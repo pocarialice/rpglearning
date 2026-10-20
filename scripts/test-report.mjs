@@ -16,7 +16,7 @@ const scope = meta.scopePrefixes // 例: ['U','D','G','A','M']
 const spec = []
 let mod = null
 for (const line of readFileSync(SPEC_MD, 'utf8').split('\n')) {
-  const h = /^####\s+(M-[A-Z]\d+(?:・M-[A-Z]\d+)?)\s+(.*)$/.exec(line)
+  const h = /^####\s+(M-[A-Z]\d+(?:[・〜]M-[A-Z]\d+)?)\s+(.*)$/.exec(line)
   if (h) { mod = { id: h[1], title: h[2].replace(/`/g, '') }; continue }
   const r = /^\|\s*(MT-([A-Z])(\d+)-(\d+))\s*\|\s*([^|]*)\|/.exec(line)
   if (r && mod) {
@@ -129,7 +129,7 @@ p('| 項目 | 内容 |')
 p('| --- | --- |')
 for (const [k, v] of meta.env) p(`| ${k} | ${v} |`)
 p()
-p('- 外部サービス（Aurora・Bedrock・SES）には接続せず、`aws-sdk-client-mock` で応答を差し替えた（仕様書 2.3）')
+p('- 外部サービス（Aurora・Bedrock・SES・S3・Lambda・Cognito）には接続せず、`aws-sdk-client-mock` で応答を差し替えた（仕様書 2.3）')
 p('- `tests/helpers/vitest.setup.js` で `fetch` の既定をエラーにし、ネットワークへ出たテストは失敗する')
 p()
 p('## 3. 結果の要約')
@@ -145,7 +145,7 @@ p('| 項目 | 結果 |')
 p('| --- | --- |')
 p(`| テストケース（仕様書のID） | ${total.cases}件中 合格 ${total.pass}・不合格 ${total.fail}・未実装 ${total.missing} |`)
 p(`| 実行したテスト（\`it\` の数） | ${itTotals.total}件（成功 ${itTotals.passed}・失敗 ${itTotals.failed}・スキップ ${itTotals.skipped}・todo ${itTotals.todo}）、テストファイル ${results.testResults.length} |`)
-p(`| うち仕様書 ${meta.specVersion} で追加したケース | ${addedCount}件（分岐網羅のための追加。7.2 参照） |`)
+p(`| うち仕様書 ${meta.specVersion} で追加したケース | ${addedCount}件（分岐網羅のための追加。第0.1版 7.2 No.10 の提案で採番） |`)
 p(`| IDのないテスト | ${supplementary.length}件 |`)
 p(`| 実行時間 | 最大 ${(maxMs / 1000).toFixed(2)} 秒（基準：60秒以内） |`)
 p(`| 安定性 | 同じコミットで${runs.length}回実行し、${stable ? 'すべて同じ結果' : '結果が変わった'}（${runs.map((r) => `${r.passed}/${r.total}`).join('、')}） |`)
@@ -290,10 +290,10 @@ H('</section>')
 H(`<section class="chapter" id="s2"><h2>${icon('fa-server')}2. 実行環境</h2>`)
 H('<div class="vis"><p class="vis-label">テストの道具と差し替え</p><div class="vis-grid c2">')
 H('<div class="card em"><h5><i class="fa-solid fa-check"></i>本物のまま動かす</h5><div class="chips"><span class="chip">domain/*</span><span class="chip">validators</span><span class="chip">ids</span><span class="chip">date-jst</span><span class="chip">json-guard</span><span class="chip">prompts</span><span class="chip">templates</span></div><p class="note">純粋関数は入力と出力だけで確かめた</p></div>')
-H('<div class="card dash"><h5><i class="fa-solid fa-masks-theater"></i>モックに差し替える</h5><div class="chips"><span class="chip">RDS Data API</span><span class="chip">Bedrock Runtime</span><span class="chip">SES</span><span class="chip">時計（偽の時計）</span><span class="chip">乱数</span><span class="chip">fetch</span></div><p class="note">aws-sdk-client-mock・vi.useFakeTimers</p></div>')
+H('<div class="card dash"><h5><i class="fa-solid fa-masks-theater"></i>モックに差し替える</h5><div class="chips"><span class="chip">RDS Data API</span><span class="chip">Bedrock Runtime</span><span class="chip">SES</span><span class="chip">S3</span><span class="chip">Lambda</span><span class="chip">Cognito</span><span class="chip">リポジトリ（vi.mock）</span><span class="chip">時計（偽の時計）</span><span class="chip">乱数</span><span class="chip">fetch</span></div><p class="note">aws-sdk-client-mock・vi.useFakeTimers</p></div>')
 H('</div></div>')
 H(table(['項目', '内容'], meta.env.map(([k, v]) => [esc(k), inline(v)])))
-H('<ul><li>外部サービス（Aurora・Bedrock・SES）には接続せず、<code>aws-sdk-client-mock</code> で応答を差し替えた（仕様書 2.3）</li><li><code>tests/helpers/vitest.setup.js</code> で <code>fetch</code> の既定をエラーにし、ネットワークへ出たテストは失敗する</li></ul></section>')
+H('<ul><li>外部サービス（Aurora・Bedrock・SES・S3・Lambda・Cognito）には接続せず、<code>aws-sdk-client-mock</code> で応答を差し替えた（仕様書 2.3）</li><li><code>tests/helpers/vitest.setup.js</code> で <code>fetch</code> の既定をエラーにし、ネットワークへ出たテストは失敗する</li></ul></section>')
 // 3
 const passDeg = (360 * total.pass) / total.cases
 H(`<section class="chapter" id="s3"><h2>${icon('fa-square-poll-vertical')}3. 結果の要約</h2>`)
@@ -309,7 +309,7 @@ H(`<div class="grid-ids" aria-label="ケースごとの結果">${rows.map((r) =>
 H(table(['項目', '結果'], [
   ['テストケース（仕様書のID）', `${total.cases}件中 合格 ${total.pass}・不合格 ${total.fail}・未実装 ${total.missing}`],
   ['実行したテスト（<code>it</code> の数）', `${itTotals.total}件（成功 ${itTotals.passed}・失敗 ${itTotals.failed}・スキップ ${itTotals.skipped}・todo ${itTotals.todo}）、テストファイル ${results.testResults.length}`],
-  [`うち仕様書 ${meta.specVersion} で追加したケース`, `${addedCount}件（分岐網羅のための追加。7.2 参照）`],
+  [`うち仕様書 ${meta.specVersion} で追加したケース`, `${addedCount}件（分岐網羅のための追加。第0.1版 7.2 No.10 の提案で採番）`],
   ['IDのないテスト', `${supplementary.length}件`],
   ['実行時間', `最大 ${(maxMs / 1000).toFixed(2)} 秒（基準：60秒以内）`],
   ['安定性', `同じコミットで${runs.length}回実行し、${stable ? 'すべて同じ結果' : '結果が変わった'}（${runs.map((r) => `${r.passed}/${r.total}`).join('、')}）`],

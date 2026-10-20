@@ -3,11 +3,11 @@
 | 項目 | 内容 |
 | --- | --- |
 | 文書名 | RPG学習アプリ モジュールテスト結果報告書 |
-| 版数 | 第0.1版（中間報告：共通モジュール） |
+| 版数 | 第1.0版（最終報告：全モジュール） |
 | 作成日 | 2026-10-20 |
-| 入力文書 | モジュールテスト仕様書 第0.2版、詳細設計書 第0.2版 |
-| 対象範囲 | 共通モジュール（functions/shared の util・db・domain・ai・mail と web/js/logic/validators.js） |
-| 実行日時・コミット | 2026-10-20 16:24（JST）、`54a2c89`（ブランチ `claude/beautiful-cray-m8heuy`） |
+| 入力文書 | モジュールテスト仕様書 第0.3版、詳細設計書 第0.3版、外部設計書 第0.8版 |
+| 対象範囲 | 全モジュール（functions/ の共通モジュール・Lambda 4関数と、web/js/core・web/js/logic） |
+| 実行日時・コミット | 2026-10-20 18:40（JST）、`02c51c9`（ブランチ `claude/beautiful-cray-m8heuy`） |
 | 判定 | **合格**（対象範囲について、仕様書 6.2 の合否基準による） |
 
 ---
@@ -16,28 +16,28 @@
 
 ### 1.1 目的
 
-モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。本版は段階リリースの第1弾（中間報告）で、共通モジュールだけを対象とする。Lambda関数（MT-H・MT-W）と画面（MT-F）は第2弾で実装・試験し、本書を更新する。
+モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。本版は段階リリースの第2弾（最終報告）で、第0.1版（中間報告：共通モジュール）に Lambda関数（MT-H・MT-W）と画面（MT-F）を加え、仕様書の全ケースで合否を判定する。
 
 ### 1.2 今回の範囲
 
 ```mermaid
 flowchart LR
-  A["共通モジュール<br>util・db・domain・ai・mail<br>193ケース"]:::done --> B["Lambda関数<br>api-handler・worker・batch"]:::todo
-  B --> C["画面<br>web/js/core・logic"]:::todo
+  A["共通モジュール<br>util・db・domain・ai・mail<br>230ケース"]:::done --> B["Lambda関数<br>api-handler・worker・batch<br>165ケース"]:::done
+  B --> C["画面<br>web/js/core・logic<br>33ケース"]:::done
   classDef done fill:#0017C1,color:#fff,stroke:#0017C1
   classDef todo fill:#fff,color:#414141,stroke:#B4B4B4,stroke-dasharray:4 3
 ```
 
 | 区分 | 層 | 仕様書のケース数 | 今回 |
 | --- | --- | --- | --- |
-| 対象 | util（MT-U） | 72 | 実行 |
-| 対象 | db（MT-D） | 24 | 実行 |
+| 対象 | util（MT-U） | 81 | 実行 |
+| 対象 | db（MT-D） | 50 | 実行 |
 | 対象 | domain（MT-G） | 69 | 実行 |
-| 対象 | ai（MT-A） | 23 | 実行 |
+| 対象 | ai（MT-A） | 25 | 実行 |
 | 対象 | mail（MT-M） | 5 | 実行 |
-| 対象外（次回） | api-handler（MT-H） | 97 | - |
-| 対象外（次回） | ワーカー・バッチ（MT-W） | 45 | - |
-| 対象外（次回） | 画面（web/js）（MT-F） | 27 | - |
+| 対象 | api-handler（MT-H） | 115 | 実行 |
+| 対象 | ワーカー・バッチ（MT-W） | 50 | 実行 |
+| 対象 | 画面（web/js）（MT-F） | 33 | 実行 |
 
 ## 2. 実行環境
 
@@ -45,50 +45,85 @@ flowchart LR
 | --- | --- |
 | OS | Linux 6.18（作業用コンテナ） |
 | Node.js | 22.22.0（Lambda の nodejs22.x と同じ系列） |
-| Vitest・@vitest/coverage-v8 | 3.2.7 |
-| jsdom | 29.1.1（web/ のテストの実行環境） |
+| Vitest・@vitest/coverage-v8 | 3.2.7（`test.projects` で functions＝Node、web＝jsdom に分けて実行） |
+| jsdom | 29.1.1 |
 | aws-sdk-client-mock | 4.1.0 |
-| AWS SDK for JavaScript v3 | 3.1153.0（client-rds-data・client-bedrock-runtime・client-ses） |
+| AWS SDK for JavaScript v3 | 3.1153.0（rds-data・bedrock-runtime・ses・s3・lambda・cognito-identity-provider、s3-request-presigner） |
+| pdf-lib | 1.17.1（PDFの分割とテスト用PDFの作成） |
 | 実行コマンド | `npx vitest run --coverage`（`npm test -- --coverage` と同じ） |
 
-- 外部サービス（Aurora・Bedrock・SES）には接続せず、`aws-sdk-client-mock` で応答を差し替えた（仕様書 2.3）
+- 外部サービス（Aurora・Bedrock・SES・S3・Lambda・Cognito）には接続せず、`aws-sdk-client-mock` で応答を差し替えた（仕様書 2.3）
 - `tests/helpers/vitest.setup.js` で `fetch` の既定をエラーにし、ネットワークへ出たテストは失敗する
 
 ## 3. 結果の要約
 
 ```mermaid
 pie showData title テストケースの結果
-  "合格" : 193
+  "合格" : 428
 ```
 
 | 項目 | 結果 |
 | --- | --- |
-| テストケース（仕様書のID） | 193件中 合格 193・不合格 0・未実装 0 |
-| 実行したテスト（`it` の数） | 279件（成功 279・失敗 0・スキップ 0・todo 0）、テストファイル 23 |
-| うち補足テスト | 32件（仕様書にない分岐を網羅するための追加。7.2 参照） |
-| 実行時間 | 最大 5.51 秒（基準：60秒以内） |
-| 安定性 | 同じコミットで3回実行し、すべて同じ結果（279/279、279/279、279/279） |
+| テストケース（仕様書のID） | 428件中 合格 428・不合格 0・未実装 0 |
+| 実行したテスト（`it` の数） | 493件（成功 493・失敗 0・スキップ 0・todo 0）、テストファイル 41 |
+| うち仕様書 第0.3版 で追加したケース | 66件（分岐網羅のための追加。第0.1版 7.2 No.10 の提案で採番） |
+| IDのないテスト | 0件 |
+| 実行時間 | 最大 11.01 秒（基準：60秒以内） |
+| 安定性 | 同じコミットで3回実行し、すべて同じ結果（493/493、493/493、493/493） |
 | 失敗したテスト | なし |
 
 ## 4. カバレッジ
 
 | 対象 | ファイル数 | 命令網羅（C0） | 分岐網羅（C1） | 関数 | 基準（C0／C1） | 判定 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 全体 | 43 | 99.93% | 99.50% | 98.89% | - | - |
+| 全体 | 85 | 99.94% | 98.83% | 98.39% | - | - |
 | `functions/shared/domain/**` | 7 | 100.00% | 100.00% | 100.00% | 100%／100% | 合格 |
 | `web/js/logic/validators.js` | 1 | 100.00% | 100.00% | 100.00% | 100%／100% | 合格 |
-| `functions/**` | 42 | 99.93% | 99.42% | 98.83% | 90%／80% | 合格 |
-| `web/js/**` | 1 | 100.00% | 100.00% | 100.00% | 90%／80% | 合格 |
+| `functions/**` | 78 | 99.93% | 98.69% | 99.04% | 90%／80% | 合格 |
+| `web/js/**` | 7 | 100.00% | 99.58% | 95.00% | 90%／80% | 合格 |
 
 **ファイル別**
 
 | ファイル | C0 | C1 | 関数 |
 | --- | --- | --- | --- |
-| `functions/shared/ai/bedrock.js` | 100.00% | 94.44% | 100.00% |
+| `functions/api-handler/index.mjs` | 100.00% | 96.15% | 100.00% |
+| `functions/api-handler/router.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/lib/aws.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/_admin.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/admin-courses.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/admin-dashboard.js` | 98.55% | 97.56% | 100.00% |
+| `functions/api-handler/routes/admin-imports.js` | 100.00% | 95.00% | 100.00% |
+| `functions/api-handler/routes/admin-partners.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/admin-questions.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/admin-users.js` | 100.00% | 95.31% | 100.00% |
+| `functions/api-handler/routes/answers.js` | 100.00% | 95.00% | 100.00% |
+| `functions/api-handler/routes/courses.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/gradings.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/health.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/home.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/me.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/quests.js` | 100.00% | 100.00% | 100.00% |
+| `functions/api-handler/routes/rankings.js` | 100.00% | 100.00% | 100.00% |
+| `functions/batch-runner/index.mjs` | 100.00% | 92.30% | 100.00% |
+| `functions/batch-runner/jobs/daily.js` | 100.00% | 100.00% | 100.00% |
+| `functions/batch-runner/jobs/mail.js` | 100.00% | 95.00% | 100.00% |
+| `functions/batch-runner/lib/s3.js` | 100.00% | 100.00% | 100.00% |
+| `functions/batch-runner/steps/assign-quests.js` | 100.00% | 100.00% | 100.00% |
+| `functions/batch-runner/steps/build-notify.js` | 100.00% | 100.00% | 100.00% |
+| `functions/batch-runner/steps/cleanup-gradings.js` | 100.00% | 100.00% | 100.00% |
+| `functions/batch-runner/steps/close-ranking.js` | 100.00% | 100.00% | 100.00% |
+| `functions/batch-runner/steps/purge-users.js` | 100.00% | 100.00% | 100.00% |
+| `functions/batch-runner/steps/update-streak.js` | 100.00% | 100.00% | 100.00% |
+| `functions/grading-worker/grader.js` | 100.00% | 94.44% | 66.66% |
+| `functions/grading-worker/index.mjs` | 100.00% | 100.00% | 100.00% |
+| `functions/import-worker/extractor.js` | 100.00% | 100.00% | 100.00% |
+| `functions/import-worker/index.mjs` | 100.00% | 94.54% | 100.00% |
+| `functions/import-worker/pdf-splitter.js` | 100.00% | 100.00% | 100.00% |
+| `functions/shared/ai/bedrock.js` | 100.00% | 95.45% | 100.00% |
 | `functions/shared/ai/json-guard.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/ai/persona.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/ai/prompts/comment.js` | 100.00% | 100.00% | 100.00% |
-| `functions/shared/ai/prompts/daily-message.js` | 100.00% | 100.00% | 50.00% |
+| `functions/shared/ai/prompts/daily-message.js` | 100.00% | 92.30% | 81.81% |
 | `functions/shared/ai/prompts/extraction.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/ai/prompts/grading.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/ai/prompts/sanitize.js` | 100.00% | 100.00% | 100.00% |
@@ -96,7 +131,7 @@ pie showData title テストケースの結果
 | `functions/shared/db/tx.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/_base.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/adventures.js` | 100.00% | 100.00% | 100.00% |
-| `functions/shared/db/repositories/answers.js` | 100.00% | 88.88% | 100.00% |
+| `functions/shared/db/repositories/answers.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/audit.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/badges.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/courses.js` | 100.00% | 100.00% | 100.00% |
@@ -105,6 +140,7 @@ pie showData title テストケースの結果
 | `functions/shared/db/repositories/gradings.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/imports.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/notify.js` | 100.00% | 100.00% | 100.00% |
+| `functions/shared/db/repositories/partners.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/questions.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/quests.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/db/repositories/rankings.js` | 100.00% | 100.00% | 100.00% |
@@ -119,29 +155,38 @@ pie showData title テストケースの結果
 | `functions/shared/domain/review.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/mail/ses.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/mail/templates.js` | 100.00% | 100.00% | 100.00% |
+| `functions/shared/services/answer-recorder.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/util/authz.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/util/date-jst.js` | 100.00% | 100.00% | 100.00% |
+| `functions/shared/util/env.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/util/errors.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/util/http.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/util/ids.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/util/logger.js` | 100.00% | 100.00% | 100.00% |
 | `functions/shared/util/validators.js` | 100.00% | 100.00% | 100.00% |
+| `web/js/core/api.js` | 100.00% | 97.50% | 100.00% |
+| `web/js/core/auth.js` | 100.00% | 100.00% | 84.21% |
+| `web/js/core/router.js` | 100.00% | 100.00% | 100.00% |
+| `web/js/core/store.js` | 100.00% | 100.00% | 100.00% |
+| `web/js/logic/format.js` | 100.00% | 100.00% | 100.00% |
+| `web/js/logic/grading-poller.js` | 100.00% | 100.00% | 100.00% |
 | `web/js/logic/validators.js` | 100.00% | 100.00% | 100.00% |
 
 ## 5. モジュール別の結果
 
 | モジュール | 対象 | ケース | 合格 | 不合格 | 未実装 | it の数 |
 | --- | --- | --- | --- | --- | --- | --- |
-| M-U01 | `util/errors.js` | 4 | 4 | 0 | 0 | 14 |
+| M-U01 | `util/errors.js` | 5 | 5 | 0 | 0 | 14 |
 | M-U02 | `util/ids.js` | 7 | 7 | 0 | 0 | 12 |
-| M-U03 | `util/date-jst.js` | 13 | 13 | 0 | 0 | 13 |
-| M-U04 | `util/authz.js` | 9 | 9 | 0 | 0 | 10 |
+| M-U03 | `util/date-jst.js` | 14 | 14 | 0 | 0 | 14 |
+| M-U04 | `util/authz.js` | 10 | 10 | 0 | 0 | 10 |
 | M-U05 | `util/logger.js` | 5 | 5 | 0 | 0 | 5 |
 | M-U06 | `util/http.js` | 6 | 6 | 0 | 0 | 6 |
-| M-U07 | `web/js/logic/validators.js（画面とLambdaで共用）` | 28 | 28 | 0 | 0 | 46 |
-| M-D01 | `db/data-api.js` | 11 | 11 | 0 | 0 | 12 |
-| M-D02 | `db/tx.js` | 4 | 4 | 0 | 0 | 5 |
-| M-D03 | `リポジトリ（代表的なもの）` | 9 | 9 | 0 | 0 | 9 |
+| M-U07 | `web/js/logic/validators.js（画面とLambdaで共用）` | 33 | 33 | 0 | 0 | 51 |
+| M-U08 | `util/env.js` | 1 | 1 | 0 | 0 | 1 |
+| M-D01 | `db/data-api.js` | 12 | 12 | 0 | 0 | 12 |
+| M-D02 | `db/tx.js` | 5 | 5 | 0 | 0 | 5 |
+| M-D03 | `リポジトリ（代表的なもの）` | 33 | 33 | 0 | 0 | 33 |
 | M-G01 | `domain/review.js 忘却曲線` | 14 | 14 | 0 | 0 | 15 |
 | M-G02 | `domain/exp.js EXPとレベル` | 13 | 13 | 0 | 0 | 23 |
 | M-G03 | `domain/quest.js デイリークエスト` | 12 | 12 | 0 | 0 | 12 |
@@ -150,9 +195,29 @@ pie showData title テストケースの結果
 | M-G06 | `domain/picker.js 出題` | 9 | 9 | 0 | 0 | 9 |
 | M-G07 | `domain/answer-flow.js 解答後の更新内容` | 8 | 8 | 0 | 0 | 8 |
 | M-A01 | `ai/bedrock.js` | 7 | 7 | 0 | 0 | 8 |
-| M-A02 | `ai/json-guard.js` | 9 | 9 | 0 | 0 | 19 |
-| M-A03・M-A04 | `ai/persona.js・ai/prompts/*` | 7 | 7 | 0 | 0 | 7 |
+| M-A02 | `ai/json-guard.js` | 10 | 10 | 0 | 0 | 19 |
+| M-A03・M-A04 | `ai/persona.js・ai/prompts/*` | 8 | 8 | 0 | 0 | 8 |
 | M-M01 | `mail/ses.js・mail/templates.js` | 5 | 5 | 0 | 0 | 6 |
+| M-H01 | `router.js・入口` | 12 | 12 | 0 | 0 | 12 |
+| M-H02 | `routes/me.js（A-01〜A-04、A-12）` | 16 | 16 | 0 | 0 | 18 |
+| M-H03 | `routes/home.js（A-05）` | 7 | 7 | 0 | 0 | 7 |
+| M-H04 | `routes/courses.js（A-06）` | 5 | 5 | 0 | 0 | 5 |
+| M-H05 | `routes/quests.js（A-07）` | 8 | 8 | 0 | 0 | 8 |
+| M-H06 | `routes/answers.js（A-08）` | 8 | 8 | 0 | 0 | 10 |
+| M-H07 | `routes/gradings.js（A-09・A-10）` | 10 | 10 | 0 | 0 | 10 |
+| M-H08 | `routes/rankings.js（A-11）` | 7 | 7 | 0 | 0 | 9 |
+| M-H09 | `routes/admin-imports.js（A-13・A-14）` | 7 | 7 | 0 | 0 | 7 |
+| M-H10 | `routes/admin-questions.js（A-15・A-16）` | 9 | 9 | 0 | 0 | 9 |
+| M-H11 | `routes/admin-dashboard.js（A-17・A-18）` | 8 | 8 | 0 | 0 | 8 |
+| M-H12 | `routes/admin-users.js（A-19・A-20）` | 9 | 9 | 0 | 0 | 9 |
+| M-H13 | `routes/admin-courses.js（A-21）・M-H14 routes/admin-partners.js（A-22）` | 9 | 9 | 0 | 0 | 9 |
+| M-W01 | `grading-worker/index.mjs・grader.js` | 12 | 12 | 0 | 0 | 13 |
+| M-W02 | `import-worker/index.mjs・extractor.js・pdf-splitter.js` | 16 | 16 | 0 | 0 | 20 |
+| M-W03 | `jobs/daily.js と steps/` | 15 | 15 | 0 | 0 | 15 |
+| M-W04 | `jobs/mail.js` | 7 | 7 | 0 | 0 | 7 |
+| M-F01 | `core/auth.js` | 10 | 10 | 0 | 0 | 10 |
+| M-F02 | `core/api.js` | 8 | 8 | 0 | 0 | 8 |
+| M-F03〜M-F06 | `core/router.js・core/store.js・logic/format.js・logic/grading-poller.js` | 15 | 15 | 0 | 0 | 15 |
 
 ## 6. テストケース別の結果
 
@@ -163,7 +228,8 @@ pie showData title テストケースの結果
 | MT-U01-01 | AppError の属性 | 同 | 合格 | 1 |
 | MT-U01-02 | 応答への変換（想定エラー） | 同 | 合格 | 1 |
 | MT-U01-03 | 応答への変換（想定外） | 異 | 合格 | 1 |
-| MT-U01-04 | コードからHTTPの既定 | 同 | 合格 | 11 |
+| MT-U01-04 | コードからHTTPの既定 | 同 | 合格 | 10 |
+| MT-U01-05 | 表にないコード・details なし | 異 | 合格 | 1 |
 
 ### M-U02 util/ids.js
 
@@ -194,6 +260,7 @@ pie showData title テストケースの結果
 | MT-U03-11 | ISO文字列 | 同 | 合格 | 1 |
 | MT-U03-12 | 日数の差 | 同 | 合格 | 1 |
 | MT-U03-13 | 不正な日付 | 異 | 合格 | 1 |
+| MT-U03-14 | DBの日時の読み取り（`parseDbTimestamp`） | 同 | 合格 | 1 |
 
 ### M-U04 util/authz.js
 
@@ -205,9 +272,10 @@ pie showData title テストケースの結果
 | MT-U04-04 | ロールあり | 同 | 合格 | 1 |
 | MT-U04-05 | ロールなし | 異 | 合格 | 1 |
 | MT-U04-06 | 招待中の初回ログイン | 状 | 合格 | 1 |
-| MT-U04-07 | 論理削除中・未登録 | 異 | 合格 | 2 |
+| MT-U04-07 | 論理削除中・未登録 | 異 | 合格 | 1 |
 | MT-U04-08 | 担当コース | DT | 合格 | 1 |
 | MT-U04-09 | システム管理者は全コース | DT | 合格 | 1 |
+| MT-U04-10 | 有効な利用者・DBのロール | DT | 合格 | 1 |
 
 ### M-U05 util/logger.js
 
@@ -262,6 +330,17 @@ pie showData title テストケースの結果
 | MT-U07-26 | 公開できる問題 | 同 | 合格 | 1 |
 | MT-U07-27 | 公開できない問題 | DT | 合格 | 5 |
 | MT-U07-28 | キーワードの数と長さ | 境 | 合格 | 1 |
+| MT-U07-29 | Lambda側の変換（`assertValid`） | 同 | 合格 | 1 |
+| MT-U07-30 | 文字列以外のニックネーム・パートナー名 | 異 | 合格 | 1 |
+| MT-U07-31 | 取り込みの要求の不正 | 異 | 合格 | 1 |
+| MT-U07-32 | 問題の下書きの不正 | 異 | 合格 | 1 |
+| MT-U07-33 | 行頭に空白がある小見出し | 同 | 合格 | 1 |
+
+### M-U08 util/env.js
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-U08-01 | 環境変数の読み取り（`requireEnv`） | 異 | 合格 | 1 |
 
 ### M-D01 db/data-api.js
 
@@ -271,22 +350,24 @@ pie showData title テストケースの結果
 | MT-D01-02 | パラメータの型（整数・小数） | 同 | 合格 | 1 |
 | MT-D01-03 | パラメータの型（文字・真偽） | 同 | 合格 | 1 |
 | MT-D01-04 | パラメータの型（null） | 同 | 合格 | 1 |
-| MT-D01-05 | 日付・JSON | 同 | 合格 | 2 |
+| MT-D01-05 | 日付・JSON | 同 | 合格 | 1 |
 | MT-D01-06 | 結果の変換 | 同 | 合格 | 1 |
 | MT-D01-07 | 結果なし | 境 | 合格 | 1 |
 | MT-D01-08 | DB起動中・再試行0回 | 異 | 合格 | 1 |
 | MT-D01-09 | DB起動中から復帰 | 状 | 合格 | 1 |
 | MT-D01-10 | 再試行が尽きる | 境 | 合格 | 1 |
 | MT-D01-11 | ほかのエラー | 異 | 合格 | 1 |
+| MT-D01-12 | 変換できないパラメータ | 異 | 合格 | 1 |
 
 ### M-D02 db/tx.js
 
 | ID | 観点 | 技法 | 結果 | it |
 | --- | --- | --- | --- | --- |
 | MT-D02-01 | 正常 | 同 | 合格 | 1 |
-| MT-D02-02 | 途中の例外 | 異 | 合格 | 2 |
+| MT-D02-02 | 途中の例外 | 異 | 合格 | 1 |
 | MT-D02-03 | Commit の失敗 | 異 | 合格 | 1 |
 | MT-D02-04 | 戻り値 | 同 | 合格 | 1 |
+| MT-D02-05 | Rollback の失敗 | 異 | 合格 | 1 |
 
 ### M-D03 リポジトリ（代表的なもの）
 
@@ -301,6 +382,30 @@ pie showData title テストケースの結果
 | MT-D03-07 | 列名の変換 | 同 | 合格 | 1 |
 | MT-D03-08 | 一覧の上限 | 境 | 合格 | 1 |
 | MT-D03-09 | 並べ替えの許可リスト | 異 | 合格 | 1 |
+| MT-D03-10 | users：取得とロール | 同 | 合格 | 1 |
+| MT-D03-11 | users：更新系 | 同 | 合格 | 1 |
+| MT-D03-12 | users：一覧の並べ替え | 同 | 合格 | 1 |
+| MT-D03-13 | users：登録・ロール・削除・復活・物理削除 | 同 | 合格 | 1 |
+| MT-D03-14 | users：物理削除・継続日数の対象 | 同 | 合格 | 1 |
+| MT-D03-15 | courses の各関数 | 同 | 合格 | 1 |
+| MT-D03-16 | enrollments の各関数 | 境 | 合格 | 1 |
+| MT-D03-17 | questions：取得系 | 同 | 合格 | 1 |
+| MT-D03-18 | questions：番号ごとの更新 | DT | 合格 | 1 |
+| MT-D03-19 | questions：公開・削除 | DT | 合格 | 1 |
+| MT-D03-20 | reviews の各関数 | 同 | 合格 | 1 |
+| MT-D03-21 | answers の各関数 | 境 | 合格 | 1 |
+| MT-D03-22 | exp の各関数 | 境 | 合格 | 1 |
+| MT-D03-23 | quests の各関数 | 同 | 合格 | 1 |
+| MT-D03-24 | badges の各関数 | 同 | 合格 | 1 |
+| MT-D03-25 | rankings の各関数 | 境 | 合格 | 1 |
+| MT-D03-26 | users.lastLoginLogAt・reviews.countDueByKind | 境 | 合格 | 1 |
+| MT-D03-27 | badges.listOwnedDetail・rankings.weeks・courses.listAll・listIds | 同 | 合格 | 1 |
+| MT-D03-28 | imports.setKey・listByCourse、quests.listAssignTargets、partners | 同 | 合格 | 1 |
+| MT-D03-29 | gradings の各関数 | 同 | 合格 | 1 |
+| MT-D03-30 | imports の各関数 | 同 | 合格 | 1 |
+| MT-D03-31 | adventures の各関数 | 同 | 合格 | 1 |
+| MT-D03-32 | audit.write | 境 | 合格 | 1 |
+| MT-D03-33 | notify の各関数 | 同 | 合格 | 1 |
 
 ### M-G01 domain/review.js 忘却曲線
 
@@ -430,7 +535,8 @@ pie showData title テストケースの結果
 | MT-A02-06 | JSONがない | 異 | 合格 | 1 |
 | MT-A02-07 | 採点の形（正常） | 同 | 合格 | 1 |
 | MT-A02-08 | 範囲外の点数 | 境 | 合格 | 4 |
-| MT-A02-09 | 必須キーがない・型違い | 異 | 合格 | 8 |
+| MT-A02-09 | 必須キーがない・型違い | 異 | 合格 | 7 |
+| MT-A02-10 | オブジェクト以外・任意キー | 異 | 合格 | 1 |
 
 ### M-A03・M-A04 ai/persona.js・ai/prompts/*
 
@@ -443,6 +549,7 @@ pie showData title テストケースの結果
 | MT-A04-03 | 小見出しはそのまま | 同 | 合格 | 1 |
 | MT-A04-04 | 抽出の指示文 | 同 | 合格 | 1 |
 | MT-A04-05 | ひとことに個人情報を入れない | 異 | 合格 | 1 |
+| MT-A04-06 | 解説コメントの指示文 | 同 | 合格 | 1 |
 
 ### M-M01 mail/ses.js・mail/templates.js
 
@@ -454,45 +561,346 @@ pie showData title テストケースの結果
 | MT-M01-04 | SES への送信 | 同 | 合格 | 1 |
 | MT-M01-05 | 送信の失敗 | 異 | 合格 | 1 |
 
+### M-H01 router.js・入口
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H01-01 | ルートの一致 | 同 | 合格 | 1 |
+| MT-H01-02 | パスのパラメータ | 同 | 合格 | 1 |
+| MT-H01-03 | ルートがない | 異 | 合格 | 1 |
+| MT-H01-04 | メソッド違い | 異 | 合格 | 1 |
+| MT-H01-05 | ヘルスチェック | 状 | 合格 | 1 |
+| MT-H01-06 | ロール不足 | 異 | 合格 | 1 |
+| MT-H01-07 | 上位ロール | DT | 合格 | 1 |
+| MT-H01-08 | 想定外の例外 | 異 | 合格 | 1 |
+| MT-H01-09 | 初回の流れが終わっていない | 状 | 合格 | 1 |
+| MT-H01-10 | コースが未選択 | 状 | 合格 | 1 |
+| MT-H01-11 | トークンがない・壊れた本文 | 異 | 合格 | 1 |
+| MT-H01-12 | Lambda の入口（handler） | 同 | 合格 | 1 |
+
+### M-H02 routes/me.js（A-01〜A-04、A-12）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H02-01 | ログインの記録（30分より前） | 境 | 合格 | 1 |
+| MT-H02-02 | ログインの記録（30分以内） | 境 | 合格 | 1 |
+| MT-H02-03 | 初回の流れの判定 | 同 | 合格 | 1 |
+| MT-H02-04 | ニックネームの登録 | 同 | 合格 | 1 |
+| MT-H02-05 | ニックネームの重複 | 異 | 合格 | 1 |
+| MT-H02-06 | ニックネームの形式 | 異 | 合格 | 1 |
+| MT-H02-07 | パートナー（名前あり） | 同 | 合格 | 1 |
+| MT-H02-08 | パートナー（名前なし） | 同 | 合格 | 1 |
+| MT-H02-09 | 知らない性格 | 異 | 合格 | 3 |
+| MT-H02-10 | 通知設定 | 境 | 合格 | 1 |
+| MT-H02-11 | 学習記録の計算 | 同 | 合格 | 1 |
+| MT-H02-12 | 解答がないときの正答率 | 境 | 合格 | 1 |
+| MT-H02-13 | バッジ一覧 | 同 | 合格 | 1 |
+| MT-H02-14 | 初回の流れが終わった利用者 | 同 | 合格 | 1 |
+| MT-H02-15 | パートナー名を省いたとき | DT | 合格 | 1 |
+| MT-H02-16 | 通知設定の取得 | 境 | 合格 | 1 |
+
+### M-H03 routes/home.js（A-05）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H03-01 | ひとことの使い回し | 状 | 合格 | 1 |
+| MT-H03-02 | ひとことの生成 | 状 | 合格 | 1 |
+| MT-H03-03 | ひとことの失敗 | 異 | 合格 | 1 |
+| MT-H03-04 | 今日の復習数 | 同 | 合格 | 1 |
+| MT-H03-05 | レベル表示 | 同 | 合格 | 1 |
+| MT-H03-06 | コース未選択 | 状 | 合格 | 1 |
+| MT-H03-07 | ひとことが空・パートナー未設定 | 異 | 合格 | 1 |
+
+### M-H04 routes/courses.js（A-06）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H04-01 | 受講の開始 | 同 | 合格 | 1 |
+| MT-H04-02 | 受講済み | 状 | 合格 | 1 |
+| MT-H04-03 | 移る先でニックネームが重複 | 異 | 合格 | 1 |
+| MT-H04-04 | ないコース | 異 | 合格 | 1 |
+| MT-H04-05 | コース一覧 | 同 | 合格 | 1 |
+
+### M-H05 routes/quests.js（A-07）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H05-01 | 冒険の開始 | 状 | 合格 | 1 |
+| MT-H05-02 | 10問で終わり | 境 | 合格 | 1 |
+| MT-H05-03 | 9問目の次 | 境 | 合格 | 1 |
+| MT-H05-04 | 他人の冒険 | 異 | 合格 | 1 |
+| MT-H05-05 | 出せる問題がない | 境 | 合格 | 1 |
+| MT-H05-06 | 答えを返さない | 異 | 合格 | 1 |
+| MT-H05-07 | 説明の出題 | 同 | 合格 | 1 |
+| MT-H05-08 | 問題が取得できない・キーワードの文言がない | 異 | 合格 | 1 |
+
+### M-H06 routes/answers.js（A-08）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H06-01 | 正解 | 同 | 合格 | 1 |
+| MT-H06-02 | 不正解 | 同 | 合格 | 1 |
+| MT-H06-03 | 選択肢の範囲 | 境 | 合格 | 3 |
+| MT-H06-04 | 非公開・他コースの問題 | 異 | 合格 | 1 |
+| MT-H06-05 | 解説コメントの失敗 | 異 | 合格 | 1 |
+| MT-H06-06 | 更新の途中で失敗 | 異 | 合格 | 1 |
+| MT-H06-07 | 応答の形 | 同 | 合格 | 1 |
+| MT-H06-08 | 冒険IDなし・クエスト達成・バッジ | 同 | 合格 | 1 |
+
+### M-H07 routes/gradings.js（A-09・A-10）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H07-01 | 採点の受付 | 同 | 合格 | 1 |
+| MT-H07-02 | 説明文が短い | 異 | 合格 | 1 |
+| MT-H07-03 | 他コースのキーワード | 異 | 合格 | 1 |
+| MT-H07-04 | 起動の失敗 | 異 | 合格 | 1 |
+| MT-H07-05 | 結果（完了） | 状 | 合格 | 1 |
+| MT-H07-06 | 結果（採点中・30秒以内） | 境 | 合格 | 1 |
+| MT-H07-07 | 結果（30秒超え） | 境 | 合格 | 1 |
+| MT-H07-08 | 結果（AIの失敗） | 状 | 合格 | 1 |
+| MT-H07-09 | 他人の採点 | 異 | 合格 | 1 |
+| MT-H07-10 | 冒険IDなし・他人の冒険 | 異 | 合格 | 1 |
+
+### M-H08 routes/rankings.js（A-11）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H08-01 | 今週 | 同 | 合格 | 1 |
+| MT-H08-02 | 上位10名＋自分 | 境 | 合格 | 1 |
+| MT-H08-03 | 自分が10位以内 | 境 | 合格 | 1 |
+| MT-H08-04 | 過去週 | 同 | 合格 | 1 |
+| MT-H08-05 | 受講していないコース | 異 | 合格 | 1 |
+| MT-H08-06 | 月曜以外の週の指定 | 異 | 合格 | 3 |
+| MT-H08-07 | コース省略・論理削除中・圏外 | DT | 合格 | 1 |
+
+### M-H09 routes/admin-imports.js（A-13・A-14）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H09-01 | PDFの取り込み | 同 | 合格 | 1 |
+| MT-H09-02 | テキストの取り込み | 同 | 合格 | 1 |
+| MT-H09-03 | 担当外のコース | 異 | 合格 | 1 |
+| MT-H09-04 | ファイル名の無害化 | 異 | 合格 | 1 |
+| MT-H09-05 | サイズ超え | 境 | 合格 | 1 |
+| MT-H09-06 | 取り込み状況 | 同 | 合格 | 1 |
+| MT-H09-07 | 取り込みがない・担当外・一覧 | 異 | 合格 | 1 |
+
+### M-H10 routes/admin-questions.js（A-15・A-16）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H10-01 | 番号ごとの更新 | 同 | 合格 | 1 |
+| MT-H10-02 | キーワードを減らす | 同 | 合格 | 1 |
+| MT-H10-03 | 下書きの削除 | 状 | 合格 | 1 |
+| MT-H10-04 | 公開済みの削除 | 状 | 合格 | 1 |
+| MT-H10-05 | 公開できない | 異 | 合格 | 1 |
+| MT-H10-06 | 公開 | 状 | 合格 | 1 |
+| MT-H10-07 | 担当外のコースの問題 | 異 | 合格 | 1 |
+| MT-H10-08 | 下書きの修正 | DT | 合格 | 1 |
+| MT-H10-09 | ない問題・公開済みの公開・状態の食い違い | 状 | 合格 | 1 |
+
+### M-H11 routes/admin-dashboard.js（A-17・A-18）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H11-01 | 集計 | 同 | 合格 | 1 |
+| MT-H11-02 | 受講者0名 | 境 | 合格 | 1 |
+| MT-H11-03 | CSVの形 | 同 | 合格 | 1 |
+| MT-H11-04 | CSVの囲み | 異 | 合格 | 1 |
+| MT-H11-05 | CSVの数式対策 | 異 | 合格 | 1 |
+| MT-H11-06 | CSVのファイル名と記録 | 同 | 合格 | 1 |
+| MT-H11-07 | 1,000件ずつの取得 | 境 | 合格 | 1 |
+| MT-H11-08 | 担当外のコース | 異 | 合格 | 1 |
+
+### M-H12 routes/admin-users.js（A-19・A-20）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H12-01 | 登録 | 同 | 合格 | 1 |
+| MT-H12-02 | Cognito の失敗 | 異 | 合格 | 1 |
+| MT-H12-03 | ロールの変更 | 同 | 合格 | 1 |
+| MT-H12-04 | 自分の system_admin を外す | 異 | 合格 | 1 |
+| MT-H12-05 | 論理削除 | 状 | 合格 | 1 |
+| MT-H12-06 | 自分自身の削除 | 異 | 合格 | 1 |
+| MT-H12-07 | 復活 | 状 | 合格 | 1 |
+| MT-H12-08 | 有効な利用者の復活 | 状 | 合格 | 1 |
+| MT-H12-09 | 利用者管理の異常系 | 異 | 合格 | 1 |
+
+### M-H13 routes/admin-courses.js（A-21）・M-H14 routes/admin-partners.js（A-22）
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-H13-01 | コースの登録 | 同 | 合格 | 1 |
+| MT-H13-02 | コース名の長さ | 境 | 合格 | 1 |
+| MT-H13-03 | 担当者の割り当て | 異 | 合格 | 1 |
+| MT-H13-04 | 担当者の割り当て（正常）・更新・一覧 | 同 | 合格 | 1 |
+| MT-H14-01 | 画像の準備（PNG） | 境 | 合格 | 1 |
+| MT-H14-02 | 画像の準備（範囲外） | 境 | 合格 | 1 |
+| MT-H14-03 | 画像の確定 | 状 | 合格 | 1 |
+| MT-H14-04 | 画像を外す | 状 | 合格 | 1 |
+| MT-H14-05 | 画像の取得・WebP・不正な操作 | 異 | 合格 | 1 |
+
+### M-W01 grading-worker/index.mjs・grader.js
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-W01-01 | 合格 | 同 | 合格 | 1 |
+| MT-W01-02 | 合格ライン | 境 | 合格 | 1 |
+| MT-W01-03 | 合計で計算し直す | 異 | 合格 | 1 |
+| MT-W01-04 | JSONのやり直し（成功） | 異 | 合格 | 1 |
+| MT-W01-05 | JSONのやり直し（失敗） | 異 | 合格 | 1 |
+| MT-W01-06 | 残り時間が少ないとき | 境 | 合格 | 1 |
+| MT-W01-07 | Bedrock の時間切れ | 異 | 合格 | 1 |
+| MT-W01-08 | 処理済みのジョブ | 状 | 合格 | 2 |
+| MT-W01-09 | A-10 が先に時間切れにした | 状 | 合格 | 1 |
+| MT-W01-10 | パートナーの口調 | 同 | 合格 | 1 |
+| MT-W01-11 | DBの起動待ち | 状 | 合格 | 1 |
+| MT-W01-12 | パートナー未設定・書き込み中の例外・入口 | 異 | 合格 | 1 |
+
+### M-W02 import-worker/index.mjs・extractor.js・pdf-splitter.js
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-W02-01 | キーから取り込みID | 同 | 合格 | 1 |
+| MT-W02-02 | 処理済みの通知 | 状 | 合格 | 1 |
+| MT-W02-03 | PDFの分割 | 境 | 合格 | 4 |
+| MT-W02-04 | ページ数の上限 | 境 | 合格 | 1 |
+| MT-W02-05 | 画像 | 同 | 合格 | 1 |
+| MT-W02-06 | テキストの分割 | 境 | 合格 | 1 |
+| MT-W02-07 | 正規化（選択肢の数） | DT | 合格 | 1 |
+| MT-W02-08 | 正規化（正解なし） | DT | 合格 | 2 |
+| MT-W02-09 | 正規化（キーワード） | 境 | 合格 | 1 |
+| MT-W02-10 | 正規化（問題文が空） | 異 | 合格 | 1 |
+| MT-W02-11 | 一部のかたまりで失敗 | 異 | 合格 | 1 |
+| MT-W02-12 | 再試行（1・2回目） | 状 | 合格 | 1 |
+| MT-W02-13 | 再試行（3回目） | 状 | 合格 | 1 |
+| MT-W02-14 | 壊れたPDF | 異 | 合格 | 1 |
+| MT-W02-15 | テキスト・JPEG・対応外の画像・知らないキー | 異 | 合格 | 1 |
+| MT-W02-16 | 正規化の細部 | 境 | 合格 | 1 |
+
+### M-W03 jobs/daily.js と steps/
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-W03-01 | 実行順 | 同 | 合格 | 1 |
+| MT-W03-02 | 月曜以外 | DT | 合格 | 1 |
+| MT-W03-03 | ランキングの締め | 同 | 合格 | 1 |
+| MT-W03-04 | 継続日数（続いた） | 境 | 合格 | 1 |
+| MT-W03-05 | 継続日数（途切れた） | DT | 合格 | 1 |
+| MT-W03-06 | 継続日数（二重実行） | 状 | 合格 | 1 |
+| MT-W03-07 | クエストの割り当て | DT | 合格 | 1 |
+| MT-W03-08 | クエストの二重実行 | 状 | 合格 | 1 |
+| MT-W03-09 | 物理削除 | 状 | 合格 | 1 |
+| MT-W03-10 | Cognito に利用者がいない | 異 | 合格 | 1 |
+| MT-W03-11 | 採点ジョブの掃除 | 境 | 合格 | 1 |
+| MT-W03-12 | 送信リスト | 同 | 合格 | 1 |
+| MT-W03-13 | ステップの失敗 | 異 | 合格 | 1 |
+| MT-W03-14 | 知らないジョブ | 異 | 合格 | 1 |
+| MT-W03-15 | Cognito のほかのエラー・削除できない・入口 | 異 | 合格 | 1 |
+
+### M-W04 jobs/mail.js
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-W04-01 | 送信 | 同 | 合格 | 1 |
+| MT-W04-02 | ファイルがない | 境 | 合格 | 1 |
+| MT-W04-03 | 1回失敗して成功 | 異 | 合格 | 1 |
+| MT-W04-04 | 2回とも失敗 | 異 | 合格 | 1 |
+| MT-W04-05 | DBを使わない | 異 | 合格 | 1 |
+| MT-W04-06 | 枠の丸め | 境 | 合格 | 1 |
+| MT-W04-07 | S3 のほかのエラー | 異 | 合格 | 1 |
+
+### M-F01 core/auth.js
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-F01-01 | code_verifier | 同 | 合格 | 1 |
+| MT-F01-02 | チャレンジの計算 | 同 | 合格 | 1 |
+| MT-F01-03 | ログイン画面への移動 | 同 | 合格 | 1 |
+| MT-F01-04 | 戻り（正常） | 状 | 合格 | 1 |
+| MT-F01-05 | 戻り（state 不一致） | 異 | 合格 | 1 |
+| MT-F01-06 | 保管場所 | 異 | 合格 | 1 |
+| MT-F01-07 | 期限前の更新 | 境 | 合格 | 1 |
+| MT-F01-08 | 更新の失敗 | 異 | 合格 | 1 |
+| MT-F01-09 | ログアウト | 状 | 合格 | 1 |
+| MT-F01-10 | IDトークンが読めないとき | 異 | 合格 | 1 |
+
+### M-F02 core/api.js
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-F02-01 | ヘッダー | 同 | 合格 | 1 |
+| MT-F02-02 | DB起動中から復帰 | 状 | 合格 | 1 |
+| MT-F02-03 | 再試行が尽きる | 境 | 合格 | 1 |
+| MT-F02-04 | 401 で1回だけ更新 | 状 | 合格 | 1 |
+| MT-F02-05 | 401 が続く | 異 | 合格 | 1 |
+| MT-F02-06 | 入力エラー | 同 | 合格 | 1 |
+| MT-F02-07 | 通信エラー | 異 | 合格 | 1 |
+| MT-F02-08 | JSONでない応答・204・CSV・PUT・DELETE・既定の引数 | 異 | 合格 | 1 |
+
+### M-F03〜M-F06 core/router.js・core/store.js・logic/format.js・logic/grading-poller.js
+
+| ID | 観点 | 技法 | 結果 | it |
+| --- | --- | --- | --- | --- |
+| MT-F03-01 | 画面の切り替え | 同 | 合格 | 1 |
+| MT-F03-02 | 知らないハッシュ | 異 | 合格 | 1 |
+| MT-F03-03 | ロール不足 | 異 | 合格 | 1 |
+| MT-F03-04 | 初回の流れ | 状 | 合格 | 1 |
+| MT-F03-05 | ハッシュの解釈・hashchange・ロールなし | 状 | 合格 | 1 |
+| MT-F04-01 | 状態の通知 | 同 | 合格 | 1 |
+| MT-F04-02 | 既定のストア | 同 | 合格 | 1 |
+| MT-F05-01 | HTMLエスケープ | 異 | 合格 | 1 |
+| MT-F05-02 | 数値・日付の表示 | 同 | 合格 | 1 |
+| MT-F05-03 | 日付の境界と空の値 | 境 | 合格 | 1 |
+| MT-F06-01 | 採点結果が返る | 状 | 合格 | 1 |
+| MT-F06-02 | 30秒で打ち切る | 境 | 合格 | 1 |
+| MT-F06-03 | 504 が返る | 異 | 合格 | 1 |
+| MT-F06-04 | 一時的な通信エラー | 異 | 合格 | 1 |
+| MT-F06-05 | 失敗の結果・そのほかのエラー | 異 | 合格 | 1 |
+
 ## 7. 所見
 
 ### 7.1 不具合
 
-- 製品コードの不具合は見つからなかった（全ケースが初回の実行から合格）
-- テストコード側の誤り1件（validators の補足テストで変数の宣言位置が誤っていた）を実行前の確認で直した。製品コードへの影響はない
+- 製品コードの不具合を2件見つけ、どちらも直してから全件を流し直した（下の表）。最終の実行では失敗0件
+- テスト仕様書の記述の矛盾を1件見つけた（7.2 No.3）。期待結果の値に合わせて実装し、仕様書の注記の修正を提案する
+- テストコード側の誤り2件（期待値の書き違い・変数の宣言位置）は実行前・実行直後に直した。製品コードへの影響はない
+
+| No | 見つけたテスト・作業 | 重大度 | 内容 | 対応 |
+| --- | --- | --- | --- | --- |
+| 1 | 第2弾の設計確認（詳細設計書 5.3 A-15）／MT-H10-01・02 | 高（データが消える） | 第1弾の `questions.update` が選択肢・キーワードを全件削除して作り直していた。公開済みの問題を直すと `keyword_id` が変わり、学習者の説明の復習段階（`review_items`）が CASCADE で消える | 番号（`choice_no`・`sort_order`）ごとの UPDATE に直し、減った番号だけ DELETE、増えた番号だけ INSERT にした。MT-H10-01・02、MT-D03-18 で確認 |
+| 2 | MT-H09-01 | 中 | 取り込み用の署名付きURLの署名に `content-type` が入っておらず、申告と違う種類のファイルを置けた（設計の「Content-Type 固定」を満たしていない） | `getSignedUrl` に `signableHeaders: content-type` を指定した。MT-H09-01・MT-H14-01 で確認 |
 
 ### 7.2 設計書・仕様書の解釈と補足
 
 | No | 対象 | 内容 | 対応の提案 |
 | --- | --- | --- | --- |
-| 1 | M-U07 validators | ニックネーム・パートナー名・通知時刻・取り込みの入力エラーには外部設計書のメッセージID（M-xx）がないため、`code: 'INVALID'` と `field` で返すようにした | 外部設計書 3.7 にメッセージIDを追加するか、`INVALID` を正式なコードとして詳細設計書 3.2 に追記する |
-| 2 | M-U04 authz | util は db を呼べない（2.1 の依存ルール）ため、`loadUser`・`assertCourseAdmin` はリポジトリを引数 `db` で受け取る形にした。担当コースの確認には `courses.isAdmin(courseId, userId)` を追加した | 詳細設計書 3.4 の courses.js の関数一覧に `isAdmin`・`dashboardRows` を追記する |
-| 3 | M-D01 data-api | 再試行回数の既定値（api-handler は0、ほかは6）を関数ごとに切り替えるため `setDefaultResumeRetries(n)` を追加した。各 `index.mjs` の先頭で呼ぶ想定 | 詳細設計書 3.3 に追記する |
-| 4 | M-G03 quest | `applyQuestEvent` の戻り値を `{ quests, achievedNow, questExp }` とした（仕様書 MT-G03-06 の achievedNow と報酬の合計を返すため） | 詳細設計書 3.5 の表に戻り値の形を追記する |
-| 5 | M-G06 picker | `servedIds` は形式ごとに ID が重なるため `choice:{問題ID}`・`explain:{キーワードID}` の文字列にした（adventures.served の k・q・kw と対応） | 詳細設計書 3.5 に servedIds の形を追記する |
-| 6 | M-G07 answer-flow | 戻り値の exp にクエスト報酬を足したあとの `totalExp` を含め、今回達成したクエスト `achievedNow` も返すようにした（DBへの書き込みで使う） | 詳細設計書 3.5 の擬似コードに追記する |
-| 7 | M-A01 bedrock | AI_TIMEOUT・AI_ERROR は内部用（HTTP なし）だが、万一外に出たときのため status を 500 とした | 詳細設計書 2.4.4 の表に注記する |
-| 8 | M-M01 templates | メールのパートナーの定型のひとことと問い合わせ先の文言は設計書に具体的な文がないため仮の文にした | 外部設計書 5.6 で文言を確定する（未決事項に追加） |
-| 9 | vitest.config.js | 仕様書 3.2 の `environmentMatchGlobs` は Vitest 3.2 で非推奨の警告が出る（動作は問題なし） | 次の版で `test.projects` に置き換えることを仕様書に反映する |
-| 10 | 補足テスト | 仕様書のケースだけでは C1 100%（domain・validators）と 90%／80%（そのほか）に届かない分岐があったため、ID の後ろに「補足」を付けたテストを追加した（リポジトリの全関数のSQL組み立てなど） | 仕様書 6.3 の決まりに沿って、次の版でケースIDを採番して本書と仕様書に載せる |
+| 1 | 詳細設計書 3.1・2.1 | 共通モジュールを2つ追加した。`util/env.js`（M-U08。環境変数の確認）と `services/answer-recorder.js`（解答の記録。A-08 と grading-worker で同じ書き込みを共用） | 3.1 の一覧と 2.1 の依存のルール（services は routes・ワーカーから呼び、domain・db を使う）に追記する |
+| 2 | 詳細設計書 3.4 | 第2弾で必要になったリポジトリの関数を追加した：`partners.js`（新規）、`users.lastLoginLogAt`・`setCurrentCourse`・`updateStreak`・`create`・`setRoles`、`reviews.countDueByKind`、`badges.listOwnedDetail`、`rankings.weeks`、`courses.listAll`・`listIds`、`imports.setKey`・`listByCourse`、`quests.listAssignTargets`。`gradings.deleteOlderThan` は日数ではなく境目の日時（JST 0:00）を受け取る | 3.4 の表に追記する |
+| 3 | テスト仕様書 MT-W02-09・詳細設計書 4.4 | 期待結果 `['DNS','A','B']` は、重複を大文字小文字を区別せずに判定しないと得られない（`'dns '` を除くため）が、注記は「大文字小文字は区別する」となっていて矛盾する。期待結果に合わせて「区別せずに判定し、最初の表記を残す」で実装した | 注記を「重複は大文字小文字を区別せずに判定し、最初に出た表記を残す」に直し、4.4 の正規化の表にも書く |
+| 4 | 詳細設計書 4.1 | `main(event, { log, now })` の `now` は、api-handler・batch-runner は Date、grading-worker は経過時間（JSONのやり直しの判定）を測るため `now()` を返す関数にした | 4.1 に grading-worker の違いを注記する |
+| 5 | 詳細設計書 5.3 A-14・A-15 | A-14 は S-11 の修正画面で使えるよう、下書きの全項目（問題文・選択肢・正解・解説・キーワード）も返す。A-15 は下書きなら選択肢2〜10個を受け付け、公開できる形なら `draft`、そうでなければ `needs_review` にする。公開済みは公開できる形でなければ400（M-12） | 5.3 に応答の項目と状態の決め方を追記する |
+| 6 | 詳細設計書 5.3 A-13 | `import_jobs.s3_key` は NOT NULL だが、キーに取り込みIDを含めるため、仮の値で登録してから `setKey` で更新している（1回の往復が増える） | キーを決める前に採番する（`nextval` を先に取る）か、列を NULL 可にするかを決める |
+| 7 | 結合テスト（dev）で確かめること | (1) Data API が返す timestamptz の形（UTCの `YYYY-MM-DD HH:MM:SS` を前提に `parseDbTimestamp` で読んでいる）。(2) Cognito の Username に `sub` を使えること（メールを別名にしたユーザープールでは Username＝sub になる前提）。(3) 署名付きURLへ画面から PUT するときに `Content-Type` を付けること | 結合テスト仕様書の確認項目に入れる |
+| 8 | 今回の範囲外 | 画面の `pages/`・`components/`・`main.js`・`sw.js`、ビルド・リリースのスクリプト（`build-functions.mjs` など）と GitHub Actions のワークフロー（`ci.yml` など）は、モジュールテストの対象外のため作っていない | 画面の実装とリリースの仕組みを次の作業として進める |
 
 ## 8. 判定と次の作業
 
 ```mermaid
 flowchart TD
-  A["全件成功<br>193/193"] --> B["カバレッジ基準<br>達成"]
+  A["全件成功<br>428/428"] --> B["カバレッジ基準<br>達成"]
   B --> C["3回続けて同じ結果<br>はい"]
   C --> D["合格"]
 ```
 
 | 基準（仕様書 6.2） | 結果 | 判定 |
 | --- | --- | --- |
-| テストケースがすべて実装され成功する（skip・todo 0件） | 193/193、skip 0・todo 0 | 合格 |
+| テストケースがすべて実装され成功する（skip・todo 0件） | 428/428、skip 0・todo 0 | 合格 |
 | カバレッジ（domain・validators 100%、そのほか 90%／80%以上） | 4章のとおり | 合格 |
-| 実行時間 60秒以内 | 5.51 秒 | 合格 |
+| 実行時間 60秒以内 | 11.01 秒 | 合格 |
 | 安定性（3回続けて同じ結果） | 同じ | 合格 |
 
-- 第2弾：api-handler（MT-H01〜H14）・grading-worker・import-worker・batch-runner（MT-W01〜W04）・画面（MT-F01〜F06）を実装し、残りのケースを試験する
-- 第2弾の完了時に本書を最終版に更新し、全362ケースで合否を判定する
-- 仕様書 第0.2版 3.4 の GitHub Actions（`ci.yml`・`release.yml` の `build`）でのテスト実行は、ワークフローの作成とあわせて第2弾以降で対応する
-- 7.2 の解釈・補足を詳細設計書と仕様書に反映するかをジュンさんに確認する
+- 7.2 の提案（No.1〜6）を詳細設計書・テスト仕様書に反映するかをジュンさんに確認する
+- 画面（pages・components）と、ビルド・リリースのスクリプト・GitHub Actions（`ci.yml`・`release.yml`）を作る
+- dev 環境で結合テストを行い、7.2 No.7 の前提を確かめる

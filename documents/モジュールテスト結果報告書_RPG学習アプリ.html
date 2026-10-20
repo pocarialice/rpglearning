@@ -420,7 +420,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 </head>
 <body>
 <header class="site-header"><div class="inner"><span class="eyebrow"><i class="fa-solid fa-flask-vial"></i> モジュールテスト結果</span><h1>RPG学習アプリ モジュールテスト結果報告書</h1><ul class="meta">
-<li>版数<b>第0.1版（中間報告：共通モジュール）</b></li><li>作成日<b>2026-10-20</b></li><li>コミット<b>54a2c89</b></li><li>判定<b>合格</b></li></ul></div></header>
+<li>版数<b>第1.0版（最終報告：全モジュール）</b></li><li>作成日<b>2026-10-20</b></li><li>コミット<b>02c51c9</b></li><li>判定<b>合格</b></li></ul></div></header>
 <div class="layout">
 <nav class="toc" aria-label="目次"><p>目次</p><ol>
 <li><a href="#s1">1. 概要</a></li>
@@ -434,78 +434,113 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 </ol></nav>
 <main>
 <section class="chapter" id="s1"><h2><i class="fa-solid fa-circle-info h-ico" aria-hidden="true"></i>1. 概要</h2>
-<div class="vis"><p class="vis-label">今回の範囲（全362ケースのうち193ケース）</p><ol class="flow">
-<li class="hl"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail　193ケース</li>
-<li class="gate"><b><i class="fa-solid fa-bolt fi"></i>Lambda関数</b>api-handler・worker・batch　142ケース</li>
-<li class="gate"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js/core・logic　27ケース</li></ol>
+<div class="vis"><p class="vis-label">今回の範囲（全428ケースのうち428ケース）</p><ol class="flow">
+<li class="hl"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail　230ケース</li>
+<li class="hl"><b><i class="fa-solid fa-bolt fi"></i>Lambda関数</b>api-handler・worker・batch　165ケース</li>
+<li class="hl"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js/core・logic　33ケース</li></ol>
 <p class="vis-cap">塗りつぶし＝今回テストした範囲、点線＝次回</p></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3><p>モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。本版は段階リリースの第1弾（中間報告）で、共通モジュールだけを対象とする。Lambda関数（MT-H・MT-W）と画面（MT-F）は第2弾で実装・試験し、本書を更新する。</p>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3><p>モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。本版は段階リリースの第2弾（最終報告）で、第0.1版（中間報告：共通モジュール）に Lambda関数（MT-H・MT-W）と画面（MT-F）を加え、仕様書の全ケースで合否を判定する。</p>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 今回の範囲</h3>
-<div class="table-wrap"><table><thead><tr><th>区分</th><th>層</th><th>仕様書のケース数</th><th>今回</th></tr></thead><tbody><tr><td>対象</td><td>util（MT-U）</td><td>72</td><td>実行</td></tr>
-<tr><td>対象</td><td>db（MT-D）</td><td>24</td><td>実行</td></tr>
+<div class="table-wrap"><table><thead><tr><th>区分</th><th>層</th><th>仕様書のケース数</th><th>今回</th></tr></thead><tbody><tr><td>対象</td><td>util（MT-U）</td><td>81</td><td>実行</td></tr>
+<tr><td>対象</td><td>db（MT-D）</td><td>50</td><td>実行</td></tr>
 <tr><td>対象</td><td>domain（MT-G）</td><td>69</td><td>実行</td></tr>
-<tr><td>対象</td><td>ai（MT-A）</td><td>23</td><td>実行</td></tr>
+<tr><td>対象</td><td>ai（MT-A）</td><td>25</td><td>実行</td></tr>
 <tr><td>対象</td><td>mail（MT-M）</td><td>5</td><td>実行</td></tr>
-<tr><td>対象外（次回）</td><td>api-handler（MT-H）</td><td>97</td><td>-</td></tr>
-<tr><td>対象外（次回）</td><td>ワーカー・バッチ（MT-W）</td><td>45</td><td>-</td></tr>
-<tr><td>対象外（次回）</td><td>画面（web/js）（MT-F）</td><td>27</td><td>-</td></tr></tbody></table></div>
+<tr><td>対象</td><td>api-handler（MT-H）</td><td>115</td><td>実行</td></tr>
+<tr><td>対象</td><td>ワーカー・バッチ（MT-W）</td><td>50</td><td>実行</td></tr>
+<tr><td>対象</td><td>画面（web/js）（MT-F）</td><td>33</td><td>実行</td></tr></tbody></table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 文書情報</h3>
 <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>文書名</td><td>RPG学習アプリ モジュールテスト結果報告書</td></tr>
-<tr><td>版数</td><td>第0.1版（中間報告：共通モジュール）</td></tr>
-<tr><td>入力文書</td><td>モジュールテスト仕様書 第0.2版、詳細設計書 第0.2版</td></tr>
-<tr><td>対象範囲</td><td>共通モジュール（functions/shared の util・db・domain・ai・mail と web/js/logic/validators.js）</td></tr>
-<tr><td>実行日時・コミット</td><td>2026-10-20 16:24（JST）、<code>54a2c89</code>（ブランチ <code>claude/beautiful-cray-m8heuy</code>）</td></tr></tbody></table></div>
+<tr><td>版数</td><td>第1.0版（最終報告：全モジュール）</td></tr>
+<tr><td>入力文書</td><td>モジュールテスト仕様書 第0.3版、詳細設計書 第0.3版、外部設計書 第0.8版</td></tr>
+<tr><td>対象範囲</td><td>全モジュール（functions/ の共通モジュール・Lambda 4関数と、web/js/core・web/js/logic）</td></tr>
+<tr><td>実行日時・コミット</td><td>2026-10-20 18:40（JST）、<code>02c51c9</code>（ブランチ <code>claude/beautiful-cray-m8heuy</code>）</td></tr></tbody></table></div>
 </section>
 <section class="chapter" id="s2"><h2><i class="fa-solid fa-server h-ico" aria-hidden="true"></i>2. 実行環境</h2>
 <div class="vis"><p class="vis-label">テストの道具と差し替え</p><div class="vis-grid c2">
 <div class="card em"><h5><i class="fa-solid fa-check"></i>本物のまま動かす</h5><div class="chips"><span class="chip">domain/*</span><span class="chip">validators</span><span class="chip">ids</span><span class="chip">date-jst</span><span class="chip">json-guard</span><span class="chip">prompts</span><span class="chip">templates</span></div><p class="note">純粋関数は入力と出力だけで確かめた</p></div>
-<div class="card dash"><h5><i class="fa-solid fa-masks-theater"></i>モックに差し替える</h5><div class="chips"><span class="chip">RDS Data API</span><span class="chip">Bedrock Runtime</span><span class="chip">SES</span><span class="chip">時計（偽の時計）</span><span class="chip">乱数</span><span class="chip">fetch</span></div><p class="note">aws-sdk-client-mock・vi.useFakeTimers</p></div>
+<div class="card dash"><h5><i class="fa-solid fa-masks-theater"></i>モックに差し替える</h5><div class="chips"><span class="chip">RDS Data API</span><span class="chip">Bedrock Runtime</span><span class="chip">SES</span><span class="chip">S3</span><span class="chip">Lambda</span><span class="chip">Cognito</span><span class="chip">リポジトリ（vi.mock）</span><span class="chip">時計（偽の時計）</span><span class="chip">乱数</span><span class="chip">fetch</span></div><p class="note">aws-sdk-client-mock・vi.useFakeTimers</p></div>
 </div></div>
 <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>OS</td><td>Linux 6.18（作業用コンテナ）</td></tr>
 <tr><td>Node.js</td><td>22.22.0（Lambda の nodejs22.x と同じ系列）</td></tr>
-<tr><td>Vitest・@vitest/coverage-v8</td><td>3.2.7</td></tr>
-<tr><td>jsdom</td><td>29.1.1（web/ のテストの実行環境）</td></tr>
+<tr><td>Vitest・@vitest/coverage-v8</td><td>3.2.7（<code>test.projects</code> で functions＝Node、web＝jsdom に分けて実行）</td></tr>
+<tr><td>jsdom</td><td>29.1.1</td></tr>
 <tr><td>aws-sdk-client-mock</td><td>4.1.0</td></tr>
-<tr><td>AWS SDK for JavaScript v3</td><td>3.1153.0（client-rds-data・client-bedrock-runtime・client-ses）</td></tr>
+<tr><td>AWS SDK for JavaScript v3</td><td>3.1153.0（rds-data・bedrock-runtime・ses・s3・lambda・cognito-identity-provider、s3-request-presigner）</td></tr>
+<tr><td>pdf-lib</td><td>1.17.1（PDFの分割とテスト用PDFの作成）</td></tr>
 <tr><td>実行コマンド</td><td><code>npx vitest run --coverage</code>（<code>npm test -- --coverage</code> と同じ）</td></tr></tbody></table></div>
-<ul><li>外部サービス（Aurora・Bedrock・SES）には接続せず、<code>aws-sdk-client-mock</code> で応答を差し替えた（仕様書 2.3）</li><li><code>tests/helpers/vitest.setup.js</code> で <code>fetch</code> の既定をエラーにし、ネットワークへ出たテストは失敗する</li></ul></section>
+<ul><li>外部サービス（Aurora・Bedrock・SES・S3・Lambda・Cognito）には接続せず、<code>aws-sdk-client-mock</code> で応答を差し替えた（仕様書 2.3）</li><li><code>tests/helpers/vitest.setup.js</code> で <code>fetch</code> の既定をエラーにし、ネットワークへ出たテストは失敗する</li></ul></section>
 <section class="chapter" id="s3"><h2><i class="fa-solid fa-square-poll-vertical h-ico" aria-hidden="true"></i>3. 結果の要約</h2>
 <div class="vis"><p class="vis-label">テストケースの結果</p><div class="vis-grid c1">
-<div class="donut" style="background: conic-gradient(var(--blue-900) 0 360deg, var(--gray-900) 360deg 360deg)"><div><span><b>193</b><small>／193 合格</small></span></div></div>
+<div class="donut" style="background: conic-gradient(var(--blue-900) 0 360deg, var(--gray-900) 360deg 360deg)"><div><span><b>428</b><small>／428 合格</small></span></div></div>
 <div class="res-tiles">
-<div class="card tile strong"><p class="tile-num">193<small>件</small></p><p class="tile-cap">合格したケース</p></div>
+<div class="card tile strong"><p class="tile-num">428<small>件</small></p><p class="tile-cap">合格したケース</p></div>
 <div class="card tile"><p class="tile-num sm">0<small>件</small></p><p class="tile-cap">不合格・未実装</p></div>
-<div class="card tile"><p class="tile-num sm">279<small>件</small></p><p class="tile-cap">実行した it（補足 32）</p></div>
-<div class="card tile"><p class="tile-num sm">5.5<small>秒</small></p><p class="tile-cap">実行時間（基準 60秒）</p></div>
+<div class="card tile"><p class="tile-num sm">493<small>件</small></p><p class="tile-cap">実行した it（追加ケース 66）</p></div>
+<div class="card tile"><p class="tile-num sm">11.0<small>秒</small></p><p class="tile-cap">実行時間（基準 60秒）</p></div>
 </div></div>
-<div class="grid-ids" aria-label="ケースごとの結果"><span class="" title="MT-U01-01 AppError の属性：合格"></span><span class="" title="MT-U01-02 応答への変換（想定エラー）：合格"></span><span class="" title="MT-U01-03 応答への変換（想定外）：合格"></span><span class="" title="MT-U01-04 コードからHTTPの既定：合格"></span><span class="" title="MT-U02-01 変換：合格"></span><span class="" title="MT-U02-02 逆変換：合格"></span><span class="" title="MT-U02-03 接頭辞の違い：合格"></span><span class="" title="MT-U02-04 下限：合格"></span><span class="" title="MT-U02-05 上限：合格"></span><span class="" title="MT-U02-06 数字以外：合格"></span><span class="" title="MT-U02-07 文字列以外：合格"></span><span class="" title="MT-U03-01 JSTの日付（0:00直前）：合格"></span><span class="" title="MT-U03-02 JSTの日付（0:00ちょうど）：合格"></span><span class="" title="MT-U03-03 月末をまたぐ：合格"></span><span class="" title="MT-U03-04 年末をまたぐ：合格"></span><span class="" title="MT-U03-05 うるう年：合格"></span><span class="" title="MT-U03-06 引き算：合格"></span><span class="" title="MT-U03-07 週の開始（月曜0:00）：合格"></span><span class="" title="MT-U03-08 週の開始（日曜23:59）：合格"></span><span class="" title="MT-U03-09 週の開始（次の月曜）：合格"></span><span class="" title="MT-U03-10 送信枠：合格"></span><span class="" title="MT-U03-11 ISO文字列：合格"></span><span class="" title="MT-U03-12 日数の差：合格"></span><span class="" title="MT-U03-13 不正な日付：合格"></span><span class="" title="MT-U04-01 グループ（文字列）：合格"></span><span class="" title="MT-U04-02 グループ（配列）・なし：合格"></span><span class="" title="MT-U04-03 sub がない：合格"></span><span class="" title="MT-U04-04 ロールあり：合格"></span><span class="" title="MT-U04-05 ロールなし：合格"></span><span class="" title="MT-U04-06 招待中の初回ログイン：合格"></span><span class="" title="MT-U04-07 論理削除中・未登録：合格"></span><span class="" title="MT-U04-08 担当コース：合格"></span><span class="" title="MT-U04-09 システム管理者は全コース：合格"></span><span class="" title="MT-U05-01 1行のJSON：合格"></span><span class="" title="MT-U05-02 prod の DEBUG：合格"></span><span class="" title="MT-U05-03 dev の DEBUG：合格"></span><span class="" title="MT-U05-04 伏せ字：合格"></span><span class="" title="MT-U05-05 エラーのスタック：合格"></span><span class="" title="MT-U06-01 本文（JSON）：合格"></span><span class="" title="MT-U06-02 本文（Base64）：合格"></span><span class="" title="MT-U06-03 本文なし：合格"></span><span class="" title="MT-U06-04 壊れたJSON：合格"></span><span class="" title="MT-U06-05 通常の応答：合格"></span><span class="" title="MT-U06-06 CSVの応答：合格"></span><span class="" title="MT-U07-01 下限の1つ下：合格"></span><span class="" title="MT-U07-02 下限：合格"></span><span class="" title="MT-U07-03 小見出し不要の上限：合格"></span><span class="" title="MT-U07-04 小見出しが必要になる：合格"></span><span class="" title="MT-U07-05 小見出しあり：合格"></span><span class="" title="MT-U07-06 上限：合格"></span><span class="" title="MT-U07-07 上限の1つ上：合格"></span><span class="" title="MT-U07-08 小見出しが行の途中：合格"></span><span class="" title="MT-U07-09 2行目の行頭の小見出し：合格"></span><span class="" title="MT-U07-10 中身のない小見出し：合格"></span><span class="" title="MT-U07-11 空白・改行は数えない：合格"></span><span class="" title="MT-U07-12 サロゲートペア：合格"></span><span class="" title="MT-U07-13 空・null：合格"></span><span class="" title="MT-U07-14 文字数の境界：合格"></span><span class="" title="MT-U07-15 使える文字：合格"></span><span class="" title="MT-U07-16 使えない文字：合格"></span><span class="" title="MT-U07-17 前後の空白：合格"></span><span class="" title="MT-U07-18 パートナー名の空：合格"></span><span class="" title="MT-U07-19 パートナー名の境界：合格"></span><span class="" title="MT-U07-20 パートナー名の記号：合格"></span><span class="" title="MT-U07-21 通知時刻の範囲：合格"></span><span class="" title="MT-U07-22 通知時刻の刻み・形式：合格"></span><span class="" title="MT-U07-23 取り込みのサイズ：合格"></span><span class="" title="MT-U07-24 取り込みの種類：合格"></span><span class="" title="MT-U07-25 テキストの長さ：合格"></span><span class="" title="MT-U07-26 公開できる問題：合格"></span><span class="" title="MT-U07-27 公開できない問題：合格"></span><span class="" title="MT-U07-28 キーワードの数と長さ：合格"></span><span class="" title="MT-D01-01 接続情報：合格"></span><span class="" title="MT-D01-02 パラメータの型（整数・小数）：合格"></span><span class="" title="MT-D01-03 パラメータの型（文字・真偽）：合格"></span><span class="" title="MT-D01-04 パラメータの型（null）：合格"></span><span class="" title="MT-D01-05 日付・JSON：合格"></span><span class="" title="MT-D01-06 結果の変換：合格"></span><span class="" title="MT-D01-07 結果なし：合格"></span><span class="" title="MT-D01-08 DB起動中・再試行0回：合格"></span><span class="" title="MT-D01-09 DB起動中から復帰：合格"></span><span class="" title="MT-D01-10 再試行が尽きる：合格"></span><span class="" title="MT-D01-11 ほかのエラー：合格"></span><span class="" title="MT-D02-01 正常：合格"></span><span class="" title="MT-D02-02 途中の例外：合格"></span><span class="" title="MT-D02-03 Commit の失敗：合格"></span><span class="" title="MT-D02-04 戻り値：合格"></span><span class="" title="MT-D03-01 ニックネームの重複確認：合格"></span><span class="" title="MT-D03-02 重複なし：合格"></span><span class="" title="MT-D03-03 採点の完了（条件付き）：合格"></span><span class="" title="MT-D03-04 復習項目の登録・更新：合格"></span><span class="" title="MT-D03-05 週の集計：合格"></span><span class="" title="MT-D03-06 ランキングの締め：合格"></span><span class="" title="MT-D03-07 列名の変換：合格"></span><span class="" title="MT-D03-08 一覧の上限：合格"></span><span class="" title="MT-D03-09 並べ替えの許可リスト：合格"></span><span class="" title="MT-G01-01 初回・正解：合格"></span><span class="" title="MT-G01-02 初回・不正解：合格"></span><span class="" title="MT-G01-03 予定日の前日：合格"></span><span class="" title="MT-G01-04 予定日当日に正解：合格"></span><span class="" title="MT-G01-05 段階2→3：合格"></span><span class="" title="MT-G01-06 段階3→4：合格"></span><span class="" title="MT-G01-07 段階4→5：合格"></span><span class="" title="MT-G01-08 習得：合格"></span><span class="" title="MT-G01-09 不正解で段階1へ：合格"></span><span class="" title="MT-G01-10 段階5で不正解：合格"></span><span class="" title="MT-G01-11 段階1で不正解：合格"></span><span class="" title="MT-G01-12 遅れて正解（段階を下げない）：合格"></span><span class="" title="MT-G01-13 習得済みを解く：合格"></span><span class="" title="MT-G01-14 年末をまたぐ：合格"></span><span class="" title="MT-G02-01 択一の正解：合格"></span><span class="" title="MT-G02-02 択一の復習正解：合格"></span><span class="" title="MT-G02-03 説明の合格：合格"></span><span class="" title="MT-G02-04 説明の復習合格：合格"></span><span class="" title="MT-G02-05 不正解は0：合格"></span><span class="" title="MT-G02-06 必要EXP（表の値）：合格"></span><span class="" title="MT-G02-07 ちょうど整数になる値：合格"></span><span class="" title="MT-G02-08 Lv1の範囲：合格"></span><span class="" title="MT-G02-09 Lv2になる境界：合格"></span><span class="" title="MT-G02-10 Lv3になる境界：合格"></span><span class="" title="MT-G02-11 表の累計EXP：合格"></span><span class="" title="MT-G02-12 大きな値：合格"></span><span class="" title="MT-G02-13 不正な種類：合格"></span><span class="" title="MT-G03-01 復習ありの日：合格"></span><span class="" title="MT-G03-02 復習なしの日：合格"></span><span class="" title="MT-G03-03 乱数によらず守られる：合格"></span><span class="" title="MT-G03-04 択一の不正解：合格"></span><span class="" title="MT-G03-05 択一の正解：合格"></span><span class="" title="MT-G03-06 達成：合格"></span><span class="" title="MT-G03-07 達成済みは進めない：合格"></span><span class="" title="MT-G03-08 説明の合格・不合格：合格"></span><span class="" title="MT-G03-09 復習：合格"></span><span class="" title="MT-G03-10 新しい問題：合格"></span><span class="" title="MT-G03-11 同時に2つ達成：合格"></span><span class="" title="MT-G03-12 クエストなし：合格"></span><span class="" title="MT-G04-01 習得の境界：合格"></span><span class="" title="MT-G04-02 次の段階：合格"></span><span class="" title="MT-G04-03 まとめて達成：合格"></span><span class="" title="MT-G04-04 全部持っている：合格"></span><span class="" title="MT-G04-05 継続の境界：合格"></span><span class="" title="MT-G04-06 継続の銀・金：合格"></span><span class="" title="MT-G04-07 0日：合格"></span><span class="" title="MT-G05-01 同点なし：合格"></span><span class="" title="MT-G05-02 同点は同順位：合格"></span><span class="" title="MT-G05-03 同点の並び順：合格"></span><span class="" title="MT-G05-04 0 EXP は除く：合格"></span><span class="" title="MT-G05-05 空：合格"></span><span class="" title="MT-G05-06 全員同点：合格"></span><span class="" title="MT-G06-01 最初は択一：合格"></span><span class="" title="MT-G06-02 交互（択一のあと）：合格"></span><span class="" title="MT-G06-03 交互（説明のあと）：合格"></span><span class="" title="MT-G06-04 説明がないときは択一：合格"></span><span class="" title="MT-G06-05 優先順位：合格"></span><span class="" title="MT-G06-06 学習済みからの出題：合格"></span><span class="" title="MT-G06-07 出したものは除く：合格"></span><span class="" title="MT-G06-08 出せるものがない：合格"></span><span class="" title="MT-G06-09 キーワードのない説明候補：合格"></span><span class="" title="MT-G07-01 初めての択一に正解：合格"></span><span class="" title="MT-G07-02 復習の択一に正解：合格"></span><span class="" title="MT-G07-03 復習の説明に合格：合格"></span><span class="" title="MT-G07-04 不正解：合格"></span><span class="" title="MT-G07-05 正解でレベルアップ：合格"></span><span class="" title="MT-G07-06 クエスト報酬だけでレベルアップ：合格"></span><span class="" title="MT-G07-07 習得でバッジ：合格"></span><span class="" title="MT-G07-08 習得済みの問題に正解：合格"></span><span class="" title="MT-A01-01 コマンドの中身：合格"></span><span class="" title="MT-A01-02 応答の取り出し：合格"></span><span class="" title="MT-A01-03 打ち切り：合格"></span><span class="" title="MT-A01-04 打ち切り前に返る：合格"></span><span class="" title="MT-A01-05 SDKのエラー：合格"></span><span class="" title="MT-A01-06 PDF・画像の入力：合格"></span><span class="" title="MT-A01-07 ログ：合格"></span><span class="" title="MT-A02-01 JSONだけ：合格"></span><span class="" title="MT-A02-02 前後に文章：合格"></span><span class="" title="MT-A02-03 コードブロック：合格"></span><span class="" title="MT-A02-04 文字列の中の括弧：合格"></span><span class="" title="MT-A02-05 配列が先頭：合格"></span><span class="" title="MT-A02-06 JSONがない：合格"></span><span class="" title="MT-A02-07 採点の形（正常）：合格"></span><span class="" title="MT-A02-08 範囲外の点数：合格"></span><span class="" title="MT-A02-09 必須キーがない・型違い：合格"></span><span class="" title="MT-A03-01 3人の定義：合格"></span><span class="" title="MT-A03-02 知らない性格：合格"></span><span class="" title="MT-A04-01 採点の指示文：合格"></span><span class="" title="MT-A04-02 閉じタグの無害化：合格"></span><span class="" title="MT-A04-03 小見出しはそのまま：合格"></span><span class="" title="MT-A04-04 抽出の指示文：合格"></span><span class="" title="MT-A04-05 ひとことに個人情報を入れない：合格"></span><span class="" title="MT-M01-01 通知メールの本文：合格"></span><span class="" title="MT-M01-02 環境名の付与：合格"></span><span class="" title="MT-M01-03 削除予定の通知：合格"></span><span class="" title="MT-M01-04 SES への送信：合格"></span><span class="" title="MT-M01-05 送信の失敗：合格"></span></div><p class="vis-cap">1マス＝1ケース（青＝合格）</p></div>
-<div class="table-wrap"><table><thead><tr><th>項目</th><th>結果</th></tr></thead><tbody><tr><td>テストケース（仕様書のID）</td><td>193件中 合格 193・不合格 0・未実装 0</td></tr>
-<tr><td>実行したテスト（<code>it</code> の数）</td><td>279件（成功 279・失敗 0・スキップ 0・todo 0）、テストファイル 23</td></tr>
-<tr><td>うち補足テスト</td><td>32件（仕様書にない分岐を網羅するための追加。7.2 参照）</td></tr>
-<tr><td>実行時間</td><td>最大 5.51 秒（基準：60秒以内）</td></tr>
-<tr><td>安定性</td><td>同じコミットで3回実行し、すべて同じ結果（279/279、279/279、279/279）</td></tr>
+<div class="grid-ids" aria-label="ケースごとの結果"><span class="" title="MT-U01-01 AppError の属性：合格"></span><span class="" title="MT-U01-02 応答への変換（想定エラー）：合格"></span><span class="" title="MT-U01-03 応答への変換（想定外）：合格"></span><span class="" title="MT-U01-04 コードからHTTPの既定：合格"></span><span class="" title="MT-U01-05 表にないコード・details なし：合格"></span><span class="" title="MT-U02-01 変換：合格"></span><span class="" title="MT-U02-02 逆変換：合格"></span><span class="" title="MT-U02-03 接頭辞の違い：合格"></span><span class="" title="MT-U02-04 下限：合格"></span><span class="" title="MT-U02-05 上限：合格"></span><span class="" title="MT-U02-06 数字以外：合格"></span><span class="" title="MT-U02-07 文字列以外：合格"></span><span class="" title="MT-U03-01 JSTの日付（0:00直前）：合格"></span><span class="" title="MT-U03-02 JSTの日付（0:00ちょうど）：合格"></span><span class="" title="MT-U03-03 月末をまたぐ：合格"></span><span class="" title="MT-U03-04 年末をまたぐ：合格"></span><span class="" title="MT-U03-05 うるう年：合格"></span><span class="" title="MT-U03-06 引き算：合格"></span><span class="" title="MT-U03-07 週の開始（月曜0:00）：合格"></span><span class="" title="MT-U03-08 週の開始（日曜23:59）：合格"></span><span class="" title="MT-U03-09 週の開始（次の月曜）：合格"></span><span class="" title="MT-U03-10 送信枠：合格"></span><span class="" title="MT-U03-11 ISO文字列：合格"></span><span class="" title="MT-U03-12 日数の差：合格"></span><span class="" title="MT-U03-13 不正な日付：合格"></span><span class="" title="MT-U03-14 DBの日時の読み取り（`parseDbTimestamp`）：合格"></span><span class="" title="MT-U04-01 グループ（文字列）：合格"></span><span class="" title="MT-U04-02 グループ（配列）・なし：合格"></span><span class="" title="MT-U04-03 sub がない：合格"></span><span class="" title="MT-U04-04 ロールあり：合格"></span><span class="" title="MT-U04-05 ロールなし：合格"></span><span class="" title="MT-U04-06 招待中の初回ログイン：合格"></span><span class="" title="MT-U04-07 論理削除中・未登録：合格"></span><span class="" title="MT-U04-08 担当コース：合格"></span><span class="" title="MT-U04-09 システム管理者は全コース：合格"></span><span class="" title="MT-U04-10 有効な利用者・DBのロール：合格"></span><span class="" title="MT-U05-01 1行のJSON：合格"></span><span class="" title="MT-U05-02 prod の DEBUG：合格"></span><span class="" title="MT-U05-03 dev の DEBUG：合格"></span><span class="" title="MT-U05-04 伏せ字：合格"></span><span class="" title="MT-U05-05 エラーのスタック：合格"></span><span class="" title="MT-U06-01 本文（JSON）：合格"></span><span class="" title="MT-U06-02 本文（Base64）：合格"></span><span class="" title="MT-U06-03 本文なし：合格"></span><span class="" title="MT-U06-04 壊れたJSON：合格"></span><span class="" title="MT-U06-05 通常の応答：合格"></span><span class="" title="MT-U06-06 CSVの応答：合格"></span><span class="" title="MT-U07-01 下限の1つ下：合格"></span><span class="" title="MT-U07-02 下限：合格"></span><span class="" title="MT-U07-03 小見出し不要の上限：合格"></span><span class="" title="MT-U07-04 小見出しが必要になる：合格"></span><span class="" title="MT-U07-05 小見出しあり：合格"></span><span class="" title="MT-U07-06 上限：合格"></span><span class="" title="MT-U07-07 上限の1つ上：合格"></span><span class="" title="MT-U07-08 小見出しが行の途中：合格"></span><span class="" title="MT-U07-09 2行目の行頭の小見出し：合格"></span><span class="" title="MT-U07-10 中身のない小見出し：合格"></span><span class="" title="MT-U07-11 空白・改行は数えない：合格"></span><span class="" title="MT-U07-12 サロゲートペア：合格"></span><span class="" title="MT-U07-13 空・null：合格"></span><span class="" title="MT-U07-14 文字数の境界：合格"></span><span class="" title="MT-U07-15 使える文字：合格"></span><span class="" title="MT-U07-16 使えない文字：合格"></span><span class="" title="MT-U07-17 前後の空白：合格"></span><span class="" title="MT-U07-18 パートナー名の空：合格"></span><span class="" title="MT-U07-19 パートナー名の境界：合格"></span><span class="" title="MT-U07-20 パートナー名の記号：合格"></span><span class="" title="MT-U07-21 通知時刻の範囲：合格"></span><span class="" title="MT-U07-22 通知時刻の刻み・形式：合格"></span><span class="" title="MT-U07-23 取り込みのサイズ：合格"></span><span class="" title="MT-U07-24 取り込みの種類：合格"></span><span class="" title="MT-U07-25 テキストの長さ：合格"></span><span class="" title="MT-U07-26 公開できる問題：合格"></span><span class="" title="MT-U07-27 公開できない問題：合格"></span><span class="" title="MT-U07-28 キーワードの数と長さ：合格"></span><span class="" title="MT-U07-29 Lambda側の変換（`assertValid`）：合格"></span><span class="" title="MT-U07-30 文字列以外のニックネーム・パートナー名：合格"></span><span class="" title="MT-U07-31 取り込みの要求の不正：合格"></span><span class="" title="MT-U07-32 問題の下書きの不正：合格"></span><span class="" title="MT-U07-33 行頭に空白がある小見出し：合格"></span><span class="" title="MT-U08-01 環境変数の読み取り（`requireEnv`）：合格"></span><span class="" title="MT-D01-01 接続情報：合格"></span><span class="" title="MT-D01-02 パラメータの型（整数・小数）：合格"></span><span class="" title="MT-D01-03 パラメータの型（文字・真偽）：合格"></span><span class="" title="MT-D01-04 パラメータの型（null）：合格"></span><span class="" title="MT-D01-05 日付・JSON：合格"></span><span class="" title="MT-D01-06 結果の変換：合格"></span><span class="" title="MT-D01-07 結果なし：合格"></span><span class="" title="MT-D01-08 DB起動中・再試行0回：合格"></span><span class="" title="MT-D01-09 DB起動中から復帰：合格"></span><span class="" title="MT-D01-10 再試行が尽きる：合格"></span><span class="" title="MT-D01-11 ほかのエラー：合格"></span><span class="" title="MT-D01-12 変換できないパラメータ：合格"></span><span class="" title="MT-D02-01 正常：合格"></span><span class="" title="MT-D02-02 途中の例外：合格"></span><span class="" title="MT-D02-03 Commit の失敗：合格"></span><span class="" title="MT-D02-04 戻り値：合格"></span><span class="" title="MT-D02-05 Rollback の失敗：合格"></span><span class="" title="MT-D03-01 ニックネームの重複確認：合格"></span><span class="" title="MT-D03-02 重複なし：合格"></span><span class="" title="MT-D03-03 採点の完了（条件付き）：合格"></span><span class="" title="MT-D03-04 復習項目の登録・更新：合格"></span><span class="" title="MT-D03-05 週の集計：合格"></span><span class="" title="MT-D03-06 ランキングの締め：合格"></span><span class="" title="MT-D03-07 列名の変換：合格"></span><span class="" title="MT-D03-08 一覧の上限：合格"></span><span class="" title="MT-D03-09 並べ替えの許可リスト：合格"></span><span class="" title="MT-D03-10 users：取得とロール：合格"></span><span class="" title="MT-D03-11 users：更新系：合格"></span><span class="" title="MT-D03-12 users：一覧の並べ替え：合格"></span><span class="" title="MT-D03-13 users：登録・ロール・削除・復活・物理削除：合格"></span><span class="" title="MT-D03-14 users：物理削除・継続日数の対象：合格"></span><span class="" title="MT-D03-15 courses の各関数：合格"></span><span class="" title="MT-D03-16 enrollments の各関数：合格"></span><span class="" title="MT-D03-17 questions：取得系：合格"></span><span class="" title="MT-D03-18 questions：番号ごとの更新：合格"></span><span class="" title="MT-D03-19 questions：公開・削除：合格"></span><span class="" title="MT-D03-20 reviews の各関数：合格"></span><span class="" title="MT-D03-21 answers の各関数：合格"></span><span class="" title="MT-D03-22 exp の各関数：合格"></span><span class="" title="MT-D03-23 quests の各関数：合格"></span><span class="" title="MT-D03-24 badges の各関数：合格"></span><span class="" title="MT-D03-25 rankings の各関数：合格"></span><span class="" title="MT-D03-26 users.lastLoginLogAt・reviews.countDueByKind：合格"></span><span class="" title="MT-D03-27 badges.listOwnedDetail・rankings.weeks・courses.listAll・listIds：合格"></span><span class="" title="MT-D03-28 imports.setKey・listByCourse、quests.listAssignTargets、partners：合格"></span><span class="" title="MT-D03-29 gradings の各関数：合格"></span><span class="" title="MT-D03-30 imports の各関数：合格"></span><span class="" title="MT-D03-31 adventures の各関数：合格"></span><span class="" title="MT-D03-32 audit.write：合格"></span><span class="" title="MT-D03-33 notify の各関数：合格"></span><span class="" title="MT-G01-01 初回・正解：合格"></span><span class="" title="MT-G01-02 初回・不正解：合格"></span><span class="" title="MT-G01-03 予定日の前日：合格"></span><span class="" title="MT-G01-04 予定日当日に正解：合格"></span><span class="" title="MT-G01-05 段階2→3：合格"></span><span class="" title="MT-G01-06 段階3→4：合格"></span><span class="" title="MT-G01-07 段階4→5：合格"></span><span class="" title="MT-G01-08 習得：合格"></span><span class="" title="MT-G01-09 不正解で段階1へ：合格"></span><span class="" title="MT-G01-10 段階5で不正解：合格"></span><span class="" title="MT-G01-11 段階1で不正解：合格"></span><span class="" title="MT-G01-12 遅れて正解（段階を下げない）：合格"></span><span class="" title="MT-G01-13 習得済みを解く：合格"></span><span class="" title="MT-G01-14 年末をまたぐ：合格"></span><span class="" title="MT-G02-01 択一の正解：合格"></span><span class="" title="MT-G02-02 択一の復習正解：合格"></span><span class="" title="MT-G02-03 説明の合格：合格"></span><span class="" title="MT-G02-04 説明の復習合格：合格"></span><span class="" title="MT-G02-05 不正解は0：合格"></span><span class="" title="MT-G02-06 必要EXP（表の値）：合格"></span><span class="" title="MT-G02-07 ちょうど整数になる値：合格"></span><span class="" title="MT-G02-08 Lv1の範囲：合格"></span><span class="" title="MT-G02-09 Lv2になる境界：合格"></span><span class="" title="MT-G02-10 Lv3になる境界：合格"></span><span class="" title="MT-G02-11 表の累計EXP：合格"></span><span class="" title="MT-G02-12 大きな値：合格"></span><span class="" title="MT-G02-13 不正な種類：合格"></span><span class="" title="MT-G03-01 復習ありの日：合格"></span><span class="" title="MT-G03-02 復習なしの日：合格"></span><span class="" title="MT-G03-03 乱数によらず守られる：合格"></span><span class="" title="MT-G03-04 択一の不正解：合格"></span><span class="" title="MT-G03-05 択一の正解：合格"></span><span class="" title="MT-G03-06 達成：合格"></span><span class="" title="MT-G03-07 達成済みは進めない：合格"></span><span class="" title="MT-G03-08 説明の合格・不合格：合格"></span><span class="" title="MT-G03-09 復習：合格"></span><span class="" title="MT-G03-10 新しい問題：合格"></span><span class="" title="MT-G03-11 同時に2つ達成：合格"></span><span class="" title="MT-G03-12 クエストなし：合格"></span><span class="" title="MT-G04-01 習得の境界：合格"></span><span class="" title="MT-G04-02 次の段階：合格"></span><span class="" title="MT-G04-03 まとめて達成：合格"></span><span class="" title="MT-G04-04 全部持っている：合格"></span><span class="" title="MT-G04-05 継続の境界：合格"></span><span class="" title="MT-G04-06 継続の銀・金：合格"></span><span class="" title="MT-G04-07 0日：合格"></span><span class="" title="MT-G05-01 同点なし：合格"></span><span class="" title="MT-G05-02 同点は同順位：合格"></span><span class="" title="MT-G05-03 同点の並び順：合格"></span><span class="" title="MT-G05-04 0 EXP は除く：合格"></span><span class="" title="MT-G05-05 空：合格"></span><span class="" title="MT-G05-06 全員同点：合格"></span><span class="" title="MT-G06-01 最初は択一：合格"></span><span class="" title="MT-G06-02 交互（択一のあと）：合格"></span><span class="" title="MT-G06-03 交互（説明のあと）：合格"></span><span class="" title="MT-G06-04 説明がないときは択一：合格"></span><span class="" title="MT-G06-05 優先順位：合格"></span><span class="" title="MT-G06-06 学習済みからの出題：合格"></span><span class="" title="MT-G06-07 出したものは除く：合格"></span><span class="" title="MT-G06-08 出せるものがない：合格"></span><span class="" title="MT-G06-09 キーワードのない説明候補：合格"></span><span class="" title="MT-G07-01 初めての択一に正解：合格"></span><span class="" title="MT-G07-02 復習の択一に正解：合格"></span><span class="" title="MT-G07-03 復習の説明に合格：合格"></span><span class="" title="MT-G07-04 不正解：合格"></span><span class="" title="MT-G07-05 正解でレベルアップ：合格"></span><span class="" title="MT-G07-06 クエスト報酬だけでレベルアップ：合格"></span><span class="" title="MT-G07-07 習得でバッジ：合格"></span><span class="" title="MT-G07-08 習得済みの問題に正解：合格"></span><span class="" title="MT-A01-01 コマンドの中身：合格"></span><span class="" title="MT-A01-02 応答の取り出し：合格"></span><span class="" title="MT-A01-03 打ち切り：合格"></span><span class="" title="MT-A01-04 打ち切り前に返る：合格"></span><span class="" title="MT-A01-05 SDKのエラー：合格"></span><span class="" title="MT-A01-06 PDF・画像の入力：合格"></span><span class="" title="MT-A01-07 ログ：合格"></span><span class="" title="MT-A02-01 JSONだけ：合格"></span><span class="" title="MT-A02-02 前後に文章：合格"></span><span class="" title="MT-A02-03 コードブロック：合格"></span><span class="" title="MT-A02-04 文字列の中の括弧：合格"></span><span class="" title="MT-A02-05 配列が先頭：合格"></span><span class="" title="MT-A02-06 JSONがない：合格"></span><span class="" title="MT-A02-07 採点の形（正常）：合格"></span><span class="" title="MT-A02-08 範囲外の点数：合格"></span><span class="" title="MT-A02-09 必須キーがない・型違い：合格"></span><span class="" title="MT-A02-10 オブジェクト以外・任意キー：合格"></span><span class="" title="MT-A03-01 3人の定義：合格"></span><span class="" title="MT-A03-02 知らない性格：合格"></span><span class="" title="MT-A04-01 採点の指示文：合格"></span><span class="" title="MT-A04-02 閉じタグの無害化：合格"></span><span class="" title="MT-A04-03 小見出しはそのまま：合格"></span><span class="" title="MT-A04-04 抽出の指示文：合格"></span><span class="" title="MT-A04-05 ひとことに個人情報を入れない：合格"></span><span class="" title="MT-A04-06 解説コメントの指示文：合格"></span><span class="" title="MT-M01-01 通知メールの本文：合格"></span><span class="" title="MT-M01-02 環境名の付与：合格"></span><span class="" title="MT-M01-03 削除予定の通知：合格"></span><span class="" title="MT-M01-04 SES への送信：合格"></span><span class="" title="MT-M01-05 送信の失敗：合格"></span><span class="" title="MT-H01-01 ルートの一致：合格"></span><span class="" title="MT-H01-02 パスのパラメータ：合格"></span><span class="" title="MT-H01-03 ルートがない：合格"></span><span class="" title="MT-H01-04 メソッド違い：合格"></span><span class="" title="MT-H01-05 ヘルスチェック：合格"></span><span class="" title="MT-H01-06 ロール不足：合格"></span><span class="" title="MT-H01-07 上位ロール：合格"></span><span class="" title="MT-H01-08 想定外の例外：合格"></span><span class="" title="MT-H01-09 初回の流れが終わっていない：合格"></span><span class="" title="MT-H01-10 コースが未選択：合格"></span><span class="" title="MT-H01-11 トークンがない・壊れた本文：合格"></span><span class="" title="MT-H01-12 Lambda の入口（handler）：合格"></span><span class="" title="MT-H02-01 ログインの記録（30分より前）：合格"></span><span class="" title="MT-H02-02 ログインの記録（30分以内）：合格"></span><span class="" title="MT-H02-03 初回の流れの判定：合格"></span><span class="" title="MT-H02-04 ニックネームの登録：合格"></span><span class="" title="MT-H02-05 ニックネームの重複：合格"></span><span class="" title="MT-H02-06 ニックネームの形式：合格"></span><span class="" title="MT-H02-07 パートナー（名前あり）：合格"></span><span class="" title="MT-H02-08 パートナー（名前なし）：合格"></span><span class="" title="MT-H02-09 知らない性格：合格"></span><span class="" title="MT-H02-10 通知設定：合格"></span><span class="" title="MT-H02-11 学習記録の計算：合格"></span><span class="" title="MT-H02-12 解答がないときの正答率：合格"></span><span class="" title="MT-H02-13 バッジ一覧：合格"></span><span class="" title="MT-H02-14 初回の流れが終わった利用者：合格"></span><span class="" title="MT-H02-15 パートナー名を省いたとき：合格"></span><span class="" title="MT-H02-16 通知設定の取得：合格"></span><span class="" title="MT-H03-01 ひとことの使い回し：合格"></span><span class="" title="MT-H03-02 ひとことの生成：合格"></span><span class="" title="MT-H03-03 ひとことの失敗：合格"></span><span class="" title="MT-H03-04 今日の復習数：合格"></span><span class="" title="MT-H03-05 レベル表示：合格"></span><span class="" title="MT-H03-06 コース未選択：合格"></span><span class="" title="MT-H03-07 ひとことが空・パートナー未設定：合格"></span><span class="" title="MT-H04-01 受講の開始：合格"></span><span class="" title="MT-H04-02 受講済み：合格"></span><span class="" title="MT-H04-03 移る先でニックネームが重複：合格"></span><span class="" title="MT-H04-04 ないコース：合格"></span><span class="" title="MT-H04-05 コース一覧：合格"></span><span class="" title="MT-H05-01 冒険の開始：合格"></span><span class="" title="MT-H05-02 10問で終わり：合格"></span><span class="" title="MT-H05-03 9問目の次：合格"></span><span class="" title="MT-H05-04 他人の冒険：合格"></span><span class="" title="MT-H05-05 出せる問題がない：合格"></span><span class="" title="MT-H05-06 答えを返さない：合格"></span><span class="" title="MT-H05-07 説明の出題：合格"></span><span class="" title="MT-H05-08 問題が取得できない・キーワードの文言がない：合格"></span><span class="" title="MT-H06-01 正解：合格"></span><span class="" title="MT-H06-02 不正解：合格"></span><span class="" title="MT-H06-03 選択肢の範囲：合格"></span><span class="" title="MT-H06-04 非公開・他コースの問題：合格"></span><span class="" title="MT-H06-05 解説コメントの失敗：合格"></span><span class="" title="MT-H06-06 更新の途中で失敗：合格"></span><span class="" title="MT-H06-07 応答の形：合格"></span><span class="" title="MT-H06-08 冒険IDなし・クエスト達成・バッジ：合格"></span><span class="" title="MT-H07-01 採点の受付：合格"></span><span class="" title="MT-H07-02 説明文が短い：合格"></span><span class="" title="MT-H07-03 他コースのキーワード：合格"></span><span class="" title="MT-H07-04 起動の失敗：合格"></span><span class="" title="MT-H07-05 結果（完了）：合格"></span><span class="" title="MT-H07-06 結果（採点中・30秒以内）：合格"></span><span class="" title="MT-H07-07 結果（30秒超え）：合格"></span><span class="" title="MT-H07-08 結果（AIの失敗）：合格"></span><span class="" title="MT-H07-09 他人の採点：合格"></span><span class="" title="MT-H07-10 冒険IDなし・他人の冒険：合格"></span><span class="" title="MT-H08-01 今週：合格"></span><span class="" title="MT-H08-02 上位10名＋自分：合格"></span><span class="" title="MT-H08-03 自分が10位以内：合格"></span><span class="" title="MT-H08-04 過去週：合格"></span><span class="" title="MT-H08-05 受講していないコース：合格"></span><span class="" title="MT-H08-06 月曜以外の週の指定：合格"></span><span class="" title="MT-H08-07 コース省略・論理削除中・圏外：合格"></span><span class="" title="MT-H09-01 PDFの取り込み：合格"></span><span class="" title="MT-H09-02 テキストの取り込み：合格"></span><span class="" title="MT-H09-03 担当外のコース：合格"></span><span class="" title="MT-H09-04 ファイル名の無害化：合格"></span><span class="" title="MT-H09-05 サイズ超え：合格"></span><span class="" title="MT-H09-06 取り込み状況：合格"></span><span class="" title="MT-H09-07 取り込みがない・担当外・一覧：合格"></span><span class="" title="MT-H10-01 番号ごとの更新：合格"></span><span class="" title="MT-H10-02 キーワードを減らす：合格"></span><span class="" title="MT-H10-03 下書きの削除：合格"></span><span class="" title="MT-H10-04 公開済みの削除：合格"></span><span class="" title="MT-H10-05 公開できない：合格"></span><span class="" title="MT-H10-06 公開：合格"></span><span class="" title="MT-H10-07 担当外のコースの問題：合格"></span><span class="" title="MT-H10-08 下書きの修正：合格"></span><span class="" title="MT-H10-09 ない問題・公開済みの公開・状態の食い違い：合格"></span><span class="" title="MT-H11-01 集計：合格"></span><span class="" title="MT-H11-02 受講者0名：合格"></span><span class="" title="MT-H11-03 CSVの形：合格"></span><span class="" title="MT-H11-04 CSVの囲み：合格"></span><span class="" title="MT-H11-05 CSVの数式対策：合格"></span><span class="" title="MT-H11-06 CSVのファイル名と記録：合格"></span><span class="" title="MT-H11-07 1,000件ずつの取得：合格"></span><span class="" title="MT-H11-08 担当外のコース：合格"></span><span class="" title="MT-H12-01 登録：合格"></span><span class="" title="MT-H12-02 Cognito の失敗：合格"></span><span class="" title="MT-H12-03 ロールの変更：合格"></span><span class="" title="MT-H12-04 自分の system_admin を外す：合格"></span><span class="" title="MT-H12-05 論理削除：合格"></span><span class="" title="MT-H12-06 自分自身の削除：合格"></span><span class="" title="MT-H12-07 復活：合格"></span><span class="" title="MT-H12-08 有効な利用者の復活：合格"></span><span class="" title="MT-H12-09 利用者管理の異常系：合格"></span><span class="" title="MT-H13-01 コースの登録：合格"></span><span class="" title="MT-H13-02 コース名の長さ：合格"></span><span class="" title="MT-H13-03 担当者の割り当て：合格"></span><span class="" title="MT-H13-04 担当者の割り当て（正常）・更新・一覧：合格"></span><span class="" title="MT-H14-01 画像の準備（PNG）：合格"></span><span class="" title="MT-H14-02 画像の準備（範囲外）：合格"></span><span class="" title="MT-H14-03 画像の確定：合格"></span><span class="" title="MT-H14-04 画像を外す：合格"></span><span class="" title="MT-H14-05 画像の取得・WebP・不正な操作：合格"></span><span class="" title="MT-W01-01 合格：合格"></span><span class="" title="MT-W01-02 合格ライン：合格"></span><span class="" title="MT-W01-03 合計で計算し直す：合格"></span><span class="" title="MT-W01-04 JSONのやり直し（成功）：合格"></span><span class="" title="MT-W01-05 JSONのやり直し（失敗）：合格"></span><span class="" title="MT-W01-06 残り時間が少ないとき：合格"></span><span class="" title="MT-W01-07 Bedrock の時間切れ：合格"></span><span class="" title="MT-W01-08 処理済みのジョブ：合格"></span><span class="" title="MT-W01-09 A-10 が先に時間切れにした：合格"></span><span class="" title="MT-W01-10 パートナーの口調：合格"></span><span class="" title="MT-W01-11 DBの起動待ち：合格"></span><span class="" title="MT-W01-12 パートナー未設定・書き込み中の例外・入口：合格"></span><span class="" title="MT-W02-01 キーから取り込みID：合格"></span><span class="" title="MT-W02-02 処理済みの通知：合格"></span><span class="" title="MT-W02-03 PDFの分割：合格"></span><span class="" title="MT-W02-04 ページ数の上限：合格"></span><span class="" title="MT-W02-05 画像：合格"></span><span class="" title="MT-W02-06 テキストの分割：合格"></span><span class="" title="MT-W02-07 正規化（選択肢の数）：合格"></span><span class="" title="MT-W02-08 正規化（正解なし）：合格"></span><span class="" title="MT-W02-09 正規化（キーワード）：合格"></span><span class="" title="MT-W02-10 正規化（問題文が空）：合格"></span><span class="" title="MT-W02-11 一部のかたまりで失敗：合格"></span><span class="" title="MT-W02-12 再試行（1・2回目）：合格"></span><span class="" title="MT-W02-13 再試行（3回目）：合格"></span><span class="" title="MT-W02-14 壊れたPDF：合格"></span><span class="" title="MT-W02-15 テキスト・JPEG・対応外の画像・知らないキー：合格"></span><span class="" title="MT-W02-16 正規化の細部：合格"></span><span class="" title="MT-W03-01 実行順：合格"></span><span class="" title="MT-W03-02 月曜以外：合格"></span><span class="" title="MT-W03-03 ランキングの締め：合格"></span><span class="" title="MT-W03-04 継続日数（続いた）：合格"></span><span class="" title="MT-W03-05 継続日数（途切れた）：合格"></span><span class="" title="MT-W03-06 継続日数（二重実行）：合格"></span><span class="" title="MT-W03-07 クエストの割り当て：合格"></span><span class="" title="MT-W03-08 クエストの二重実行：合格"></span><span class="" title="MT-W03-09 物理削除：合格"></span><span class="" title="MT-W03-10 Cognito に利用者がいない：合格"></span><span class="" title="MT-W03-11 採点ジョブの掃除：合格"></span><span class="" title="MT-W03-12 送信リスト：合格"></span><span class="" title="MT-W03-13 ステップの失敗：合格"></span><span class="" title="MT-W03-14 知らないジョブ：合格"></span><span class="" title="MT-W03-15 Cognito のほかのエラー・削除できない・入口：合格"></span><span class="" title="MT-W04-01 送信：合格"></span><span class="" title="MT-W04-02 ファイルがない：合格"></span><span class="" title="MT-W04-03 1回失敗して成功：合格"></span><span class="" title="MT-W04-04 2回とも失敗：合格"></span><span class="" title="MT-W04-05 DBを使わない：合格"></span><span class="" title="MT-W04-06 枠の丸め：合格"></span><span class="" title="MT-W04-07 S3 のほかのエラー：合格"></span><span class="" title="MT-F01-01 code_verifier：合格"></span><span class="" title="MT-F01-02 チャレンジの計算：合格"></span><span class="" title="MT-F01-03 ログイン画面への移動：合格"></span><span class="" title="MT-F01-04 戻り（正常）：合格"></span><span class="" title="MT-F01-05 戻り（state 不一致）：合格"></span><span class="" title="MT-F01-06 保管場所：合格"></span><span class="" title="MT-F01-07 期限前の更新：合格"></span><span class="" title="MT-F01-08 更新の失敗：合格"></span><span class="" title="MT-F01-09 ログアウト：合格"></span><span class="" title="MT-F01-10 IDトークンが読めないとき：合格"></span><span class="" title="MT-F02-01 ヘッダー：合格"></span><span class="" title="MT-F02-02 DB起動中から復帰：合格"></span><span class="" title="MT-F02-03 再試行が尽きる：合格"></span><span class="" title="MT-F02-04 401 で1回だけ更新：合格"></span><span class="" title="MT-F02-05 401 が続く：合格"></span><span class="" title="MT-F02-06 入力エラー：合格"></span><span class="" title="MT-F02-07 通信エラー：合格"></span><span class="" title="MT-F02-08 JSONでない応答・204・CSV・PUT・DELETE・既定の引数：合格"></span><span class="" title="MT-F03-01 画面の切り替え：合格"></span><span class="" title="MT-F03-02 知らないハッシュ：合格"></span><span class="" title="MT-F03-03 ロール不足：合格"></span><span class="" title="MT-F03-04 初回の流れ：合格"></span><span class="" title="MT-F03-05 ハッシュの解釈・hashchange・ロールなし：合格"></span><span class="" title="MT-F04-01 状態の通知：合格"></span><span class="" title="MT-F04-02 既定のストア：合格"></span><span class="" title="MT-F05-01 HTMLエスケープ：合格"></span><span class="" title="MT-F05-02 数値・日付の表示：合格"></span><span class="" title="MT-F05-03 日付の境界と空の値：合格"></span><span class="" title="MT-F06-01 採点結果が返る：合格"></span><span class="" title="MT-F06-02 30秒で打ち切る：合格"></span><span class="" title="MT-F06-03 504 が返る：合格"></span><span class="" title="MT-F06-04 一時的な通信エラー：合格"></span><span class="" title="MT-F06-05 失敗の結果・そのほかのエラー：合格"></span></div><p class="vis-cap">1マス＝1ケース（青＝合格）</p></div>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>結果</th></tr></thead><tbody><tr><td>テストケース（仕様書のID）</td><td>428件中 合格 428・不合格 0・未実装 0</td></tr>
+<tr><td>実行したテスト（<code>it</code> の数）</td><td>493件（成功 493・失敗 0・スキップ 0・todo 0）、テストファイル 41</td></tr>
+<tr><td>うち仕様書 第0.3版 で追加したケース</td><td>66件（分岐網羅のための追加。第0.1版 7.2 No.10 の提案で採番）</td></tr>
+<tr><td>IDのないテスト</td><td>0件</td></tr>
+<tr><td>実行時間</td><td>最大 11.01 秒（基準：60秒以内）</td></tr>
+<tr><td>安定性</td><td>同じコミットで3回実行し、すべて同じ結果（493/493、493/493、493/493）</td></tr>
 <tr><td>失敗したテスト</td><td>なし</td></tr></tbody></table></div>
 </section>
 <section class="chapter" id="s4"><h2><i class="fa-solid fa-chart-simple h-ico" aria-hidden="true"></i>4. カバレッジ</h2>
 <div class="vis"><p class="vis-label">基準（縦線）に対する到達度</p><div class="bars">
 <div class="cov-row cov-head"><span>対象</span><span>命令網羅（C0）</span><span>分岐網羅（C1）</span></div>
-<div class="cov-row"><span class="bl"><code>全体</code></span><div class="meter"><span style="width:99.92942836979535%"></span><em>99.9%</em></div><div class="meter"><span style="width:99.49916527545909%"></span><em>99.5%</em></div></div>
+<div class="cov-row"><span class="bl"><code>全体</code></span><div class="meter"><span style="width:99.94058229352348%"></span><em>99.9%</em></div><div class="meter"><span style="width:98.828125%"></span><em>98.8%</em></div></div>
 <div class="cov-row"><span class="bl"><code>functions/shared/domain/**</code></span><div class="meter"><span style="width:100%"></span><i style="left:100%"></i><em>100.0%</em></div><div class="meter"><span style="width:100%"></span><i style="left:100%"></i><em>100.0%</em></div></div>
 <div class="cov-row"><span class="bl"><code>web/js/logic/validators.js</code></span><div class="meter"><span style="width:100%"></span><i style="left:100%"></i><em>100.0%</em></div><div class="meter"><span style="width:100%"></span><i style="left:100%"></i><em>100.0%</em></div></div>
-<div class="cov-row"><span class="bl"><code>functions/**</code></span><div class="meter"><span style="width:99.92542878448918%"></span><i style="left:90%"></i><em>99.9%</em></div><div class="meter"><span style="width:99.41972920696325%"></span><i style="left:80%"></i><em>99.4%</em></div></div>
-<div class="cov-row"><span class="bl"><code>web/js/**</code></span><div class="meter"><span style="width:100%"></span><i style="left:90%"></i><em>100.0%</em></div><div class="meter"><span style="width:100%"></span><i style="left:80%"></i><em>100.0%</em></div></div>
+<div class="cov-row"><span class="bl"><code>functions/**</code></span><div class="meter"><span style="width:99.93295340261481%"></span><i style="left:90%"></i><em>99.9%</em></div><div class="meter"><span style="width:98.6923076923077%"></span><i style="left:80%"></i><em>98.7%</em></div></div>
+<div class="cov-row"><span class="bl"><code>web/js/**</code></span><div class="meter"><span style="width:100%"></span><i style="left:90%"></i><em>100.0%</em></div><div class="meter"><span style="width:99.57627118644068%"></span><i style="left:80%"></i><em>99.6%</em></div></div>
 </div></div>
-<div class="table-wrap"><table><thead><tr><th>対象</th><th>ファイル数</th><th>命令網羅（C0）</th><th>分岐網羅（C1）</th><th>関数</th><th>基準（C0／C1）</th><th>判定</th></tr></thead><tbody><tr><td>全体</td><td>43</td><td>99.93%</td><td>99.50%</td><td>98.89%</td><td>-</td><td>-</td></tr>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>ファイル数</th><th>命令網羅（C0）</th><th>分岐網羅（C1）</th><th>関数</th><th>基準（C0／C1）</th><th>判定</th></tr></thead><tbody><tr><td>全体</td><td>85</td><td>99.94%</td><td>98.83%</td><td>98.39%</td><td>-</td><td>-</td></tr>
 <tr><td><code>functions/shared/domain/**</code></td><td>7</td><td>100.00%</td><td>100.00%</td><td>100.00%</td><td>100%／100%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
 <tr><td><code>web/js/logic/validators.js</code></td><td>1</td><td>100.00%</td><td>100.00%</td><td>100.00%</td><td>100%／100%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
-<tr><td><code>functions/**</code></td><td>42</td><td>99.93%</td><td>99.42%</td><td>98.83%</td><td>90%／80%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
-<tr><td><code>web/js/**</code></td><td>1</td><td>100.00%</td><td>100.00%</td><td>100.00%</td><td>90%／80%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr></tbody></table></div>
+<tr><td><code>functions/**</code></td><td>78</td><td>99.93%</td><td>98.69%</td><td>99.04%</td><td>90%／80%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<tr><td><code>web/js/**</code></td><td>7</td><td>100.00%</td><td>99.58%</td><td>95.00%</td><td>90%／80%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr></tbody></table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>ファイル別</h3>
-<div class="table-wrap"><table><thead><tr><th>ファイル</th><th>C0</th><th>C1</th><th>関数</th></tr></thead><tbody><tr><td><code>functions/shared/ai/bedrock.js</code></td><td>100.00%</td><td>94.44%</td><td>100.00%</td></tr>
+<div class="table-wrap"><table><thead><tr><th>ファイル</th><th>C0</th><th>C1</th><th>関数</th></tr></thead><tbody><tr><td><code>functions/api-handler/index.mjs</code></td><td>100.00%</td><td>96.15%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/router.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/lib/aws.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/_admin.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/admin-courses.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/admin-dashboard.js</code></td><td>98.55%</td><td>97.56%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/admin-imports.js</code></td><td>100.00%</td><td>95.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/admin-partners.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/admin-questions.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/admin-users.js</code></td><td>100.00%</td><td>95.31%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/answers.js</code></td><td>100.00%</td><td>95.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/courses.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/gradings.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/health.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/home.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/me.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/quests.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/api-handler/routes/rankings.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/index.mjs</code></td><td>100.00%</td><td>92.30%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/jobs/daily.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/jobs/mail.js</code></td><td>100.00%</td><td>95.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/lib/s3.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/steps/assign-quests.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/steps/build-notify.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/steps/cleanup-gradings.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/steps/close-ranking.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/steps/purge-users.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/batch-runner/steps/update-streak.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/grading-worker/grader.js</code></td><td>100.00%</td><td>94.44%</td><td>66.66%</td></tr>
+<tr><td><code>functions/grading-worker/index.mjs</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/import-worker/extractor.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/import-worker/index.mjs</code></td><td>100.00%</td><td>94.54%</td><td>100.00%</td></tr>
+<tr><td><code>functions/import-worker/pdf-splitter.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/ai/bedrock.js</code></td><td>100.00%</td><td>95.45%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/ai/json-guard.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/ai/persona.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/ai/prompts/comment.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
-<tr><td><code>functions/shared/ai/prompts/daily-message.js</code></td><td>100.00%</td><td>100.00%</td><td>50.00%</td></tr>
+<tr><td><code>functions/shared/ai/prompts/daily-message.js</code></td><td>100.00%</td><td>92.30%</td><td>81.81%</td></tr>
 <tr><td><code>functions/shared/ai/prompts/extraction.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/ai/prompts/grading.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/ai/prompts/sanitize.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
@@ -513,7 +548,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td><code>functions/shared/db/tx.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/_base.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/adventures.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
-<tr><td><code>functions/shared/db/repositories/answers.js</code></td><td>100.00%</td><td>88.88%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/answers.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/audit.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/badges.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/courses.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
@@ -522,6 +557,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td><code>functions/shared/db/repositories/gradings.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/imports.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/notify.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/partners.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/questions.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/quests.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/db/repositories/rankings.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
@@ -536,33 +572,45 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td><code>functions/shared/domain/review.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/mail/ses.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/mail/templates.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/services/answer-recorder.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/util/authz.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/util/date-jst.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/util/env.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/util/errors.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/util/http.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/util/ids.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/util/logger.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>functions/shared/util/validators.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>web/js/core/api.js</code></td><td>100.00%</td><td>97.50%</td><td>100.00%</td></tr>
+<tr><td><code>web/js/core/auth.js</code></td><td>100.00%</td><td>100.00%</td><td>84.21%</td></tr>
+<tr><td><code>web/js/core/router.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>web/js/core/store.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>web/js/logic/format.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>web/js/logic/grading-poller.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
 <tr><td><code>web/js/logic/validators.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr></tbody></table></div>
 </section>
 <section class="chapter" id="s5"><h2><i class="fa-solid fa-layer-group h-ico" aria-hidden="true"></i>5. モジュール別の結果</h2>
 <div class="vis"><p class="vis-label">層ごとの合格ケース数</p><div class="bars">
-<div class="bar-row"><span class="bl">util（MT-U）</span><div class="bt"><span style="width:100%"></span></div><b>72/72</b></div>
-<div class="bar-row"><span class="bl">db（MT-D）</span><div class="bt"><span style="width:33.333333333333336%"></span></div><b>24/24</b></div>
-<div class="bar-row"><span class="bl">domain（MT-G）</span><div class="bt"><span style="width:95.83333333333333%"></span></div><b>69/69</b></div>
-<div class="bar-row"><span class="bl">ai（MT-A）</span><div class="bt"><span style="width:31.944444444444443%"></span></div><b>23/23</b></div>
-<div class="bar-row"><span class="bl">mail（MT-M）</span><div class="bt"><span style="width:6.944444444444445%"></span></div><b>5/5</b></div>
+<div class="bar-row"><span class="bl">util（MT-U）</span><div class="bt"><span style="width:70.43478260869566%"></span></div><b>81/81</b></div>
+<div class="bar-row"><span class="bl">db（MT-D）</span><div class="bt"><span style="width:43.47826086956522%"></span></div><b>50/50</b></div>
+<div class="bar-row"><span class="bl">domain（MT-G）</span><div class="bt"><span style="width:60%"></span></div><b>69/69</b></div>
+<div class="bar-row"><span class="bl">ai（MT-A）</span><div class="bt"><span style="width:21.73913043478261%"></span></div><b>25/25</b></div>
+<div class="bar-row"><span class="bl">mail（MT-M）</span><div class="bt"><span style="width:4.3478260869565215%"></span></div><b>5/5</b></div>
+<div class="bar-row"><span class="bl">api-handler（MT-H）</span><div class="bt"><span style="width:100%"></span></div><b>115/115</b></div>
+<div class="bar-row"><span class="bl">ワーカー・バッチ（MT-W）</span><div class="bt"><span style="width:43.47826086956522%"></span></div><b>50/50</b></div>
+<div class="bar-row"><span class="bl">画面（web/js）（MT-F）</span><div class="bt"><span style="width:28.695652173913043%"></span></div><b>33/33</b></div>
 </div></div>
-<div class="table-wrap"><table><thead><tr><th>モジュール</th><th>対象</th><th>ケース</th><th>合格</th><th>不合格</th><th>未実装</th><th>it の数</th></tr></thead><tbody><tr><td>M-U01</td><td><code>util/errors.js</code></td><td>4</td><td>4</td><td>0</td><td>0</td><td>14</td></tr>
+<div class="table-wrap"><table><thead><tr><th>モジュール</th><th>対象</th><th>ケース</th><th>合格</th><th>不合格</th><th>未実装</th><th>it の数</th></tr></thead><tbody><tr><td>M-U01</td><td><code>util/errors.js</code></td><td>5</td><td>5</td><td>0</td><td>0</td><td>14</td></tr>
 <tr><td>M-U02</td><td><code>util/ids.js</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>12</td></tr>
-<tr><td>M-U03</td><td><code>util/date-jst.js</code></td><td>13</td><td>13</td><td>0</td><td>0</td><td>13</td></tr>
-<tr><td>M-U04</td><td><code>util/authz.js</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>10</td></tr>
+<tr><td>M-U03</td><td><code>util/date-jst.js</code></td><td>14</td><td>14</td><td>0</td><td>0</td><td>14</td></tr>
+<tr><td>M-U04</td><td><code>util/authz.js</code></td><td>10</td><td>10</td><td>0</td><td>0</td><td>10</td></tr>
 <tr><td>M-U05</td><td><code>util/logger.js</code></td><td>5</td><td>5</td><td>0</td><td>0</td><td>5</td></tr>
 <tr><td>M-U06</td><td><code>util/http.js</code></td><td>6</td><td>6</td><td>0</td><td>0</td><td>6</td></tr>
-<tr><td>M-U07</td><td><code>web/js/logic/validators.js（画面とLambdaで共用）</code></td><td>28</td><td>28</td><td>0</td><td>0</td><td>46</td></tr>
-<tr><td>M-D01</td><td><code>db/data-api.js</code></td><td>11</td><td>11</td><td>0</td><td>0</td><td>12</td></tr>
-<tr><td>M-D02</td><td><code>db/tx.js</code></td><td>4</td><td>4</td><td>0</td><td>0</td><td>5</td></tr>
-<tr><td>M-D03</td><td><code>リポジトリ（代表的なもの）</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>9</td></tr>
+<tr><td>M-U07</td><td><code>web/js/logic/validators.js（画面とLambdaで共用）</code></td><td>33</td><td>33</td><td>0</td><td>0</td><td>51</td></tr>
+<tr><td>M-U08</td><td><code>util/env.js</code></td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>M-D01</td><td><code>db/data-api.js</code></td><td>12</td><td>12</td><td>0</td><td>0</td><td>12</td></tr>
+<tr><td>M-D02</td><td><code>db/tx.js</code></td><td>5</td><td>5</td><td>0</td><td>0</td><td>5</td></tr>
+<tr><td>M-D03</td><td><code>リポジトリ（代表的なもの）</code></td><td>33</td><td>33</td><td>0</td><td>0</td><td>33</td></tr>
 <tr><td>M-G01</td><td><code>domain/review.js 忘却曲線</code></td><td>14</td><td>14</td><td>0</td><td>0</td><td>15</td></tr>
 <tr><td>M-G02</td><td><code>domain/exp.js EXPとレベル</code></td><td>13</td><td>13</td><td>0</td><td>0</td><td>23</td></tr>
 <tr><td>M-G03</td><td><code>domain/quest.js デイリークエスト</code></td><td>12</td><td>12</td><td>0</td><td>0</td><td>12</td></tr>
@@ -571,17 +619,38 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>M-G06</td><td><code>domain/picker.js 出題</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>9</td></tr>
 <tr><td>M-G07</td><td><code>domain/answer-flow.js 解答後の更新内容</code></td><td>8</td><td>8</td><td>0</td><td>0</td><td>8</td></tr>
 <tr><td>M-A01</td><td><code>ai/bedrock.js</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>8</td></tr>
-<tr><td>M-A02</td><td><code>ai/json-guard.js</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>19</td></tr>
-<tr><td>M-A03・M-A04</td><td><code>ai/persona.js・ai/prompts/*</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>7</td></tr>
-<tr><td>M-M01</td><td><code>mail/ses.js・mail/templates.js</code></td><td>5</td><td>5</td><td>0</td><td>0</td><td>6</td></tr></tbody></table></div>
+<tr><td>M-A02</td><td><code>ai/json-guard.js</code></td><td>10</td><td>10</td><td>0</td><td>0</td><td>19</td></tr>
+<tr><td>M-A03・M-A04</td><td><code>ai/persona.js・ai/prompts/*</code></td><td>8</td><td>8</td><td>0</td><td>0</td><td>8</td></tr>
+<tr><td>M-M01</td><td><code>mail/ses.js・mail/templates.js</code></td><td>5</td><td>5</td><td>0</td><td>0</td><td>6</td></tr>
+<tr><td>M-H01</td><td><code>router.js・入口</code></td><td>12</td><td>12</td><td>0</td><td>0</td><td>12</td></tr>
+<tr><td>M-H02</td><td><code>routes/me.js（A-01〜A-04、A-12）</code></td><td>16</td><td>16</td><td>0</td><td>0</td><td>18</td></tr>
+<tr><td>M-H03</td><td><code>routes/home.js（A-05）</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>7</td></tr>
+<tr><td>M-H04</td><td><code>routes/courses.js（A-06）</code></td><td>5</td><td>5</td><td>0</td><td>0</td><td>5</td></tr>
+<tr><td>M-H05</td><td><code>routes/quests.js（A-07）</code></td><td>8</td><td>8</td><td>0</td><td>0</td><td>8</td></tr>
+<tr><td>M-H06</td><td><code>routes/answers.js（A-08）</code></td><td>8</td><td>8</td><td>0</td><td>0</td><td>10</td></tr>
+<tr><td>M-H07</td><td><code>routes/gradings.js（A-09・A-10）</code></td><td>10</td><td>10</td><td>0</td><td>0</td><td>10</td></tr>
+<tr><td>M-H08</td><td><code>routes/rankings.js（A-11）</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>9</td></tr>
+<tr><td>M-H09</td><td><code>routes/admin-imports.js（A-13・A-14）</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>7</td></tr>
+<tr><td>M-H10</td><td><code>routes/admin-questions.js（A-15・A-16）</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>9</td></tr>
+<tr><td>M-H11</td><td><code>routes/admin-dashboard.js（A-17・A-18）</code></td><td>8</td><td>8</td><td>0</td><td>0</td><td>8</td></tr>
+<tr><td>M-H12</td><td><code>routes/admin-users.js（A-19・A-20）</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>9</td></tr>
+<tr><td>M-H13</td><td><code>routes/admin-courses.js（A-21）・M-H14 routes/admin-partners.js（A-22）</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>9</td></tr>
+<tr><td>M-W01</td><td><code>grading-worker/index.mjs・grader.js</code></td><td>12</td><td>12</td><td>0</td><td>0</td><td>13</td></tr>
+<tr><td>M-W02</td><td><code>import-worker/index.mjs・extractor.js・pdf-splitter.js</code></td><td>16</td><td>16</td><td>0</td><td>0</td><td>20</td></tr>
+<tr><td>M-W03</td><td><code>jobs/daily.js と steps/</code></td><td>15</td><td>15</td><td>0</td><td>0</td><td>15</td></tr>
+<tr><td>M-W04</td><td><code>jobs/mail.js</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>7</td></tr>
+<tr><td>M-F01</td><td><code>core/auth.js</code></td><td>10</td><td>10</td><td>0</td><td>0</td><td>10</td></tr>
+<tr><td>M-F02</td><td><code>core/api.js</code></td><td>8</td><td>8</td><td>0</td><td>0</td><td>8</td></tr>
+<tr><td>M-F03〜M-F06</td><td><code>core/router.js・core/store.js・logic/format.js・logic/grading-poller.js</code></td><td>15</td><td>15</td><td>0</td><td>0</td><td>15</td></tr></tbody></table></div>
 </section>
 <section class="chapter" id="s6"><h2><i class="fa-solid fa-list-check h-ico" aria-hidden="true"></i>6. テストケース別の結果</h2>
 <div class="vis"><p class="vis-label">見方</p><div class="info-strip"><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>仕様書のIDを含む it がすべて成功</span><span class="res ng"><i class="fa-solid fa-circle-xmark"></i>不合格</span><span>1つでも失敗</span><span class="res ng"><i class="fa-solid fa-circle-minus"></i>未実装</span><span>IDを含む it がない</span></div></div>
-<details class="cases"><summary>M-U01 <code>util/errors.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>4/4</span></summary>
+<details class="cases"><summary>M-U01 <code>util/errors.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>5/5</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U01-01</td><td>AppError の属性</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U01-02</td><td>応答への変換（想定エラー）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U01-03</td><td>応答への変換（想定外）</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-U01-04</td><td>コードからHTTPの既定</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>11</td></tr></tbody></table></div>
+<tr><td>MT-U01-04</td><td>コードからHTTPの既定</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>10</td></tr>
+<tr><td>MT-U01-05</td><td>表にないコード・details なし</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
 <details class="cases"><summary>M-U02 <code>util/ids.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U02-01</td><td>変換</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
@@ -592,7 +661,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>MT-U02-06</td><td>数字以外</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>5</td></tr>
 <tr><td>MT-U02-07</td><td>文字列以外</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr></tbody></table></div>
 </details>
-<details class="cases"><summary>M-U03 <code>util/date-jst.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>13/13</span></summary>
+<details class="cases"><summary>M-U03 <code>util/date-jst.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>14/14</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U03-01</td><td>JSTの日付（0:00直前）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U03-02</td><td>JSTの日付（0:00ちょうど）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U03-03</td><td>月末をまたぐ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
@@ -605,18 +674,20 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>MT-U03-10</td><td>送信枠</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U03-11</td><td>ISO文字列</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U03-12</td><td>日数の差</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-U03-13</td><td>不正な日付</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+<tr><td>MT-U03-13</td><td>不正な日付</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-14</td><td>DBの日時の読み取り（<code>parseDbTimestamp</code>）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
-<details class="cases"><summary>M-U04 <code>util/authz.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<details class="cases"><summary>M-U04 <code>util/authz.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>10/10</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U04-01</td><td>グループ（文字列）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U04-02</td><td>グループ（配列）・なし</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U04-03</td><td>sub がない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U04-04</td><td>ロールあり</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U04-05</td><td>ロールなし</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U04-06</td><td>招待中の初回ログイン</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-U04-07</td><td>論理削除中・未登録</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-U04-07</td><td>論理削除中・未登録</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U04-08</td><td>担当コース</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-U04-09</td><td>システム管理者は全コース</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+<tr><td>MT-U04-09</td><td>システム管理者は全コース</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U04-10</td><td>有効な利用者・DBのロール</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
 <details class="cases"><summary>M-U05 <code>util/logger.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>5/5</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U05-01</td><td>1行のJSON</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
@@ -633,7 +704,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>MT-U06-05</td><td>通常の応答</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U06-06</td><td>CSVの応答</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
-<details class="cases"><summary>M-U07 <code>web/js/logic/validators.js（画面とLambdaで共用）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>28/28</span></summary>
+<details class="cases"><summary>M-U07 <code>web/js/logic/validators.js（画面とLambdaで共用）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>33/33</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U07-01</td><td>下限の1つ下</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U07-02</td><td>下限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U07-03</td><td>小見出し不要の上限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
@@ -661,28 +732,38 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>MT-U07-25</td><td>テキストの長さ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U07-26</td><td>公開できる問題</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-U07-27</td><td>公開できない問題</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>5</td></tr>
-<tr><td>MT-U07-28</td><td>キーワードの数と長さ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+<tr><td>MT-U07-28</td><td>キーワードの数と長さ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-29</td><td>Lambda側の変換（<code>assertValid</code>）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-30</td><td>文字列以外のニックネーム・パートナー名</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-31</td><td>取り込みの要求の不正</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-32</td><td>問題の下書きの不正</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-33</td><td>行頭に空白がある小見出し</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
-<details class="cases"><summary>M-D01 <code>db/data-api.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>11/11</span></summary>
+<details class="cases"><summary>M-U08 <code>util/env.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>1/1</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U08-01</td><td>環境変数の読み取り（<code>requireEnv</code>）</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-D01 <code>db/data-api.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>12/12</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-D01-01</td><td>接続情報</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D01-02</td><td>パラメータの型（整数・小数）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D01-03</td><td>パラメータの型（文字・真偽）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D01-04</td><td>パラメータの型（null）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-D01-05</td><td>日付・JSON</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-D01-05</td><td>日付・JSON</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D01-06</td><td>結果の変換</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D01-07</td><td>結果なし</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D01-08</td><td>DB起動中・再試行0回</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D01-09</td><td>DB起動中から復帰</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D01-10</td><td>再試行が尽きる</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-D01-11</td><td>ほかのエラー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+<tr><td>MT-D01-11</td><td>ほかのエラー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-12</td><td>変換できないパラメータ</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
-<details class="cases"><summary>M-D02 <code>db/tx.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>4/4</span></summary>
+<details class="cases"><summary>M-D02 <code>db/tx.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>5/5</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-D02-01</td><td>正常</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-D02-02</td><td>途中の例外</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-D02-02</td><td>途中の例外</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D02-03</td><td>Commit の失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-D02-04</td><td>戻り値</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+<tr><td>MT-D02-04</td><td>戻り値</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D02-05</td><td>Rollback の失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
-<details class="cases"><summary>M-D03 <code>リポジトリ（代表的なもの）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<details class="cases"><summary>M-D03 <code>リポジトリ（代表的なもの）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>33/33</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-D03-01</td><td>ニックネームの重複確認</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D03-02</td><td>重複なし</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D03-03</td><td>採点の完了（条件付き）</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
@@ -691,7 +772,31 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>MT-D03-06</td><td>ランキングの締め</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D03-07</td><td>列名の変換</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-D03-08</td><td>一覧の上限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-D03-09</td><td>並べ替えの許可リスト</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+<tr><td>MT-D03-09</td><td>並べ替えの許可リスト</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-10</td><td>users：取得とロール</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-11</td><td>users：更新系</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-12</td><td>users：一覧の並べ替え</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-13</td><td>users：登録・ロール・削除・復活・物理削除</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-14</td><td>users：物理削除・継続日数の対象</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-15</td><td>courses の各関数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-16</td><td>enrollments の各関数</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-17</td><td>questions：取得系</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-18</td><td>questions：番号ごとの更新</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-19</td><td>questions：公開・削除</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-20</td><td>reviews の各関数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-21</td><td>answers の各関数</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-22</td><td>exp の各関数</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-23</td><td>quests の各関数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-24</td><td>badges の各関数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-25</td><td>rankings の各関数</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-26</td><td>users.lastLoginLogAt・reviews.countDueByKind</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-27</td><td>badges.listOwnedDetail・rankings.weeks・courses.listAll・listIds</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-28</td><td>imports.setKey・listByCourse、quests.listAssignTargets、partners</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-29</td><td>gradings の各関数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-30</td><td>imports の各関数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-31</td><td>adventures の各関数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-32</td><td>audit.write</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-33</td><td>notify の各関数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
 <details class="cases"><summary>M-G01 <code>domain/review.js 忘却曲線</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>14/14</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-G01-01</td><td>初回・正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
@@ -785,7 +890,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>MT-A01-06</td><td>PDF・画像の入力</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A01-07</td><td>ログ</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
-<details class="cases"><summary>M-A02 <code>ai/json-guard.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<details class="cases"><summary>M-A02 <code>ai/json-guard.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>10/10</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-A02-01</td><td>JSONだけ</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A02-02</td><td>前後に文章</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A02-03</td><td>コードブロック</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
@@ -794,16 +899,18 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>MT-A02-06</td><td>JSONがない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A02-07</td><td>採点の形（正常）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A02-08</td><td>範囲外の点数</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>4</td></tr>
-<tr><td>MT-A02-09</td><td>必須キーがない・型違い</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>8</td></tr></tbody></table></div>
+<tr><td>MT-A02-09</td><td>必須キーがない・型違い</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>7</td></tr>
+<tr><td>MT-A02-10</td><td>オブジェクト以外・任意キー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
-<details class="cases"><summary>M-A03・M-A04 <code>ai/persona.js・ai/prompts/*</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<details class="cases"><summary>M-A03・M-A04 <code>ai/persona.js・ai/prompts/*</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>8/8</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-A03-01</td><td>3人の定義</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A03-02</td><td>知らない性格</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A04-01</td><td>採点の指示文</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A04-02</td><td>閉じタグの無害化</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A04-03</td><td>小見出しはそのまま</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-A04-04</td><td>抽出の指示文</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
-<tr><td>MT-A04-05</td><td>ひとことに個人情報を入れない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+<tr><td>MT-A04-05</td><td>ひとことに個人情報を入れない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A04-06</td><td>解説コメントの指示文</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
 <details class="cases"><summary>M-M01 <code>mail/ses.js・mail/templates.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>5/5</span></summary>
 <div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-M01-01</td><td>通知メールの本文</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
@@ -812,31 +919,269 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>MT-M01-04</td><td>SES への送信</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
 <tr><td>MT-M01-05</td><td>送信の失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
 </details>
+<details class="cases"><summary>M-H01 <code>router.js・入口</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>12/12</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H01-01</td><td>ルートの一致</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-02</td><td>パスのパラメータ</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-03</td><td>ルートがない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-04</td><td>メソッド違い</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-05</td><td>ヘルスチェック</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-06</td><td>ロール不足</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-07</td><td>上位ロール</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-08</td><td>想定外の例外</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-09</td><td>初回の流れが終わっていない</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-10</td><td>コースが未選択</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-11</td><td>トークンがない・壊れた本文</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H01-12</td><td>Lambda の入口（handler）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H02 <code>routes/me.js（A-01〜A-04、A-12）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>16/16</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H02-01</td><td>ログインの記録（30分より前）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-02</td><td>ログインの記録（30分以内）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-03</td><td>初回の流れの判定</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-04</td><td>ニックネームの登録</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-05</td><td>ニックネームの重複</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-06</td><td>ニックネームの形式</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-07</td><td>パートナー（名前あり）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-08</td><td>パートナー（名前なし）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-09</td><td>知らない性格</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>3</td></tr>
+<tr><td>MT-H02-10</td><td>通知設定</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-11</td><td>学習記録の計算</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-12</td><td>解答がないときの正答率</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-13</td><td>バッジ一覧</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-14</td><td>初回の流れが終わった利用者</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-15</td><td>パートナー名を省いたとき</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H02-16</td><td>通知設定の取得</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H03 <code>routes/home.js（A-05）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H03-01</td><td>ひとことの使い回し</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H03-02</td><td>ひとことの生成</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H03-03</td><td>ひとことの失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H03-04</td><td>今日の復習数</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H03-05</td><td>レベル表示</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H03-06</td><td>コース未選択</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H03-07</td><td>ひとことが空・パートナー未設定</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H04 <code>routes/courses.js（A-06）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>5/5</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H04-01</td><td>受講の開始</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H04-02</td><td>受講済み</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H04-03</td><td>移る先でニックネームが重複</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H04-04</td><td>ないコース</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H04-05</td><td>コース一覧</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H05 <code>routes/quests.js（A-07）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>8/8</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H05-01</td><td>冒険の開始</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H05-02</td><td>10問で終わり</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H05-03</td><td>9問目の次</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H05-04</td><td>他人の冒険</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H05-05</td><td>出せる問題がない</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H05-06</td><td>答えを返さない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H05-07</td><td>説明の出題</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H05-08</td><td>問題が取得できない・キーワードの文言がない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H06 <code>routes/answers.js（A-08）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>8/8</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H06-01</td><td>正解</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H06-02</td><td>不正解</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H06-03</td><td>選択肢の範囲</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>3</td></tr>
+<tr><td>MT-H06-04</td><td>非公開・他コースの問題</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H06-05</td><td>解説コメントの失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H06-06</td><td>更新の途中で失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H06-07</td><td>応答の形</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H06-08</td><td>冒険IDなし・クエスト達成・バッジ</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H07 <code>routes/gradings.js（A-09・A-10）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>10/10</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H07-01</td><td>採点の受付</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-02</td><td>説明文が短い</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-03</td><td>他コースのキーワード</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-04</td><td>起動の失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-05</td><td>結果（完了）</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-06</td><td>結果（採点中・30秒以内）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-07</td><td>結果（30秒超え）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-08</td><td>結果（AIの失敗）</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-09</td><td>他人の採点</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H07-10</td><td>冒険IDなし・他人の冒険</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H08 <code>routes/rankings.js（A-11）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H08-01</td><td>今週</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H08-02</td><td>上位10名＋自分</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H08-03</td><td>自分が10位以内</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H08-04</td><td>過去週</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H08-05</td><td>受講していないコース</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H08-06</td><td>月曜以外の週の指定</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>3</td></tr>
+<tr><td>MT-H08-07</td><td>コース省略・論理削除中・圏外</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H09 <code>routes/admin-imports.js（A-13・A-14）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H09-01</td><td>PDFの取り込み</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H09-02</td><td>テキストの取り込み</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H09-03</td><td>担当外のコース</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H09-04</td><td>ファイル名の無害化</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H09-05</td><td>サイズ超え</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H09-06</td><td>取り込み状況</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H09-07</td><td>取り込みがない・担当外・一覧</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H10 <code>routes/admin-questions.js（A-15・A-16）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H10-01</td><td>番号ごとの更新</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H10-02</td><td>キーワードを減らす</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H10-03</td><td>下書きの削除</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H10-04</td><td>公開済みの削除</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H10-05</td><td>公開できない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H10-06</td><td>公開</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H10-07</td><td>担当外のコースの問題</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H10-08</td><td>下書きの修正</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H10-09</td><td>ない問題・公開済みの公開・状態の食い違い</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H11 <code>routes/admin-dashboard.js（A-17・A-18）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>8/8</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H11-01</td><td>集計</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H11-02</td><td>受講者0名</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H11-03</td><td>CSVの形</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H11-04</td><td>CSVの囲み</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H11-05</td><td>CSVの数式対策</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H11-06</td><td>CSVのファイル名と記録</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H11-07</td><td>1,000件ずつの取得</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H11-08</td><td>担当外のコース</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H12 <code>routes/admin-users.js（A-19・A-20）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H12-01</td><td>登録</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H12-02</td><td>Cognito の失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H12-03</td><td>ロールの変更</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H12-04</td><td>自分の system_admin を外す</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H12-05</td><td>論理削除</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H12-06</td><td>自分自身の削除</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H12-07</td><td>復活</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H12-08</td><td>有効な利用者の復活</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H12-09</td><td>利用者管理の異常系</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-H13 <code>routes/admin-courses.js（A-21）・M-H14 routes/admin-partners.js（A-22）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-H13-01</td><td>コースの登録</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H13-02</td><td>コース名の長さ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H13-03</td><td>担当者の割り当て</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H13-04</td><td>担当者の割り当て（正常）・更新・一覧</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H14-01</td><td>画像の準備（PNG）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H14-02</td><td>画像の準備（範囲外）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H14-03</td><td>画像の確定</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H14-04</td><td>画像を外す</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-H14-05</td><td>画像の取得・WebP・不正な操作</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-W01 <code>grading-worker/index.mjs・grader.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>12/12</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-W01-01</td><td>合格</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-02</td><td>合格ライン</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-03</td><td>合計で計算し直す</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-04</td><td>JSONのやり直し（成功）</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-05</td><td>JSONのやり直し（失敗）</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-06</td><td>残り時間が少ないとき</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-07</td><td>Bedrock の時間切れ</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-08</td><td>処理済みのジョブ</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-W01-09</td><td>A-10 が先に時間切れにした</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-10</td><td>パートナーの口調</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-11</td><td>DBの起動待ち</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W01-12</td><td>パートナー未設定・書き込み中の例外・入口</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-W02 <code>import-worker/index.mjs・extractor.js・pdf-splitter.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>16/16</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-W02-01</td><td>キーから取り込みID</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-02</td><td>処理済みの通知</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-03</td><td>PDFの分割</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>4</td></tr>
+<tr><td>MT-W02-04</td><td>ページ数の上限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-05</td><td>画像</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-06</td><td>テキストの分割</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-07</td><td>正規化（選択肢の数）</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-08</td><td>正規化（正解なし）</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-W02-09</td><td>正規化（キーワード）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-10</td><td>正規化（問題文が空）</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-11</td><td>一部のかたまりで失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-12</td><td>再試行（1・2回目）</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-13</td><td>再試行（3回目）</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-14</td><td>壊れたPDF</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-15</td><td>テキスト・JPEG・対応外の画像・知らないキー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W02-16</td><td>正規化の細部</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-W03 <code>jobs/daily.js と steps/</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>15/15</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-W03-01</td><td>実行順</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-02</td><td>月曜以外</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-03</td><td>ランキングの締め</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-04</td><td>継続日数（続いた）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-05</td><td>継続日数（途切れた）</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-06</td><td>継続日数（二重実行）</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-07</td><td>クエストの割り当て</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-08</td><td>クエストの二重実行</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-09</td><td>物理削除</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-10</td><td>Cognito に利用者がいない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-11</td><td>採点ジョブの掃除</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-12</td><td>送信リスト</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-13</td><td>ステップの失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-14</td><td>知らないジョブ</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W03-15</td><td>Cognito のほかのエラー・削除できない・入口</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-W04 <code>jobs/mail.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-W04-01</td><td>送信</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W04-02</td><td>ファイルがない</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W04-03</td><td>1回失敗して成功</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W04-04</td><td>2回とも失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W04-05</td><td>DBを使わない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W04-06</td><td>枠の丸め</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-W04-07</td><td>S3 のほかのエラー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-F01 <code>core/auth.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>10/10</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-F01-01</td><td>code_verifier</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-02</td><td>チャレンジの計算</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-03</td><td>ログイン画面への移動</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-04</td><td>戻り（正常）</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-05</td><td>戻り（state 不一致）</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-06</td><td>保管場所</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-07</td><td>期限前の更新</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-08</td><td>更新の失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-09</td><td>ログアウト</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F01-10</td><td>IDトークンが読めないとき</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-F02 <code>core/api.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>8/8</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-F02-01</td><td>ヘッダー</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F02-02</td><td>DB起動中から復帰</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F02-03</td><td>再試行が尽きる</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F02-04</td><td>401 で1回だけ更新</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F02-05</td><td>401 が続く</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F02-06</td><td>入力エラー</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F02-07</td><td>通信エラー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F02-08</td><td>JSONでない応答・204・CSV・PUT・DELETE・既定の引数</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-F03〜M-F06 <code>core/router.js・core/store.js・logic/format.js・logic/grading-poller.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>15/15</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-F03-01</td><td>画面の切り替え</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F03-02</td><td>知らないハッシュ</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F03-03</td><td>ロール不足</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F03-04</td><td>初回の流れ</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F03-05</td><td>ハッシュの解釈・hashchange・ロールなし</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F04-01</td><td>状態の通知</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F04-02</td><td>既定のストア</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F05-01</td><td>HTMLエスケープ</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F05-02</td><td>数値・日付の表示</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F05-03</td><td>日付の境界と空の値</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F06-01</td><td>採点結果が返る</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F06-02</td><td>30秒で打ち切る</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F06-03</td><td>504 が返る</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F06-04</td><td>一時的な通信エラー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-F06-05</td><td>失敗の結果・そのほかのエラー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
 </section>
 <section class="chapter" id="s7"><h2><i class="fa-solid fa-magnifying-glass h-ico" aria-hidden="true"></i>7. 所見</h2>
-<div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合</h5><p class="tile-num sm">0<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-pen-ruler"></i>設計の解釈・補足</h5><p class="tile-num sm">10<small>件</small></p></div></div></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 不具合</h3><ul><li>製品コードの不具合は見つからなかった（全ケースが初回の実行から合格）</li><li>テストコード側の誤り1件（validators の補足テストで変数の宣言位置が誤っていた）を実行前の確認で直した。製品コードへの影響はない</li></ul>
+<div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合（修正済み）</h5><p class="tile-num sm">2<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-pen-ruler"></i>設計の解釈・補足</h5><p class="tile-num sm">8<small>件</small></p></div></div></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 不具合</h3><ul><li>製品コードの不具合を2件見つけ、どちらも直してから全件を流し直した（下の表）。最終の実行では失敗0件</li><li>テスト仕様書の記述の矛盾を1件見つけた（7.2 No.3）。期待結果の値に合わせて実装し、仕様書の注記の修正を提案する</li><li>テストコード側の誤り2件（期待値の書き違い・変数の宣言位置）は実行前・実行直後に直した。製品コードへの影響はない</li></ul>
+<div class="table-wrap"><table><thead><tr><th>No</th><th>見つけたテスト・作業</th><th>重大度</th><th>内容</th><th>対応</th></tr></thead><tbody><tr><td>1</td><td>第2弾の設計確認（詳細設計書 5.3 A-15）／MT-H10-01・02</td><td>高（データが消える）</td><td>第1弾の <code>questions.update</code> が選択肢・キーワードを全件削除して作り直していた。公開済みの問題を直すと <code>keyword_id</code> が変わり、学習者の説明の復習段階（<code>review_items</code>）が CASCADE で消える</td><td>番号（<code>choice_no</code>・<code>sort_order</code>）ごとの UPDATE に直し、減った番号だけ DELETE、増えた番号だけ INSERT にした。MT-H10-01・02、MT-D03-18 で確認</td></tr>
+<tr><td>2</td><td>MT-H09-01</td><td>中</td><td>取り込み用の署名付きURLの署名に <code>content-type</code> が入っておらず、申告と違う種類のファイルを置けた（設計の「Content-Type 固定」を満たしていない）</td><td><code>getSignedUrl</code> に <code>signableHeaders: content-type</code> を指定した。MT-H09-01・MT-H14-01 で確認</td></tr></tbody></table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 設計書・仕様書の解釈と補足</h3>
-<div class="table-wrap"><table><thead><tr><th>No</th><th>対象</th><th>内容</th><th>対応の提案</th></tr></thead><tbody><tr><td>1</td><td>M-U07 validators</td><td>ニックネーム・パートナー名・通知時刻・取り込みの入力エラーには外部設計書のメッセージID（M-xx）がないため、<code>code: 'INVALID'</code> と <code>field</code> で返すようにした</td><td>外部設計書 3.7 にメッセージIDを追加するか、<code>INVALID</code> を正式なコードとして詳細設計書 3.2 に追記する</td></tr>
-<tr><td>2</td><td>M-U04 authz</td><td>util は db を呼べない（2.1 の依存ルール）ため、<code>loadUser</code>・<code>assertCourseAdmin</code> はリポジトリを引数 <code>db</code> で受け取る形にした。担当コースの確認には <code>courses.isAdmin(courseId, userId)</code> を追加した</td><td>詳細設計書 3.4 の courses.js の関数一覧に <code>isAdmin</code>・<code>dashboardRows</code> を追記する</td></tr>
-<tr><td>3</td><td>M-D01 data-api</td><td>再試行回数の既定値（api-handler は0、ほかは6）を関数ごとに切り替えるため <code>setDefaultResumeRetries(n)</code> を追加した。各 <code>index.mjs</code> の先頭で呼ぶ想定</td><td>詳細設計書 3.3 に追記する</td></tr>
-<tr><td>4</td><td>M-G03 quest</td><td><code>applyQuestEvent</code> の戻り値を <code>{ quests, achievedNow, questExp }</code> とした（仕様書 MT-G03-06 の achievedNow と報酬の合計を返すため）</td><td>詳細設計書 3.5 の表に戻り値の形を追記する</td></tr>
-<tr><td>5</td><td>M-G06 picker</td><td><code>servedIds</code> は形式ごとに ID が重なるため <code>choice:{問題ID}</code>・<code>explain:{キーワードID}</code> の文字列にした（adventures.served の k・q・kw と対応）</td><td>詳細設計書 3.5 に servedIds の形を追記する</td></tr>
-<tr><td>6</td><td>M-G07 answer-flow</td><td>戻り値の exp にクエスト報酬を足したあとの <code>totalExp</code> を含め、今回達成したクエスト <code>achievedNow</code> も返すようにした（DBへの書き込みで使う）</td><td>詳細設計書 3.5 の擬似コードに追記する</td></tr>
-<tr><td>7</td><td>M-A01 bedrock</td><td>AI_TIMEOUT・AI_ERROR は内部用（HTTP なし）だが、万一外に出たときのため status を 500 とした</td><td>詳細設計書 2.4.4 の表に注記する</td></tr>
-<tr><td>8</td><td>M-M01 templates</td><td>メールのパートナーの定型のひとことと問い合わせ先の文言は設計書に具体的な文がないため仮の文にした</td><td>外部設計書 5.6 で文言を確定する（未決事項に追加）</td></tr>
-<tr><td>9</td><td>vitest.config.js</td><td>仕様書 3.2 の <code>environmentMatchGlobs</code> は Vitest 3.2 で非推奨の警告が出る（動作は問題なし）</td><td>次の版で <code>test.projects</code> に置き換えることを仕様書に反映する</td></tr>
-<tr><td>10</td><td>補足テスト</td><td>仕様書のケースだけでは C1 100%（domain・validators）と 90%／80%（そのほか）に届かない分岐があったため、ID の後ろに「補足」を付けたテストを追加した（リポジトリの全関数のSQL組み立てなど）</td><td>仕様書 6.3 の決まりに沿って、次の版でケースIDを採番して本書と仕様書に載せる</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>No</th><th>対象</th><th>内容</th><th>対応の提案</th></tr></thead><tbody><tr><td>1</td><td>詳細設計書 3.1・2.1</td><td>共通モジュールを2つ追加した。<code>util/env.js</code>（M-U08。環境変数の確認）と <code>services/answer-recorder.js</code>（解答の記録。A-08 と grading-worker で同じ書き込みを共用）</td><td>3.1 の一覧と 2.1 の依存のルール（services は routes・ワーカーから呼び、domain・db を使う）に追記する</td></tr>
+<tr><td>2</td><td>詳細設計書 3.4</td><td>第2弾で必要になったリポジトリの関数を追加した：<code>partners.js</code>（新規）、<code>users.lastLoginLogAt</code>・<code>setCurrentCourse</code>・<code>updateStreak</code>・<code>create</code>・<code>setRoles</code>、<code>reviews.countDueByKind</code>、<code>badges.listOwnedDetail</code>、<code>rankings.weeks</code>、<code>courses.listAll</code>・<code>listIds</code>、<code>imports.setKey</code>・<code>listByCourse</code>、<code>quests.listAssignTargets</code>。<code>gradings.deleteOlderThan</code> は日数ではなく境目の日時（JST 0:00）を受け取る</td><td>3.4 の表に追記する</td></tr>
+<tr><td>3</td><td>テスト仕様書 MT-W02-09・詳細設計書 4.4</td><td>期待結果 <code>['DNS','A','B']</code> は、重複を大文字小文字を区別せずに判定しないと得られない（<code>'dns '</code> を除くため）が、注記は「大文字小文字は区別する」となっていて矛盾する。期待結果に合わせて「区別せずに判定し、最初の表記を残す」で実装した</td><td>注記を「重複は大文字小文字を区別せずに判定し、最初に出た表記を残す」に直し、4.4 の正規化の表にも書く</td></tr>
+<tr><td>4</td><td>詳細設計書 4.1</td><td><code>main(event, { log, now })</code> の <code>now</code> は、api-handler・batch-runner は Date、grading-worker は経過時間（JSONのやり直しの判定）を測るため <code>now()</code> を返す関数にした</td><td>4.1 に grading-worker の違いを注記する</td></tr>
+<tr><td>5</td><td>詳細設計書 5.3 A-14・A-15</td><td>A-14 は S-11 の修正画面で使えるよう、下書きの全項目（問題文・選択肢・正解・解説・キーワード）も返す。A-15 は下書きなら選択肢2〜10個を受け付け、公開できる形なら <code>draft</code>、そうでなければ <code>needs_review</code> にする。公開済みは公開できる形でなければ400（M-12）</td><td>5.3 に応答の項目と状態の決め方を追記する</td></tr>
+<tr><td>6</td><td>詳細設計書 5.3 A-13</td><td><code>import_jobs.s3_key</code> は NOT NULL だが、キーに取り込みIDを含めるため、仮の値で登録してから <code>setKey</code> で更新している（1回の往復が増える）</td><td>キーを決める前に採番する（<code>nextval</code> を先に取る）か、列を NULL 可にするかを決める</td></tr>
+<tr><td>7</td><td>結合テスト（dev）で確かめること</td><td>(1) Data API が返す timestamptz の形（UTCの <code>YYYY-MM-DD HH:MM:SS</code> を前提に <code>parseDbTimestamp</code> で読んでいる）。(2) Cognito の Username に <code>sub</code> を使えること（メールを別名にしたユーザープールでは Username＝sub になる前提）。(3) 署名付きURLへ画面から PUT するときに <code>Content-Type</code> を付けること</td><td>結合テスト仕様書の確認項目に入れる</td></tr>
+<tr><td>8</td><td>今回の範囲外</td><td>画面の <code>pages/</code>・<code>components/</code>・<code>main.js</code>・<code>sw.js</code>、ビルド・リリースのスクリプト（<code>build-functions.mjs</code> など）と GitHub Actions のワークフロー（<code>ci.yml</code> など）は、モジュールテストの対象外のため作っていない</td><td>画面の実装とリリースの仕組みを次の作業として進める</td></tr></tbody></table></div>
 </section>
 <section class="chapter" id="s8"><h2><i class="fa-solid fa-gavel h-ico" aria-hidden="true"></i>8. 判定と次の作業</h2>
-<div class="vis"><div class="judge"><div class="judge-mark ">合格</div><div class="judge-body"><p class="big">共通モジュール（functions/shared の util・db・domain・ai・mail と web/js/logic/validators.js）</p><p>仕様書 6.2 の合否基準をすべて満たした</p></div></div></div>
-<div class="table-wrap"><table><thead><tr><th>基準（仕様書 6.2）</th><th>結果</th><th>判定</th></tr></thead><tbody><tr><td>テストケースがすべて実装され成功する（skip・todo 0件）</td><td>193/193、skip 0・todo 0</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<div class="vis"><div class="judge"><div class="judge-mark ">合格</div><div class="judge-body"><p class="big">全モジュール（functions/ の共通モジュール・Lambda 4関数と、web/js/core・web/js/logic）</p><p>仕様書 6.2 の合否基準をすべて満たした</p></div></div></div>
+<div class="table-wrap"><table><thead><tr><th>基準（仕様書 6.2）</th><th>結果</th><th>判定</th></tr></thead><tbody><tr><td>テストケースがすべて実装され成功する（skip・todo 0件）</td><td>428/428、skip 0・todo 0</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
 <tr><td>カバレッジ（domain・validators 100%、そのほか 90%／80%以上）</td><td>4章のとおり</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
-<tr><td>実行時間 60秒以内</td><td>5.51 秒</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<tr><td>実行時間 60秒以内</td><td>11.01 秒</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
 <tr><td>安定性（3回続けて同じ結果）</td><td>同じ</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr></tbody></table></div>
-<ul><li>第2弾：api-handler（MT-H01〜H14）・grading-worker・import-worker・batch-runner（MT-W01〜W04）・画面（MT-F01〜F06）を実装し、残りのケースを試験する</li><li>第2弾の完了時に本書を最終版に更新し、全362ケースで合否を判定する</li><li>仕様書 第0.2版 3.4 の GitHub Actions（<code>ci.yml</code>・<code>release.yml</code> の <code>build</code>）でのテスト実行は、ワークフローの作成とあわせて第2弾以降で対応する</li><li>7.2 の解釈・補足を詳細設計書と仕様書に反映するかをジュンさんに確認する</li></ul></section>
+<ul><li>7.2 の提案（No.1〜6）を詳細設計書・テスト仕様書に反映するかをジュンさんに確認する</li><li>画面（pages・components）と、ビルド・リリースのスクリプト・GitHub Actions（<code>ci.yml</code>・<code>release.yml</code>）を作る</li><li>dev 環境で結合テストを行い、7.2 No.7 の前提を確かめる</li></ul></section>
 </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト結果報告書 第0.1版（中間報告：共通モジュール）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト結果報告書 第1.0版（最終報告：全モジュール）</div></footer>
 </body>
 </html>
