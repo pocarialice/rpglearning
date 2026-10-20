@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPG学習アプリ モジュールテスト結果報告書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;family=Noto+Sans+Mono&amp;display=swap" rel="stylesheet">
+<style>
+
+
+:root {
+  /* DADS color tokens */
+  --blue-1000: #00118F;
+  --blue-900: #0017C1;
+  --blue-700: #264AF4;
+  --blue-200: #C5D7FB;
+  --blue-100: #D9E6FF;
+  --blue-50: #E8F1FE;
+  --gray-900: #1A1A1C;
+  --gray-700: #414141;
+  --gray-600: #626264;
+  --gray-536: #767676;
+  --gray-300: #B4B4B4;
+  --gray-100: #E6E6E6;
+  --gray-50: #F2F2F2;
+  --white: #FFFFFF;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --focus: #FFD43D;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--gray-900);
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+a { color: var(--blue-900); text-underline-offset: 3px; }
+a:hover { color: var(--blue-1000); }
+a:focus-visible { outline: 4px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.site-header {
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--white);
+}
+.site-header .inner {
+  max-width: 1120px; margin: 0 auto; padding: 40px 16px 32px;
+}
+.eyebrow {
+  display: inline-block; font-size: 14px; font-weight: 700; color: var(--blue-900);
+  background: var(--blue-50); border-radius: 999px; padding: 2px 12px; margin-bottom: 12px;
+}
+.site-header h1 {
+  font-size: 32px; line-height: 1.4; margin: 0 0 16px; font-weight: 700;
+}
+.meta {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding: 0; list-style: none;
+  font-size: 14px; color: var(--gray-600);
+}
+.meta b { color: var(--gray-900); font-weight: 700; margin-left: 4px; }
+
+.layout {
+  max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px;
+}
+nav.toc { position: sticky; top: 24px; align-self: start; }
+nav.toc p { font-size: 14px; font-weight: 700; color: var(--gray-600); margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--gray-100); }
+nav.toc a {
+  display: block; padding: 6px 12px; margin-left: -2px; border-left: 2px solid transparent;
+  color: var(--gray-700); text-decoration: none; font-size: 15px;
+}
+nav.toc a:hover { color: var(--blue-900); border-left-color: var(--blue-900); background: var(--blue-50); }
+
+main { min-width: 0; }
+.chapter { padding-bottom: 48px; margin-bottom: 48px; border-bottom: 1px solid var(--gray-100); scroll-margin-top: 24px; }
+.chapter:last-child { border-bottom: none; }
+h2 {
+  font-size: 28px; line-height: 1.4; margin: 0 0 24px; padding-left: 16px;
+  border-left: 6px solid var(--blue-900);
+}
+h3 {
+  font-size: 20px; line-height: 1.5; margin: 32px 0 12px; color: var(--blue-1000);
+}
+p { margin: 0 0 16px; }
+.h-ico { color: var(--blue-900); display: inline-block; width: 1.2em; text-align: center; margin-right: 0.45em; font-size: 0.9em; vertical-align: 0.02em; }
+h3 .h-ico { font-size: 0.85em; margin-right: 0.4em; }
+ul, ol { margin: 0 0 16px; padding-left: 1.5em; }
+li { margin: 4px 0; }
+li::marker { color: var(--blue-900); }
+
+.table-wrap { overflow-x: auto; margin: 0 0 24px; border: 1px solid var(--gray-300); border-radius: var(--radius-8); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--gray-100); }
+th { background: var(--blue-50); color: var(--gray-900); font-weight: 700; border-bottom: 2px solid var(--blue-900); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+.mermaid .node rect, .mermaid rect.actor, .mermaid .statediagram-state rect { rx: 8px; ry: 8px; }
+.mermaid .edgeLabel, .mermaid .edgeLabel p { font-size: 13px; color: var(--gray-700); }
+
+figure.diagram {
+  margin: 8px 0 32px; padding: 24px 16px; background: var(--white);
+  border: 1px solid var(--gray-300); border-radius: var(--radius-12); overflow-x: auto;
+  text-align: center;
+}
+.mermaid { font-family: "Noto Sans JP", sans-serif; }
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* ===== chapter visuals (DADS components) ===== */
+.vis {
+  background: var(--blue-50); border-radius: var(--radius-12); padding: 24px;
+  margin: 0 0 32px; display: grid; gap: 16px;
+}
+.vis p { margin: 0; }
+.vis-grid { display: grid; gap: 16px; }
+.vis-grid.c1 { grid-template-columns: minmax(220px, 1fr) 2fr; }
+.vis-grid.c2 { grid-template-columns: 1fr 1fr; }
+.vis-grid.c5 { grid-template-columns: 280px 1fr; align-items: center; }
+.vis-grid.cards4 { grid-template-columns: repeat(4, 1fr); }
+.vis-grid.cards4.c6 { grid-template-columns: repeat(2, 1fr); }
+.vis-grid.tiles4 { grid-template-columns: repeat(4, 1fr); }
+.vis-stack { display: grid; gap: 16px; }
+.card, .role, .tile, .kpi-hero {
+  background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px;
+}
+.vis-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin-bottom: 8px !important; }
+.vis-label.inline { margin: 0 8px 0 0 !important; }
+.vis-title { font-size: 17px; font-weight: 700; }
+.count { font-size: 13px; color: var(--white); background: var(--blue-900); border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
+.lead { font-size: 17px; font-weight: 400; line-height: 1.6; }
+.lead strong { color: var(--blue-900); }
+.note { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-top: 6px !important; }
+.tag-row, .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-row { margin-top: 12px; }
+.tag { display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; line-height: 1.4; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.tag.solid { background: var(--blue-900); color: var(--white); }
+.tag.line { background: var(--white); color: var(--blue-900); border: 1px solid var(--blue-900); }
+.tag.mute { background: var(--gray-50); color: var(--gray-600); border: 1px solid var(--gray-300); }
+.pill { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--blue-100); color: var(--blue-1000); }
+.scope { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+/* KPI hero */
+.kpi-hero { background: var(--blue-900); border-color: var(--blue-900); color: var(--white); display: flex; flex-direction: column; justify-content: center; }
+.kpi-hero .vis-label { color: var(--blue-100); }
+.kpi-num { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: 0; }
+.kpi-num span { font-size: 32px; margin-left: 2px; }
+.kpi-num small { font-size: 16px; margin-left: 6px; font-weight: 400; }
+.kpi-name { font-size: 17px; font-weight: 700; margin-top: 12px !important; }
+.kpi-def { font-size: 14px; color: var(--blue-100); margin-top: 4px !important; }
+/* scale */
+.scale { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.scale-pt { display: flex; align-items: center; gap: 10px; }
+.scale-num { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1; }
+.scale-num small { font-size: 15px; margin-left: 2px; }
+.scale-cap { font-size: 13px; color: var(--gray-600); line-height: 1.4; }
+.scale-bar { height: 8px; background: var(--blue-100); border-radius: 999px; position: relative; }
+.scale-bar span { position: absolute; inset: 0; background: linear-gradient(90deg, var(--blue-200), var(--blue-900)); border-radius: 999px; }
+.scale-bar::after { content: ""; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); border-left: 12px solid var(--blue-900); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+/* role */
+.ico { width: 44px; height: 44px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; margin-bottom: 10px; }
+.ico.sm { width: 32px; height: 32px; margin: 0; }
+.ico.sm svg { width: 18px; height: 18px; }
+.role.ai { border-style: dashed; border-color: var(--blue-700); }
+.role-name { font-size: 17px; font-weight: 700; margin-bottom: 6px !important; }
+ul.mini, ul.checks { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--gray-700); }
+ul.mini li { padding-left: 14px; position: relative; margin: 2px 0; }
+ul.mini li::before { content: ""; position: absolute; left: 0; top: 0.7em; width: 6px; height: 6px; border-radius: 50%; background: var(--blue-900); }
+.info-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* feature map */
+.vis-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--gray-700); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.lg.l1, .feat.l1 { background: var(--white); border: 1px solid var(--blue-900); }
+.lg.l2, .feat.l2 { background: var(--blue-900); border: 1px solid var(--blue-900); color: var(--white); }
+.lg.l3, .feat.l3 { background: var(--gray-900); border: 1px solid var(--gray-900); color: var(--white); }
+.fmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fcol { display: flex; flex-direction: column; gap: 8px; }
+.fcol-h { font-size: 14px; font-weight: 700; color: var(--blue-1000); border-bottom: 2px solid var(--blue-900); padding-bottom: 4px; }
+.feat { display: flex; align-items: baseline; gap: 8px; font-size: 14px; padding: 8px 12px; border-radius: 6px; }
+.feat b { font-family: "Noto Sans Mono", monospace; font-size: 12px; opacity: 0.8; }
+.interval { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+ol.steps-mini { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+ol.steps-mini li { position: relative; font-size: 13px; color: var(--gray-700); background: var(--blue-50); border: 1px solid var(--blue-200); border-radius: 6px; padding: 6px 12px 6px 12px; margin: 0; }
+ol.steps-mini li b { font-size: 18px; color: var(--blue-900); margin-right: 2px; }
+ol.steps-mini li:not(:last-child)::after { content: "›"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--blue-900); font-weight: 700; }
+ol.steps-mini li.done { background: var(--blue-900); color: var(--white); border-color: var(--blue-900); font-weight: 700; display: flex; align-items: center; }
+/* tiles */
+.tile { text-align: center; }
+.tile.strong { border: 2px solid var(--blue-900); }
+.tile-num { font-size: 36px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.tile-num small { font-size: 14px; margin-left: 4px; }
+.tile-num.sm { font-size: 26px; }
+.tile-cap { font-size: 13px; color: var(--gray-700); margin-top: 6px !important; }
+ul.checks li { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--gray-100); }
+ul.checks li::before { content: ""; width: 16px; height: 16px; flex: none; border: 2px solid var(--blue-900); border-radius: 4px; }
+.badges { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 20px; }
+.badge { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--gray-700); }
+.medal { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--blue-900); background: var(--blue-50); border: 2px solid var(--blue-900); box-shadow: 0 0 0 3px var(--blue-100); }
+/* phone */
+.phone { background: var(--gray-900); border-radius: 32px; padding: 10px; width: 260px; justify-self: center; }
+.phone-in { background: var(--white); border-radius: 24px; padding: 18px 14px; display: grid; gap: 10px; font-size: 12px; }
+.ph-lv { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 8px; }
+.ph-badge { grid-row: span 2; background: var(--blue-900); color: var(--white); font-weight: 700; border-radius: 8px; padding: 6px 8px; font-size: 14px; }
+.ph-bar { height: 8px; background: var(--blue-100); border-radius: 999px; overflow: hidden; }
+.ph-bar span { display: block; height: 100%; background: var(--blue-900); }
+.ph-exp { font-size: 11px; color: var(--gray-600); }
+.ph-say { display: flex; gap: 8px; align-items: flex-start; }
+.ph-ava { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; }
+.ph-ava svg { width: 16px; height: 16px; }
+.ph-say p { background: var(--blue-50); border-radius: 0 10px 10px 10px; padding: 8px 10px; line-height: 1.5; }
+.ph-quest { border: 1px solid var(--gray-100); border-radius: 10px; padding: 8px 10px; }
+.ph-quest p { font-weight: 700; margin-bottom: 4px !important; }
+.ph-quest ul { list-style: none; margin: 0; padding: 0; }
+.ph-quest li { display: flex; gap: 6px; align-items: center; margin: 3px 0; color: var(--gray-700); }
+.ph-quest li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--blue-900); border-radius: 3px; flex: none; }
+.ph-quest li.ok { color: var(--gray-536); text-decoration: line-through; }
+.ph-quest li.ok::before { background: var(--blue-900); }
+.ph-btn { background: var(--blue-900); color: var(--white); text-align: center; font-weight: 700; border-radius: 8px; padding: 10px; font-size: 13px; }
+ol.prio-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+ol.prio-list li { display: flex; gap: 12px; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px 14px; margin: 0; }
+ol.prio-list li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--blue-900); color: var(--white); display: grid; place-items: center; font-size: 14px; }
+ol.prio-list span { font-weight: 700; display: flex; flex-direction: column; }
+ol.prio-list small { font-weight: 400; font-size: 13px; color: var(--gray-600); }
+.mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-stats > div { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px; text-align: center; }
+/* non-functional */
+.nf-h { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 10px; }
+ul.model { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 14px; }
+ul.model li { display: flex; align-items: center; gap: 8px; margin: 0; }
+ul.model .tag { min-width: 72px; justify-content: center; }
+.auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.arrow { color: var(--blue-900); font-weight: 700; }
+ol.tl { list-style: none; padding: 0 0 0 14px; margin: 0; border-left: 2px solid var(--blue-200); display: grid; gap: 8px; font-size: 14px; }
+ol.tl li { position: relative; margin: 0; color: var(--gray-700); }
+ol.tl li::before { content: ""; position: absolute; left: -21px; top: 0.45em; width: 12px; height: 12px; border-radius: 50%; background: var(--white); border: 2px solid var(--blue-900); }
+ol.tl li:last-child::before { background: var(--blue-900); }
+ol.tl b { display: block; color: var(--gray-900); font-size: 13px; }
+/* step navigation */
+ol.stepnav { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1.5fr auto 1fr 1fr; gap: 12px; align-items: stretch; }
+ol.stepnav > li { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px; display: flex; gap: 12px; margin: 0; }
+ol.stepnav > li.current { border: 2px solid var(--blue-900); }
+.sn-num { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue-900); color: var(--blue-900); display: grid; place-items: center; font-weight: 700; }
+li.current .sn-num { background: var(--blue-900); color: var(--white); }
+.sn-h { font-weight: 700; font-size: 17px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sn-sub { font-size: 13px; color: var(--blue-900); font-weight: 700; }
+ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-items: center; }
+.gate-in { font-size: 12px; text-align: center; color: var(--gray-700); border: 2px dashed var(--blue-900); border-radius: var(--radius-8); padding: 8px 10px; background: var(--white); line-height: 1.5; }
+.gate-in b { color: var(--blue-900); }
+/* banner */
+.banner { display: flex; gap: 14px; align-items: flex-start; background: var(--white); border: 1px solid var(--blue-900); border-left: 6px solid var(--blue-900); border-radius: var(--radius-8); padding: 16px 20px; }
+.banner-ico { color: var(--blue-900); flex: none; }
+.banner-h { font-size: 17px; font-weight: 700; }
+.banner-h b { color: var(--blue-900); font-size: 22px; }
+.cat-n { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.cat-n small { font-size: 14px; margin-left: 2px; }
+.cat-h { font-weight: 700; margin-top: 4px !important; }
+
+@media (max-width: 860px) {
+  .vis { padding: 16px; }
+  .card, .role, .tile, .kpi-hero { padding: 14px; }
+  .role-name, .cat-h { font-size: 15px; }
+  .vis-grid.c1, .vis-grid.c2, .vis-grid.c5, .scope, .fmap { grid-template-columns: 1fr; }
+  .vis-grid.tiles4, .mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .mini-stats { grid-template-columns: repeat(3, 1fr); }
+  ol.stepnav { grid-template-columns: 1fr; }
+  .vis-grid.cards4 { grid-template-columns: repeat(2, 1fr); }
+  .vis-grid.cards4.c6 { grid-template-columns: 1fr; }
+  ol.stepnav > li.gate { justify-content: center; }
+  .scale { grid-template-columns: 1fr; text-align: left; }
+  .scale-bar { height: 6px; margin-right: 12px; }
+  .kpi-num { font-size: 52px; }
+}
+@media print { .vis { break-inside: avoid; } }
+
+.site-footer { border-top: 1px solid var(--gray-100); color: var(--gray-600); font-size: 14px; }
+.site-footer .inner { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }
+  nav.toc { position: static; background: var(--gray-50); border-radius: var(--radius-8); padding: 16px; }
+  nav.toc ol { border-left: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  nav.toc a { padding: 6px 4px; border-left: none; font-size: 14px; }
+  .site-header h1 { font-size: 26px; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 18px; }
+  th, td { padding: 10px 12px; font-size: 14px; }
+}
+@media print {
+  nav.toc { display: none; }
+  .layout { display: block; }
+  .chapter { break-inside: auto; }
+  figure.diagram { break-inside: avoid; }
+}
+
+code { font-family: "Noto Sans Mono", monospace; font-size: 0.88em; background: var(--blue-50); color: var(--blue-1000); padding: 1px 6px; border-radius: 4px; }
+pre { background: var(--gray-50); border: 1px solid var(--gray-100); border-radius: var(--radius-8); padding: 16px; overflow-x: auto; font-size: 14px; }
+pre code { background: none; padding: 0; color: var(--gray-900); }
+strong { color: var(--blue-1000); }
+blockquote { margin: 0 0 16px; padding: 12px 16px; border-left: 4px solid var(--blue-900); background: var(--blue-50); border-radius: 0 var(--radius-8) var(--radius-8) 0; }
+td code, th code { white-space: nowrap; }
+/* ===== 詳細設計書・モジュールテスト仕様書 追加スタイル ===== */
+h4 { font-size: 17px; line-height: 1.5; margin: 24px 0 10px; color: var(--gray-900); }
+h4 .h-ico { font-size: 0.8em; margin-right: 0.35em; }
+.note-block { display: flex; gap: 12px; margin: 0 0 24px; padding: 14px 18px; background: var(--blue-50); border-left: 4px solid var(--blue-900); border-radius: var(--radius-8); font-size: 15px; }
+.note-block > i { color: var(--blue-900); margin-top: 5px; }
+.note-block p { margin: 0 0 6px; }
+.note-block p:last-child { margin: 0; }
+pre { line-height: 1.55; }
+/* flow */
+.flow { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: stretch; margin: 0; padding: 0; list-style: none; }
+.flow > li { position: relative; flex: 1 1 140px; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 12px 14px; margin: 0; font-size: 14px; color: var(--gray-700); }
+.flow > li b { display: block; font-size: 15px; color: var(--gray-900); margin-bottom: 2px; }
+.flow > li .fi { color: var(--blue-900); margin-right: 6px; }
+.flow > li:not(:last-child)::after { content: "\f054"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; right: -20px; top: 50%; transform: translateY(-50%); color: var(--blue-900); font-size: 13px; }
+.flow > li.hl { background: var(--blue-900); border-color: var(--blue-900); color: var(--blue-100); }
+.flow > li.hl b, .flow > li.hl .fi { color: var(--white); }
+.flow > li.gate { border: 2px dashed var(--blue-900); }
+/* layers */
+.layers { display: grid; gap: 8px; }
+.layer { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px 14px; }
+.layer-h { font-weight: 700; font-size: 14px; color: var(--blue-1000); display: flex; align-items: center; gap: 8px; }
+.layer-h i { color: var(--blue-900); width: 18px; text-align: center; }
+.layer.dark { background: var(--blue-900); border-color: var(--blue-900); }
+.layer.dark .layer-h, .layer.dark .layer-h i { color: var(--white); }
+.layer.dark .chip { background: var(--white); }
+.layer-arrow { text-align: center; color: var(--blue-900); font-size: 13px; line-height: 1; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: "Noto Sans Mono", monospace; font-size: 12.5px; padding: 3px 9px; border-radius: 6px; background: var(--blue-50); color: var(--blue-1000); border: 1px solid var(--blue-200); white-space: nowrap; }
+.chip.solid { background: var(--blue-900); color: var(--white); border-color: var(--blue-900); }
+.chip.ja { font-family: "Noto Sans JP", sans-serif; }
+/* map rows: from -> to */
+.maprows { display: grid; gap: 8px; }
+.maprow { display: grid; grid-template-columns: 1fr 28px 1fr; align-items: center; gap: 8px; }
+.maprow > div { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 8px 12px; font-size: 14px; }
+.maprow > div code { font-size: 12.5px; }
+.maprow > span { color: var(--blue-900); text-align: center; }
+.maprow > div small { display: block; color: var(--gray-600); font-size: 12px; }
+/* cards grid */
+.cgrid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.card h5 { margin: 0 0 8px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+.card h5 i { color: var(--blue-900); }
+.card .sub { font-size: 13px; color: var(--gray-600); margin: 0 0 8px; }
+.card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 13px; }
+.card dt { color: var(--gray-600); }
+.card dd { margin: 0; color: var(--gray-900); font-weight: 700; }
+.card.em { border: 2px solid var(--blue-900); }
+.card.dash { border-style: dashed; border-color: var(--blue-700); }
+/* bars */
+.bars { display: grid; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: 220px 1fr 60px; gap: 12px; align-items: center; font-size: 14px; }
+.bar-row .bt { height: 12px; background: var(--blue-100); border-radius: 999px; overflow: hidden; }
+.bar-row .bt span { display: block; height: 100%; background: var(--blue-900); border-radius: 999px; }
+.bar-row b { color: var(--blue-900); text-align: right; }
+/* level stack */
+.levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: end; }
+.lv { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 12px; text-align: center; font-size: 13px; color: var(--gray-700); }
+.lv b { display: block; font-size: 15px; color: var(--gray-900); }
+.lv.on { background: var(--blue-900); border-color: var(--blue-900); color: var(--blue-100); }
+.lv.on b { color: var(--white); }
+.lv:nth-child(1) { min-height: 120px; } .lv:nth-child(2) { min-height: 100px; } .lv:nth-child(3) { min-height: 84px; } .lv:nth-child(4) { min-height: 70px; }
+.kv { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 14px; }
+.vis-cap { font-size: 13px; color: var(--gray-600); margin: 0 !important; }
+@media (max-width: 860px) {
+  .flow { flex-direction: column; gap: 22px; }
+  .flow > li { flex: none; }
+  .flow > li:not(:last-child)::after { content: "\f078"; right: auto; left: 50%; top: auto; bottom: -19px; transform: translateX(-50%); }
+  .layer { grid-template-columns: 1fr; }
+  .maprow { grid-template-columns: 1fr; }
+  .maprow > span { transform: rotate(90deg); }
+  .bar-row { grid-template-columns: 1fr 50px; }
+  .bar-row .bl { grid-column: 1 / -1; }
+  .levels { grid-template-columns: repeat(2, 1fr); }
+}
+td code { white-space: normal; overflow-wrap: anywhere; }
+p code, li code, .note code, .vis code, blockquote code { overflow-wrap: anywhere; }
+.banner > div, .maprow > div, .card, .layer > div, .flow > li { min-width: 0; overflow-wrap: anywhere; }
+h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
+
+</style>
+<style>
+.res { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+.res.ok { background: var(--blue-50); color: var(--blue-900); border: 1px solid var(--blue-200); }
+.res.ng { background: var(--gray-900); color: var(--white); }
+.judge { display: flex; gap: 20px; align-items: center; background: var(--white); border: 2px solid var(--blue-900); border-radius: var(--radius-12); padding: 20px 24px; }
+.judge-mark { flex: none; width: 88px; height: 88px; border-radius: 50%; background: var(--blue-900); color: var(--white); display: grid; place-items: center; font-size: 22px; font-weight: 700; }
+.judge-mark.ng { background: var(--gray-900); }
+.judge-body p { margin: 0 0 4px; }
+.judge-body .big { font-size: 20px; font-weight: 700; }
+.donut { width: 132px; height: 132px; border-radius: 50%; display: grid; place-items: center; justify-self: center; }
+.donut > div { width: 92px; height: 92px; border-radius: 50%; background: var(--white); display: grid; place-items: center; text-align: center; line-height: 1.2; }
+.donut b { font-size: 24px; color: var(--blue-900); display: block; }
+.donut small { font-size: 12px; color: var(--gray-600); }
+.cov-row { display: grid; grid-template-columns: 220px 1fr 1fr; gap: 12px; align-items: center; font-size: 14px; }
+.cov-row .meter { position: relative; height: 14px; background: var(--blue-100); border-radius: 999px; overflow: visible; }
+.cov-row .meter span { display: block; height: 100%; background: var(--blue-900); border-radius: 999px; }
+.cov-row .meter i { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--gray-900); }
+.cov-row .meter em { position: absolute; right: 6px; top: -1px; font-style: normal; font-size: 11px; font-weight: 700; color: var(--white); }
+.cov-head { font-size: 12px; color: var(--gray-600); }
+details.cases { border: 1px solid var(--gray-300); border-radius: var(--radius-8); margin: 0 0 12px; background: var(--white); }
+details.cases summary { cursor: pointer; padding: 12px 16px; font-weight: 700; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+details.cases summary::marker { color: var(--blue-900); }
+details.cases .table-wrap { margin: 0 12px 12px; }
+.grid-ids { display: flex; flex-wrap: wrap; gap: 4px; }
+.grid-ids span { width: 14px; height: 14px; border-radius: 3px; background: var(--blue-900); }
+.grid-ids span.ng { background: var(--gray-900); }
+.grid-ids span.todo { background: var(--white); border: 1px dashed var(--gray-300); }
+td:first-child code { white-space: nowrap; overflow-wrap: normal; }
+.res-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.res-tiles .tile-num { font-size: 30px; }
+@media (max-width: 860px) { .cov-row { grid-template-columns: 1fr; } .judge { flex-direction: column; align-items: flex-start; } }
+</style>
+</head>
+<body>
+<header class="site-header"><div class="inner"><span class="eyebrow"><i class="fa-solid fa-flask-vial"></i> モジュールテスト結果</span><h1>RPG学習アプリ モジュールテスト結果報告書</h1><ul class="meta">
+<li>版数<b>第0.1版（中間報告：共通モジュール）</b></li><li>作成日<b>2026-10-20</b></li><li>コミット<b>cdfd493</b></li><li>判定<b>合格</b></li></ul></div></header>
+<div class="layout">
+<nav class="toc" aria-label="目次"><p>目次</p><ol>
+<li><a href="#s1">1. 概要</a></li>
+<li><a href="#s2">2. 実行環境</a></li>
+<li><a href="#s3">3. 結果の要約</a></li>
+<li><a href="#s4">4. カバレッジ</a></li>
+<li><a href="#s5">5. モジュール別の結果</a></li>
+<li><a href="#s6">6. テストケース別の結果</a></li>
+<li><a href="#s7">7. 所見</a></li>
+<li><a href="#s8">8. 判定と次の作業</a></li>
+</ol></nav>
+<main>
+<section class="chapter" id="s1"><h2><i class="fa-solid fa-circle-info h-ico" aria-hidden="true"></i>1. 概要</h2>
+<div class="vis"><p class="vis-label">今回の範囲（全362ケースのうち193ケース）</p><ol class="flow">
+<li class="hl"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail　193ケース</li>
+<li class="gate"><b><i class="fa-solid fa-bolt fi"></i>Lambda関数</b>api-handler・worker・batch　142ケース</li>
+<li class="gate"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js/core・logic　27ケース</li></ol>
+<p class="vis-cap">塗りつぶし＝今回テストした範囲、点線＝次回</p></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3><p>モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。本版は段階リリースの第1弾（中間報告）で、共通モジュールだけを対象とする。Lambda関数（MT-H・MT-W）と画面（MT-F）は第2弾で実装・試験し、本書を更新する。</p>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 今回の範囲</h3>
+<div class="table-wrap"><table><thead><tr><th>区分</th><th>層</th><th>仕様書のケース数</th><th>今回</th></tr></thead><tbody><tr><td>対象</td><td>util（MT-U）</td><td>72</td><td>実行</td></tr>
+<tr><td>対象</td><td>db（MT-D）</td><td>24</td><td>実行</td></tr>
+<tr><td>対象</td><td>domain（MT-G）</td><td>69</td><td>実行</td></tr>
+<tr><td>対象</td><td>ai（MT-A）</td><td>23</td><td>実行</td></tr>
+<tr><td>対象</td><td>mail（MT-M）</td><td>5</td><td>実行</td></tr>
+<tr><td>対象外（次回）</td><td>api-handler（MT-H）</td><td>97</td><td>-</td></tr>
+<tr><td>対象外（次回）</td><td>ワーカー・バッチ（MT-W）</td><td>45</td><td>-</td></tr>
+<tr><td>対象外（次回）</td><td>画面（web/js）（MT-F）</td><td>27</td><td>-</td></tr></tbody></table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 文書情報</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>文書名</td><td>RPG学習アプリ モジュールテスト結果報告書</td></tr>
+<tr><td>版数</td><td>第0.1版（中間報告：共通モジュール）</td></tr>
+<tr><td>入力文書</td><td>モジュールテスト仕様書 第0.1版、詳細設計書 第0.1版</td></tr>
+<tr><td>対象範囲</td><td>共通モジュール（functions/shared の util・db・domain・ai・mail と web/js/logic/validators.js）</td></tr>
+<tr><td>実行日時・コミット</td><td>2026-10-20 16:23（JST）、<code>cdfd493</code>（ブランチ <code>claude/beautiful-cray-m8heuy</code>）</td></tr></tbody></table></div>
+</section>
+<section class="chapter" id="s2"><h2><i class="fa-solid fa-server h-ico" aria-hidden="true"></i>2. 実行環境</h2>
+<div class="vis"><p class="vis-label">テストの道具と差し替え</p><div class="vis-grid c2">
+<div class="card em"><h5><i class="fa-solid fa-check"></i>本物のまま動かす</h5><div class="chips"><span class="chip">domain/*</span><span class="chip">validators</span><span class="chip">ids</span><span class="chip">date-jst</span><span class="chip">json-guard</span><span class="chip">prompts</span><span class="chip">templates</span></div><p class="note">純粋関数は入力と出力だけで確かめた</p></div>
+<div class="card dash"><h5><i class="fa-solid fa-masks-theater"></i>モックに差し替える</h5><div class="chips"><span class="chip">RDS Data API</span><span class="chip">Bedrock Runtime</span><span class="chip">SES</span><span class="chip">時計（偽の時計）</span><span class="chip">乱数</span><span class="chip">fetch</span></div><p class="note">aws-sdk-client-mock・vi.useFakeTimers</p></div>
+</div></div>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>OS</td><td>Linux 6.18（作業用コンテナ）</td></tr>
+<tr><td>Node.js</td><td>22.22.0（Lambda の nodejs22.x と同じ系列）</td></tr>
+<tr><td>Vitest・@vitest/coverage-v8</td><td>3.2.7</td></tr>
+<tr><td>jsdom</td><td>29.1.1（web/ のテストの実行環境）</td></tr>
+<tr><td>aws-sdk-client-mock</td><td>4.1.0</td></tr>
+<tr><td>AWS SDK for JavaScript v3</td><td>3.1153.0（client-rds-data・client-bedrock-runtime・client-ses）</td></tr>
+<tr><td>実行コマンド</td><td><code>npx vitest run --coverage</code>（<code>npm test -- --coverage</code> と同じ）</td></tr></tbody></table></div>
+<ul><li>外部サービス（Aurora・Bedrock・SES）には接続せず、<code>aws-sdk-client-mock</code> で応答を差し替えた（仕様書 2.3）</li><li><code>tests/helpers/vitest.setup.js</code> で <code>fetch</code> の既定をエラーにし、ネットワークへ出たテストは失敗する</li></ul></section>
+<section class="chapter" id="s3"><h2><i class="fa-solid fa-square-poll-vertical h-ico" aria-hidden="true"></i>3. 結果の要約</h2>
+<div class="vis"><p class="vis-label">テストケースの結果</p><div class="vis-grid c1">
+<div class="donut" style="background: conic-gradient(var(--blue-900) 0 360deg, var(--gray-900) 360deg 360deg)"><div><span><b>193</b><small>／193 合格</small></span></div></div>
+<div class="res-tiles">
+<div class="card tile strong"><p class="tile-num">193<small>件</small></p><p class="tile-cap">合格したケース</p></div>
+<div class="card tile"><p class="tile-num sm">0<small>件</small></p><p class="tile-cap">不合格・未実装</p></div>
+<div class="card tile"><p class="tile-num sm">279<small>件</small></p><p class="tile-cap">実行した it（補足 32）</p></div>
+<div class="card tile"><p class="tile-num sm">5.6<small>秒</small></p><p class="tile-cap">実行時間（基準 60秒）</p></div>
+</div></div>
+<div class="grid-ids" aria-label="ケースごとの結果"><span class="" title="MT-U01-01 AppError の属性：合格"></span><span class="" title="MT-U01-02 応答への変換（想定エラー）：合格"></span><span class="" title="MT-U01-03 応答への変換（想定外）：合格"></span><span class="" title="MT-U01-04 コードからHTTPの既定：合格"></span><span class="" title="MT-U02-01 変換：合格"></span><span class="" title="MT-U02-02 逆変換：合格"></span><span class="" title="MT-U02-03 接頭辞の違い：合格"></span><span class="" title="MT-U02-04 下限：合格"></span><span class="" title="MT-U02-05 上限：合格"></span><span class="" title="MT-U02-06 数字以外：合格"></span><span class="" title="MT-U02-07 文字列以外：合格"></span><span class="" title="MT-U03-01 JSTの日付（0:00直前）：合格"></span><span class="" title="MT-U03-02 JSTの日付（0:00ちょうど）：合格"></span><span class="" title="MT-U03-03 月末をまたぐ：合格"></span><span class="" title="MT-U03-04 年末をまたぐ：合格"></span><span class="" title="MT-U03-05 うるう年：合格"></span><span class="" title="MT-U03-06 引き算：合格"></span><span class="" title="MT-U03-07 週の開始（月曜0:00）：合格"></span><span class="" title="MT-U03-08 週の開始（日曜23:59）：合格"></span><span class="" title="MT-U03-09 週の開始（次の月曜）：合格"></span><span class="" title="MT-U03-10 送信枠：合格"></span><span class="" title="MT-U03-11 ISO文字列：合格"></span><span class="" title="MT-U03-12 日数の差：合格"></span><span class="" title="MT-U03-13 不正な日付：合格"></span><span class="" title="MT-U04-01 グループ（文字列）：合格"></span><span class="" title="MT-U04-02 グループ（配列）・なし：合格"></span><span class="" title="MT-U04-03 sub がない：合格"></span><span class="" title="MT-U04-04 ロールあり：合格"></span><span class="" title="MT-U04-05 ロールなし：合格"></span><span class="" title="MT-U04-06 招待中の初回ログイン：合格"></span><span class="" title="MT-U04-07 論理削除中・未登録：合格"></span><span class="" title="MT-U04-08 担当コース：合格"></span><span class="" title="MT-U04-09 システム管理者は全コース：合格"></span><span class="" title="MT-U05-01 1行のJSON：合格"></span><span class="" title="MT-U05-02 prod の DEBUG：合格"></span><span class="" title="MT-U05-03 dev の DEBUG：合格"></span><span class="" title="MT-U05-04 伏せ字：合格"></span><span class="" title="MT-U05-05 エラーのスタック：合格"></span><span class="" title="MT-U06-01 本文（JSON）：合格"></span><span class="" title="MT-U06-02 本文（Base64）：合格"></span><span class="" title="MT-U06-03 本文なし：合格"></span><span class="" title="MT-U06-04 壊れたJSON：合格"></span><span class="" title="MT-U06-05 通常の応答：合格"></span><span class="" title="MT-U06-06 CSVの応答：合格"></span><span class="" title="MT-U07-01 下限の1つ下：合格"></span><span class="" title="MT-U07-02 下限：合格"></span><span class="" title="MT-U07-03 小見出し不要の上限：合格"></span><span class="" title="MT-U07-04 小見出しが必要になる：合格"></span><span class="" title="MT-U07-05 小見出しあり：合格"></span><span class="" title="MT-U07-06 上限：合格"></span><span class="" title="MT-U07-07 上限の1つ上：合格"></span><span class="" title="MT-U07-08 小見出しが行の途中：合格"></span><span class="" title="MT-U07-09 2行目の行頭の小見出し：合格"></span><span class="" title="MT-U07-10 中身のない小見出し：合格"></span><span class="" title="MT-U07-11 空白・改行は数えない：合格"></span><span class="" title="MT-U07-12 サロゲートペア：合格"></span><span class="" title="MT-U07-13 空・null：合格"></span><span class="" title="MT-U07-14 文字数の境界：合格"></span><span class="" title="MT-U07-15 使える文字：合格"></span><span class="" title="MT-U07-16 使えない文字：合格"></span><span class="" title="MT-U07-17 前後の空白：合格"></span><span class="" title="MT-U07-18 パートナー名の空：合格"></span><span class="" title="MT-U07-19 パートナー名の境界：合格"></span><span class="" title="MT-U07-20 パートナー名の記号：合格"></span><span class="" title="MT-U07-21 通知時刻の範囲：合格"></span><span class="" title="MT-U07-22 通知時刻の刻み・形式：合格"></span><span class="" title="MT-U07-23 取り込みのサイズ：合格"></span><span class="" title="MT-U07-24 取り込みの種類：合格"></span><span class="" title="MT-U07-25 テキストの長さ：合格"></span><span class="" title="MT-U07-26 公開できる問題：合格"></span><span class="" title="MT-U07-27 公開できない問題：合格"></span><span class="" title="MT-U07-28 キーワードの数と長さ：合格"></span><span class="" title="MT-D01-01 接続情報：合格"></span><span class="" title="MT-D01-02 パラメータの型（整数・小数）：合格"></span><span class="" title="MT-D01-03 パラメータの型（文字・真偽）：合格"></span><span class="" title="MT-D01-04 パラメータの型（null）：合格"></span><span class="" title="MT-D01-05 日付・JSON：合格"></span><span class="" title="MT-D01-06 結果の変換：合格"></span><span class="" title="MT-D01-07 結果なし：合格"></span><span class="" title="MT-D01-08 DB起動中・再試行0回：合格"></span><span class="" title="MT-D01-09 DB起動中から復帰：合格"></span><span class="" title="MT-D01-10 再試行が尽きる：合格"></span><span class="" title="MT-D01-11 ほかのエラー：合格"></span><span class="" title="MT-D02-01 正常：合格"></span><span class="" title="MT-D02-02 途中の例外：合格"></span><span class="" title="MT-D02-03 Commit の失敗：合格"></span><span class="" title="MT-D02-04 戻り値：合格"></span><span class="" title="MT-D03-01 ニックネームの重複確認：合格"></span><span class="" title="MT-D03-02 重複なし：合格"></span><span class="" title="MT-D03-03 採点の完了（条件付き）：合格"></span><span class="" title="MT-D03-04 復習項目の登録・更新：合格"></span><span class="" title="MT-D03-05 週の集計：合格"></span><span class="" title="MT-D03-06 ランキングの締め：合格"></span><span class="" title="MT-D03-07 列名の変換：合格"></span><span class="" title="MT-D03-08 一覧の上限：合格"></span><span class="" title="MT-D03-09 並べ替えの許可リスト：合格"></span><span class="" title="MT-G01-01 初回・正解：合格"></span><span class="" title="MT-G01-02 初回・不正解：合格"></span><span class="" title="MT-G01-03 予定日の前日：合格"></span><span class="" title="MT-G01-04 予定日当日に正解：合格"></span><span class="" title="MT-G01-05 段階2→3：合格"></span><span class="" title="MT-G01-06 段階3→4：合格"></span><span class="" title="MT-G01-07 段階4→5：合格"></span><span class="" title="MT-G01-08 習得：合格"></span><span class="" title="MT-G01-09 不正解で段階1へ：合格"></span><span class="" title="MT-G01-10 段階5で不正解：合格"></span><span class="" title="MT-G01-11 段階1で不正解：合格"></span><span class="" title="MT-G01-12 遅れて正解（段階を下げない）：合格"></span><span class="" title="MT-G01-13 習得済みを解く：合格"></span><span class="" title="MT-G01-14 年末をまたぐ：合格"></span><span class="" title="MT-G02-01 択一の正解：合格"></span><span class="" title="MT-G02-02 択一の復習正解：合格"></span><span class="" title="MT-G02-03 説明の合格：合格"></span><span class="" title="MT-G02-04 説明の復習合格：合格"></span><span class="" title="MT-G02-05 不正解は0：合格"></span><span class="" title="MT-G02-06 必要EXP（表の値）：合格"></span><span class="" title="MT-G02-07 ちょうど整数になる値：合格"></span><span class="" title="MT-G02-08 Lv1の範囲：合格"></span><span class="" title="MT-G02-09 Lv2になる境界：合格"></span><span class="" title="MT-G02-10 Lv3になる境界：合格"></span><span class="" title="MT-G02-11 表の累計EXP：合格"></span><span class="" title="MT-G02-12 大きな値：合格"></span><span class="" title="MT-G02-13 不正な種類：合格"></span><span class="" title="MT-G03-01 復習ありの日：合格"></span><span class="" title="MT-G03-02 復習なしの日：合格"></span><span class="" title="MT-G03-03 乱数によらず守られる：合格"></span><span class="" title="MT-G03-04 択一の不正解：合格"></span><span class="" title="MT-G03-05 択一の正解：合格"></span><span class="" title="MT-G03-06 達成：合格"></span><span class="" title="MT-G03-07 達成済みは進めない：合格"></span><span class="" title="MT-G03-08 説明の合格・不合格：合格"></span><span class="" title="MT-G03-09 復習：合格"></span><span class="" title="MT-G03-10 新しい問題：合格"></span><span class="" title="MT-G03-11 同時に2つ達成：合格"></span><span class="" title="MT-G03-12 クエストなし：合格"></span><span class="" title="MT-G04-01 習得の境界：合格"></span><span class="" title="MT-G04-02 次の段階：合格"></span><span class="" title="MT-G04-03 まとめて達成：合格"></span><span class="" title="MT-G04-04 全部持っている：合格"></span><span class="" title="MT-G04-05 継続の境界：合格"></span><span class="" title="MT-G04-06 継続の銀・金：合格"></span><span class="" title="MT-G04-07 0日：合格"></span><span class="" title="MT-G05-01 同点なし：合格"></span><span class="" title="MT-G05-02 同点は同順位：合格"></span><span class="" title="MT-G05-03 同点の並び順：合格"></span><span class="" title="MT-G05-04 0 EXP は除く：合格"></span><span class="" title="MT-G05-05 空：合格"></span><span class="" title="MT-G05-06 全員同点：合格"></span><span class="" title="MT-G06-01 最初は択一：合格"></span><span class="" title="MT-G06-02 交互（択一のあと）：合格"></span><span class="" title="MT-G06-03 交互（説明のあと）：合格"></span><span class="" title="MT-G06-04 説明がないときは択一：合格"></span><span class="" title="MT-G06-05 優先順位：合格"></span><span class="" title="MT-G06-06 学習済みからの出題：合格"></span><span class="" title="MT-G06-07 出したものは除く：合格"></span><span class="" title="MT-G06-08 出せるものがない：合格"></span><span class="" title="MT-G06-09 キーワードのない説明候補：合格"></span><span class="" title="MT-G07-01 初めての択一に正解：合格"></span><span class="" title="MT-G07-02 復習の択一に正解：合格"></span><span class="" title="MT-G07-03 復習の説明に合格：合格"></span><span class="" title="MT-G07-04 不正解：合格"></span><span class="" title="MT-G07-05 正解でレベルアップ：合格"></span><span class="" title="MT-G07-06 クエスト報酬だけでレベルアップ：合格"></span><span class="" title="MT-G07-07 習得でバッジ：合格"></span><span class="" title="MT-G07-08 習得済みの問題に正解：合格"></span><span class="" title="MT-A01-01 コマンドの中身：合格"></span><span class="" title="MT-A01-02 応答の取り出し：合格"></span><span class="" title="MT-A01-03 打ち切り：合格"></span><span class="" title="MT-A01-04 打ち切り前に返る：合格"></span><span class="" title="MT-A01-05 SDKのエラー：合格"></span><span class="" title="MT-A01-06 PDF・画像の入力：合格"></span><span class="" title="MT-A01-07 ログ：合格"></span><span class="" title="MT-A02-01 JSONだけ：合格"></span><span class="" title="MT-A02-02 前後に文章：合格"></span><span class="" title="MT-A02-03 コードブロック：合格"></span><span class="" title="MT-A02-04 文字列の中の括弧：合格"></span><span class="" title="MT-A02-05 配列が先頭：合格"></span><span class="" title="MT-A02-06 JSONがない：合格"></span><span class="" title="MT-A02-07 採点の形（正常）：合格"></span><span class="" title="MT-A02-08 範囲外の点数：合格"></span><span class="" title="MT-A02-09 必須キーがない・型違い：合格"></span><span class="" title="MT-A03-01 3人の定義：合格"></span><span class="" title="MT-A03-02 知らない性格：合格"></span><span class="" title="MT-A04-01 採点の指示文：合格"></span><span class="" title="MT-A04-02 閉じタグの無害化：合格"></span><span class="" title="MT-A04-03 小見出しはそのまま：合格"></span><span class="" title="MT-A04-04 抽出の指示文：合格"></span><span class="" title="MT-A04-05 ひとことに個人情報を入れない：合格"></span><span class="" title="MT-M01-01 通知メールの本文：合格"></span><span class="" title="MT-M01-02 環境名の付与：合格"></span><span class="" title="MT-M01-03 削除予定の通知：合格"></span><span class="" title="MT-M01-04 SES への送信：合格"></span><span class="" title="MT-M01-05 送信の失敗：合格"></span></div><p class="vis-cap">1マス＝1ケース（青＝合格）</p></div>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>結果</th></tr></thead><tbody><tr><td>テストケース（仕様書のID）</td><td>193件中 合格 193・不合格 0・未実装 0</td></tr>
+<tr><td>実行したテスト（<code>it</code> の数）</td><td>279件（成功 279・失敗 0・スキップ 0・todo 0）、テストファイル 23</td></tr>
+<tr><td>うち補足テスト</td><td>32件（仕様書にない分岐を網羅するための追加。7.2 参照）</td></tr>
+<tr><td>実行時間</td><td>最大 5.59 秒（基準：60秒以内）</td></tr>
+<tr><td>安定性</td><td>同じコミットで3回実行し、すべて同じ結果（279/279、279/279、279/279）</td></tr>
+<tr><td>失敗したテスト</td><td>なし</td></tr></tbody></table></div>
+</section>
+<section class="chapter" id="s4"><h2><i class="fa-solid fa-chart-simple h-ico" aria-hidden="true"></i>4. カバレッジ</h2>
+<div class="vis"><p class="vis-label">基準（縦線）に対する到達度</p><div class="bars">
+<div class="cov-row cov-head"><span>対象</span><span>命令網羅（C0）</span><span>分岐網羅（C1）</span></div>
+<div class="cov-row"><span class="bl"><code>全体</code></span><div class="meter"><span style="width:99.92942836979535%"></span><em>99.9%</em></div><div class="meter"><span style="width:99.49916527545909%"></span><em>99.5%</em></div></div>
+<div class="cov-row"><span class="bl"><code>functions/shared/domain/**</code></span><div class="meter"><span style="width:100%"></span><i style="left:100%"></i><em>100.0%</em></div><div class="meter"><span style="width:100%"></span><i style="left:100%"></i><em>100.0%</em></div></div>
+<div class="cov-row"><span class="bl"><code>web/js/logic/validators.js</code></span><div class="meter"><span style="width:100%"></span><i style="left:100%"></i><em>100.0%</em></div><div class="meter"><span style="width:100%"></span><i style="left:100%"></i><em>100.0%</em></div></div>
+<div class="cov-row"><span class="bl"><code>functions/**</code></span><div class="meter"><span style="width:99.92542878448918%"></span><i style="left:90%"></i><em>99.9%</em></div><div class="meter"><span style="width:99.41972920696325%"></span><i style="left:80%"></i><em>99.4%</em></div></div>
+<div class="cov-row"><span class="bl"><code>web/js/**</code></span><div class="meter"><span style="width:100%"></span><i style="left:90%"></i><em>100.0%</em></div><div class="meter"><span style="width:100%"></span><i style="left:80%"></i><em>100.0%</em></div></div>
+</div></div>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>ファイル数</th><th>命令網羅（C0）</th><th>分岐網羅（C1）</th><th>関数</th><th>基準（C0／C1）</th><th>判定</th></tr></thead><tbody><tr><td>全体</td><td>43</td><td>99.93%</td><td>99.50%</td><td>98.89%</td><td>-</td><td>-</td></tr>
+<tr><td><code>functions/shared/domain/**</code></td><td>7</td><td>100.00%</td><td>100.00%</td><td>100.00%</td><td>100%／100%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<tr><td><code>web/js/logic/validators.js</code></td><td>1</td><td>100.00%</td><td>100.00%</td><td>100.00%</td><td>100%／100%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<tr><td><code>functions/**</code></td><td>42</td><td>99.93%</td><td>99.42%</td><td>98.83%</td><td>90%／80%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<tr><td><code>web/js/**</code></td><td>1</td><td>100.00%</td><td>100.00%</td><td>100.00%</td><td>90%／80%</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr></tbody></table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>ファイル別</h3>
+<div class="table-wrap"><table><thead><tr><th>ファイル</th><th>C0</th><th>C1</th><th>関数</th></tr></thead><tbody><tr><td><code>functions/shared/ai/bedrock.js</code></td><td>100.00%</td><td>94.44%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/ai/json-guard.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/ai/persona.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/ai/prompts/comment.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/ai/prompts/daily-message.js</code></td><td>100.00%</td><td>100.00%</td><td>50.00%</td></tr>
+<tr><td><code>functions/shared/ai/prompts/extraction.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/ai/prompts/grading.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/ai/prompts/sanitize.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/data-api.js</code></td><td>98.48%</td><td>97.95%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/tx.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/_base.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/adventures.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/answers.js</code></td><td>100.00%</td><td>88.88%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/audit.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/badges.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/courses.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/enrollments.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/exp.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/gradings.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/imports.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/notify.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/questions.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/quests.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/rankings.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/reviews.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/db/repositories/users.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/domain/answer-flow.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/domain/badge.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/domain/exp.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/domain/picker.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/domain/quest.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/domain/ranking.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/domain/review.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/mail/ses.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/mail/templates.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/util/authz.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/util/date-jst.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/util/errors.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/util/http.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/util/ids.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/util/logger.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>functions/shared/util/validators.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+<tr><td><code>web/js/logic/validators.js</code></td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr></tbody></table></div>
+</section>
+<section class="chapter" id="s5"><h2><i class="fa-solid fa-layer-group h-ico" aria-hidden="true"></i>5. モジュール別の結果</h2>
+<div class="vis"><p class="vis-label">層ごとの合格ケース数</p><div class="bars">
+<div class="bar-row"><span class="bl">util（MT-U）</span><div class="bt"><span style="width:100%"></span></div><b>72/72</b></div>
+<div class="bar-row"><span class="bl">db（MT-D）</span><div class="bt"><span style="width:33.333333333333336%"></span></div><b>24/24</b></div>
+<div class="bar-row"><span class="bl">domain（MT-G）</span><div class="bt"><span style="width:95.83333333333333%"></span></div><b>69/69</b></div>
+<div class="bar-row"><span class="bl">ai（MT-A）</span><div class="bt"><span style="width:31.944444444444443%"></span></div><b>23/23</b></div>
+<div class="bar-row"><span class="bl">mail（MT-M）</span><div class="bt"><span style="width:6.944444444444445%"></span></div><b>5/5</b></div>
+</div></div>
+<div class="table-wrap"><table><thead><tr><th>モジュール</th><th>対象</th><th>ケース</th><th>合格</th><th>不合格</th><th>未実装</th><th>it の数</th></tr></thead><tbody><tr><td>M-U01</td><td><code>util/errors.js</code></td><td>4</td><td>4</td><td>0</td><td>0</td><td>14</td></tr>
+<tr><td>M-U02</td><td><code>util/ids.js</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>12</td></tr>
+<tr><td>M-U03</td><td><code>util/date-jst.js</code></td><td>13</td><td>13</td><td>0</td><td>0</td><td>13</td></tr>
+<tr><td>M-U04</td><td><code>util/authz.js</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>10</td></tr>
+<tr><td>M-U05</td><td><code>util/logger.js</code></td><td>5</td><td>5</td><td>0</td><td>0</td><td>5</td></tr>
+<tr><td>M-U06</td><td><code>util/http.js</code></td><td>6</td><td>6</td><td>0</td><td>0</td><td>6</td></tr>
+<tr><td>M-U07</td><td><code>web/js/logic/validators.js（画面とLambdaで共用）</code></td><td>28</td><td>28</td><td>0</td><td>0</td><td>46</td></tr>
+<tr><td>M-D01</td><td><code>db/data-api.js</code></td><td>11</td><td>11</td><td>0</td><td>0</td><td>12</td></tr>
+<tr><td>M-D02</td><td><code>db/tx.js</code></td><td>4</td><td>4</td><td>0</td><td>0</td><td>5</td></tr>
+<tr><td>M-D03</td><td><code>リポジトリ（代表的なもの）</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>9</td></tr>
+<tr><td>M-G01</td><td><code>domain/review.js 忘却曲線</code></td><td>14</td><td>14</td><td>0</td><td>0</td><td>15</td></tr>
+<tr><td>M-G02</td><td><code>domain/exp.js EXPとレベル</code></td><td>13</td><td>13</td><td>0</td><td>0</td><td>23</td></tr>
+<tr><td>M-G03</td><td><code>domain/quest.js デイリークエスト</code></td><td>12</td><td>12</td><td>0</td><td>0</td><td>12</td></tr>
+<tr><td>M-G04</td><td><code>domain/badge.js バッジ</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>7</td></tr>
+<tr><td>M-G05</td><td><code>domain/ranking.js 順位づけ</code></td><td>6</td><td>6</td><td>0</td><td>0</td><td>6</td></tr>
+<tr><td>M-G06</td><td><code>domain/picker.js 出題</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>9</td></tr>
+<tr><td>M-G07</td><td><code>domain/answer-flow.js 解答後の更新内容</code></td><td>8</td><td>8</td><td>0</td><td>0</td><td>8</td></tr>
+<tr><td>M-A01</td><td><code>ai/bedrock.js</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>8</td></tr>
+<tr><td>M-A02</td><td><code>ai/json-guard.js</code></td><td>9</td><td>9</td><td>0</td><td>0</td><td>19</td></tr>
+<tr><td>M-A03・M-A04</td><td><code>ai/persona.js・ai/prompts/*</code></td><td>7</td><td>7</td><td>0</td><td>0</td><td>7</td></tr>
+<tr><td>M-M01</td><td><code>mail/ses.js・mail/templates.js</code></td><td>5</td><td>5</td><td>0</td><td>0</td><td>6</td></tr></tbody></table></div>
+</section>
+<section class="chapter" id="s6"><h2><i class="fa-solid fa-list-check h-ico" aria-hidden="true"></i>6. テストケース別の結果</h2>
+<div class="vis"><p class="vis-label">見方</p><div class="info-strip"><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>仕様書のIDを含む it がすべて成功</span><span class="res ng"><i class="fa-solid fa-circle-xmark"></i>不合格</span><span>1つでも失敗</span><span class="res ng"><i class="fa-solid fa-circle-minus"></i>未実装</span><span>IDを含む it がない</span></div></div>
+<details class="cases"><summary>M-U01 <code>util/errors.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>4/4</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U01-01</td><td>AppError の属性</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U01-02</td><td>応答への変換（想定エラー）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U01-03</td><td>応答への変換（想定外）</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U01-04</td><td>コードからHTTPの既定</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>11</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-U02 <code>util/ids.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U02-01</td><td>変換</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U02-02</td><td>逆変換</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U02-03</td><td>接頭辞の違い</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U02-04</td><td>下限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U02-05</td><td>上限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U02-06</td><td>数字以外</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>5</td></tr>
+<tr><td>MT-U02-07</td><td>文字列以外</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-U03 <code>util/date-jst.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>13/13</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U03-01</td><td>JSTの日付（0:00直前）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-02</td><td>JSTの日付（0:00ちょうど）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-03</td><td>月末をまたぐ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-04</td><td>年末をまたぐ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-05</td><td>うるう年</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-06</td><td>引き算</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-07</td><td>週の開始（月曜0:00）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-08</td><td>週の開始（日曜23:59）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-09</td><td>週の開始（次の月曜）</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-10</td><td>送信枠</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-11</td><td>ISO文字列</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-12</td><td>日数の差</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U03-13</td><td>不正な日付</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-U04 <code>util/authz.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U04-01</td><td>グループ（文字列）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U04-02</td><td>グループ（配列）・なし</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U04-03</td><td>sub がない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U04-04</td><td>ロールあり</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U04-05</td><td>ロールなし</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U04-06</td><td>招待中の初回ログイン</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U04-07</td><td>論理削除中・未登録</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-U04-08</td><td>担当コース</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U04-09</td><td>システム管理者は全コース</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-U05 <code>util/logger.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>5/5</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U05-01</td><td>1行のJSON</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U05-02</td><td>prod の DEBUG</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U05-03</td><td>dev の DEBUG</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U05-04</td><td>伏せ字</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U05-05</td><td>エラーのスタック</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-U06 <code>util/http.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>6/6</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U06-01</td><td>本文（JSON）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U06-02</td><td>本文（Base64）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U06-03</td><td>本文なし</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U06-04</td><td>壊れたJSON</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U06-05</td><td>通常の応答</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U06-06</td><td>CSVの応答</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-U07 <code>web/js/logic/validators.js（画面とLambdaで共用）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>28/28</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-U07-01</td><td>下限の1つ下</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-02</td><td>下限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-03</td><td>小見出し不要の上限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-04</td><td>小見出しが必要になる</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-05</td><td>小見出しあり</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-06</td><td>上限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-07</td><td>上限の1つ上</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-08</td><td>小見出しが行の途中</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-09</td><td>2行目の行頭の小見出し</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-10</td><td>中身のない小見出し</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-11</td><td>空白・改行は数えない</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-12</td><td>サロゲートペア</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-13</td><td>空・null</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>3</td></tr>
+<tr><td>MT-U07-14</td><td>文字数の境界</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-15</td><td>使える文字</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>5</td></tr>
+<tr><td>MT-U07-16</td><td>使えない文字</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>4</td></tr>
+<tr><td>MT-U07-17</td><td>前後の空白</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-18</td><td>パートナー名の空</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-19</td><td>パートナー名の境界</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-20</td><td>パートナー名の記号</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>3</td></tr>
+<tr><td>MT-U07-21</td><td>通知時刻の範囲</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-22</td><td>通知時刻の刻み・形式</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>4</td></tr>
+<tr><td>MT-U07-23</td><td>取り込みのサイズ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-24</td><td>取り込みの種類</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-25</td><td>テキストの長さ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-26</td><td>公開できる問題</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-U07-27</td><td>公開できない問題</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>5</td></tr>
+<tr><td>MT-U07-28</td><td>キーワードの数と長さ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-D01 <code>db/data-api.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>11/11</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-D01-01</td><td>接続情報</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-02</td><td>パラメータの型（整数・小数）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-03</td><td>パラメータの型（文字・真偽）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-04</td><td>パラメータの型（null）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-05</td><td>日付・JSON</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-D01-06</td><td>結果の変換</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-07</td><td>結果なし</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-08</td><td>DB起動中・再試行0回</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-09</td><td>DB起動中から復帰</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-10</td><td>再試行が尽きる</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D01-11</td><td>ほかのエラー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-D02 <code>db/tx.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>4/4</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-D02-01</td><td>正常</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D02-02</td><td>途中の例外</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-D02-03</td><td>Commit の失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D02-04</td><td>戻り値</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-D03 <code>リポジトリ（代表的なもの）</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-D03-01</td><td>ニックネームの重複確認</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-02</td><td>重複なし</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-03</td><td>採点の完了（条件付き）</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-04</td><td>復習項目の登録・更新</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-05</td><td>週の集計</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-06</td><td>ランキングの締め</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-07</td><td>列名の変換</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-08</td><td>一覧の上限</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-D03-09</td><td>並べ替えの許可リスト</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-G01 <code>domain/review.js 忘却曲線</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>14/14</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-G01-01</td><td>初回・正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-02</td><td>初回・不正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-03</td><td>予定日の前日</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-04</td><td>予定日当日に正解</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-05</td><td>段階2→3</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-06</td><td>段階3→4</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-07</td><td>段階4→5</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-08</td><td>習得</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-09</td><td>不正解で段階1へ</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-10</td><td>段階5で不正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-11</td><td>段階1で不正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-12</td><td>遅れて正解（段階を下げない）</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G01-13</td><td>習得済みを解く</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-G01-14</td><td>年末をまたぐ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-G02 <code>domain/exp.js EXPとレベル</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>13/13</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-G02-01</td><td>択一の正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-02</td><td>択一の復習正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-03</td><td>説明の合格</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-04</td><td>説明の復習合格</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-05</td><td>不正解は0</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-06</td><td>必要EXP（表の値）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>8</td></tr>
+<tr><td>MT-G02-07</td><td>ちょうど整数になる値</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-08</td><td>Lv1の範囲</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-09</td><td>Lv2になる境界</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-10</td><td>Lv3になる境界</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-11</td><td>表の累計EXP</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>4</td></tr>
+<tr><td>MT-G02-12</td><td>大きな値</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G02-13</td><td>不正な種類</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-G03 <code>domain/quest.js デイリークエスト</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>12/12</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-G03-01</td><td>復習ありの日</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-02</td><td>復習なしの日</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-03</td><td>乱数によらず守られる</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-04</td><td>択一の不正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-05</td><td>択一の正解</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-06</td><td>達成</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-07</td><td>達成済みは進めない</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-08</td><td>説明の合格・不合格</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-09</td><td>復習</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-10</td><td>新しい問題</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-11</td><td>同時に2つ達成</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G03-12</td><td>クエストなし</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-G04 <code>domain/badge.js バッジ</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-G04-01</td><td>習得の境界</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G04-02</td><td>次の段階</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G04-03</td><td>まとめて達成</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G04-04</td><td>全部持っている</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G04-05</td><td>継続の境界</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G04-06</td><td>継続の銀・金</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G04-07</td><td>0日</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-G05 <code>domain/ranking.js 順位づけ</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>6/6</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-G05-01</td><td>同点なし</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G05-02</td><td>同点は同順位</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G05-03</td><td>同点の並び順</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G05-04</td><td>0 EXP は除く</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G05-05</td><td>空</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G05-06</td><td>全員同点</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-G06 <code>domain/picker.js 出題</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-G06-01</td><td>最初は択一</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G06-02</td><td>交互（択一のあと）</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G06-03</td><td>交互（説明のあと）</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G06-04</td><td>説明がないときは択一</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G06-05</td><td>優先順位</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G06-06</td><td>学習済みからの出題</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G06-07</td><td>出したものは除く</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G06-08</td><td>出せるものがない</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G06-09</td><td>キーワードのない説明候補</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-G07 <code>domain/answer-flow.js 解答後の更新内容</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>8/8</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-G07-01</td><td>初めての択一に正解</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G07-02</td><td>復習の択一に正解</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G07-03</td><td>復習の説明に合格</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G07-04</td><td>不正解</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G07-05</td><td>正解でレベルアップ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G07-06</td><td>クエスト報酬だけでレベルアップ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G07-07</td><td>習得でバッジ</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-G07-08</td><td>習得済みの問題に正解</td><td>状</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-A01 <code>ai/bedrock.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-A01-01</td><td>コマンドの中身</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A01-02</td><td>応答の取り出し</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A01-03</td><td>打ち切り</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A01-04</td><td>打ち切り前に返る</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A01-05</td><td>SDKのエラー</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-A01-06</td><td>PDF・画像の入力</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A01-07</td><td>ログ</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-A02 <code>ai/json-guard.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>9/9</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-A02-01</td><td>JSONだけ</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A02-02</td><td>前後に文章</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A02-03</td><td>コードブロック</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A02-04</td><td>文字列の中の括弧</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A02-05</td><td>配列が先頭</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A02-06</td><td>JSONがない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A02-07</td><td>採点の形（正常）</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A02-08</td><td>範囲外の点数</td><td>境</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>4</td></tr>
+<tr><td>MT-A02-09</td><td>必須キーがない・型違い</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>8</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-A03・M-A04 <code>ai/persona.js・ai/prompts/*</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>7/7</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-A03-01</td><td>3人の定義</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A03-02</td><td>知らない性格</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A04-01</td><td>採点の指示文</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A04-02</td><td>閉じタグの無害化</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A04-03</td><td>小見出しはそのまま</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A04-04</td><td>抽出の指示文</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-A04-05</td><td>ひとことに個人情報を入れない</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+<details class="cases"><summary>M-M01 <code>mail/ses.js・mail/templates.js</code> <span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span><span>5/5</span></summary>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>観点</th><th>技法</th><th>結果</th><th>it</th></tr></thead><tbody><tr><td>MT-M01-01</td><td>通知メールの本文</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-M01-02</td><td>環境名の付与</td><td>DT</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>2</td></tr>
+<tr><td>MT-M01-03</td><td>削除予定の通知</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-M01-04</td><td>SES への送信</td><td>同</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr>
+<tr><td>MT-M01-05</td><td>送信の失敗</td><td>異</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td><td>1</td></tr></tbody></table></div>
+</details>
+</section>
+<section class="chapter" id="s7"><h2><i class="fa-solid fa-magnifying-glass h-ico" aria-hidden="true"></i>7. 所見</h2>
+<div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合</h5><p class="tile-num sm">0<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-pen-ruler"></i>設計の解釈・補足</h5><p class="tile-num sm">10<small>件</small></p></div></div></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 不具合</h3><ul><li>製品コードの不具合は見つからなかった（全ケースが初回の実行から合格）</li><li>テストコード側の誤り1件（validators の補足テストで変数の宣言位置が誤っていた）を実行前の確認で直した。製品コードへの影響はない</li></ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 設計書・仕様書の解釈と補足</h3>
+<div class="table-wrap"><table><thead><tr><th>No</th><th>対象</th><th>内容</th><th>対応の提案</th></tr></thead><tbody><tr><td>1</td><td>M-U07 validators</td><td>ニックネーム・パートナー名・通知時刻・取り込みの入力エラーには外部設計書のメッセージID（M-xx）がないため、<code>code: 'INVALID'</code> と <code>field</code> で返すようにした</td><td>外部設計書 3.7 にメッセージIDを追加するか、<code>INVALID</code> を正式なコードとして詳細設計書 3.2 に追記する</td></tr>
+<tr><td>2</td><td>M-U04 authz</td><td>util は db を呼べない（2.1 の依存ルール）ため、<code>loadUser</code>・<code>assertCourseAdmin</code> はリポジトリを引数 <code>db</code> で受け取る形にした。担当コースの確認には <code>courses.isAdmin(courseId, userId)</code> を追加した</td><td>詳細設計書 3.4 の courses.js の関数一覧に <code>isAdmin</code>・<code>dashboardRows</code> を追記する</td></tr>
+<tr><td>3</td><td>M-D01 data-api</td><td>再試行回数の既定値（api-handler は0、ほかは6）を関数ごとに切り替えるため <code>setDefaultResumeRetries(n)</code> を追加した。各 <code>index.mjs</code> の先頭で呼ぶ想定</td><td>詳細設計書 3.3 に追記する</td></tr>
+<tr><td>4</td><td>M-G03 quest</td><td><code>applyQuestEvent</code> の戻り値を <code>{ quests, achievedNow, questExp }</code> とした（仕様書 MT-G03-06 の achievedNow と報酬の合計を返すため）</td><td>詳細設計書 3.5 の表に戻り値の形を追記する</td></tr>
+<tr><td>5</td><td>M-G06 picker</td><td><code>servedIds</code> は形式ごとに ID が重なるため <code>choice:{問題ID}</code>・<code>explain:{キーワードID}</code> の文字列にした（adventures.served の k・q・kw と対応）</td><td>詳細設計書 3.5 に servedIds の形を追記する</td></tr>
+<tr><td>6</td><td>M-G07 answer-flow</td><td>戻り値の exp にクエスト報酬を足したあとの <code>totalExp</code> を含め、今回達成したクエスト <code>achievedNow</code> も返すようにした（DBへの書き込みで使う）</td><td>詳細設計書 3.5 の擬似コードに追記する</td></tr>
+<tr><td>7</td><td>M-A01 bedrock</td><td>AI_TIMEOUT・AI_ERROR は内部用（HTTP なし）だが、万一外に出たときのため status を 500 とした</td><td>詳細設計書 2.4.4 の表に注記する</td></tr>
+<tr><td>8</td><td>M-M01 templates</td><td>メールのパートナーの定型のひとことと問い合わせ先の文言は設計書に具体的な文がないため仮の文にした</td><td>外部設計書 5.6 で文言を確定する（未決事項に追加）</td></tr>
+<tr><td>9</td><td>vitest.config.js</td><td>仕様書 3.2 の <code>environmentMatchGlobs</code> は Vitest 3.2 で非推奨の警告が出る（動作は問題なし）</td><td>次の版で <code>test.projects</code> に置き換えることを仕様書に反映する</td></tr>
+<tr><td>10</td><td>補足テスト</td><td>仕様書のケースだけでは C1 100%（domain・validators）と 90%／80%（そのほか）に届かない分岐があったため、ID の後ろに「補足」を付けたテストを追加した（リポジトリの全関数のSQL組み立てなど）</td><td>仕様書 6.3 の決まりに沿って、次の版でケースIDを採番して本書と仕様書に載せる</td></tr></tbody></table></div>
+</section>
+<section class="chapter" id="s8"><h2><i class="fa-solid fa-gavel h-ico" aria-hidden="true"></i>8. 判定と次の作業</h2>
+<div class="vis"><div class="judge"><div class="judge-mark ">合格</div><div class="judge-body"><p class="big">共通モジュール（functions/shared の util・db・domain・ai・mail と web/js/logic/validators.js）</p><p>仕様書 6.2 の合否基準をすべて満たした</p></div></div></div>
+<div class="table-wrap"><table><thead><tr><th>基準（仕様書 6.2）</th><th>結果</th><th>判定</th></tr></thead><tbody><tr><td>テストケースがすべて実装され成功する（skip・todo 0件）</td><td>193/193、skip 0・todo 0</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<tr><td>カバレッジ（domain・validators 100%、そのほか 90%／80%以上）</td><td>4章のとおり</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<tr><td>実行時間 60秒以内</td><td>5.59 秒</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr>
+<tr><td>安定性（3回続けて同じ結果）</td><td>同じ</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>合格</span></td></tr></tbody></table></div>
+<ul><li>第2弾：api-handler（MT-H01〜H14）・grading-worker・import-worker・batch-runner（MT-W01〜W04）・画面（MT-F01〜F06）を実装し、残りのケースを試験する</li><li>第2弾の完了時に本書を最終版に更新し、全362ケースで合否を判定する</li><li>7.2 の解釈・補足を詳細設計書と仕様書に反映するかをジュンさんに確認する</li></ul></section>
+</main>
+</div>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト結果報告書 第0.1版（中間報告：共通モジュール）</div></footer>
+</body>
+</html>
