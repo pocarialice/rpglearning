@@ -520,11 +520,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">AWS構築手順書</span>
     <h1><i class="fa-brands fa-aws h-ico" aria-hidden="true"></i>RPG学習アプリ AWS構築手順書</h1>
     <ul class="meta">
-      <li>版数<b>第0.3版（ドラフト）</b></li>
+      <li>版数<b>第0.4版（ドラフト。アプリの配置を GitHub Actions に変更）</b></li>
       <li>作成日<b>2026-10-19</b></li>
       <li>入力文書<b>RPG学習アプリ 外部設計書 第0.6版（第2章 システム方式設計、第6章、第8章）</b></li>
       <li>対象<b>Phase 1（MVP）のパイロット環境。Phase 3 で行う作業（AWS WAF のルールの見直しなど）は第7章にまとめる</b></li>
-      <li>作業方法<b>AWSマネジメントコンソール（Web画面）だけで構築する</b></li>
+      <li>作業方法<b>AWSのリソースはマネジメントコンソール（Web画面）で構築する。アプリの配置（Lambda のコード・画面・DBのテーブル）は GitHub Actions で行う（詳細設計書 第11章）</b></li>
     </ul>
   </div>
 </header>
@@ -550,6 +550,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>第3〜5章は同じ手順を環境ごとに書いている。各章の中は上から順に作業すればよく、他の章を見なくてよい</li>
 <li>手順の中の <code>&lt;アカウントID&gt;</code> などの山かっこは、自分の環境の値に置き換える</li>
 <li>作業中に控える値（ARN・ID）は、各章の最初にある「控える値」表に書き込む</li>
+<li>本書で作ったリソースへのアプリの配置は GitHub Actions が行う。本書の手順でコンソールから zip や画面をアップロードすることはない</li>
 <li>コンソールの項目名は2026年10月時点の想定。画面の文言が少し違う場合は、意味の近い項目を選ぶ</li>
 </ul>
 <h3 id="s1-2"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.2 前提</h3>
@@ -579,7 +580,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>アプリの資材</td>
-<td>Lambda関数4つのzipファイルと、画面一式（HTML・CSS・JS）は開発チームから受け取る。初回はzipがなくても関数の作成までは進められる</td>
+<td>Lambda のコード・画面一式（HTML・CSS・JS）・テーブルは、GitHub Actions がリポジトリから配置する。本書では関数を仮のコードで作り、各環境の手順14で初回の配置を行う</td>
+</tr>
+<tr>
+<td>GitHub</td>
+<td>アプリのリポジトリ <code>&lt;オーナー&gt;/rpg-learning-app</code> の管理者権限（Settings を変更できる）。Environments を使うため、非公開リポジトリの場合は GitHub Team 以上のプラン</td>
 </tr>
 </tbody>
 </table></div>
@@ -613,7 +618,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <p>タグは請求を環境ごとに分けるのに使う。作成画面にタグの欄がない場合は、作成後に各リソースの「タグ」タブで付ける。</p>
 <h3 id="s1-4"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.4 構築の順番</h3>
 <figure class="diagram"><div class="mermaid">flowchart TD
-  C0["第2章 アカウントで1回&lt;br&gt;CloudTrail・Bedrock申請・SES・Budgets"] --&gt; E1
+  C0["第2章 アカウントで1回&lt;br&gt;CloudTrail・Bedrock申請・SES・Budgets&lt;br&gt;GitHub OIDC"] --&gt; E1
   subgraph ENV["第3〜5章 環境ごと dev → stg → prod"]
     E1["1 SNS 通知先"] --&gt; E2["2 S3 バケット4つ"]
     E2 --&gt; E3["3 SQS キューとDLQ"]
@@ -626,13 +631,15 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     E9 --&gt; E10["10 CloudFront に /api/* 追加"]
     E10 --&gt; E11["11 EventBridge Scheduler"]
     E11 --&gt; E12["12 CloudWatch アラーム"]
-    E12 --&gt; E13["13 画面の配置と動作確認"]
+    E12 --&gt; E13["13 GitHub Actions 配置用ロール&lt;br&gt;と Environment"]
+    E13 --&gt; E14["14 初回の配置と動作確認&lt;br&gt;GitHub Actions"]
   end
-  E13 --&gt; D6["第6章 ドメイン決定後&lt;br&gt;ACM・Route 53・SES DKIM"]
+  E14 --&gt; D6["第6章 ドメイン決定後&lt;br&gt;ACM・Route 53・SES DKIM"]
   D6 --&gt; W7["第7章 Phase 3&lt;br&gt;WAFルールなどの見直し"]</div></figure>
 <ul>
 <li>CloudFront を Cognito より先に作るのは、Cognito のログイン後の戻り先URLに CloudFront のドメインが必要なため</li>
 <li>API Gateway を作ったあとで CloudFront に <code>/api/*</code> を追加する（API Gateway のURLが必要なため）</li>
+<li>配置用ロール（手順13）は、配置先の Lambda・S3・CloudFront・Aurora がそろってから作る（ポリシーにそれらのARNを書くため）</li>
 </ul>
 <h3 id="s1-5"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.5 環境ごとの設定値</h3>
 <div class="table-wrap"><table>
@@ -808,6 +815,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>V-10</td>
 <td>API Gateway の API ID・URL</td>
 <td>各環境の手順9</td>
+</tr>
+<tr>
+<td>V-11</td>
+<td>GitHub Actions 配置用ロールの ARN</td>
+<td>各環境の手順13</td>
 </tr>
 </tbody>
 </table></div>
@@ -1013,6 +1025,67 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>内訳を見たいときは「Cost Explorer」でタグ <code>Environment</code> ごとにグループ化する</li>
 </ol>
 
+<h3 id="s2-6"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>2.6 GitHub Actions との連携（OIDC）</h3>
+<p>GitHub Actions が AWS に配置するときは、アクセスキーを使わず、GitHub が発行する一時的なトークン（OIDC）で各環境の配置用ロールを引き受ける。そのための ID プロバイダーをアカウントに1つ作る。</p>
+<p><strong>(1) ID プロバイダーの作成</strong></p>
+<ol>
+<li>「IAM」→「ID プロバイダー」→「プロバイダを追加」</li>
+<li>次のとおり入力し、タグを付けて追加する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>プロバイダのタイプ</td>
+<td><strong>OpenID Connect</strong></td>
+</tr>
+<tr>
+<td>プロバイダの URL</td>
+<td><code>https://token.actions.githubusercontent.com</code></td>
+</tr>
+<tr>
+<td>対象者</td>
+<td><code>sts.amazonaws.com</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(2) GitHub リポジトリの共通設定</strong></p>
+<p>リポジトリ <code>&lt;オーナー&gt;/rpg-learning-app</code> の「Settings」で行う。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>場所</th>
+<th>設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>「Secrets and variables」→「Actions」→「Variables」</td>
+<td>リポジトリの変数 <code>AWS_REGION</code> = <code>ap-northeast-1</code></td>
+</tr>
+<tr>
+<td>「Rules」→「Rulesets」（ブランチ <code>main</code>）</td>
+<td>プルリクエスト必須、ステータスチェック <code>ci</code> の成功を必須、force push と削除を禁止</td>
+</tr>
+<tr>
+<td>「Rules」→「Rulesets」（タグ <code>release-*</code>）</td>
+<td>作成は Maintain 以上の人だけ（バイパスリストで指定）、更新と削除を禁止</td>
+</tr>
+<tr>
+<td>「Actions」→「General」</td>
+<td>Workflow permissions は「Read repository contents and packages permissions」（必要な権限はワークフローに書く）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>各環境の Environment（<code>dev</code>・<code>stg</code>・<code>prod</code>）は、環境ごとの手順13で作る</li>
+<li>AWS のアクセスキーは作らない。GitHub の Secrets にも入れない</li>
+</ul>
 </section><section class="chapter" id="ch3"><h2><i aria-hidden="true" class="fa-solid fa-flask h-ico"></i>3. dev 環境の構築<span class="env-badge env-dev">dev・開発</span></h2>
 <p>最初に作る環境。ここで手順と画面を確かめ、つまずいた点は本書に書き足してから stg に進む。</p>
 <h3 id="s3-0"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.0 この章で使う値</h3>
@@ -1097,6 +1170,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>V-10</td>
 <td>API ID・API のURL</td>
+<td></td>
+</tr>
+<tr>
+<td>V-11</td>
+<td>配置用ロール ARN</td>
 <td></td>
 </tr>
 </tbody>
@@ -1417,16 +1495,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </ul>
 </li>
 </ol>
-<p><strong>(2) テーブルの作成（クエリエディタ）</strong></p>
-<ol>
-<li>RDS の左メニュー「クエリエディタ」を開く</li>
-<li>データベース <code>rpg-dev-db</code>、ユーザー「Secrets Manager ARN で接続」に V-07、データベース名 <code>rpg</code> を入れて接続する<ul>
-<li>止まっている場合は起動に15〜30秒かかる。エラーになったら少し待ってもう一度接続する</li>
-</ul>
-</li>
-<li>開発チームから受け取ったテーブル作成のSQL（外部設計書 第7章に基づくもの）を貼り付けて実行する</li>
-<li><code>SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';</code> を実行し、テーブルができたことを確かめる</li>
-</ol>
+<p><strong>(2) テーブルの作成</strong></p>
+<p>テーブルはここでは作らない。3.14 の初回の配置で、GitHub Actions がリポジトリの <code>db/migrations/</code> のSQLを Data API で流して作る（詳細設計書 8.7・11.6）。ここでは、RDS Data API が <strong>有効</strong> になっていることだけを確かめておく。</p>
 <blockquote>
 <p>マスターユーザーのパスワードは Secrets Manager が7日ごとに自動で変える。Data API は常に最新の値を読むので、アプリ側の作業はない。</p>
 </blockquote>
@@ -1925,7 +1995,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </table></div>
 <p>作成後、関数ごとに次を行う。</p>
 <ol>
-<li>「コード」→「アップロード元」→「.zip ファイル」で、開発チームから受け取った zip をアップロードする</li>
+<li>「コード」はまだ変えない（作成時の既定のコードのまま）。本物のコードは 3.14 で GitHub Actions が入れる</li>
 <li>「設定」→「一般設定」→「編集」で、メモリとタイムアウトを上の表のとおりにする</li>
 <li>「設定」→「タグ」で <code>Project</code>・<code>Environment</code> を付ける</li>
 <li>「設定」→「環境変数」で、次の値を入れる（変数名は 2026-10-19 に決定）</li>
@@ -2037,7 +2107,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>予約された同時実行を設定できない（アカウントの同時実行数の上限が10など小さい）場合は、設定せずに進め、「Service Quotas」で Lambda の「同時実行数」の引き上げを申請する</li>
 </ul>
 <p><strong>(4) 動作の確認</strong></p>
-<p><code>rpg-dev-api-handler</code> の「テスト」タブで、開発チームが用意した確認用イベント（例：ヘルスチェック）を実行し、成功することを確かめる。DB が止まっている場合、1回目は起動待ちで失敗することがある。</p>
+<p>ここでは行わない。関数のコードはまだ仮のもの（作成時の既定のコード）のため、3.14 の初回の配置のあとで GitHub Actions がヘルスチェックを行う。</p>
 <h3 id="s3-9"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.9 API Gateway（HTTP API）</h3>
 <ol>
 <li>「API Gateway」→「API を作成」→ <strong>HTTP API</strong> の「構築」</li>
@@ -2249,14 +2319,172 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>フィルターパターン <code>GRADING_TIMEOUT</code>（画面に 504 を返すときにアプリが出すログ。開発チームと合わせる）</li>
 <li>名前空間 <code>rpg/dev</code>、メトリクス名 <code>GradingTimeout</code>、値 <code>1</code></li>
 </ol>
-<h3 id="s3-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.13 画面の配置と動作確認</h3>
-<p><strong>(1) 画面の配置</strong></p>
+<h3 id="s3-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.13 GitHub Actions の配置用ロールと Environment</h3>
+<p><strong>(1) 配置用ロールの作成</strong></p>
 <ol>
-<li>S3 の <code>rpg-dev-web-&lt;アカウントID&gt;</code> に、開発チームから受け取った画面一式（<code>index.html</code>・<code>manifest.webmanifest</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> など）をフォルダの構成のままアップロードする</li>
-<li>画面の設定ファイル（例：<code>js/config.js</code>）に、V-08・V-09 の値（CloudFront ドメイン、ユーザープールID、アプリクライアントID、Cognito ドメイン）が入っていることを確かめる</li>
-<li>CloudFront の <code>rpg-dev-cdn</code> →「キャッシュ削除」→「キャッシュ削除を作成」→ パス <code>/*</code></li>
+<li>「IAM」→「ロール」→「ロールを作成」→ 信頼されたエンティティ <strong>カスタム信頼ポリシー</strong> を選び、次の JSON を貼る（<code>&lt;オーナー&gt;</code> はリポジトリの持ち主）</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Principal&quot;: { &quot;Federated&quot;: &quot;arn:aws:iam::&lt;アカウントID&gt;:oidc-provider/token.actions.githubusercontent.com&quot; },
+      &quot;Action&quot;: &quot;sts:AssumeRoleWithWebIdentity&quot;,
+      &quot;Condition&quot;: {
+        &quot;StringEquals&quot;: {
+          &quot;token.actions.githubusercontent.com:aud&quot;: &quot;sts.amazonaws.com&quot;,
+          &quot;token.actions.githubusercontent.com:sub&quot;: &quot;repo:&lt;オーナー&gt;/rpg-learning-app:environment:dev&quot;
+        }
+      }
+    }
+  ]
+}</code></pre>
+<ol>
+<li>許可ポリシーは付けずに次へ進み、ロール名 <code>rpg-dev-deploy-role</code>、タグを付けて作成する</li>
+<li>作成したロールを開き「許可を追加」→「インラインポリシーを作成」→「JSON」に次を貼り、名前 <code>deploy</code> で保存する</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Sid&quot;: &quot;LambdaCode&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;lambda:UpdateFunctionCode&quot;, &quot;lambda:GetFunction&quot;, &quot;lambda:GetFunctionConfiguration&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-dev-*&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;HealthCheck&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;lambda:InvokeFunction&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-dev-api-handler&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;WebBucket&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;s3:ListBucket&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:s3:::rpg-dev-web-&lt;アカウントID&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;WebObjects&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;s3:PutObject&quot;, &quot;s3:GetObject&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:s3:::rpg-dev-web-&lt;アカウントID&gt;/*&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;Invalidation&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;cloudfront:CreateInvalidation&quot;, &quot;cloudfront:GetInvalidation&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:cloudfront::&lt;アカウントID&gt;:distribution/&lt;V-08 ディストリビューションID&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;Migration&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;rds-data:ExecuteStatement&quot;, &quot;rds-data:BatchExecuteStatement&quot;],
+      &quot;Resource&quot;: &quot;&lt;V-06 クラスターARN&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;DbSecret&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;secretsmanager:GetSecretValue&quot;,
+      &quot;Resource&quot;: &quot;&lt;V-07 シークレットARN&gt;&quot;
+    }
+  ]
+}</code></pre>
+<ol>
+<li>ロールの ARN を控える（V-11）</li>
+</ol>
+<ul>
+<li>信頼ポリシーの <code>sub</code> で、GitHub の Environment <code>dev</code> で動くジョブだけがこのロールを使えるようにしている。ほかの環境のジョブやフォークからは引き受けられない</li>
+<li>権限は配置に必要なものだけ。Lambda の設定（環境変数・メモリなど）やリソースの作成・削除はできない</li>
+</ul>
+<p><strong>(2) GitHub の Environment</strong></p>
+<ol>
+<li>GitHub のリポジトリ →「Settings」→「Environments」→「New environment」で、名前 <code>dev</code> を作る</li>
+<li>「Deployment branches and tags」で「Selected branches and tags」を選び、<code>main</code>（ブランチ）だけを追加する</li>
+<li>「Environment variables」に次を入れる（値はどれも秘密ではないため Variables に入れる）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変数名</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AWS_ROLE_ARN</code></td>
+<td>V-11</td>
+</tr>
+<tr>
+<td><code>WEB_BUCKET</code></td>
+<td><code>rpg-dev-web-&lt;アカウントID&gt;</code></td>
+</tr>
+<tr>
+<td><code>CF_DISTRIBUTION_ID</code></td>
+<td>V-08 のディストリビューションID</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ARN</code></td>
+<td>V-06</td>
+</tr>
+<tr>
+<td><code>DB_SECRET_ARN</code></td>
+<td>V-07</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ID</code></td>
+<td><code>rpg-dev-db</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s3-14"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.14 初回の配置と動作確認</h3>
+<p><strong>(1) 初回の配置（GitHub Actions）</strong></p>
+<ol>
+<li>開発チームに V-08・V-09 の値を伝え、画面の設定ファイル <code>web/config/config.dev.js</code> に入れて <code>main</code> にマージしてもらう</li>
+<li>GitHub の「Actions」→「release」→「Run workflow」で、ブランチ <code>main</code> を選んで実行する（設定ファイルのマージで自動的に動いた場合は、その実行を見ればよい）</li>
+<li>ジョブ <code>build</code> → <code>deploy-dev</code> がすべて緑（成功）になるまで待つ（約15分）。失敗したら、失敗したステップのログを開発チームに渡す</li>
+</ol>
+<p>配置が終わったら、次を確かめる。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認すること</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>配置ジョブの概要（Summary）</td>
+<td>マイグレーション <code>V001</code>・<code>V002</code> を適用、Lambda 4関数の SHA-256 が一致、ヘルスチェック 200</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Lambda <code>rpg-dev-api-handler</code> の「コード」タブ</td>
+<td>仮のコードではなく、配置した <code>index.mjs</code> になっている</td>
+</tr>
+<tr>
+<td>3</td>
+<td>RDS のクエリエディタ（<code>rpg-dev-db</code>、V-07、データベース <code>rpg</code>）で <code>SELECT version, release_no FROM schema_migrations;</code></td>
+<td><code>V001</code>・<code>V002</code> の2行があり、<code>release_no</code> に今回のリリース番号が入っている</td>
+</tr>
+<tr>
+<td>4</td>
+<td>S3 の <code>rpg-dev-web-&lt;アカウントID&gt;</code></td>
+<td><code>index.html</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> などがある</td>
+</tr>
+</tbody>
+</table></div>
+<p>続けて、次を行う。</p>
+<ol>
+<li>3.6 (7) で作ったシステム管理者を、アプリの <code>users</code> に登録する。クエリエディタで詳細設計書 8.5 の末尾にあるSQL（3文）を、<code>&lt;sub&gt;</code>（Cognito のユーザー詳細の「ユーザーID（sub）」）・メール・氏名を置き換えて実行する</li>
 <li>キャラクター画像がある場合は、S-14 から登録する（ない場合は頭文字の表示のままでよい）</li>
 </ol>
+<ul>
+<li>以後のアプリの更新は、詳細設計書 第11章のとおり GitHub Actions で配置する。コンソールから zip や画面をアップロードしない</li>
+</ul>
 <p><strong>(2) 動作確認</strong></p>
 <div class="table-wrap"><table>
 <thead>
@@ -2274,7 +2502,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>2</td>
-<td>3.6 で作った管理者でログイン</td>
+<td>3.6 で作り 3.14 で登録した管理者でログイン</td>
 <td>新しいパスワードの設定を求められる。設定後に S-13 が開く</td>
 </tr>
 <tr>
@@ -2415,6 +2643,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>V-10</td>
 <td>API ID・API のURL</td>
+<td></td>
+</tr>
+<tr>
+<td>V-11</td>
+<td>配置用ロール ARN</td>
 <td></td>
 </tr>
 </tbody>
@@ -2735,16 +2968,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </ul>
 </li>
 </ol>
-<p><strong>(2) テーブルの作成（クエリエディタ）</strong></p>
-<ol>
-<li>RDS の左メニュー「クエリエディタ」を開く</li>
-<li>データベース <code>rpg-stg-db</code>、ユーザー「Secrets Manager ARN で接続」に V-07、データベース名 <code>rpg</code> を入れて接続する<ul>
-<li>止まっている場合は起動に15〜30秒かかる。エラーになったら少し待ってもう一度接続する</li>
-</ul>
-</li>
-<li>開発チームから受け取ったテーブル作成のSQL（外部設計書 第7章に基づくもの）を貼り付けて実行する</li>
-<li><code>SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';</code> を実行し、テーブルができたことを確かめる</li>
-</ol>
+<p><strong>(2) テーブルの作成</strong></p>
+<p>テーブルはここでは作らない。4.14 の初回の配置で、GitHub Actions がリポジトリの <code>db/migrations/</code> のSQLを Data API で流して作る（詳細設計書 8.7・11.6）。ここでは、RDS Data API が <strong>有効</strong> になっていることだけを確かめておく。</p>
 <blockquote>
 <p>マスターユーザーのパスワードは Secrets Manager が7日ごとに自動で変える。Data API は常に最新の値を読むので、アプリ側の作業はない。</p>
 </blockquote>
@@ -3243,7 +3468,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </table></div>
 <p>作成後、関数ごとに次を行う。</p>
 <ol>
-<li>「コード」→「アップロード元」→「.zip ファイル」で、開発チームから受け取った zip をアップロードする</li>
+<li>「コード」はまだ変えない（作成時の既定のコードのまま）。本物のコードは 4.14 で GitHub Actions が入れる</li>
 <li>「設定」→「一般設定」→「編集」で、メモリとタイムアウトを上の表のとおりにする</li>
 <li>「設定」→「タグ」で <code>Project</code>・<code>Environment</code> を付ける</li>
 <li>「設定」→「環境変数」で、次の値を入れる（変数名は 2026-10-19 に決定）</li>
@@ -3355,7 +3580,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>予約された同時実行を設定できない（アカウントの同時実行数の上限が10など小さい）場合は、設定せずに進め、「Service Quotas」で Lambda の「同時実行数」の引き上げを申請する</li>
 </ul>
 <p><strong>(4) 動作の確認</strong></p>
-<p><code>rpg-stg-api-handler</code> の「テスト」タブで、開発チームが用意した確認用イベント（例：ヘルスチェック）を実行し、成功することを確かめる。DB が止まっている場合、1回目は起動待ちで失敗することがある。</p>
+<p>ここでは行わない。関数のコードはまだ仮のもの（作成時の既定のコード）のため、4.14 の初回の配置のあとで GitHub Actions がヘルスチェックを行う。</p>
 <h3 id="s4-9"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.9 API Gateway（HTTP API）</h3>
 <ol>
 <li>「API Gateway」→「API を作成」→ <strong>HTTP API</strong> の「構築」</li>
@@ -3567,14 +3792,173 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>フィルターパターン <code>GRADING_TIMEOUT</code>（画面に 504 を返すときにアプリが出すログ。開発チームと合わせる）</li>
 <li>名前空間 <code>rpg/stg</code>、メトリクス名 <code>GradingTimeout</code>、値 <code>1</code></li>
 </ol>
-<h3 id="s4-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.13 画面の配置と動作確認</h3>
-<p><strong>(1) 画面の配置</strong></p>
+<h3 id="s4-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.13 GitHub Actions の配置用ロールと Environment</h3>
+<p><strong>(1) 配置用ロールの作成</strong></p>
 <ol>
-<li>S3 の <code>rpg-stg-web-&lt;アカウントID&gt;</code> に、開発チームから受け取った画面一式（<code>index.html</code>・<code>manifest.webmanifest</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> など）をフォルダの構成のままアップロードする</li>
-<li>画面の設定ファイル（例：<code>js/config.js</code>）に、V-08・V-09 の値（CloudFront ドメイン、ユーザープールID、アプリクライアントID、Cognito ドメイン）が入っていることを確かめる</li>
-<li>CloudFront の <code>rpg-stg-cdn</code> →「キャッシュ削除」→「キャッシュ削除を作成」→ パス <code>/*</code></li>
+<li>「IAM」→「ロール」→「ロールを作成」→ 信頼されたエンティティ <strong>カスタム信頼ポリシー</strong> を選び、次の JSON を貼る（<code>&lt;オーナー&gt;</code> はリポジトリの持ち主）</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Principal&quot;: { &quot;Federated&quot;: &quot;arn:aws:iam::&lt;アカウントID&gt;:oidc-provider/token.actions.githubusercontent.com&quot; },
+      &quot;Action&quot;: &quot;sts:AssumeRoleWithWebIdentity&quot;,
+      &quot;Condition&quot;: {
+        &quot;StringEquals&quot;: {
+          &quot;token.actions.githubusercontent.com:aud&quot;: &quot;sts.amazonaws.com&quot;,
+          &quot;token.actions.githubusercontent.com:sub&quot;: &quot;repo:&lt;オーナー&gt;/rpg-learning-app:environment:stg&quot;
+        }
+      }
+    }
+  ]
+}</code></pre>
+<ol>
+<li>許可ポリシーは付けずに次へ進み、ロール名 <code>rpg-stg-deploy-role</code>、タグを付けて作成する</li>
+<li>作成したロールを開き「許可を追加」→「インラインポリシーを作成」→「JSON」に次を貼り、名前 <code>deploy</code> で保存する</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Sid&quot;: &quot;LambdaCode&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;lambda:UpdateFunctionCode&quot;, &quot;lambda:GetFunction&quot;, &quot;lambda:GetFunctionConfiguration&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-stg-*&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;HealthCheck&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;lambda:InvokeFunction&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-stg-api-handler&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;WebBucket&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;s3:ListBucket&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:s3:::rpg-stg-web-&lt;アカウントID&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;WebObjects&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;s3:PutObject&quot;, &quot;s3:GetObject&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:s3:::rpg-stg-web-&lt;アカウントID&gt;/*&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;Invalidation&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;cloudfront:CreateInvalidation&quot;, &quot;cloudfront:GetInvalidation&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:cloudfront::&lt;アカウントID&gt;:distribution/&lt;V-08 ディストリビューションID&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;Migration&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;rds-data:ExecuteStatement&quot;, &quot;rds-data:BatchExecuteStatement&quot;],
+      &quot;Resource&quot;: &quot;&lt;V-06 クラスターARN&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;DbSecret&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;secretsmanager:GetSecretValue&quot;,
+      &quot;Resource&quot;: &quot;&lt;V-07 シークレットARN&gt;&quot;
+    }
+  ]
+}</code></pre>
+<ol>
+<li>ロールの ARN を控える（V-11）</li>
+</ol>
+<ul>
+<li>信頼ポリシーの <code>sub</code> で、GitHub の Environment <code>stg</code> で動くジョブだけがこのロールを使えるようにしている。ほかの環境のジョブやフォークからは引き受けられない</li>
+<li>権限は配置に必要なものだけ。Lambda の設定（環境変数・メモリなど）やリソースの作成・削除はできない</li>
+</ul>
+<p><strong>(2) GitHub の Environment</strong></p>
+<ol>
+<li>GitHub のリポジトリ →「Settings」→「Environments」→「New environment」で、名前 <code>stg</code> を作る</li>
+<li>「Deployment branches and tags」で「Selected branches and tags」を選び、<code>release-*</code>（タグ）だけを追加する</li>
+<li>「Environment variables」に次を入れる（値はどれも秘密ではないため Variables に入れる）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変数名</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AWS_ROLE_ARN</code></td>
+<td>V-11</td>
+</tr>
+<tr>
+<td><code>WEB_BUCKET</code></td>
+<td><code>rpg-stg-web-&lt;アカウントID&gt;</code></td>
+</tr>
+<tr>
+<td><code>CF_DISTRIBUTION_ID</code></td>
+<td>V-08 のディストリビューションID</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ARN</code></td>
+<td>V-06</td>
+</tr>
+<tr>
+<td><code>DB_SECRET_ARN</code></td>
+<td>V-07</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ID</code></td>
+<td><code>rpg-stg-db</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s4-14"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.14 初回の配置と動作確認</h3>
+<p><strong>(1) 初回の配置（GitHub Actions）</strong></p>
+<ol>
+<li>開発チームに V-08・V-09 の値を伝え、<code>web/config/config.stg.js</code> に入れて <code>main</code> にマージしてもらう（dev への配置が成功することも確かめる）</li>
+<li>開発チームにタグ <code>release-YYYYMMDD-NN</code>（例：<code>release-20261105-01</code>）を付けて push してもらう</li>
+<li>GitHub の「Actions」→ そのタグの「release」の実行で、<code>build</code> → <code>publish</code> → <code>deploy-stg</code> が成功するまで待つ（約15分）</li>
+<li>続く <code>deploy-prod</code> は承認待ちになる。prod はまだないため <strong>承認しない</strong>（5.14 で承認する。30日を過ぎて期限切れになった場合は、5.14 で新しいタグを付けて出し直す）</li>
+</ol>
+<p>配置が終わったら、次を確かめる。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認すること</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>配置ジョブの概要（Summary）</td>
+<td>マイグレーション <code>V001</code>・<code>V002</code> を適用、Lambda 4関数の SHA-256 が一致、ヘルスチェック 200</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Lambda <code>rpg-stg-api-handler</code> の「コード」タブ</td>
+<td>仮のコードではなく、配置した <code>index.mjs</code> になっている</td>
+</tr>
+<tr>
+<td>3</td>
+<td>RDS のクエリエディタ（<code>rpg-stg-db</code>、V-07、データベース <code>rpg</code>）で <code>SELECT version, release_no FROM schema_migrations;</code></td>
+<td><code>V001</code>・<code>V002</code> の2行があり、<code>release_no</code> に今回のリリース番号が入っている</td>
+</tr>
+<tr>
+<td>4</td>
+<td>S3 の <code>rpg-stg-web-&lt;アカウントID&gt;</code></td>
+<td><code>index.html</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> などがある</td>
+</tr>
+</tbody>
+</table></div>
+<p>続けて、次を行う。</p>
+<ol>
+<li>4.6 (7) で作ったシステム管理者を、アプリの <code>users</code> に登録する。クエリエディタで詳細設計書 8.5 の末尾にあるSQL（3文）を、<code>&lt;sub&gt;</code>（Cognito のユーザー詳細の「ユーザーID（sub）」）・メール・氏名を置き換えて実行する</li>
 <li>キャラクター画像がある場合は、S-14 から登録する（ない場合は頭文字の表示のままでよい）</li>
 </ol>
+<ul>
+<li>以後のアプリの更新は、詳細設計書 第11章のとおり GitHub Actions で配置する。コンソールから zip や画面をアップロードしない</li>
+</ul>
 <p><strong>(2) 動作確認</strong></p>
 <div class="table-wrap"><table>
 <thead>
@@ -3592,7 +3976,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>2</td>
-<td>4.6 で作った管理者でログイン</td>
+<td>4.6 で作り 4.14 で登録した管理者でログイン</td>
 <td>新しいパスワードの設定を求められる。設定後に S-13 が開く</td>
 </tr>
 <tr>
@@ -3733,6 +4117,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>V-10</td>
 <td>API ID・API のURL</td>
+<td></td>
+</tr>
+<tr>
+<td>V-11</td>
+<td>配置用ロール ARN</td>
 <td></td>
 </tr>
 </tbody>
@@ -4053,16 +4442,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </ul>
 </li>
 </ol>
-<p><strong>(2) テーブルの作成（クエリエディタ）</strong></p>
-<ol>
-<li>RDS の左メニュー「クエリエディタ」を開く</li>
-<li>データベース <code>rpg-prod-db</code>、ユーザー「Secrets Manager ARN で接続」に V-07、データベース名 <code>rpg</code> を入れて接続する<ul>
-<li>止まっている場合は起動に15〜30秒かかる。エラーになったら少し待ってもう一度接続する</li>
-</ul>
-</li>
-<li>開発チームから受け取ったテーブル作成のSQL（外部設計書 第7章に基づくもの）を貼り付けて実行する</li>
-<li><code>SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';</code> を実行し、テーブルができたことを確かめる</li>
-</ol>
+<p><strong>(2) テーブルの作成</strong></p>
+<p>テーブルはここでは作らない。5.14 の初回の配置で、GitHub Actions がリポジトリの <code>db/migrations/</code> のSQLを Data API で流して作る（詳細設計書 8.7・11.6）。ここでは、RDS Data API が <strong>有効</strong> になっていることだけを確かめておく。</p>
 <blockquote>
 <p>マスターユーザーのパスワードは Secrets Manager が7日ごとに自動で変える。Data API は常に最新の値を読むので、アプリ側の作業はない。</p>
 </blockquote>
@@ -4564,7 +4945,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </table></div>
 <p>作成後、関数ごとに次を行う。</p>
 <ol>
-<li>「コード」→「アップロード元」→「.zip ファイル」で、開発チームから受け取った zip をアップロードする</li>
+<li>「コード」はまだ変えない（作成時の既定のコードのまま）。本物のコードは 5.14 で GitHub Actions が入れる</li>
 <li>「設定」→「一般設定」→「編集」で、メモリとタイムアウトを上の表のとおりにする</li>
 <li>「設定」→「タグ」で <code>Project</code>・<code>Environment</code> を付ける</li>
 <li>「設定」→「環境変数」で、次の値を入れる（変数名は 2026-10-19 に決定）</li>
@@ -4676,7 +5057,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>予約された同時実行を設定できない（アカウントの同時実行数の上限が10など小さい）場合は、設定せずに進め、「Service Quotas」で Lambda の「同時実行数」の引き上げを申請する</li>
 </ul>
 <p><strong>(4) 動作の確認</strong></p>
-<p><code>rpg-prod-api-handler</code> の「テスト」タブで、開発チームが用意した確認用イベント（例：ヘルスチェック）を実行し、成功することを確かめる。DB が止まっている場合、1回目は起動待ちで失敗することがある。</p>
+<p>ここでは行わない。関数のコードはまだ仮のもの（作成時の既定のコード）のため、5.14 の初回の配置のあとで GitHub Actions がヘルスチェックを行う。</p>
 <h3 id="s5-9"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.9 API Gateway（HTTP API）</h3>
 <ol>
 <li>「API Gateway」→「API を作成」→ <strong>HTTP API</strong> の「構築」</li>
@@ -4888,14 +5269,182 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>フィルターパターン <code>GRADING_TIMEOUT</code>（画面に 504 を返すときにアプリが出すログ。開発チームと合わせる）</li>
 <li>名前空間 <code>rpg/prod</code>、メトリクス名 <code>GradingTimeout</code>、値 <code>1</code></li>
 </ol>
-<h3 id="s5-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.13 画面の配置と動作確認</h3>
-<p><strong>(1) 画面の配置</strong></p>
+<h3 id="s5-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.13 GitHub Actions の配置用ロールと Environment</h3>
+<p><strong>(1) 配置用ロールの作成</strong></p>
 <ol>
-<li>S3 の <code>rpg-prod-web-&lt;アカウントID&gt;</code> に、開発チームから受け取った画面一式（<code>index.html</code>・<code>manifest.webmanifest</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> など）をフォルダの構成のままアップロードする</li>
-<li>画面の設定ファイル（例：<code>js/config.js</code>）に、V-08・V-09 の値（CloudFront ドメイン、ユーザープールID、アプリクライアントID、Cognito ドメイン）が入っていることを確かめる</li>
-<li>CloudFront の <code>rpg-prod-cdn</code> →「キャッシュ削除」→「キャッシュ削除を作成」→ パス <code>/*</code></li>
+<li>「IAM」→「ロール」→「ロールを作成」→ 信頼されたエンティティ <strong>カスタム信頼ポリシー</strong> を選び、次の JSON を貼る（<code>&lt;オーナー&gt;</code> はリポジトリの持ち主）</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Principal&quot;: { &quot;Federated&quot;: &quot;arn:aws:iam::&lt;アカウントID&gt;:oidc-provider/token.actions.githubusercontent.com&quot; },
+      &quot;Action&quot;: &quot;sts:AssumeRoleWithWebIdentity&quot;,
+      &quot;Condition&quot;: {
+        &quot;StringEquals&quot;: {
+          &quot;token.actions.githubusercontent.com:aud&quot;: &quot;sts.amazonaws.com&quot;,
+          &quot;token.actions.githubusercontent.com:sub&quot;: &quot;repo:&lt;オーナー&gt;/rpg-learning-app:environment:prod&quot;
+        }
+      }
+    }
+  ]
+}</code></pre>
+<ol>
+<li>許可ポリシーは付けずに次へ進み、ロール名 <code>rpg-prod-deploy-role</code>、タグを付けて作成する</li>
+<li>作成したロールを開き「許可を追加」→「インラインポリシーを作成」→「JSON」に次を貼り、名前 <code>deploy</code> で保存する</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Sid&quot;: &quot;LambdaCode&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;lambda:UpdateFunctionCode&quot;, &quot;lambda:GetFunction&quot;, &quot;lambda:GetFunctionConfiguration&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-prod-*&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;HealthCheck&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;lambda:InvokeFunction&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-prod-api-handler&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;WebBucket&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;s3:ListBucket&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:s3:::rpg-prod-web-&lt;アカウントID&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;WebObjects&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;s3:PutObject&quot;, &quot;s3:GetObject&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:s3:::rpg-prod-web-&lt;アカウントID&gt;/*&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;Invalidation&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;cloudfront:CreateInvalidation&quot;, &quot;cloudfront:GetInvalidation&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:cloudfront::&lt;アカウントID&gt;:distribution/&lt;V-08 ディストリビューションID&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;Migration&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;rds-data:ExecuteStatement&quot;, &quot;rds-data:BatchExecuteStatement&quot;],
+      &quot;Resource&quot;: &quot;&lt;V-06 クラスターARN&gt;&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;DbSecret&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;secretsmanager:GetSecretValue&quot;,
+      &quot;Resource&quot;: &quot;&lt;V-07 シークレットARN&gt;&quot;
+    }
+  ]
+}</code></pre>
+<ul>
+<li>prod だけ、配置前のスナップショット用に次の部品を加える</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;Sid&quot;: &quot;Snapshot&quot;,
+  &quot;Effect&quot;: &quot;Allow&quot;,
+  &quot;Action&quot;: [&quot;rds:CreateDBClusterSnapshot&quot;, &quot;rds:DescribeDBClusterSnapshots&quot;, &quot;rds:AddTagsToResource&quot;],
+  &quot;Resource&quot;: [&quot;arn:aws:rds:ap-northeast-1:&lt;アカウントID&gt;:cluster:rpg-prod-db&quot;, &quot;arn:aws:rds:ap-northeast-1:&lt;アカウントID&gt;:cluster-snapshot:rpg-prod-before-*&quot;]
+}</code></pre>
+<ol>
+<li>ロールの ARN を控える（V-11）</li>
+</ol>
+<ul>
+<li>信頼ポリシーの <code>sub</code> で、GitHub の Environment <code>prod</code> で動くジョブだけがこのロールを使えるようにしている。ほかの環境のジョブやフォークからは引き受けられない</li>
+<li>権限は配置に必要なものだけ。Lambda の設定（環境変数・メモリなど）やリソースの作成・削除はできない</li>
+</ul>
+<p><strong>(2) GitHub の Environment</strong></p>
+<ol>
+<li>GitHub のリポジトリ →「Settings」→「Environments」→「New environment」で、名前 <code>prod</code> を作る</li>
+<li>「Deployment branches and tags」で「Selected branches and tags」を選び、<code>release-*</code>（タグ）だけを追加する</li>
+<li>「Environment variables」に次を入れる（値はどれも秘密ではないため Variables に入れる）</li>
+<li>「Required reviewers」にチェックし、承認者（システム管理者・開発リーダー）を登録する。「Prevent self-review」もオンにする（タグを付けた人が自分で承認できないようにする）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変数名</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AWS_ROLE_ARN</code></td>
+<td>V-11</td>
+</tr>
+<tr>
+<td><code>WEB_BUCKET</code></td>
+<td><code>rpg-prod-web-&lt;アカウントID&gt;</code></td>
+</tr>
+<tr>
+<td><code>CF_DISTRIBUTION_ID</code></td>
+<td>V-08 のディストリビューションID</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ARN</code></td>
+<td>V-06</td>
+</tr>
+<tr>
+<td><code>DB_SECRET_ARN</code></td>
+<td>V-07</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ID</code></td>
+<td><code>rpg-prod-db</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s5-14"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.14 初回の配置と動作確認</h3>
+<p><strong>(1) 初回の配置（GitHub Actions）</strong></p>
+<ol>
+<li>開発チームに V-08・V-09 の値を伝え、<code>web/config/config.prod.js</code> に入れて <code>main</code> にマージしてもらい、新しいタグ <code>release-YYYYMMDD-NN</code> を付けてもらう（4.14 のタグが承認待ちのままで、prod の設定ファイルがそのタグに入っている場合は、そのまま使ってよい）</li>
+<li>そのタグの「release」の実行で <code>deploy-stg</code> が成功したら、承認者が「Review deployments」→ <code>prod</code> にチェック →「Approve and deploy」を押す</li>
+<li><code>deploy-prod</code> が成功するまで待つ（約15分）</li>
+</ol>
+<p>配置が終わったら、次を確かめる。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認すること</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>配置ジョブの概要（Summary）</td>
+<td>マイグレーション <code>V001</code>・<code>V002</code> を適用、Lambda 4関数の SHA-256 が一致、ヘルスチェック 200</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Lambda <code>rpg-prod-api-handler</code> の「コード」タブ</td>
+<td>仮のコードではなく、配置した <code>index.mjs</code> になっている</td>
+</tr>
+<tr>
+<td>3</td>
+<td>RDS のクエリエディタ（<code>rpg-prod-db</code>、V-07、データベース <code>rpg</code>）で <code>SELECT version, release_no FROM schema_migrations;</code></td>
+<td><code>V001</code>・<code>V002</code> の2行があり、<code>release_no</code> に今回のリリース番号が入っている</td>
+</tr>
+<tr>
+<td>4</td>
+<td>S3 の <code>rpg-prod-web-&lt;アカウントID&gt;</code></td>
+<td><code>index.html</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> などがある</td>
+</tr>
+</tbody>
+</table></div>
+<p>続けて、次を行う。</p>
+<ol>
+<li>5.6 (7) で作ったシステム管理者を、アプリの <code>users</code> に登録する。クエリエディタで詳細設計書 8.5 の末尾にあるSQL（3文）を、<code>&lt;sub&gt;</code>（Cognito のユーザー詳細の「ユーザーID（sub）」）・メール・氏名を置き換えて実行する</li>
 <li>キャラクター画像がある場合は、S-14 から登録する（ない場合は頭文字の表示のままでよい）</li>
 </ol>
+<ul>
+<li>以後のアプリの更新は、詳細設計書 第11章のとおり GitHub Actions で配置する。コンソールから zip や画面をアップロードしない</li>
+</ul>
 <p><strong>(2) 動作確認</strong></p>
 <div class="table-wrap"><table>
 <thead>
@@ -4913,7 +5462,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>2</td>
-<td>5.6 で作った管理者でログイン</td>
+<td>5.6 で作り 5.14 で登録した管理者でログイン</td>
 <td>新しいパスワードの設定を求められる。設定後に S-13 が開く</td>
 </tr>
 <tr>
@@ -5035,8 +5584,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>画面</td>
-<td>画面の設定ファイル（例：<code>js/config.js</code>）</td>
-<td>リダイレクト先を新しいドメインに変え、アップロードし直して CloudFront のキャッシュを削除（<code>/*</code>）</td>
+<td>画面の設定ファイル <code>web/config/config.prod.js</code>（リポジトリ）</td>
+<td>開発チームがリダイレクト先を新しいドメインに変えて <code>main</code> にマージし、新しいタグで GitHub Actions から配置する（詳細設計書 第11章）</td>
 </tr>
 </tbody>
 </table></div>
@@ -5289,14 +5838,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>5</td>
 <td>テーブルの作り方</td>
-<td>クエリエディタで SQL を実行する（3.4 (2)）</td>
-<td>開発チームとの打ち合わせ</td>
+<td><strong>決定（2026-10-20）</strong>：GitHub Actions の配置ジョブが <code>db/migrations/</code> を Data API で流す（3.14、詳細設計書 11.6）</td>
+<td>決定済み</td>
 </tr>
 <tr>
 <td>6</td>
 <td>アラームの通知先</td>
 <td>dev・stg は開発者、prod はシステム管理者と開発者</td>
 <td>prod 構築前</td>
+</tr>
+<tr>
+<td>7</td>
+<td>GitHub のリポジトリと承認者</td>
+<td>リポジトリ <code>&lt;オーナー&gt;/rpg-learning-app</code>。prod の承認者はシステム管理者と開発リーダーの2名（3.13・5.13）</td>
+<td>dev 構築前</td>
 </tr>
 </tbody>
 </table></div></section>

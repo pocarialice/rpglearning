@@ -3,9 +3,9 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第0.1版（ドラフト：第1〜12章、HTML版あり）                                 |
+| 版数     | 第0.2版（ドラフト：第1〜12章、HTML版あり。リリースを GitHub Actions に変更）      |
 | 作成日    | 2026-10-20                                                 |
-| 入力文書   | 要件定義書 第1版（ドラフト）、外部設計書 第0.6版、AWS構築手順書 第0.3版                 |
+| 入力文書   | 要件定義書 第1版（ドラフト）、外部設計書 第0.7版、AWS構築手順書 第0.4版                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
 
@@ -29,8 +29,8 @@
 | ニックネームの重複  | DBの一意制約は付けず、アプリで「同じコースの受講者に同じニックネームがいないか」を確認する（登録・変更・受講開始の3か所）                           | 3.7 S-08 |
 | DBアクセス     | RDS Data API（`@aws-sdk/client-rds-data`）。DB起動中は `DB_RESUMING` を返す                         | 2.3、5.1  |
 | テスト        | Vitest（モジュールテスト）。詳細はモジュールテスト仕様書                                                             | -        |
-| リリース方式     | AWSマネジメントコンソールで手動配置（Lambdaはzipアップロード、画面はS3アップロード＋CloudFrontのキャッシュ削除、DBはクエリエディタ）                | -        |
-| ロールバック     | リリースごとの成果物（zip・画面一式）を保管し、前回の成果物を再アップロードして戻す                                                  | -        |
+| リリース方式     | GitHub Actions で配置（`main` への push で dev、タグ `release-YYYYMMDD-NN` で stg → 承認後に prod）。AWS へは OIDC で認証し、Lambda はコードの更新、画面は S3 への同期＋CloudFront のキャッシュ削除、DB は Data API でマイグレーション。AWSリソースの作成・設定変更はコンソール（構築手順書） | -        |
+| ロールバック     | リリースごとの成果物（zip・画面一式）を GitHub Release に保管し、ワークフロー `rollback.yml` で前回の成果物を配置し直して戻す                      | -        |
 
 ### 1.3 用語
 
@@ -108,6 +108,12 @@ rpg-learning-app/
 ├─ package-lock.json
 ├─ vitest.config.js               # テスト設定（環境・カバレッジ閾値）
 ├─ .gitignore                     # dist/、release/、coverage/、node_modules/
+├─ .github/
+│  └─ workflows/
+│     ├─ ci.yml                     # プルリクエストで test・build（11.2）
+│     ├─ release.yml                # main → dev、タグ release-* → stg → prod
+│     ├─ deploy.yml                 # 1環境への配置（release.yml から呼ばれる）
+│     └─ rollback.yml               # 手動。前回のリリースに戻す
 ├─ db/
 │  ├─ migrations/
 │  │  ├─ V001__create_tables.sql        # 第8章のCREATE TABLE
@@ -203,21 +209,24 @@ rpg-learning-app/
 ├─ scripts/
 │  ├─ build-functions.mjs         # esbuildで束ねて dist/functions/*.zip を作る
 │  ├─ build-web.mjs               # dist/web-{env}/ を作る（config差し込み・キャッシュ名更新）
-│  └─ pack-release.mjs            # release/{リリース番号}/ に成果物とmanifest.jsonを集める
+│  ├─ pack-release.mjs            # release/{リリース番号}/ に成果物とmanifest.jsonを集める
+│  ├─ migrate.mjs                 # Data API で未適用のマイグレーションを流す（GitHub Actions から）
+│  ├─ deploy-functions.mjs        # Lambda 4関数のコード更新と SHA-256 の照合
+│  └─ health-check.mjs            # api-handler の health を呼んで 200 を確かめる
 ├─ dist/                          # 生成物（git管理外）
-└─ release/                       # リリースごとの成果物の保管（git管理外。共有ドライブにも複製）
+└─ release/                       # 成果物の置き場（git管理外。保管は GitHub Release）
 ```
 
 **配置先との対応**
 
 | リポジトリ                          | 成果物                                  | 配置先（AWS）                                 | 配置の方法             |
 | ------------------------------ | ------------------------------------ | ---------------------------------------- | ----------------- |
-| `functions/api-handler/`       | `dist/functions/api-handler.zip`     | Lambda `rpg-{env}-api-handler`           | コンソールで.zipをアップロード |
+| `functions/api-handler/`       | `dist/functions/api-handler.zip`     | Lambda `rpg-{env}-api-handler`           | GitHub Actions（`update-function-code`） |
 | `functions/grading-worker/`    | `dist/functions/grading-worker.zip`  | Lambda `rpg-{env}-grading-worker`        | 同上                |
 | `functions/import-worker/`     | `dist/functions/import-worker.zip`   | Lambda `rpg-{env}-import-worker`         | 同上                |
 | `functions/batch-runner/`      | `dist/functions/batch-runner.zip`    | Lambda `rpg-{env}-batch-runner`          | 同上                |
-| `web/`                         | `dist/web-{env}/`                    | S3 `rpg-{env}-web-<アカウントID>`             | S3コンソールでアップロード    |
-| `db/migrations/`               | `V***__*.sql`                        | Aurora `rpg-{env}-db`（データベース `rpg`）      | RDSクエリエディタで実行     |
+| `web/`                         | `dist/web-{env}/`                    | S3 `rpg-{env}-web-<アカウントID>`             | GitHub Actions（`s3 sync`＋キャッシュ削除） |
+| `db/migrations/`               | `V***__*.sql`                        | Aurora `rpg-{env}-db`（データベース `rpg`）      | GitHub Actions（`scripts/migrate.mjs`、Data API） |
 | -                              | キャラクター画像                             | S3 `rpg-{env}-assets-<アカウントID>/partners/` | S-14 の画面から登録（リリース対象外） |
 
 ### 2.3 技術スタック
@@ -232,6 +241,7 @@ rpg-learning-app/
 | zip作成       | archiver                              | `scripts/build-functions.mjs` から使う           |
 | テスト         | Vitest、@vitest/coverage-v8、jsdom、aws-sdk-client-mock | モジュールテスト仕様書を参照                               |
 | 画面          | Vanilla JS（ES Modules）、アプリ用デザインシステム `bundle.css` | ビルドなし                                         |
+| CI/CD       | GitHub Actions、AWS CLI v2                     | ランナー `ubuntu-latest`。AWS へは `aws-actions/configure-aws-credentials`（OIDC）で認証 |
 
 ### 2.4 共通の実装方針
 
@@ -567,7 +577,7 @@ flowchart TD
 
 | No   | メソッド・パス                                     | ハンドラ（routes/）                 | ロール            |
 | ---- | ------------------------------------------- | ------------------------------ | -------------- |
-| A-00 | `GET /api/health`                           | `health.get`（DBに `SELECT 1`）    | 不要（コンソールのテスト用。API Gateway経由ではJWTが必要） |
+| A-00 | `GET /api/health`                           | `health.get`（DBに `SELECT 1`）    | 不要（配置時のヘルスチェック用。Lambda を直接呼び出す。API Gateway経由ではJWTが必要） |
 | A-01 | `GET /api/me`                               | `me.get`                       | 全員             |
 | A-02 | `PUT /api/me/profile`                       | `me.putProfile`                | learner        |
 | A-03 | `PUT /api/me/partner`                       | `me.putPartner`                | learner        |
@@ -1102,7 +1112,7 @@ erDiagram
 
 ### 8.4 CREATE TABLE文（`db/migrations/V001__create_tables.sql`）
 
-RDSクエリエディタで上から順に実行する（外部キーの参照先を先に作る順番になっている）。クエリエディタは Data API で1文ずつ実行するため、`BEGIN`／`COMMIT` で囲まず、**何度流しても同じ結果になる書き方**（`IF NOT EXISTS`・`ON CONFLICT DO NOTHING`）にしている。途中で失敗したら、原因を直してファイル全体をもう一度流せばよい。
+GitHub Actions の配置ジョブ（11.6 手順1、`scripts/migrate.mjs`）が上から順に実行する（外部キーの参照先を先に作る順番になっている）。Data API で1文ずつ実行するため、`BEGIN`／`COMMIT` で囲まず、**何度流しても同じ結果になる書き方**（`IF NOT EXISTS`・`ON CONFLICT DO NOTHING`）にしている。途中で失敗したら、原因を直したファイルを含めてもう一度配置すればよい。
 
 ```sql
 -- =========================================================
@@ -1486,7 +1496,7 @@ ON CONFLICT (badge_code) DO NOTHING;
 INSERT INTO schema_migrations (version, description) VALUES ('V002', 'seed masters') ON CONFLICT DO NOTHING;
 ```
 
-> 最初のシステム管理者（構築手順書 3.6 (7) で Cognito に作った人）は、アプリの `users` にも行が必要になる。リリース時に次のSQLで登録する（`<sub>` は Cognito のユーザー詳細の「ユーザーID（sub）」）。
+> 最初のシステム管理者（構築手順書 3.6 (7) で Cognito に作った人）は、アプリの `users` にも行が必要になる。環境ごとの初回の配置のあと、RDS のクエリエディタで次のSQLを1回だけ実行して登録する（環境ごとに値が違うためマイグレーションには入れない。`<sub>` は Cognito のユーザー詳細の「ユーザーID（sub）」）。
 >
 > `INSERT INTO users (cognito_sub, email, full_name, status) VALUES ('<sub>', '<メール>', '<氏名>', 'active');`
 > `INSERT INTO user_roles (user_id, role) SELECT user_id, r FROM users, unnest(ARRAY['system_admin','learner']) r WHERE cognito_sub = '<sub>';`
@@ -1573,7 +1583,8 @@ LIMIT :limit OFFSET :offset;
 | ルール      | 内容                                                                                             |
 | -------- | ---------------------------------------------------------------------------------------------- |
 | ファイル名    | `V{3桁の連番}__{英小文字の説明}.sql`。一度リリースしたファイルは書き換えない（直すときは新しい番号で出す）                                  |
-| 中身       | クエリエディタ（Data API）は1文ずつ実行するため、トランザクションで囲まない。`IF NOT EXISTS`・`ON CONFLICT DO NOTHING`・`ADD COLUMN IF NOT EXISTS` を使い、途中で失敗しても再実行できる形にする。最後の文で `schema_migrations` に1行入れる |
+| 中身       | `scripts/migrate.mjs` は**行末の `;` で文を区切り**、Data API で1文ずつ実行するため、トランザクションで囲まない。1つの文の途中で行末を `;` にしない（関数定義の `$$` は使わない）。`IF NOT EXISTS`・`ON CONFLICT DO NOTHING`・`ADD COLUMN IF NOT EXISTS` を使い、途中で失敗しても再実行できる形にする。最後の文で `schema_migrations` に1行入れる（`release_no` はスクリプトが入れる） |
+| 適用のしかた   | プルリクエストに含めて main にマージすると dev に、タグを付けると stg・prod に自動で適用される（11.6）。クエリエディタで手で流さない                          |
 | 互換性      | 列の追加は「NULL可または既定値つき」にし、**古いLambdaのまま動ける形**にする。列の削除・名前の変更は、新しいLambdaのリリース後に別のマイグレーションで行う（拡張→縮小の2段階） |
 | 取り消し用    | dev だけで使う `*.down.sql` を用意する。stg・prod では使わず、直すマイグレーションを新しく出す                                   |
 | 適用の確認    | `SELECT version, release_no, applied_at FROM schema_migrations ORDER BY version;`                |
@@ -1656,62 +1667,120 @@ fields purpose, inputTokens, outputTokens
 
 ## 11. ビルド・リリース手順
 
+AWSへのリリース（ビルド・配置）は **GitHub Actions** で行う。AWSのリソースそのもの（Lambda関数・S3バケット・CloudFront・Aurora など）の作成と設定の変更は、これまでどおり構築手順書に沿ってマネジメントコンソールで行い、GitHub Actions は **コードと画面とDBの変更（マイグレーション）を配置するだけ** とする。
+
 ### 11.1 リリースの全体像
 
 ```mermaid
 flowchart LR
-  A["1 ビルド<br>npm ci・test・build"] --> B["2 成果物の保管<br>release/リリース番号"]
-  B --> C["3 dev に配置<br>確認"]
-  C --> D["4 stg に配置<br>受け入れ確認"]
-  D --> E{"5 リリース判定"}
-  E -->|"OK"| F["6 prod に配置<br>スモークテスト"]
-  E -->|"NG"| A
-  F --> G["7 リリース記録"]
-  F -->|"問題あり"| R["ロールバック<br>11.7"]
+  PR["1 プルリクエスト<br>ci.yml：test・build"] --> M["2 main にマージ"]
+  M --> DEV["3 dev に自動配置<br>release.yml"]
+  DEV --> T["4 タグ release-YYYYMMDD-NN<br>を付けて push"]
+  T --> GR["5 ビルド<br>GitHub Release に保管"]
+  GR --> STG["6 stg に自動配置<br>受け入れ確認"]
+  STG --> E{"7 リリース判定<br>prod の承認"}
+  E -->|"承認"| PRD["8 prod に配置<br>スモークテスト"]
+  E -->|"却下"| PR
+  PRD --> REC["9 リリース記録"]
+  PRD -->|"問題あり"| RB["ロールバック<br>rollback.yml 11.9"]
 ```
 
-| 区分     | 内容                                                                           |
-| ------ | ---------------------------------------------------------------------------- |
-| 方式     | AWSマネジメントコンソールで手動配置（IaC・CI/CDは使わない）                                           |
-| 作業者    | 開発チーム（ビルド・成果物の作成）とインフラ担当（配置）。1人で行う場合も、prod は2人で画面を確認しながら行う                    |
-| 権限     | 配置に必要な権限：Lambda の `UpdateFunctionCode`、S3 の `PutObject`、CloudFront の `CreateInvalidation`、RDS クエリエディタ（Secrets Manager の値の読み取り） |
-| 時間帯    | prod は平日の 13:00〜13:30 を基本とする。0:00 の日次処理、30分ごとのメール送信の時刻（:00・:30）の前後5分は避けて作業する          |
-| 所要時間   | 1環境あたり約30分（DBの変更がない場合は約20分）                                                    |
-| 順番     | **DB → Lambda → 画面** の順。DBの変更は古いLambdaでも動く形（8.7）にしているため、途中の状態でもサービスは止まらない               |
+| 区分   | 内容                                                                                                                         |
+| ---- | -------------------------------------------------------------------------------------------------------------------------- |
+| 方式   | GitHub Actions（GitHub ホストのランナー `ubuntu-latest`）から AWS CLI で配置する。AWSへの認証は **OIDC**（一時的な認証情報）で行い、長期のアクセスキーは作らない。IaC は使わない         |
+| きっかけ | `main` への push で **dev**、タグ `release-YYYYMMDD-NN` の push で **stg → prod**（prod は承認者の承認が必要）                                     |
+| 作業者  | 開発者（プルリクエスト・タグ付け・スモークテスト）と承認者（prod の配置を承認する。タグを付けた人とは別の人）                                                                   |
+| 権限   | 環境ごとの配置用ロール `rpg-{env}-deploy-role`（構築手順書 3.13・4.13・5.13）。ワークフローは自分の環境のロールしか引き受けられない                                        |
+| 時間帯  | prod の承認は平日の 13:00〜13:30 を基本とする。ワークフローは 0:00 の日次処理と30分ごとのメール送信（:00・:30）の前後5分を避け、該当する場合は待ってから batch-runner を入れ替える |
+| 所要時間 | 1環境あたり約10分（DBの変更がある場合は約15分。prod でスナップショットを取る場合はさらに5〜10分）                                                                   |
+| 順番   | **DB → Lambda → 画面** の順。DBの変更は古いLambdaでも動く形（8.7）にしているため、途中の状態でもサービスは止まらない                                                  |
 
-### 11.2 リリース物
+### 11.2 ワークフロー一覧
 
-| 成果物                                     | 作り方                        | 配置先                                        |
-| --------------------------------------- | -------------------------- | ------------------------------------------ |
-| `dist/functions/api-handler.zip`        | `npm run build:functions`  | Lambda `rpg-{env}-api-handler`             |
-| `dist/functions/grading-worker.zip`     | 同上                         | Lambda `rpg-{env}-grading-worker`          |
-| `dist/functions/import-worker.zip`      | 同上                         | Lambda `rpg-{env}-import-worker`           |
-| `dist/functions/batch-runner.zip`       | 同上                         | Lambda `rpg-{env}-batch-runner`            |
-| `dist/web-{env}/`（index.html・js・css など） | `npm run build:web -- --env={env}` | S3 `rpg-{env}-web-<アカウントID>`の直下             |
-| `db/migrations/V***__*.sql`（今回追加分）      | 手で書く                       | Aurora `rpg-{env}-db` のデータベース `rpg`        |
-| `release/{リリース番号}/manifest.json`       | `npm run pack -- --release={番号}` | 保管のみ（共有ドライブにも複製）                           |
+ワークフローはリポジトリの `.github/workflows/` に置く。
+
+| ファイル          | きっかけ                                          | 処理                                                                                                |
+| ------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `ci.yml`      | `main` へのプルリクエスト                              | `npm ci` → `npm test -- --coverage` → `build:functions` → `build:web`（3環境）。AWS には接続しない                 |
+| `release.yml` | `main` への push、タグ `release-*` の push、手動（`main` を選んで dev に配置し直すとき） | ジョブ `build` → `deploy-dev`（main のとき）／`publish` → `deploy-stg` → `deploy-prod`（タグのとき）                    |
+| `deploy.yml`  | `release.yml` から呼ばれる（`workflow_call`）            | 1つの環境への配置（DB → Lambda → 画面 → ヘルスチェック）。入力は環境名とリリース番号                                                  |
+| `rollback.yml` | 手動（`workflow_dispatch`）。戻したいタグを選んで実行            | GitHub Release に保管した前回の成果物で Lambda・画面を戻す。DB は戻さない                                                    |
+
+- `release.yml` は `paths-ignore` で `documents/**`・`**.md` だけの変更では動かさない
+- 同じ環境への配置が重ならないよう、`deploy.yml` に `concurrency: deploy-{env}`（`cancel-in-progress: false`）を付ける
+
+```mermaid
+sequenceDiagram
+  participant Dev as 開発者
+  participant GH as GitHub
+  participant GA as GitHub Actions
+  participant AWS as AWS（rpg-env-*）
+  Dev->>GH: プルリクエスト
+  GH->>GA: ci.yml（test・build）
+  Dev->>GH: main にマージ
+  GH->>GA: release.yml（main）
+  GA->>AWS: OIDC で rpg-dev-deploy-role を引き受け、dev に配置
+  Dev->>GH: タグ release-YYYYMMDD-NN を push
+  GH->>GA: release.yml（タグ）
+  GA->>GH: GitHub Release に成果物を保管
+  GA->>AWS: rpg-stg-deploy-role で stg に配置
+  GA-->>GH: prod は承認待ち
+  Dev->>GH: 承認者が「Approve and deploy」
+  GA->>AWS: rpg-prod-deploy-role で prod に配置
+```
+
+### 11.3 リリース物
+
+| 成果物                                     | 作り方（ジョブ `build`）                      | 配置先                                        |
+| --------------------------------------- | ------------------------------------- | ------------------------------------------ |
+| `dist/functions/api-handler.zip`        | `npm run build:functions`             | Lambda `rpg-{env}-api-handler`             |
+| `dist/functions/grading-worker.zip`     | 同上                                    | Lambda `rpg-{env}-grading-worker`          |
+| `dist/functions/import-worker.zip`      | 同上                                    | Lambda `rpg-{env}-import-worker`           |
+| `dist/functions/batch-runner.zip`       | 同上                                    | Lambda `rpg-{env}-batch-runner`            |
+| `dist/web-{env}/`（index.html・js・css など） | `npm run build:web -- --env={env}`（3環境分） | S3 `rpg-{env}-web-<アカウントID>`の直下             |
+| `db/migrations/V***__*.sql`             | 手で書いてプルリクエストに含める                      | Aurora `rpg-{env}-db` のデータベース `rpg`        |
+| `manifest.json`                         | `npm run pack -- --release={番号}`      | 保管のみ（配置時の照合に使う）                            |
+
+**成果物の保管場所**
+
+| きっかけ     | 保管場所                                                       | 保管期間 | 使いみち                 |
+| -------- | ---------------------------------------------------------- | ---- | -------------------- |
+| main への push | Actions の成果物（artifact）`bundle-{リリース番号}`                     | 30日  | dev への配置             |
+| タグの push  | Actions の成果物に加えて、**GitHub Release** `release-{リリース番号}` の添付ファイル `bundle-{リリース番号}.zip` | 無期限  | stg・prod への配置、ロールバック |
+
+**リリース番号**
+
+| きっかけ     | リリース番号                        | 例                   |
+| -------- | ----------------------------- | ------------------- |
+| タグの push  | タグ名から `release-` を除いたもの（`YYYYMMDD-NN`） | `20261105-01`       |
+| main への push | `dev-{YYYYMMDD}-{コミットの先頭7文字}`      | `dev-20261105-a1b2c3d` |
 
 **manifest.json の例**
 
 ```json
 {"release":"20261105-01","commit":"a1b2c3d","createdAt":"2026-11-05T10:12:00+09:00",
+ "workflowRun":"https://github.com/<オーナー>/rpg-learning-app/actions/runs/123456789",
  "functions":{"api-handler":{"file":"api-handler.zip","sha256Base64":"Qm9nVXM..."}},
  "web":["index.html","sw.js","js/main.js"],"migrations":["V003__add_xxx.sql"]}
 ```
 
-- `sha256Base64` は Lambda コンソールの「コード SHA-256」と同じ形式（Base64）。アップロード後にここで照合する
+- `sha256Base64` は Lambda の `CodeSha256`（Base64）と同じ形式。配置後にワークフローが照合する
 
-### 11.3 ビルド（作業PC）
+### 11.4 ビルド（ジョブ `build`）
 
-| 順 | 作業                                                     | 確かめること                                   |
-| - | ------------------------------------------------------ | ---------------------------------------- |
-| 1 | `git switch main && git pull` で最新にし、`git status` が空であること | 未コミットの変更がない                              |
-| 2 | `npm ci`                                               | エラーがない                                   |
-| 3 | `npm test -- --coverage`                               | 全件成功、カバレッジがモジュールテスト仕様書の基準以上                 |
-| 4 | `npm run build:functions`                              | `dist/functions/` に zip が4つ。各10MB未満（コンソールから直接アップロードできる上限） |
-| 5 | `npm run build:web -- --env=dev`（stg・prod も同様に作る）        | `dist/web-dev/js/config.js` の値が dev のもの、`sw.js` のキャッシュ名にリリース番号 |
-| 6 | `npm run pack -- --release=20261105-01`                | `release/20261105-01/` に zip・web一式・SQL・manifest.json |
-| 7 | `git tag release-20261105-01 && git push origin release-20261105-01` | タグが付いた                                   |
+| 順 | ステップ                                                    | 確かめること                                                    |
+| - | ------------------------------------------------------- | --------------------------------------------------------- |
+| 1 | `actions/checkout`（タグのときは `fetch-depth: 0`）             | -                                                         |
+| 2 | （タグのとき）タグ名が `release-YYYYMMDD-NN` の形で、そのコミットが `main` に含まれる | `git merge-base --is-ancestor $GITHUB_SHA origin/main`。違えば失敗させる（dev を通っていないコードを出さない） |
+| 3 | `actions/setup-node`（Node.js 22、`cache: npm`）           | -                                                         |
+| 4 | `npm ci`                                                | エラーがない                                                    |
+| 5 | `npm test -- --coverage`                                | 全件成功、カバレッジがモジュールテスト仕様書の基準以上（下回るとジョブが失敗する）                      |
+| 6 | `npm run build:functions`                               | `dist/functions/` に zip が4つ。各50MB未満（API で直接アップロードできる上限）         |
+| 7 | `npm run build:web -- --env=dev`（stg・prod も同様に作る）         | `dist/web-{env}/js/config.js` の値がその環境のもの、`sw.js` のキャッシュ名にリリース番号 |
+| 8 | `npm run pack -- --release={番号}`                         | `release/{番号}/` に zip・web一式・SQL・manifest.json                 |
+| 9 | `actions/upload-artifact` で `release/{番号}/` を `bundle-{番号}` として保管 | -                                                         |
+
+タグのときは、続くジョブ `publish` が `bundle-{番号}.zip` を GitHub Release `release-{番号}` に添付する（本文は 11.10 のリリース記録のひな形）。
 
 **`scripts/build-functions.mjs` の要点**
 
@@ -1728,54 +1797,125 @@ await esbuild.build({
 ```
 
 - Lambda のハンドラ設定は既定の `index.handler` のまま（構築手順書 3.8 の設定を変えない）
+- zip は同じリリース番号なら dev・stg・prod で同じものを使う（環境の違いは Lambda の環境変数で吸収する）
 
-### 11.4 配置前の準備（環境ごと）
+### 11.5 GitHub と AWS の設定
 
-| 順 | 作業                                                                                           |
-| - | -------------------------------------------------------------------------------------------- |
-| 1 | リリース記録（11.8）を作り、配置する環境・リリース番号・作業者を書く                                                          |
-| 2 | **前回のリリース番号**を記録から確認し、`release/{前回の番号}/` が手元にあることを確かめる（ロールバック用）                                    |
-| 3 | （prod のみ）利用者にお知らせする（「13:00〜13:30 にメンテナンス。操作中に画面が切り替わることがあります」）                                   |
-| 4 | （prod でDBの変更がある場合のみ）RDS →「データベース」→ `rpg-prod-db` →「アクション」→「スナップショットの取得」。名前 `rpg-prod-before-{リリース番号}` |
+**AWS 側**（構築手順書 2.6・3.13・4.13・5.13 で作る）
 
-### 11.5 配置手順（dev → stg → prod で同じ）
+| 項目                | 内容                                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| OIDC IDプロバイダー     | `token.actions.githubusercontent.com`、対象者 `sts.amazonaws.com`（アカウントで1つ）                                |
+| 配置用ロール            | `rpg-dev-deploy-role`・`rpg-stg-deploy-role`・`rpg-prod-deploy-role`。信頼ポリシーの条件 `sub` を `repo:<オーナー>/rpg-learning-app:environment:{env}` に絞る |
+| 配置用ロールの権限         | 下の表。リソースはすべて自分の環境（`rpg-{env}-`）のものだけ                                                                  |
 
-**手順1：DBの変更（今回追加のマイグレーションがあるときだけ）**
+| 対象            | Action                                                                                         | 使う場面                  |
+| ------------- | ---------------------------------------------------------------------------------------------- | --------------------- |
+| Lambda        | `lambda:UpdateFunctionCode`、`lambda:GetFunction`、`lambda:GetFunctionConfiguration`、`lambda:InvokeFunction`（api-handler のみ） | コードの入れ替え・照合・ヘルスチェック   |
+| S3            | `s3:ListBucket`、`s3:PutObject`、`s3:GetObject`（web バケットのみ）                                       | 画面の配置                 |
+| CloudFront    | `cloudfront:CreateInvalidation`、`cloudfront:GetInvalidation`                                     | キャッシュ削除               |
+| RDS Data API  | `rds-data:ExecuteStatement`、`rds-data:BatchExecuteStatement`、`secretsmanager:GetSecretValue`（DBのシークレットのみ） | マイグレーション              |
+| RDS           | `rds:CreateDBClusterSnapshot`、`rds:DescribeDBClusterSnapshots`、`rds:AddTagsToResource`（prod のみ）   | 配置前のスナップショット          |
 
-1. RDS の左メニュー「クエリエディタ」を開き、`rpg-{env}-db`・Secrets Manager ARN（V-07）・データベース `rpg` で接続する（DBが止まっていたら15〜30秒待って再接続）
-2. `SELECT version FROM schema_migrations ORDER BY version;` で、どこまで適用済みかを確かめる
-3. 未適用のファイルを番号の小さい順に、ファイルの中身を全部貼り付けて「実行」する
-4. 最後の文の `INSERT INTO schema_migrations` に今回のリリース番号を入れる（`release_no` 列）
-5. 手順2のSQLをもう一度流し、今回の番号が入ったことを確かめる
+**GitHub 側**（リポジトリの「Settings」）
 
-**手順2：Lambda（4関数）**
+| 場所                       | 設定                                                                                                                                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Environments `dev`       | 配置できるブランチ：`main` のみ                                                                                                                                |
+| Environments `stg`       | 配置できるタグ：`release-*` のみ                                                                                                                              |
+| Environments `prod`      | 配置できるタグ：`release-*` のみ。**Required reviewers** に承認者（システム管理者・開発リーダー）を登録し、**Prevent self-review** をオン                                                 |
+| 各 Environment の Variables | `AWS_ROLE_ARN`（配置用ロールのARN）、`WEB_BUCKET`、`CF_DISTRIBUTION_ID`（V-08）、`DB_CLUSTER_ARN`（V-06）、`DB_SECRET_ARN`（V-07）、`DB_CLUSTER_ID`（`rpg-{env}-db`） |
+| リポジトリの Variables         | `AWS_REGION` = `ap-northeast-1`                                                                                                                      |
+| Rulesets（ブランチ `main`）   | プルリクエスト必須、`ci.yml` の成功を必須、force push 禁止                                                                                                             |
+| Rulesets（タグ `release-*`） | 作成は管理者（Maintain 以上）だけ。更新・削除は禁止（一度出したリリース番号を付け替えない）                                                                                                    |
 
-| 順 | 関数                       | 理由                         |
-| - | ------------------------ | -------------------------- |
-| 1 | `rpg-{env}-grading-worker` | api-handler から呼ばれる側を先に入れる   |
-| 2 | `rpg-{env}-import-worker`  | 同上（SQS から呼ばれる）             |
-| 3 | `rpg-{env}-batch-runner`   | 定期処理の時刻（:00・:30）を避ける        |
-| 4 | `rpg-{env}-api-handler`    | 最後に入れ替える（画面から使われるため）        |
+- ARN などはどれも秘密の値ではないため、Secrets ではなく Variables に入れる。AWS のアクセスキーは GitHub に置かない
+- ワークフローには `permissions: id-token: write, contents: read`（`publish` だけ `contents: write`）を付ける
+
+### 11.6 配置（`deploy.yml`）
+
+配置ジョブは環境ごとに1つ動き、`environment: {env}` を指定する（prod はここで承認待ちになる）。
+
+**`deploy.yml` の要点**
+
+```yaml
+on:
+  workflow_call:
+    inputs:
+      env:     { type: string, required: true }   # dev / stg / prod
+      release: { type: string, required: true }   # 20261105-01 など
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env }}
+    concurrency: { group: deploy-${{ inputs.env }}, cancel-in-progress: false }
+    permissions: { id-token: write, contents: read }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { name: bundle-${{ inputs.release }}, path: release/${{ inputs.release }} }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: "${{ vars.AWS_ROLE_ARN }}", aws-region: "${{ vars.AWS_REGION }}" }
+      - name: DB（マイグレーション）
+        run: node scripts/migrate.mjs --env=${{ inputs.env }} --release=${{ inputs.release }}
+      - name: Lambda（4関数）
+        run: node scripts/deploy-functions.mjs --env=${{ inputs.env }} --release=${{ inputs.release }}
+      - name: 画面
+        run: |
+          aws s3 sync release/${{ inputs.release }}/web-${{ inputs.env }}/ s3://${{ vars.WEB_BUCKET }}/
+          ID=$(aws cloudfront create-invalidation --distribution-id ${{ vars.CF_DISTRIBUTION_ID }} --paths '/*' --query Invalidation.Id --output text)
+          aws cloudfront wait invalidation-completed --distribution-id ${{ vars.CF_DISTRIBUTION_ID }} --id $ID
+      - name: ヘルスチェック
+        run: node scripts/health-check.mjs --env=${{ inputs.env }}
+```
+
+- アクションのバージョンは、使い始めるときにその時点の最新のメジャー版に合わせる
+
+**手順1：DBの変更（`scripts/migrate.mjs`）**
+
+1. Data API で `SELECT version FROM schema_migrations` を実行し、適用済みの番号を得る（`schema_migrations` がまだない初回は「すべて未適用」とみなす）。DBが止まっていて `DatabaseResumingException` が返ったら、15秒おきに最大8回やり直す
+2. 未適用のファイルがなければ何もしないで終わる
+3. （prod のみ）未適用のファイルがある場合、`aws rds create-db-cluster-snapshot` で `rpg-prod-before-{リリース番号}` を取り、`available` になるまで待つ
+4. 未適用のファイルを番号の小さい順に、**行末の `;` で文を区切って1文ずつ** `ExecuteStatement` で実行する（8.7）
+5. ファイルの最後の文で入った行に、`UPDATE schema_migrations SET release_no = :release WHERE version = :version` でリリース番号を入れる
+6. 実行したファイルと件数をジョブの概要（`$GITHUB_STEP_SUMMARY`）に書く。1文でも失敗したらそこで止め、ジョブを失敗させる（Lambda・画面は入れ替えない）
+
+**手順2：Lambda（`scripts/deploy-functions.mjs`）**
+
+| 順 | 関数                         | 理由                                       |
+| - | -------------------------- | ---------------------------------------- |
+| 1 | `rpg-{env}-grading-worker` | api-handler から呼ばれる側を先に入れる                 |
+| 2 | `rpg-{env}-import-worker`  | 同上（SQS から呼ばれる）                           |
+| 3 | `rpg-{env}-batch-runner`   | 定期処理の時刻（:00・:30）の前後5分なら、その時間帯が過ぎるまで待ってから入れる |
+| 4 | `rpg-{env}-api-handler`    | 最後に入れ替える（画面から使われるため）                     |
 
 各関数で次を行う。
 
-1. 「Lambda」→ 関数を開く →「コード」タブ →「アップロード元」→「.zip ファイル」→ `release/{番号}/functions/{関数名}.zip` を選んで「保存」
-2. 「コード」タブの上部「関数の概要」の「コード SHA-256」が、manifest.json の `sha256Base64` と同じことを確かめる
-3. 環境変数を変える場合は「設定」→「環境変数」で変更する（変更点はリリース記録に書く）
-4. （api-handler のみ）「テスト」タブでテストイベント `health` を実行し、`statusCode: 200` を確かめる。1回目は DB の起動待ちで 503 になることがあるので、30秒待ってもう一度実行する
+1. `aws lambda update-function-code --function-name rpg-{env}-{関数名} --zip-file fileb://release/{番号}/functions/{関数名}.zip`
+2. `aws lambda wait function-updated-v2` で更新の完了を待つ
+3. `CodeSha256` が manifest.json の `sha256Base64` と同じことを確かめる（違えばジョブを失敗させる）
+
+- 環境変数は配置で変えない。変える場合は、配置の**前に**コンソールの「設定」→「環境変数」で変更し、リリース記録に書く（新しい変数は古いコードでは使われないため、先に入れても害はない）
+
+**手順3：画面**
+
+1. `aws s3 sync` で `release/{番号}/web-{env}/` の中身を web バケットの直下に上書きする（`--delete` は付けない。今回だけにないファイルは残っても参照されない）
+2. CloudFront `rpg-{env}-cdn` のキャッシュを `/*` で削除し、完了まで待つ（1〜3分）
+
+**手順4：ヘルスチェック（`scripts/health-check.mjs`）**
+
+`aws lambda invoke` で `rpg-{env}-api-handler` に次のイベントを送り、`statusCode: 200` を確かめる。503（DBの起動待ち）のときは30秒待って最大3回やり直す。
 
 ```json
 {"version":"2.0","routeKey":"GET /api/health","rawPath":"/api/health","headers":{},"requestContext":{"http":{"method":"GET","path":"/api/health"}},"isBase64Encoded":false}
 ```
 
-**手順3：画面**
+### 11.7 スモークテスト（配置後に人が行う）
 
-1. 「S3」→ `rpg-{env}-web-<アカウントID>` を開く →「アップロード」
-2. `release/{番号}/web-{env}/` の**中身**（`index.html`・`sw.js`・`manifest.webmanifest`・`css/`・`js/`・`icons/` …）を「ファイルを追加」「フォルダの追加」で選び、「アップロード」（同じ名前は上書きされる）
-3. `js/config.js` を開いて（「オブジェクトURL」ではなく「開く」）、環境の値になっていることを確かめる
-4. 「CloudFront」→ `rpg-{env}-cdn` →「キャッシュ削除」→「キャッシュ削除を作成」→ パス `/*` →「作成」。状態が「完了」になるまで待つ（1〜3分）
-
-**手順4：スモークテスト**
+ワークフローが成功したら、作業者が次を確かめる。
 
 | No | 確かめること                                         | 期待する結果                               |
 | -- | ---------------------------------------------- | ------------------------------------ |
@@ -1788,54 +1928,69 @@ await esbuild.build({
 | 7  | 今回のリリースで変えた機能                                  | リリース記録の「確認項目」のとおりに動く                  |
 
 - prod の確認用の学習者は、ランキングに出ないよう専用のテストコース（`[確認用]`）だけを受講させておく
+- dev はプルリクエストのマージのたびに配置されるため、No.1〜3 と変えた機能だけでよい
 
-### 11.6 環境ごとの違い
+### 11.8 環境ごとの違い
 
-| 項目         | dev                 | stg                          | prod                               |
-| ---------- | ------------------- | ---------------------------- | ---------------------------------- |
-| 配置のきっかけ    | 開発者が随時              | dev の確認が終わったリリース番号            | stg の受け入れ確認とリリース判定が終わったもの             |
-| 事前のお知らせ    | 不要                  | コース管理者へ（受け入れ確認中の場合）           | 利用者全員（前日まで）                          |
-| DBスナップショット | 不要                  | 不要                           | DBの変更があるとき必須                         |
-| 確認         | 11.5 手順4            | 11.5 手順4＋受け入れ確認（変更した機能の画面確認）  | 11.5 手順4                             |
-| 作業者        | 1人                  | 1人                           | 2人（作業者と確認者）                         |
+| 項目         | dev                       | stg                                | prod                                        |
+| ---------- | ------------------------- | ---------------------------------- | ------------------------------------------- |
+| 配置のきっかけ    | `main` への push（自動）        | タグ `release-*` の push（自動）            | stg のあと、承認者が GitHub で承認                       |
+| 事前のお知らせ    | 不要                        | コース管理者へ（受け入れ確認中の場合）                 | 利用者全員（前日まで。「13:00〜13:30 にメンテナンス。操作中に画面が切り替わることがあります」） |
+| DBスナップショット | 不要                        | 不要                                 | DBの変更があるとき、ワークフローが自動で取る                       |
+| 確認         | 11.7（一部）                  | 11.7＋受け入れ確認（変更した機能の画面確認）            | 11.7                                        |
+| 作業者        | 1人                        | 1人（タグを付けた人）                        | 2人（タグを付けた人と承認者）                             |
 
-**リリース判定（prod の前）**
+**リリース判定（prod の承認の前）**
+
+承認者は、次をすべて満たすことを確かめてから「Review deployments」→ `prod` →「Approve and deploy」を押す。満たさない場合は「Reject」し、直したものを新しいリリース番号のタグで出し直す。
 
 | 判定項目                         | 基準                                   |
 | ---------------------------- | ------------------------------------ |
-| モジュールテスト                     | 全件成功・カバレッジ基準以上（モジュールテスト仕様書 第5章）         |
-| stg での確認                     | スモークテストと受け入れ確認がすべてOK                   |
+| モジュールテスト                     | ジョブ `build` が成功（全件成功・カバレッジ基準以上。モジュールテスト仕様書 第6章） |
+| stg での確認                     | `deploy-stg` が成功し、スモークテストと受け入れ確認がすべてOK |
 | 未解決の不具合                      | 重大度「高」が0件                            |
 | DBの変更                        | 古いLambdaで動く形になっている（8.7）。stg で適用済み        |
-| ロールバックの準備                    | 前回の成果物が手元にある                          |
+| ロールバックの準備                    | 前回のリリースの GitHub Release に成果物が添付されている  |
+| 時間帯                          | 平日 13:00〜13:30（お知らせした時間）              |
 
-### 11.7 ロールバック手順
+- 承認待ちは30日で期限切れになる。期限切れや却下のときは、同じタグのワークフローを「Re-run」するか、新しいタグで出し直す
+
+### 11.9 ロールバック手順
 
 **判断の目安**：スモークテストで失敗した、配置後に 5xx のアラームが出た、利用者から「操作できない」連絡が続いた。迷ったら戻してから調べる。
 
+**stg・prod**
+
+1. GitHub の「Actions」→「rollback」→「Run workflow」
+2. 「Use workflow from」で **戻したいリリースのタグ**（例：`release-20261029-01`）を選ぶ
+3. 入力：環境（`stg`／`prod`）、対象（`all`／`functions`／`web`）を選んで実行する（prod は承認が必要）
+4. ワークフローが GitHub Release `release-{前回の番号}` の `bundle-{前回の番号}.zip` を取り出し、11.6 の手順2〜4（Lambda・画面・ヘルスチェック）を行う。**DB は戻さない**
+
+**dev**：直前に成功した `release.yml` の実行を開いて「Re-run all jobs」を押す。または、原因のプルリクエストを revert して main にマージする。
+
 | 対象      | 戻し方                                                                                                    | 所要時間 |
 | ------- | ------------------------------------------------------------------------------------------------------ | ---- |
-| Lambda  | 11.5 手順2と同じ操作で、`release/{前回の番号}/functions/` の zip をアップロードする。SHA-256 が前回の manifest.json と同じことを確かめる | 約10分 |
-| 画面      | 11.5 手順3と同じ操作で、`release/{前回の番号}/web-{env}/` をアップロードし、キャッシュ削除 `/*`。今回だけにあるファイルは残っても害はない（参照されない） | 約10分 |
-| DB      | 原則として戻さない（新しい列・テーブルは古いLambdaでは使われないため）。データを壊す不具合だった場合だけ、11.4 のスナップショットから新しいクラスターを復元し、切り替えを相談する（データの巻き戻りを伴うため、システム管理者の判断で行う） | 1時間以上 |
+| Lambda  | `rollback.yml`（対象 `functions`）。SHA-256 が前回の manifest.json と同じことをワークフローが確かめる | 約5分  |
+| 画面      | `rollback.yml`（対象 `web`）。今回だけにあるファイルは残っても害はない（参照されない） | 約5分  |
+| DB      | 原則として戻さない（新しい列・テーブルは古いLambdaでは使われないため）。データを壊す不具合だった場合だけ、ワークフローが取ったスナップショット `rpg-prod-before-{リリース番号}` から新しいクラスターを復元し、切り替えを相談する（データの巻き戻りを伴うため、システム管理者の判断で行う） | 1時間以上 |
 
 - 戻したら、リリース記録に「ロールバック」と理由・時刻を書き、原因を直したものを新しいリリース番号で出し直す
-- 画面だけ、Lambdaだけを戻すこともできる。ただし API の入出力を変えたリリースでは、両方を戻す
+- 画面だけ、Lambdaだけを戻すこともできる。ただし API の入出力を変えたリリースでは、両方を戻す（対象 `all`）
 
-### 11.8 リリース記録
+### 11.10 リリース記録
 
-リリースごとに1枚作り、共有ドライブの `リリース記録/` に置く。
+リリースごとに GitHub Release `release-{リリース番号}` の本文に書く（ジョブ `publish` がひな形を入れる）。配置の日時・実行した人・承認者は Actions の実行履歴と Environments の「Deployments」に自動で残るため、本文には実行のURLを貼る。
 
 | 項目       | 記入例                                              |
 | -------- | ------------------------------------------------ |
 | リリース番号   | 20261105-01（タグ `release-20261105-01`、コミット a1b2c3d） |
 | 前回のリリース番号 | 20261029-01                                      |
-| 変更内容     | 週間ランキングの過去週の切り替えを追加                              |
+| 変更内容     | 週間ランキングの過去週の切り替えを追加（プルリクエストの一覧は GitHub が自動で作る）         |
 | DBの変更    | V003__add_weekly_index.sql                        |
 | 環境変数の変更  | なし                                               |
-| 環境ごとの配置日時 | dev 11/05 10:30、stg 11/05 15:00、prod 11/06 13:05 |
-| 作業者・確認者  | ○○・△△                                            |
-| 確認項目と結果  | 11.5 手順4 No.1〜7：OK。過去週の切り替え：OK                    |
+| 配置の記録    | stg 11/05 15:00、prod 11/06 13:05（Actions の実行URL）   |
+| 作業者・承認者  | ○○・△△                                            |
+| 確認項目と結果  | 11.7 No.1〜7：OK。過去週の切り替え：OK                    |
 | 特記事項     | なし（ロールバックした場合は理由と時刻）                             |
 
 ---
@@ -1849,5 +2004,6 @@ await esbuild.build({
 | 3  | Bedrock の打ち切り時間（抽出120秒）          | 10ページのPDFで実測して調整                                           | dev での試行時       |
 | 4  | `login_logs` の保持期間              | 永続（1年で約30万行）。Phase 3 で1年より古い行の削除を検討                         | Phase 3         |
 | 5  | prod の確認用テストコース                 | `[確認用]` コースを作り、ランキング・ダッシュボードの集計から除く設定は設けない（受講者が確認用の利用者だけのため） | パイロット開始前        |
-| 6  | リリースの自動化                        | Phase 1 は手動。利用者数と頻度が増えたら AWS SAM＋GitHub Actions への移行を検討         | Phase 2 の計画時     |
+| 6  | リリースの自動化                        | **決定（2026-10-20）**：Phase 1 から GitHub Actions で配置する（第11章）。AWSリソースの定義（IaC。AWS SAM など）への移行は、利用者数と構成変更の頻度が増えたら検討 | Phase 2 の計画時     |
 | 7  | `esbuild` が使う依存ライブラリのライセンス確認     | pdf-lib（MIT）。追加のたびに確認                                       | ライブラリ追加時        |
+| 8  | GitHub のリポジトリ名・承認者               | `<オーナー>/rpg-learning-app`。prod の承認者はシステム管理者と開発リーダーの2名を仮置き     | dev 構築前         |

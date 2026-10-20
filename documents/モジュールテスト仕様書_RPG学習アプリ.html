@@ -392,9 +392,9 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第0.1版（ドラフト：第1〜6章、HTML版あり）</b></li>
+      <li>版数<b>第0.2版（ドラフト：第1〜6章、HTML版あり。GitHub Actions での実行を追加）</b></li>
       <li>作成日<b>2026-10-20</b></li>
-      <li>入力文書<b>詳細設計書 第0.1版、外部設計書 第0.6版</b></li>
+      <li>入力文書<b>詳細設計書 第0.2版、外部設計書 第0.7版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
   </div>
@@ -431,12 +431,12 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 </div>
 
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3>
-<p>詳細設計書で定めたモジュール（1つのJSファイル）ごとに、公開関数が設計どおりに動くことを確かめるテストの範囲・方法・テストケース・合否基準を定める。テストは Vitest で自動化し、リリースのたびに全件を実行する（詳細設計書 11.3）。</p>
+<p>詳細設計書で定めたモジュール（1つのJSファイル）ごとに、公開関数が設計どおりに動くことを確かめるテストの範囲・方法・テストケース・合否基準を定める。テストは Vitest で自動化し、GitHub Actions でプルリクエストごととリリースのビルドごとに全件を実行する（詳細設計書 11.2・11.4）。</p>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 テストの位置づけ</h3>
 <div class="table-wrap"><table>
 <thead><tr><th>テスト</th><th>対象</th><th>環境</th><th>本書での扱い</th></tr></thead>
 <tbody>
-<tr><td>モジュールテスト</td><td>関数の入出力・分岐・例外</td><td>作業PC（Node.js 22）</td><td>対象</td></tr>
+<tr><td>モジュールテスト</td><td>関数の入出力・分岐・例外</td><td>作業PC と GitHub Actions（Node.js 22）</td><td>対象</td></tr>
 <tr><td>結合テスト</td><td>Lambda と実際の Aurora・Bedrock・S3 の組み合わせ</td><td>dev</td><td>対象外（別紙）</td></tr>
 <tr><td>システムテスト</td><td>画面からの業務の流れ、性能（採点30秒以内など）</td><td>stg</td><td>対象外（別紙）</td></tr>
 </tbody></table></div>
@@ -518,7 +518,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <div class="card"><h5><i class="fa-solid fa-window-maximize"></i>jsdom</h5><p class="sub">画面モジュールの実行環境</p></div>
     <div class="card"><h5><i class="fa-brands fa-aws"></i>aws-sdk-client-mock</h5><p class="sub">SDK v3 のコマンドを差し替え・検証</p></div>
   </div>
-  <div class="kv"><span class="tag mute">全件</span><code>npm test</code><span class="tag mute">カバレッジ</span><code>npm test -- --coverage</code><span class="tag mute">IDで絞る</span><code>npx vitest run -t "MT-G01"</code></div>
+  <div class="kv"><span class="tag mute">GitHub Actions</span><code>ci.yml</code><code>release.yml（build）</code><span class="tag mute">全件</span><code>npm test</code><span class="tag mute">カバレッジ</span><code>npm test -- --coverage</code><span class="tag mute">IDで絞る</span><code>npx vitest run -t "MT-G01"</code></div>
 </div>
 
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 ツール</h3>
@@ -583,6 +583,18 @@ export default defineConfig({
 <tr><td>IDで絞る</td><td><code>npx vitest run -t &quot;MT-G01&quot;</code></td></tr>
 <tr><td>変更を見張りながら</td><td><code>npx vitest</code></td></tr>
 </tbody></table></div>
+<p><strong>GitHub Actions での実行</strong></p>
+<div class="table-wrap"><table>
+<thead><tr><th>ワークフロー（ジョブ）</th><th>きっかけ</th><th>実行するもの</th><th>失敗したとき</th></tr></thead>
+<tbody>
+<tr><td><code>ci.yml</code></td><td><code>main</code> へのプルリクエスト</td><td><code>npm test -- --coverage</code></td><td>マージできない（ブランチのルールで <code>ci</code> の成功を必須にしている）</td></tr>
+<tr><td><code>release.yml</code>（<code>build</code>）</td><td><code>main</code> への push、タグ <code>release-*</code> の push</td><td><code>npm test -- --coverage</code></td><td>配置のジョブが動かない（dev・stg・prod のどこにも配置されない）</td></tr>
+</tbody></table></div>
+<ul>
+<li>カバレッジの結果（<code>coverage/</code>）は Actions の成果物 <code>coverage-{実行番号}</code> として14日保管し、要約をジョブの概要（Summary）に書く</li>
+<li>Node.js は <code>actions/setup-node</code> で 22 を使い、作業PCと版をそろえる</li>
+<li>時刻に依存するテストは偽の時計を使う。ランナーのタイムゾーンは UTC のため、<code>TZ</code> に頼るテストを書かない</li>
+</ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 テストの書き方の例</h3>
 <pre><code class="language-js">import { describe, it, expect, beforeEach } from 'vitest'
 import { mockClient } from 'aws-sdk-client-mock'
@@ -1286,11 +1298,11 @@ describe('M-D01 data-api', () =&gt; {
 <li>直したら、その不具合を再現するテストケースを本書と <code>tests/</code> に追加する（ID は該当モジュールの最後の番号の次）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.4 結果の報告</h3>
-<p>リリースごとに、詳細設計書 11.8 のリリース記録に次を書く。</p>
+<p>リリースごとに、詳細設計書 11.10 のリリース記録（GitHub Release の本文）に次を書く。値はジョブ <code>build</code> の概要（Summary）から写す。</p>
 <div class="table-wrap"><table>
 <thead><tr><th>項目</th><th>内容</th></tr></thead>
 <tbody>
-<tr><td>実行日時・コミット</td><td>例：2026-11-05 10:05、a1b2c3d</td></tr>
+<tr><td>実行日時・コミット</td><td>例：2026-11-05 10:05、a1b2c3d（Actions の実行URL）</td></tr>
 <tr><td>件数</td><td>実行・成功・失敗・スキップの件数</td></tr>
 <tr><td>カバレッジ</td><td>C0・C1（全体と domain・validators）</td></tr>
 <tr><td>失敗したテスト</td><td>ID と Issue 番号（失敗0件ならなし）</td></tr>
