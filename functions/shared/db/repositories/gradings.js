@@ -26,7 +26,8 @@ export async function fail(gradingId, reason, db = defaultDb) {
     WHERE grading_id = :gradingId AND status = 'processing'`, { gradingId, reason })
   return r.numberOfRecordsUpdated === 1
 }
-export async function deleteOlderThan(days, db = defaultDb) {
-  const r = await db.execute("DELETE FROM grading_jobs WHERE created_at < now() - make_interval(days => :days)", { days })
+// cutoff は +09:00 付きのISO文字列（例：30日前の0:00 JST）
+export async function deleteOlderThan(cutoff, db = defaultDb) {
+  const r = await db.execute('DELETE FROM grading_jobs WHERE created_at < CAST(:cutoff AS timestamptz)', { cutoff })
   return r.numberOfRecordsUpdated
 }

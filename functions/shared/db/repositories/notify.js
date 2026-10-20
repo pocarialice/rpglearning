@@ -12,7 +12,7 @@ export async function put(userId, { emailEnabled, sendTime }, db = defaultDb) {
 }
 // その日の送信リストを作るための一覧（通知オンの有効な学習者）
 export async function listForSlotBuild(today, db = defaultDb) {
-  return camelRows(await db.query(`SELECT u.user_id, u.email, u.nickname, u.partner_persona, u.partner_name,
+  return camelRows(await db.query(`SELECT u.user_id, u.email, u.nickname, u.partner_persona, u.partner_name, u.status, s.email_enabled,
       to_char(s.send_time, 'HH24MI') AS slot,
       (SELECT count(*) FROM review_items r WHERE r.user_id = u.user_id AND r.course_id = u.current_course_id
          AND r.stage < 6 AND r.next_review_on <= :today)::int AS review_count,

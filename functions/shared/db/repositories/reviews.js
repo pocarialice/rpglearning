@@ -28,6 +28,15 @@ export async function countDue(userId, courseId, today, db = defaultDb) {
   { userId, courseId, today: date(today) })
   return rows[0]?.cnt ?? 0
 }
+export async function countDueByKind(userId, courseId, today, db = defaultDb) {
+  const rows = await db.query(`SELECT r.kind, count(*)::int AS cnt FROM review_items r
+    JOIN questions q ON q.question_id = r.question_id AND q.status = 'published'
+    WHERE r.user_id = :userId AND r.course_id = :courseId AND r.stage < 6 AND r.next_review_on <= :today
+    GROUP BY r.kind`, { userId, courseId, today: date(today) })
+  const out = { choice: 0, explain: 0 }
+  for (const row of rows) out[row.kind] = row.cnt
+  return { ...out, total: out.choice + out.explain }
+}
 export async function listDue(userId, courseId, kind, today, db = defaultDb) {
   return camelRows(await db.query(`SELECT r.review_id, r.kind, r.question_id, r.keyword_id, r.stage, r.next_review_on
 FROM review_items r

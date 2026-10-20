@@ -104,14 +104,14 @@ describe('M-U07 validators 通知時刻・取り込み・問題', () => {
     expect(kw(['a'.repeat(51)])).toBe(false)
   })
 })
-describe('M-U07 validators 補足（分岐網羅のための追加ケース）', () => {
-  it('ニックネーム・パートナー名に文字列以外を渡しても例外にしない', () => {
+describe('M-U07 validators', () => {
+  it('MT-U07-30 ニックネーム・パートナー名に文字列以外を渡しても例外にしない', () => {
     expect(validateNickname(null).ok).toBe(false)
     expect(validatePartnerName(null)).toEqual({ ok: true })
     expect(validatePartnerName(undefined)).toEqual({ ok: true })
     expect(validatePartnerName(12).ok).toBe(false)
   })
-  it('取り込みの要求が空・ファイル名やサイズが不正', () => {
+  it('MT-U07-31 取り込みの要求が空・ファイル名やサイズが不正', () => {
     expect(validateImportRequest(undefined).ok).toBe(false)
     expect(validateImportRequest({ sourceType: 'text', text: 1 }).ok).toBe(false)
     const img = { sourceType: 'image', fileName: 'a.png', contentType: 'image/png', size: 10 }
@@ -122,7 +122,7 @@ describe('M-U07 validators 補足（分岐網羅のための追加ケース）',
     expect(validateImportRequest({ ...img, size: 0 })).toMatchObject({ field: 'size' })
     expect(validateImportRequest({ ...img, size: 1.5 })).toMatchObject({ field: 'size' })
   })
-  it('問題の下書きが空・問題文なし・選択肢が配列でない・キーワードが配列でない・正解が整数でない', () => {
+  it('MT-U07-32 問題の下書きが空・問題文なし・選択肢が配列でない・キーワードが配列でない・正解が整数でない', () => {
     expect(validateQuestionDraft(undefined)).toMatchObject({ code: 'M-12', field: 'body' })
     expect(validateQuestionDraft({ ...good, body: ' ' })).toMatchObject({ field: 'body' })
     expect(validateQuestionDraft({ ...good, choices: 'ア' })).toMatchObject({ field: 'choices' })
@@ -131,7 +131,7 @@ describe('M-U07 validators 補足（分岐網羅のための追加ケース）',
     expect(validateQuestionDraft({ ...good, keywords: undefined })).toEqual({ ok: true })
     expect(validateQuestionDraft({ ...good, keywords: [''] })).toMatchObject({ field: 'keywords' })
   })
-  it('前に空白がある行頭の小見出しも認める', () => {
+  it('MT-U07-33 前に空白がある行頭の小見出しも認める', () => {
     expect(validateExplanation(X(100) + '\n　【しくみ】' + X(101))).toEqual({ ok: true })
   })
 })

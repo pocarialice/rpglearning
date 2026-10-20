@@ -42,7 +42,7 @@ describe('M-D01 data-api', () => {
       { name: 'j', value: { stringValue: '{"a":1}' }, typeHint: 'JSON' }
     ])
   })
-  it('MT-D01-05 補足 変換できない型は例外', () => {
+  it('MT-D01-12 変換できない型は例外', () => {
     expect(() => toParameters({ x: { foo: 1 } })).toThrow(expect.objectContaining({ code: 'INTERNAL_ERROR' }))
   })
   it('MT-D01-06 結果の変換', async () => {

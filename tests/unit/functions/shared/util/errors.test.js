@@ -29,7 +29,7 @@ describe('M-U01 errors', () => {
     expect(ERROR_STATUS[code]).toBe(status)
     expect(e.message).not.toBe('')
   })
-  it('MT-U01-04 補足 表にないコードは500、details なしの応答には details を出さない', () => {
+  it('MT-U01-05 表にないコードは500、details なしの応答には details を出さない', () => {
     const e = new AppError('SOMETHING')
     expect(e.status).toBe(500)
     expect(e.message).toBe('SOMETHING')

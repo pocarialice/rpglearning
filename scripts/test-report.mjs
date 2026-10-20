@@ -39,7 +39,9 @@ const rows = inScope.map((c) => {
   const status = list.length === 0 ? '未実装' : list.every((t) => t.status === 'passed') ? '合格' : '不合格'
   return { ...c, its: list.length, status, file: list[0]?.file ?? '-' }
 })
-const supplementary = its.filter((t) => !/MT-[A-Z]\d+-\d+/.test(t.title) || t.title.includes('補足') || /補足/.test(t.ancestorTitles.join(' ')))
+const supplementary = its.filter((t) => !/MT-[A-Z]\d+-\d+/.test(t.title))
+const added = new Set(meta.addedIds ?? [])
+const addedCount = rows.filter((r) => added.has(r.id)).length
 const count = (s) => rows.filter((r) => r.status === s).length
 const total = { cases: rows.length, pass: count('合格'), fail: count('不合格'), missing: count('未実装') }
 const itTotals = {
@@ -90,7 +92,7 @@ p('| --- | --- |')
 p(`| 文書名 | ${meta.title} |`)
 p(`| 版数 | ${meta.version} |`)
 p(`| 作成日 | ${meta.date} |`)
-p(`| 入力文書 | モジュールテスト仕様書 第0.2版、詳細設計書 第0.2版 |`)
+p(`| 入力文書 | ${meta.inputs} |`)
 p(`| 対象範囲 | ${meta.scopeLabel} |`)
 p(`| 実行日時・コミット | ${meta.executedAt}、\`${meta.commit}\`（ブランチ \`${meta.branch}\`） |`)
 p(`| 判定 | **${judge ? '合格' : '不合格'}**（対象範囲について、仕様書 6.2 の合否基準による） |`)
@@ -107,8 +109,9 @@ p('### 1.2 今回の範囲')
 p()
 p('```mermaid')
 p('flowchart LR')
-p(`  A["共通モジュール<br>util・db・domain・ai・mail<br>193ケース"]:::${scope.includes('U') ? 'done' : 'todo'} --> B["Lambda関数<br>api-handler・worker・batch"]:::${scope.includes('H') ? 'done' : 'todo'}`)
-p(`  B --> C["画面<br>web/js/core・logic"]:::${scope.includes('F') ? 'done' : 'todo'}`)
+const groupCount = (gs) => spec.filter((c) => gs.includes(c.group)).length
+p(`  A["共通モジュール<br>util・db・domain・ai・mail<br>${groupCount('UDGAM')}ケース"]:::${scope.includes('U') ? 'done' : 'todo'} --> B["Lambda関数<br>api-handler・worker・batch<br>${groupCount('HW')}ケース"]:::${scope.includes('H') ? 'done' : 'todo'}`)
+p(`  B --> C["画面<br>web/js/core・logic<br>${groupCount('F')}ケース"]:::${scope.includes('F') ? 'done' : 'todo'}`)
 p('  classDef done fill:#0017C1,color:#fff,stroke:#0017C1')
 p('  classDef todo fill:#fff,color:#414141,stroke:#B4B4B4,stroke-dasharray:4 3')
 p('```')
@@ -142,7 +145,8 @@ p('| 項目 | 結果 |')
 p('| --- | --- |')
 p(`| テストケース（仕様書のID） | ${total.cases}件中 合格 ${total.pass}・不合格 ${total.fail}・未実装 ${total.missing} |`)
 p(`| 実行したテスト（\`it\` の数） | ${itTotals.total}件（成功 ${itTotals.passed}・失敗 ${itTotals.failed}・スキップ ${itTotals.skipped}・todo ${itTotals.todo}）、テストファイル ${results.testResults.length} |`)
-p(`| うち補足テスト | ${supplementary.length}件（仕様書にない分岐を網羅するための追加。7.2 参照） |`)
+p(`| うち仕様書 ${meta.specVersion} で追加したケース | ${addedCount}件（分岐網羅のための追加。7.2 参照） |`)
+p(`| IDのないテスト | ${supplementary.length}件 |`)
 p(`| 実行時間 | 最大 ${(maxMs / 1000).toFixed(2)} 秒（基準：60秒以内） |`)
 p(`| 安定性 | 同じコミットで${runs.length}回実行し、${stable ? 'すべて同じ結果' : '結果が変わった'}（${runs.map((r) => `${r.passed}/${r.total}`).join('、')}） |`)
 p(`| 失敗したテスト | ${failedList.length === 0 ? 'なし' : failedList.map((r) => r.id).join('、')} |`)
@@ -183,6 +187,12 @@ p()
 p('### 7.1 不具合')
 p()
 for (const s of meta.defects) p(`- ${s}`)
+if (meta.defectTable) {
+  p()
+  p('| No | 見つけたテスト・作業 | 重大度 | 内容 | 対応 |')
+  p('| --- | --- | --- | --- | --- |')
+  meta.defectTable.forEach((d, i) => p(`| ${i + 1} | ${d[0]} | ${d[1]} | ${d[2]} | ${d[3]} |`))
+}
 p()
 p('### 7.2 設計書・仕様書の解釈と補足')
 p()
@@ -274,7 +284,7 @@ H(`<h3>${icon('fa-caret-right')}1.1 目的</h3><p>${inline(`モジュールテ�
 H(`<h3>${icon('fa-caret-right')}1.2 今回の範囲</h3>`)
 H(table(['区分', '層', '仕様書のケース数', '今回'], Object.entries(LAYERS).map(([g, name]) => [scope.includes(g) ? '対象' : '対象外（次回）', `${esc(name)}（MT-${g}）`, spec.filter((c) => c.group === g).length, scope.includes(g) ? '実行' : '-'])))
 H(`<h3>${icon('fa-caret-right')}1.3 文書情報</h3>`)
-H(table(['項目', '内容'], [['文書名', esc(meta.title)], ['版数', esc(meta.version)], ['入力文書', 'モジュールテスト仕様書 第0.2版、詳細設計書 第0.2版'], ['対象範囲', esc(meta.scopeLabel)], ['実行日時・コミット', `${esc(meta.executedAt)}、<code>${esc(meta.commit)}</code>（ブランチ <code>${esc(meta.branch)}</code>）`]]))
+H(table(['項目', '内容'], [['文書名', esc(meta.title)], ['版数', esc(meta.version)], ['入力文書', esc(meta.inputs)], ['対象範囲', esc(meta.scopeLabel)], ['実行日時・コミット', `${esc(meta.executedAt)}、<code>${esc(meta.commit)}</code>（ブランチ <code>${esc(meta.branch)}</code>）`]]))
 H('</section>')
 // 2
 H(`<section class="chapter" id="s2"><h2>${icon('fa-server')}2. 実行環境</h2>`)
@@ -292,14 +302,15 @@ H(`<div class="donut" style="background: conic-gradient(var(--blue-900) 0 ${pass
 H('<div class="res-tiles">')
 H(`<div class="card tile strong"><p class="tile-num">${total.pass}<small>件</small></p><p class="tile-cap">合格したケース</p></div>`)
 H(`<div class="card tile"><p class="tile-num sm">${total.fail + total.missing}<small>件</small></p><p class="tile-cap">不合格・未実装</p></div>`)
-H(`<div class="card tile"><p class="tile-num sm">${itTotals.total}<small>件</small></p><p class="tile-cap">実行した it（補足 ${supplementary.length}）</p></div>`)
+H(`<div class="card tile"><p class="tile-num sm">${itTotals.total}<small>件</small></p><p class="tile-cap">実行した it（追加ケース ${addedCount}）</p></div>`)
 H(`<div class="card tile"><p class="tile-num sm">${(maxMs / 1000).toFixed(1)}<small>秒</small></p><p class="tile-cap">実行時間（基準 60秒）</p></div>`)
 H('</div></div>')
 H(`<div class="grid-ids" aria-label="ケースごとの結果">${rows.map((r) => `<span class="${r.status === '合格' ? '' : r.status === '不合格' ? 'ng' : 'todo'}" title="${r.id} ${esc(r.view)}：${r.status}"></span>`).join('')}</div><p class="vis-cap">1マス＝1ケース（青＝合格）</p></div>`)
 H(table(['項目', '結果'], [
   ['テストケース（仕様書のID）', `${total.cases}件中 合格 ${total.pass}・不合格 ${total.fail}・未実装 ${total.missing}`],
   ['実行したテスト（<code>it</code> の数）', `${itTotals.total}件（成功 ${itTotals.passed}・失敗 ${itTotals.failed}・スキップ ${itTotals.skipped}・todo ${itTotals.todo}）、テストファイル ${results.testResults.length}`],
-  ['うち補足テスト', `${supplementary.length}件（仕様書にない分岐を網羅するための追加。7.2 参照）`],
+  [`うち仕様書 ${meta.specVersion} で追加したケース`, `${addedCount}件（分岐網羅のための追加。7.2 参照）`],
+  ['IDのないテスト', `${supplementary.length}件`],
   ['実行時間', `最大 ${(maxMs / 1000).toFixed(2)} 秒（基準：60秒以内）`],
   ['安定性', `同じコミットで${runs.length}回実行し、${stable ? 'すべて同じ結果' : '結果が変わった'}（${runs.map((r) => `${r.passed}/${r.total}`).join('、')}）`],
   ['失敗したテスト', failedList.length === 0 ? 'なし' : failedList.map((r) => r.id).join('、')]
@@ -343,8 +354,9 @@ for (const m of modules) {
 H('</section>')
 // 7
 H(`<section class="chapter" id="s7"><h2>${icon('fa-magnifying-glass')}7. 所見</h2>`)
-H(`<div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合</h5><p class="tile-num sm">${meta.defectCount}<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-pen-ruler"></i>設計の解釈・補足</h5><p class="tile-num sm">${meta.notes.length}<small>件</small></p></div></div></div>`)
+H(`<div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合（修正済み）</h5><p class="tile-num sm">${meta.defectCount}<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-pen-ruler"></i>設計の解釈・補足</h5><p class="tile-num sm">${meta.notes.length}<small>件</small></p></div></div></div>`)
 H(`<h3>${icon('fa-caret-right')}7.1 不具合</h3><ul>${meta.defects.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>`)
+if (meta.defectTable) H(table(['No', '見つけたテスト・作業', '重大度', '内容', '対応'], meta.defectTable.map((d, i) => [i + 1, inline(d[0]), inline(d[1]), inline(d[2]), inline(d[3])])))
 H(`<h3>${icon('fa-caret-right')}7.2 設計書・仕様書の解釈と補足</h3>`)
 H(table(['No', '対象', '内容', '対応の提案'], meta.notes.map((n, i) => [i + 1, inline(n[0]), inline(n[1]), inline(n[2])])))
 H('</section>')

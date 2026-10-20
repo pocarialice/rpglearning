@@ -1,9 +1,16 @@
 // import_jobs（T-09）と取り込んだ下書きの保存
-import { defaultDb, camelRow } from './_base.js'
+import { defaultDb, camelRow, camelRows } from './_base.js'
 export async function create({ courseId, userId, sourceType, fileName, s3Key }, db = defaultDb) {
   const rows = await db.query(`INSERT INTO import_jobs (course_id, created_by, source_type, file_name, s3_key)
     VALUES (:courseId, :userId, :sourceType, :fileName, :s3Key) RETURNING import_id`, { courseId, userId, sourceType, fileName, s3Key })
   return rows[0].import_id
+}
+export async function setKey(importId, s3Key, db = defaultDb) {
+  await db.execute('UPDATE import_jobs SET s3_key = :s3Key, updated_at = now() WHERE import_id = :importId', { importId, s3Key })
+}
+export async function listByCourse(courseId, db = defaultDb) {
+  return camelRows(await db.query(`SELECT import_id, source_type, file_name, status, extracted_count, error_message, created_at
+    FROM import_jobs WHERE course_id = :courseId ORDER BY created_at DESC LIMIT 50`, { courseId }))
 }
 export async function find(importId, db = defaultDb) {
   const rows = await db.query(`SELECT import_id, course_id, created_by, source_type, file_name, s3_key, status, extracted_count,

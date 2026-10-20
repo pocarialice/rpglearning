@@ -3,9 +3,9 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第0.2版（ドラフト：第1〜12章、HTML版あり。リリースを GitHub Actions に変更）      |
+| 版数     | 第0.3版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第0.1版の指摘を反映）      |
 | 作成日    | 2026-10-20                                                 |
-| 入力文書   | 要件定義書 第1版（ドラフト）、外部設計書 第0.7版、AWS構築手順書 第0.4版                 |
+| 入力文書   | 要件定義書 第1版（ドラフト）、外部設計書 第0.8版、AWS構築手順書 第0.4版                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
 
@@ -300,7 +300,7 @@ rpg-learning-app/
 | `DB_RESUMING`       | 503  | data-api（`DatabaseResumingException`） |
 | `GRADING_TIMEOUT`   | 504  | A-10（30秒を超えた採点）               |
 | `INTERNAL_ERROR`    | 500  | ハンドラの一番外側                     |
-| `AI_TIMEOUT`・`AI_ERROR` | -  | ai/bedrock.js（内部用。呼び出し側が定型文に切り替える・採点を失敗にする） |
+| `AI_TIMEOUT`・`AI_ERROR` | （500） | ai/bedrock.js（内部用。呼び出し側が定型文に切り替える・採点を失敗にする）。画面には返さない想定だが、万一ハンドラの外まで出たときのため status は500にする |
 
 #### 2.4.5 ログ（`util/logger.js`）
 
@@ -377,9 +377,14 @@ rpg-learning-app/
 | `loadUser(db, auth)`                      | `users` を `cognito_sub` で引く。いない・`status='deleted'` なら `FORBIDDEN`。`status='invited'` なら `active` に更新（初回ログイン） |
 | `assertCourseAdmin(db, user, courseId)`   | `system_admin` は通す。`course_admin` は `course_admins` に行があるときだけ通す。なければ `FORBIDDEN`                       |
 
+- util は db を呼べない（2.1 の依存ルール）ため、`loadUser`・`assertCourseAdmin` の `db` には呼び出し側がリポジトリ（`{ users, courses }`）を渡す。担当コースの確認は `courses.isAdmin(courseId, userId)` を使う
+- `loadUser` の戻り値の `roles` は `user_roles` の値（なければトークンの `cognito:groups`）
+
 #### M-U07 `web/js/logic/validators.js`（画面とLambdaで共用）
 
 戻り値は `{ ok: true }` または `{ ok: false, code: 'M-03', field, params }`。Lambda側は `ok:false` を `VALIDATION_ERROR` に変換する。
+
+`code` は画面のメッセージID（`M-03`〜`M-05`・`M-12`）。メッセージIDのない入力エラー（ニックネーム・パートナー名・通知時刻・取り込み）は `code: 'INVALID'` とし、`field`（`nickname`・`partnerName`・`sendTime`・`sourceType`・`fileName`・`contentType`・`size`・`text`）と `params`（上限・下限・文字数など）で画面が文言を組み立てる。Lambda側は `assertValid(result)`（`util/validators.js`）で変換する。
 
 | 関数                          | ルール（外部設計書の根拠）                                                                                     |
 | --------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -400,7 +405,7 @@ rpg-learning-app/
 | 呼び出し      | `ExecuteStatementCommand`（`resourceArn`・`secretArn`・`database`・`sql`・`parameters`・`formatRecordsAs: 'JSON'`） |
 | パラメータ     | `{ name: value }` のオブジェクトを渡すと型を判定して変換する。`null` → `isNull`、整数 → `longValue`、小数 → `doubleValue`、真偽 → `booleanValue`、文字列 → `stringValue`、`{date: 'YYYY-MM-DD'}` → `typeHint: 'DATE'`、`{json: obj}` → `typeHint: 'JSON'` |
 | 戻り値       | `formattedRecords` を `JSON.parse` した配列。列名はスネークケースのまま返し、リポジトリでキャメルケースに直す                                 |
-| DB起動中     | `DatabaseResumingException` を受けたら、`opts.resumeRetries`（api-handler は0、ほかの関数は6）回まで5秒おきにやり直す。尽きたら `AppError('DB_RESUMING', 503)` |
+| DB起動中     | `DatabaseResumingException` を受けたら、`opts.resumeRetries`（api-handler は0、ほかの関数は6）回まで5秒おきにやり直す。尽きたら `AppError('DB_RESUMING', 503)`。`opts.resumeRetries` を省いたときの既定値は `setDefaultResumeRetries(n)` で関数ごとに設定する（各 `index.mjs` の先頭で呼ぶ。設定しなければ0） |
 | 1MB制限     | Data API の応答は1MBまで。一覧取得は必ず `LIMIT` を付ける（CSV出力は1,000件ずつ繰り返す）                                          |
 
 #### M-D02 `db/tx.js`
@@ -412,7 +417,7 @@ rpg-learning-app/
 | ファイル            | 主な関数                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
 | `users.js`      | `findBySub`、`findById`、`activate`、`touchLogin`、`updateNickname`、`updatePartner`、`addExp`、`setDailyMessage`、`listForAdmin`、`markDeleted`、`restore`、`listPurgeTargets`、`purge` |
-| `courses.js`    | `listWithProgress`、`findById`、`create`、`update`、`assignAdmins`、`listAdminCourses`                     |
+| `courses.js`    | `listWithProgress`、`findById`、`create`、`update`、`assignAdmins`、`listAdminCourses`、`isAdmin`（担当コースの確認）、`dashboardRows`（8.6 のダッシュボードの一覧） |
 | `enrollments.js`| `enroll`、`isEnrolled`、`nicknameTaken(courseIds, nickname, exceptUserId)`                               |
 | `questions.js`  | `findForLearner`、`findDraftsByImport`、`update`（選択肢・キーワードの置き換えを含む）、`publish`、`deleteOrArchive`         |
 | `reviews.js`    | `findItem`、`upsertItem`、`countDue`、`listDue`、`listUnlearned`、`listLearned`                             |
@@ -459,7 +464,7 @@ rpg-learning-app/
 | 関数                                           | 内容                                                                                         |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `pickDailyQuests(dueCount, rand = Math.random)` | `dueCount > 0` なら Q-04 を必ず入れ、残り2つを Q-01・02・03・05 から重複なく選ぶ。`dueCount = 0` なら Q-04 を除く4つから3つ。Q-04 の `target` は `dueCount` |
-| `applyQuestEvent(quests, ev)`                | 解答イベント `ev = { kind, correct, passed, isNew, isReview }` で未達成クエストの `progress` を進め、`target` に届いたものを `achieved` にして返す |
+| `applyQuestEvent(quests, ev)`                | 解答イベント `ev = { kind, correct, passed, isNew, isReview }` で未達成クエストの `progress` を進め、`target` に届いたものを `achieved` にする。戻り値は `{ quests, achievedNow: [{ code, reward }], questExp }`（`achievedNow` は今回達成したもの、`questExp` はその報酬の合計） |
 
 | クエスト | 進む条件                                  | target   |
 | ---- | ------------------------------------- | -------- |
@@ -489,6 +494,9 @@ rpg-learning-app/
 
 `pickNext({ due, unlearned, learned }, { lastKind, servedIds })` → `{ kind, questionId, keywordId, source: 'due'|'new'|'learned' }` または `null`（出せるものがない）
 
+- 候補は形式ごとに分ける：`{ due: { choice, explain }, unlearned: { choice, explain }, learned: { choice, explain } }`
+- `servedIds` は形式ごとに内部IDが重なるため、`choice:{問題ID}`・`explain:{キーワードID}` の文字列にする（`servedKey(kind, row)` で作る。`adventures.served` の `k`・`q`・`kw` と対応）
+
 #### M-G07 `domain/answer-flow.js` 解答後の更新内容
 
 択一（A-08）と説明（grading-worker）で同じ計算を使うため、DBに書く前の「結果」を純粋関数でまとめる。
@@ -502,7 +510,8 @@ buildAnswerOutcome({ kind, correct, score, reviewItem, today, user, quests, owne
      questExp = 今回達成したクエストの報酬の合計 → after を再計算
   5. mastered = masteredCountBefore + (review.mastered ? 1 : 0)
      newBadges = judgeMasteryBadges(mastered, ownedBadges)
-  6. return { review, exp: {gained, questExp, levelUp: after.level > before.level, ...after}, quests: quests2, newBadges }
+  6. return { review, exp: {gained, questExp, totalExp, levelUp: after.level > before.level, ...after}, quests: quests2, achievedNow, newBadges }
+     totalExp = user.totalExp + gained + questExp（users に書く値）、achievedNow = 今回達成したクエスト（exp_logs の reason=quest に使う）
 ```
 
 ### 3.6 ai
@@ -2007,3 +2016,4 @@ jobs:
 | 6  | リリースの自動化                        | **決定（2026-10-20）**：Phase 1 から GitHub Actions で配置する（第11章）。AWSリソースの定義（IaC。AWS SAM など）への移行は、利用者数と構成変更の頻度が増えたら検討 | Phase 2 の計画時     |
 | 7  | `esbuild` が使う依存ライブラリのライセンス確認     | pdf-lib（MIT）。追加のたびに確認                                       | ライブラリ追加時        |
 | 8  | GitHub のリポジトリ名・承認者               | `<オーナー>/rpg-learning-app`。prod の承認者はシステム管理者と開発リーダーの2名を仮置き     | dev 構築前         |
+| 9  | 通知メールの文言                       | パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を `mail/templates.js` に仮置き。外部設計書 10 No.10 で確定する | パイロット開始前        |

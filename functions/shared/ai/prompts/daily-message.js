@@ -11,9 +11,25 @@ export function buildDailyMessagePrompt(input) {
   const user = `今日の復習数：${reviewCount}\n昨日の解答数：${yesterdayAnswers}\n今週のEXP：${weeklyExp}\nレベル：${level}`
   return { system, user }
 }
-// 生成に失敗したときの定型文（保存しない）
+// 生成に失敗したときの定型文（persona ごとに3つ。保存しない。詳細設計書 5.2 A-05）
 export const FALLBACK_MESSAGES = {
-  encourage: (n) => `今日の復習は${n}問だよ。いっしょにいこう！`,
-  logic: (n) => `今日の復習は${n}問です。復習から始めるのが効率的です。`,
-  rival: (n) => `今日の復習は${n}問だな。俺より先に終わらせられるか？`
+  encourage: [
+    (n) => `今日の復習は${n}問だよ。いっしょにいこう！`,
+    () => '今日もここまで来てくれてうれしいな。1問ずついこう！',
+    () => '少しずつでも続けるのがいちばんだよ。今日もよろしくね！'
+  ],
+  logic: [
+    (n) => `今日の復習は${n}問です。復習から始めるのが効率的です。`,
+    () => '短い時間でも毎日解くと記憶に残りやすくなります。始めましょう。',
+    () => '今日の目標はクエストの3つです。順に片付けていきましょう。'
+  ],
+  rival: [
+    (n) => `今日の復習は${n}問だな。俺より先に終わらせられるか？`,
+    () => '今日も来たか。今週のランキング、負けないぞ。',
+    () => '昨日の自分を超えてみせろ。準備はいいか？'
+  ]
+}
+export function fallbackMessage(persona, reviewCount, rand = Math.random) {
+  const list = FALLBACK_MESSAGES[persona] ?? FALLBACK_MESSAGES.encourage
+  return list[Math.min(Math.floor(rand() * list.length), list.length - 1)](reviewCount)
 }

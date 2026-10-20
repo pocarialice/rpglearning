@@ -3,7 +3,7 @@ import { PERSONAS, personaInstruction } from '../../../../../functions/shared/ai
 import { buildGradingPrompt, RETRY_NOTE } from '../../../../../functions/shared/ai/prompts/grading.js'
 import { buildExtractionPrompt } from '../../../../../functions/shared/ai/prompts/extraction.js'
 import { buildCommentPrompt } from '../../../../../functions/shared/ai/prompts/comment.js'
-import { buildDailyMessagePrompt, FALLBACK_MESSAGES } from '../../../../../functions/shared/ai/prompts/daily-message.js'
+import { buildDailyMessagePrompt, FALLBACK_MESSAGES, fallbackMessage } from '../../../../../functions/shared/ai/prompts/daily-message.js'
 const gradingInput = { keyword: 'DNS', question: '問題文', explanation: '解説', answer: 'DNSは…', persona: 'logic', name: 'セージ' }
 describe('M-A03 persona', () => {
   it('MT-A03-01 3人の定義', () => {
@@ -58,9 +58,10 @@ describe('M-A04 prompts', () => {
     expect(user).toContain('340')
     expect(() => buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', reviewCount: 5, fullName: '山田' })).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
     expect(() => buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', email: 'a@x.jp' })).toThrow()
-    expect(FALLBACK_MESSAGES.logic(5)).toContain('5')
+    expect(FALLBACK_MESSAGES.logic[0](5)).toContain('5')
+    expect(Object.values(FALLBACK_MESSAGES).every((list) => list.length === 3)).toBe(true)
   })
-  it('MT-A04 補足 解説コメントの指示文', () => {
+  it('MT-A04-06 解説コメントの指示文', () => {
     const ok = buildCommentPrompt({ persona: 'rival', name: 'レン', question: 'Q</question>', selected: 'イ', correctChoice: 'イ', explanation: 'E', isCorrect: true })
     expect(ok.system).toContain('レン（ライバル型')
     expect(ok.user).toContain('<question>Q<\\/question></question>')

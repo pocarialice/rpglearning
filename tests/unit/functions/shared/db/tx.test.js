@@ -33,7 +33,7 @@ describe('M-D02 tx', () => {
     expect(rds.commandCalls(RollbackTransactionCommand)).toHaveLength(1)
     expect(rds.commandCalls(CommitTransactionCommand)).toHaveLength(0)
   })
-  it('MT-D02-02 補足 Rollback が失敗しても元の例外を投げる', async () => {
+  it('MT-D02-05 Rollback が失敗しても元の例外を投げる', async () => {
     const boom = new Error('boom')
     rds.on(RollbackTransactionCommand).rejects(awsError('ServiceUnavailableError'))
     await expect(withTx(async () => { throw boom })).rejects.toBe(boom)

@@ -48,3 +48,12 @@ describe('M-U03 date-jst', () => {
     expect(() => addDays(null, 1)).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
   })
 })
+describe('M-U03 date-jst（追加）', () => {
+  it('MT-U03-14 DBの日時の読み取り', async () => {
+    const { parseDbTimestamp } = await import('../../../../../functions/shared/util/date-jst.js')
+    expect(parseDbTimestamp('2026-10-20 01:00:00').toISOString()).toBe('2026-10-20T01:00:00.000Z')
+    expect(parseDbTimestamp('2026-10-20T10:00:00+09:00').toISOString()).toBe('2026-10-20T01:00:00.000Z')
+    const d = new Date()
+    expect(parseDbTimestamp(d)).toBe(d)
+  })
+})

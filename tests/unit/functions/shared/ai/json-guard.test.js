@@ -45,7 +45,7 @@ describe('M-A02 json-guard', () => {
     expect(r.ok).toBe(false)
     expect(r.errors.map((e) => e.key)).toContain(key)
   })
-  it('MT-A02-09 補足 オブジェクト以外・任意キー', () => {
+  it('MT-A02-10 オブジェクト以外・任意キー', () => {
     expect(validateShape(null, GRADING_SCHEMA).ok).toBe(false)
     expect(validateShape([], GRADING_SCHEMA).ok).toBe(false)
     expect(validateShape({}, { x: { type: 'int', min: 0, max: 1, required: false } })).toEqual({ ok: true, errors: [] })

@@ -13,11 +13,17 @@ export async function insert(a, db = defaultDb) {
   })
   return rows[0].answer_id
 }
+// 学習記録（A-12）。網羅率・正答率は択一の公開済み問題で数える
 export async function statsForUser(userId, courseId, db = defaultDb) {
-  const rows = await db.query(`SELECT count(*)::int AS answer_count, count(*) FILTER (WHERE is_correct)::int AS correct_count,
-      count(DISTINCT question_id) FILTER (WHERE kind = 'choice')::int AS answered_questions,
-      count(*) FILTER (WHERE kind = 'explain')::int AS explain_count
-    FROM answer_logs WHERE user_id = :userId AND course_id = :courseId`, { userId, courseId })
+  const rows = await db.query(`SELECT
+      (SELECT count(*) FROM questions WHERE course_id = :courseId AND status = 'published')::int AS published_count,
+      count(DISTINCT a.question_id)::int AS answered_questions,
+      count(*)::int AS answer_count,
+      count(*) FILTER (WHERE a.is_correct)::int AS correct_count,
+      (SELECT count(*) FROM review_items r WHERE r.user_id = :userId AND r.course_id = :courseId
+         AND r.kind = 'choice' AND r.stage = 6)::int AS mastered
+    FROM answer_logs a JOIN questions q ON q.question_id = a.question_id AND q.status = 'published'
+    WHERE a.user_id = :userId AND a.course_id = :courseId AND a.kind = 'choice'`, { userId, courseId })
   return camelRow(rows[0])
 }
 export async function countOnDate(userId, day, db = defaultDb) {

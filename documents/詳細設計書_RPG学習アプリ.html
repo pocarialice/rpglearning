@@ -392,9 +392,9 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.2版（ドラフト：第1〜12章、HTML版あり。リリースを GitHub Actions に変更）</b></li>
+      <li>版数<b>第0.3版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第0.1版の指摘を反映）</b></li>
       <li>作成日<b>2026-10-20</b></li>
-      <li>入力文書<b>要件定義書 第1版（ドラフト）、外部設計書 第0.7版、AWS構築手順書 第0.4版</b></li>
+      <li>入力文書<b>要件定義書 第1版（ドラフト）、外部設計書 第0.8版、AWS構築手順書 第0.4版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
       <li>関連文書<b>モジュールテスト仕様書_RPG学習アプリ（本書のモジュール単位の試験を定める）</b></li>
     </ul>
@@ -698,7 +698,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tr><td><code>DB_RESUMING</code></td><td>503</td><td>data-api（<code>DatabaseResumingException</code>）</td></tr>
 <tr><td><code>GRADING_TIMEOUT</code></td><td>504</td><td>A-10（30秒を超えた採点）</td></tr>
 <tr><td><code>INTERNAL_ERROR</code></td><td>500</td><td>ハンドラの一番外側</td></tr>
-<tr><td><code>AI_TIMEOUT</code>・<code>AI_ERROR</code></td><td>-</td><td>ai/bedrock.js（内部用。呼び出し側が定型文に切り替える・採点を失敗にする）</td></tr>
+<tr><td><code>AI_TIMEOUT</code>・<code>AI_ERROR</code></td><td>（500）</td><td>ai/bedrock.js（内部用。呼び出し側が定型文に切り替える・採点を失敗にする）。画面には返さない想定だが、万一ハンドラの外まで出たときのため status は500にする</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>2.4.5 ログ（<code>util/logger.js</code>）</h4>
 <p>1行1件のJSONで CloudWatch Logs に出す。</p>
@@ -783,8 +783,13 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tr><td><code>loadUser(db, auth)</code></td><td><code>users</code> を <code>cognito_sub</code> で引く。いない・<code>status='deleted'</code> なら <code>FORBIDDEN</code>。<code>status='invited'</code> なら <code>active</code> に更新（初回ログイン）</td></tr>
 <tr><td><code>assertCourseAdmin(db, user, courseId)</code></td><td><code>system_admin</code> は通す。<code>course_admin</code> は <code>course_admins</code> に行があるときだけ通す。なければ <code>FORBIDDEN</code></td></tr>
 </tbody></table></div>
+<ul>
+<li>util は db を呼べない（2.1 の依存ルール）ため、<code>loadUser</code>・<code>assertCourseAdmin</code> の <code>db</code> には呼び出し側がリポジトリ（<code>{ users, courses }</code>）を渡す。担当コースの確認は <code>courses.isAdmin(courseId, userId)</code> を使う</li>
+<li><code>loadUser</code> の戻り値の <code>roles</code> は <code>user_roles</code> の値（なければトークンの <code>cognito:groups</code>）</li>
+</ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-U07 <code>web/js/logic/validators.js</code>（画面とLambdaで共用）</h4>
 <p>戻り値は <code>{ ok: true }</code> または <code>{ ok: false, code: 'M-03', field, params }</code>。Lambda側は <code>ok:false</code> を <code>VALIDATION_ERROR</code> に変換する。</p>
+<p><code>code</code> は画面のメッセージID（<code>M-03</code>〜<code>M-05</code>・<code>M-12</code>）。メッセージIDのない入力エラー（ニックネーム・パートナー名・通知時刻・取り込み）は <code>code: 'INVALID'</code> とし、<code>field</code>（<code>nickname</code>・<code>partnerName</code>・<code>sendTime</code>・<code>sourceType</code>・<code>fileName</code>・<code>contentType</code>・<code>size</code>・<code>text</code>）と <code>params</code>（上限・下限・文字数など）で画面が文言を組み立てる。Lambda側は <code>assertValid(result)</code>（<code>util/validators.js</code>）で変換する。</p>
 <div class="table-wrap"><table>
 <thead><tr><th>関数</th><th>ルール（外部設計書の根拠）</th></tr></thead>
 <tbody>
@@ -804,7 +809,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tr><td>呼び出し</td><td><code>ExecuteStatementCommand</code>（<code>resourceArn</code>・<code>secretArn</code>・<code>database</code>・<code>sql</code>・<code>parameters</code>・<code>formatRecordsAs: 'JSON'</code>）</td></tr>
 <tr><td>パラメータ</td><td><code>{ name: value }</code> のオブジェクトを渡すと型を判定して変換する。<code>null</code> → <code>isNull</code>、整数 → <code>longValue</code>、小数 → <code>doubleValue</code>、真偽 → <code>booleanValue</code>、文字列 → <code>stringValue</code>、<code>{date: 'YYYY-MM-DD'}</code> → <code>typeHint: 'DATE'</code>、<code>{json: obj}</code> → <code>typeHint: 'JSON'</code></td></tr>
 <tr><td>戻り値</td><td><code>formattedRecords</code> を <code>JSON.parse</code> した配列。列名はスネークケースのまま返し、リポジトリでキャメルケースに直す</td></tr>
-<tr><td>DB起動中</td><td><code>DatabaseResumingException</code> を受けたら、<code>opts.resumeRetries</code>（api-handler は0、ほかの関数は6）回まで5秒おきにやり直す。尽きたら <code>AppError('DB_RESUMING', 503)</code></td></tr>
+<tr><td>DB起動中</td><td><code>DatabaseResumingException</code> を受けたら、<code>opts.resumeRetries</code>（api-handler は0、ほかの関数は6）回まで5秒おきにやり直す。尽きたら <code>AppError('DB_RESUMING', 503)</code>。<code>opts.resumeRetries</code> を省いたときの既定値は <code>setDefaultResumeRetries(n)</code> で関数ごとに設定する（各 <code>index.mjs</code> の先頭で呼ぶ。設定しなければ0）</td></tr>
 <tr><td>1MB制限</td><td>Data API の応答は1MBまで。一覧取得は必ず <code>LIMIT</code> を付ける（CSV出力は1,000件ずつ繰り返す）</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-D02 <code>db/tx.js</code></h4>
@@ -814,7 +819,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <thead><tr><th>ファイル</th><th>主な関数</th></tr></thead>
 <tbody>
 <tr><td><code>users.js</code></td><td><code>findBySub</code>、<code>findById</code>、<code>activate</code>、<code>touchLogin</code>、<code>updateNickname</code>、<code>updatePartner</code>、<code>addExp</code>、<code>setDailyMessage</code>、<code>listForAdmin</code>、<code>markDeleted</code>、<code>restore</code>、<code>listPurgeTargets</code>、<code>purge</code></td></tr>
-<tr><td><code>courses.js</code></td><td><code>listWithProgress</code>、<code>findById</code>、<code>create</code>、<code>update</code>、<code>assignAdmins</code>、<code>listAdminCourses</code></td></tr>
+<tr><td><code>courses.js</code></td><td><code>listWithProgress</code>、<code>findById</code>、<code>create</code>、<code>update</code>、<code>assignAdmins</code>、<code>listAdminCourses</code>、<code>isAdmin</code>（担当コースの確認）、<code>dashboardRows</code>（8.6 のダッシュボードの一覧）</td></tr>
 <tr><td><code>enrollments.js</code></td><td><code>enroll</code>、<code>isEnrolled</code>、<code>nicknameTaken(courseIds, nickname, exceptUserId)</code></td></tr>
 <tr><td><code>questions.js</code></td><td><code>findForLearner</code>、<code>findDraftsByImport</code>、<code>update</code>（選択肢・キーワードの置き換えを含む）、<code>publish</code>、<code>deleteOrArchive</code></td></tr>
 <tr><td><code>reviews.js</code></td><td><code>findItem</code>、<code>upsertItem</code>、<code>countDue</code>、<code>listDue</code>、<code>listUnlearned</code>、<code>listLearned</code></td></tr>
@@ -857,7 +862,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <thead><tr><th>関数</th><th>内容</th></tr></thead>
 <tbody>
 <tr><td><code>pickDailyQuests(dueCount, rand = Math.random)</code></td><td><code>dueCount &gt; 0</code> なら Q-04 を必ず入れ、残り2つを Q-01・02・03・05 から重複なく選ぶ。<code>dueCount = 0</code> なら Q-04 を除く4つから3つ。Q-04 の <code>target</code> は <code>dueCount</code></td></tr>
-<tr><td><code>applyQuestEvent(quests, ev)</code></td><td>解答イベント <code>ev = { kind, correct, passed, isNew, isReview }</code> で未達成クエストの <code>progress</code> を進め、<code>target</code> に届いたものを <code>achieved</code> にして返す</td></tr>
+<tr><td><code>applyQuestEvent(quests, ev)</code></td><td>解答イベント <code>ev = { kind, correct, passed, isNew, isReview }</code> で未達成クエストの <code>progress</code> を進め、<code>target</code> に届いたものを <code>achieved</code> にする。戻り値は <code>{ quests, achievedNow: [{ code, reward }], questExp }</code>（<code>achievedNow</code> は今回達成したもの、<code>questExp</code> はその報酬の合計）</td></tr>
 </tbody></table></div>
 <div class="table-wrap"><table>
 <thead><tr><th>クエスト</th><th>進む条件</th><th>target</th></tr></thead>
@@ -885,6 +890,10 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <li>キーワードは、同じ問題に複数あるとき予定日の早いもの（未学習なら <code>sort_order</code> の小さいもの）を1つだけ候補にする（SQLで絞る）</li>
 </ol>
 <p><code>pickNext({ due, unlearned, learned }, { lastKind, servedIds })</code> → <code>{ kind, questionId, keywordId, source: 'due'|'new'|'learned' }</code> または <code>null</code>（出せるものがない）</p>
+<ul>
+<li>候補は形式ごとに分ける：<code>{ due: { choice, explain }, unlearned: { choice, explain }, learned: { choice, explain } }</code></li>
+<li><code>servedIds</code> は形式ごとに内部IDが重なるため、<code>choice:{問題ID}</code>・<code>explain:{キーワードID}</code> の文字列にする（<code>servedKey(kind, row)</code> で作る。<code>adventures.served</code> の <code>k</code>・<code>q</code>・<code>kw</code> と対応）</li>
+</ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-G07 <code>domain/answer-flow.js</code> 解答後の更新内容</h4>
 <p>択一（A-08）と説明（grading-worker）で同じ計算を使うため、DBに書く前の「結果」を純粋関数でまとめる。</p>
 <pre><code class="language-text">buildAnswerOutcome({ kind, correct, score, reviewItem, today, user, quests, ownedBadges, masteredCountBefore })
@@ -895,7 +904,8 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
      questExp = 今回達成したクエストの報酬の合計 → after を再計算
   5. mastered = masteredCountBefore + (review.mastered ? 1 : 0)
      newBadges = judgeMasteryBadges(mastered, ownedBadges)
-  6. return { review, exp: {gained, questExp, levelUp: after.level &gt; before.level, ...after}, quests: quests2, newBadges }</code></pre>
+  6. return { review, exp: {gained, questExp, totalExp, levelUp: after.level &gt; before.level, ...after}, quests: quests2, achievedNow, newBadges }
+     totalExp = user.totalExp + gained + questExp（users に書く値）、achievedNow = 今回達成したクエスト（exp_logs の reason=quest に使う）</code></pre>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 ai</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A01 <code>ai/bedrock.js</code></h4>
 <div class="table-wrap"><table>
@@ -2229,10 +2239,11 @@ jobs:
 <tr><td>6</td><td>リリースの自動化</td><td><strong>決定（2026-10-20）</strong>：Phase 1 から GitHub Actions で配置する（第11章）。AWSリソースの定義（IaC。AWS SAM など）への移行は、利用者数と構成変更の頻度が増えたら検討</td><td>Phase 2 の計画時</td></tr>
 <tr><td>7</td><td><code>esbuild</code> が使う依存ライブラリのライセンス確認</td><td>pdf-lib（MIT）。追加のたびに確認</td><td>ライブラリ追加時</td></tr>
 <tr><td>8</td><td>GitHub のリポジトリ名・承認者</td><td><code>&lt;オーナー&gt;/rpg-learning-app</code>。prod の承認者はシステム管理者と開発リーダーの2名を仮置き</td><td>dev 構築前</td></tr>
+<tr><td>9</td><td>通知メールの文言</td><td>パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を <code>mail/templates.js</code> に仮置き。外部設計書 10 No.10 で確定する</td><td>パイロット開始前</td></tr>
 </tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.1版（ドラフト：第1〜12章、HTML版あり）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.3版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第0.1版の指摘を反映）</div></footer>
 </body>
 </html>

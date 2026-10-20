@@ -37,7 +37,7 @@ describe('M-U04 authz', () => {
     await expect(loadUser(db({ userId: 15, status: 'deleted' }), { sub: 's', groups: [] })).rejects.toMatchObject({ code: 'FORBIDDEN' })
     await expect(loadUser(db(null), { sub: 's', groups: [] })).rejects.toMatchObject({ code: 'FORBIDDEN' })
   })
-  it('MT-U04-07 補足 有効な利用者はそのまま返し、DBのロールを優先する', async () => {
+  it('MT-U04-10 有効な利用者はそのまま返し、DBのロールを優先する', async () => {
     const d = db({ userId: 15, status: 'active', roles: ['learner', 'course_admin'] })
     const u = await loadUser(d, { sub: 's', groups: ['learner'] })
     expect(d.users.activate).not.toHaveBeenCalled()

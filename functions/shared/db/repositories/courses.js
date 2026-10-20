@@ -7,6 +7,16 @@ export async function listWithProgress(userId, db = defaultDb) {
       EXISTS (SELECT 1 FROM enrollments e WHERE e.course_id = c.course_id AND e.user_id = :userId) AS enrolled
     FROM courses c ORDER BY c.course_id LIMIT 100`, { userId }))
 }
+export async function listAll(db = defaultDb) {
+  const rows = camelRows(await db.query(`SELECT c.course_id, c.name, c.certification, c.description,
+      COALESCE((SELECT json_agg(a.user_id ORDER BY a.user_id) FROM course_admins a WHERE a.course_id = c.course_id), '[]') AS admin_user_ids
+    FROM courses c ORDER BY c.course_id LIMIT 200`))
+  return rows.map((c) => ({ ...c, adminUserIds: typeof c.adminUserIds === 'string' ? JSON.parse(c.adminUserIds) : c.adminUserIds }))
+}
+export async function listIds(db = defaultDb) {
+  const rows = await db.query('SELECT course_id FROM courses ORDER BY course_id LIMIT 200')
+  return rows.map((r) => r.course_id)
+}
 export async function findById(courseId, db = defaultDb) {
   const rows = await db.query('SELECT course_id, name, certification, description FROM courses WHERE course_id = :courseId', { courseId })
   return camelRow(rows[0])

@@ -94,8 +94,12 @@ export async function purge(userId, db = defaultDb) {
   const r = await db.execute(`DELETE FROM users WHERE user_id = :userId AND status = 'deleted'`, { userId })
   return r.numberOfRecordsUpdated === 1
 }
+export async function lastLoginLogAt(userId, db = defaultDb) {
+  const rows = await db.query('SELECT max(logged_in_at) AS last_at FROM login_logs WHERE user_id = :userId', { userId })
+  return rows[0]?.last_at ?? null
+}
 export async function listForStreak(today, db = defaultDb) {
-  return camelRows(await db.query(`SELECT user_id, streak_days, last_active_on FROM users
+  return camelRows(await db.query(`SELECT user_id, streak_days, last_active_on, streak_checked_on FROM users
     WHERE status = 'active' AND (streak_checked_on IS NULL OR streak_checked_on < :today) ORDER BY user_id LIMIT 1000`,
   { today: date(today) }))
 }

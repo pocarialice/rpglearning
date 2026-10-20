@@ -19,6 +19,15 @@ export async function saveProgress(quests, db = defaultDb) {
       WHERE user_quest_id = :id`, { id: q.userQuestId, progress: q.progress, achieved: !!q.achieved })
   }
 }
+// 日次のクエスト割り当ての対象（有効な学習者）と、0:00時点の復習対象数（全コース）
+export async function listAssignTargets(today, db = defaultDb) {
+  return camelRows(await db.query(`SELECT u.user_id,
+      (SELECT count(*) FROM review_items r JOIN questions q ON q.question_id = r.question_id AND q.status = 'published'
+        WHERE r.user_id = u.user_id AND r.stage < 6 AND r.next_review_on <= :today)::int AS due_count,
+      EXISTS (SELECT 1 FROM user_quests uq WHERE uq.user_id = u.user_id AND uq.quest_on = :today) AS assigned
+    FROM users u JOIN user_roles ur ON ur.user_id = u.user_id AND ur.role = 'learner'
+    WHERE u.status = 'active' ORDER BY u.user_id LIMIT 2000`, { today: date(today) }))
+}
 export async function listDefs(db = defaultDb) {
   return camelRows(await db.query('SELECT quest_code, title, target, reward_exp FROM quest_defs WHERE is_active ORDER BY sort_order'))
 }

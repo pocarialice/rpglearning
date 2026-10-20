@@ -1,11 +1,12 @@
 import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
-    include: ['tests/unit/**/*.test.js'],
     setupFiles: ['tests/helpers/vitest.setup.js'],
-    environment: 'node',
-    environmentMatchGlobs: [['tests/unit/web/**', 'jsdom']],
     restoreMocks: true,
+    projects: [
+      { extends: true, test: { name: 'functions', include: ['tests/unit/functions/**/*.test.js'], environment: 'node' } },
+      { extends: true, test: { name: 'web', include: ['tests/unit/web/**/*.test.js'], environment: 'jsdom' } }
+    ],
     coverage: {
       provider: 'v8',
       include: ['functions/**/*.{js,mjs}', 'web/js/core/**', 'web/js/logic/**'],

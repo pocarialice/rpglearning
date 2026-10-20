@@ -28,37 +28,46 @@ export async function findDraftsByImport(importId, db = defaultDb) {
     WHERE q.import_id = :importId AND q.status IN ('draft', 'needs_review') ORDER BY q.question_id LIMIT 500`, { importId })
   return camelRows(rows).map(parseJsonCols)
 }
-// 選択肢・キーワードは全件置き換え
+// 選択肢・キーワードは番号（choice_no・sort_order）ごとに更新し、行を作り直さない（詳細設計書 5.3 A-15）
+// 公開後も学習者の復習段階（keyword_id にひもづく）を残すため。減った番号の行だけ削除する
 export async function update(questionId, { body, choices, correct, explanation, keywords, status }, userId, db = defaultDb) {
   const r = await db.execute(`UPDATE questions SET body = :body, correct_choice = :correct, explanation = :explanation,
       status = :status, updated_by = :userId, updated_at = now()
     WHERE question_id = :questionId AND status <> 'archived'`,
   { questionId, body, correct: correct ?? null, explanation, status, userId })
   if (r.numberOfRecordsUpdated !== 1) return false
-  await db.execute('DELETE FROM choices WHERE question_id = :questionId', { questionId })
-  for (const [i, c] of choices.entries()) {
-    await db.execute('INSERT INTO choices (question_id, choice_no, body) VALUES (:questionId, :no, :body)', { questionId, no: i + 1, body: c })
-  }
-  await db.execute('DELETE FROM keywords WHERE question_id = :questionId', { questionId })
-  for (const [i, k] of keywords.entries()) {
-    await db.execute('INSERT INTO keywords (question_id, sort_order, keyword) VALUES (:questionId, :no, :keyword)',
-      { questionId, no: i + 1, keyword: k })
-  }
+  await syncNumbered(db, { table: 'choices', noCol: 'choice_no', valueCol: 'body', questionId, values: choices })
+  await syncNumbered(db, { table: 'keywords', noCol: 'sort_order', valueCol: 'keyword', questionId, values: keywords, touch: true })
   return true
+}
+async function syncNumbered(db, { table, noCol, valueCol, questionId, values, touch = false }) {
+  const rows = await db.query(`SELECT ${noCol} AS no FROM ${table} WHERE question_id = :questionId`, { questionId })
+  const existing = new Set(rows.map((x) => x.no))
+  for (const [i, value] of values.entries()) {
+    const no = i + 1
+    if (existing.has(no)) {
+      await db.execute(`UPDATE ${table} SET ${valueCol} = :value${touch ? ', updated_at = now()' : ''}
+        WHERE question_id = :questionId AND ${noCol} = :no`, { questionId, no, value })
+    } else {
+      await db.execute(`INSERT INTO ${table} (question_id, ${noCol}, ${valueCol}) VALUES (:questionId, :no, :value)`, { questionId, no, value })
+    }
+  }
+  if ([...existing].some((no) => no > values.length)) {
+    await db.execute(`DELETE FROM ${table} WHERE question_id = :questionId AND ${noCol} > :count`, { questionId, count: values.length })
+  }
 }
 export async function publish(questionId, userId, db = defaultDb) {
   const r = await db.execute(`UPDATE questions SET status = 'published', published_at = now(), updated_by = :userId, updated_at = now()
     WHERE question_id = :questionId AND status IN ('draft', 'needs_review')`, { questionId, userId })
   return r.numberOfRecordsUpdated === 1
 }
-// 解答履歴があれば archived、なければ物理削除
-export async function deleteOrArchive(questionId, userId, db = defaultDb) {
-  const used = await db.query('SELECT 1 AS used FROM answer_logs WHERE question_id = :questionId LIMIT 1', { questionId })
-  if (used.length > 0) {
-    await db.execute(`UPDATE questions SET status = 'archived', updated_by = :userId, updated_at = now()
-      WHERE question_id = :questionId`, { questionId, userId })
-    return 'archived'
+// 下書き・要確認は行ごと削除、公開済みは archived にして出題対象から外す（解答履歴を残す）
+export async function deleteOrArchive(questionId, status, userId, db = defaultDb) {
+  if (status === 'draft' || status === 'needs_review') {
+    await db.execute("DELETE FROM questions WHERE question_id = :questionId AND status IN ('draft', 'needs_review')", { questionId })
+    return 'deleted'
   }
-  await db.execute('DELETE FROM questions WHERE question_id = :questionId', { questionId })
-  return 'deleted'
+  await db.execute(`UPDATE questions SET status = 'archived', updated_by = :userId, updated_at = now()
+    WHERE question_id = :questionId AND status = 'published'`, { questionId, userId })
+  return 'archived'
 }

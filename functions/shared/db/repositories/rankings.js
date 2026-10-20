@@ -9,6 +9,11 @@ export async function history(courseId, weekStart, db = defaultDb) {
     WHERE course_id = :courseId AND week_start = :weekStart ORDER BY rank, nickname LIMIT 1000`,
   { courseId, weekStart: date(weekStart) }))
 }
+export async function weeks(courseId, db = defaultDb) {
+  const rows = await db.query(`SELECT DISTINCT week_start FROM weekly_rankings WHERE course_id = :courseId
+    ORDER BY week_start DESC LIMIT 12`, { courseId })
+  return rows.map((r) => r.week_start)
+}
 export async function closeWeek(rows, db = defaultDb) {
   let inserted = 0
   for (const r of rows) {
