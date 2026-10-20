@@ -342,6 +342,7 @@ flowchart TD
 
 - AWS上にホストする
 - 生成AIはAmazon Bedrockを利用する
+- AWSへのリリース（アプリの配置）は GitHub Actions で行う。テストに通ったものだけを、dev → stg → prod（承認つき）の順に配置する
 
 ### 6.2 AIの利用とデータ保護
 

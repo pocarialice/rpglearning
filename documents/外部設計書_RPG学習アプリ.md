@@ -3,8 +3,8 @@
 | 項目     | 内容                               |
 | ------ | -------------------------------- |
 | 文書名    | RPG学習アプリ 外部設計書                   |
-| 版数     | 第0.6版（ドラフト：第1〜10章、HTML版あり）       |
-| 作成日    | 2026-10-19                       |
+| 版数     | 第0.7版（ドラフト：第1〜10章、HTML版あり）       |
+| 作成日    | 2026-10-19（第0.7版：2026-10-20）       |
 | 入力文書   | RPG学習アプリ 要件定義書 第1版（ドラフト）         |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記 |
 
@@ -25,6 +25,7 @@
 | 環境      | dev／stg／prod の3環境を1つのAWSアカウント内でリソース名の接頭辞（rpg-dev- など）とタグ Environment で分ける。東京リージョン（ap-northeast-1） | 6.1          |
 | AIモデル   | 高精度＝Claude Sonnet 5.5、軽量＝Claude Haiku 5.5。東京リージョンで使えない場合は、東京リージョンで使える別バージョンを使う（クロスリージョン推論は使わない）      | 6.3          |
 | フロントエンド | Vanilla JS（フレームワークなし）のSPA＋PWA                                                                     | 6.7          |
+| リリース方式  | GitHub Actions で配置する（`main` への push で dev、タグで stg → 承認後に prod）。AWS へは OIDC で認証し、アクセスキーは使わない。AWSリソースの作成はマネジメントコンソール | 6.1          |
 | レベル計算式  | 次のレベルまでの必要EXP＝100 × Lv^1.2（端数切り上げ）                                                                | 仮置き No.8     |
 | AIパートナー | 励まし型・論理型・ライバル型の3人。名前は学習者が入力。紋章はキャラクター画像（まずは表情1種、管理画面で差し替え可）。画像が未設定なら名前の頭文字を表示                     | 仮置き No.9     |
 | 管理画面    | 羊皮紙の世界観のまま「ギルド管理局」型で学習者画面と区別                                                                      | 5.1          |
@@ -44,7 +45,8 @@
 | 要件定義書\_RPG学習アプリ        | 要件の根拠                |
 | アプリ用\_デザインシステム（冒険者ギルド） | 画面イメージ・部品            |
 | デジタル庁\_デザインシステム        | 本書HTML版の体裁           |
-| AWS構築手順書\_RPG学習アプリ     | AWSマネジメントコンソールでの構築手順 |
+| AWS構築手順書\_RPG学習アプリ     | AWSマネジメントコンソールでの構築手順と、GitHub Actions との連携（OIDC・配置用ロール）の設定 |
+| 詳細設計書\_RPG学習アプリ       | GitHub Actions によるビルド・リリース手順（第11章） |
 
 ---
 
@@ -146,6 +148,7 @@ flowchart LR
 | EventBridge Scheduler           | 定期処理の起動                         | タイムゾーン Asia/Tokyo                                                                                                       |
 | Amazon SES                      | 通知メール・招待メール                     | 送信ドメインの認証（DKIM）                                                                                                         |
 | CloudWatch／CloudTrail           | ログ・監視・操作記録                      | エラー率と採点時間のアラーム                                                                                                          |
+| IAM（OIDC IDプロバイダー）            | GitHub Actions からの配置の認証            | GitHub が発行するトークンで環境ごとの配置用ロール `rpg-{env}-deploy-role` を引き受ける。長期のアクセスキーは作らない                                                    |
 
 ### 2.4 Lambda関数の分担
 
@@ -216,18 +219,26 @@ flowchart TB
     subgraph PRD["prod 環境"]
       P1["rpg-prod-* のリソース一式"]
     end
-    IAM["IAM・CloudTrail・請求<br>（共通）"]
+    IAM["IAM・CloudTrail・請求<br>OIDC IDプロバイダー（共通）"]
+  end
+  subgraph GH["GitHub"]
+    REPO["リポジトリ<br>rpg-learning-app"]
+    GA["GitHub Actions"]
   end
   IAM --- DEV
   IAM --- STG
   IAM --- PRD
-  DEV -->|"手順書どおりに構築"| STG
-  STG -->|"確認後に同じ手順で構築"| PRD
+  REPO --> GA
+  GA -->|"main への push"| DEV
+  GA -->|"タグ release-*"| STG
+  GA -->|"承認後"| PRD
 ```
 
 - 命名規則：`rpg-{env}-{用途}`（例：`rpg-prod-api-handler`）
 - タグ：`Project=rpg-learning`、`Environment=dev|stg|prod`。請求はタグで環境ごとに集計する
 - IAMの権限は環境ごとに、リソース名の接頭辞で範囲を絞る
+- AWSのリソースは構築手順書に沿ってマネジメントコンソールで dev → stg → prod の順に作る。アプリ（Lambda のコード・画面・DBのテーブル）は GitHub Actions が配置する
+- 配置のきっかけ：dev は `main` への push、stg はタグ `release-YYYYMMDD-NN` の push、prod は stg での確認のあと承認者が GitHub で承認したとき（詳細設計書 第11章）
 
 ### 2.8 AIモデルの使い分け
 
@@ -1159,5 +1170,6 @@ erDiagram
 | 6  | パイロット後のDB常時起動の要否             | 全環境で自動停止                                                                   | パイロット1か月後        |
 | 7  | 利用回数の前提（コスト試算）               | 説明5回・択一20回／人・日                                                             | パイロット1か月後に実績で見直し |
 | 8  | CloudFront の料金プラン            | **決定（2026-10-19）**：全環境で定額の Free プラン（月0ドル、AWS WAF 付き）を使う。WAF は Phase 1 から付く | 決定済み             |
+| 9  | リリースの方式                      | **決定（2026-10-20）**：GitHub Actions で配置する（2.7）。AWSリソースの定義（IaC）は Phase 2 以降に検討 | 決定済み             |
 
 <p></p>
