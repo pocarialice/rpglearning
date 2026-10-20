@@ -1,0 +1,245 @@
+// M-D03 補足：仕様書の代表ケース以外のリポジトリ関数について、SQLとパラメータの組み立てと戻り値の変換を確かめる
+import { describe, it, expect } from 'vitest'
+import { fakeDb } from '../../../../../helpers/aws-mocks.js'
+import * as users from '../../../../../../functions/shared/db/repositories/users.js'
+import * as courses from '../../../../../../functions/shared/db/repositories/courses.js'
+import * as enrollments from '../../../../../../functions/shared/db/repositories/enrollments.js'
+import * as questions from '../../../../../../functions/shared/db/repositories/questions.js'
+import * as reviews from '../../../../../../functions/shared/db/repositories/reviews.js'
+import * as answers from '../../../../../../functions/shared/db/repositories/answers.js'
+import * as exp from '../../../../../../functions/shared/db/repositories/exp.js'
+import * as quests from '../../../../../../functions/shared/db/repositories/quests.js'
+import * as badges from '../../../../../../functions/shared/db/repositories/badges.js'
+import * as rankings from '../../../../../../functions/shared/db/repositories/rankings.js'
+import * as gradings from '../../../../../../functions/shared/db/repositories/gradings.js'
+import * as imports from '../../../../../../functions/shared/db/repositories/imports.js'
+import * as adventures from '../../../../../../functions/shared/db/repositories/adventures.js'
+import * as audit from '../../../../../../functions/shared/db/repositories/audit.js'
+import * as notify from '../../../../../../functions/shared/db/repositories/notify.js'
+const D = (d) => ({ date: d })
+describe('M-D03 補足 users', () => {
+  it('findBySub・findById はロールのJSONを配列にする', async () => {
+    const db = fakeDb({ rows: [{ user_id: 15, roles: '["learner"]' }] })
+    expect(await users.findBySub('s', db)).toEqual({ userId: 15, roles: ['learner'] })
+    expect(db.query.mock.calls[0][1]).toEqual({ sub: 's' })
+    expect(await users.findById(15, fakeDb({ rows: [{ user_id: 15, roles: ['learner'] }] }))).toEqual({ userId: 15, roles: ['learner'] })
+    expect(await users.findById(99, fakeDb())).toBeNull()
+  })
+  it('更新系', async () => {
+    const db = fakeDb()
+    expect(await users.activate(15, db)).toBe(true)
+    expect(db.execute.mock.calls[0][0]).toContain("status = 'invited'")
+    await users.touchLogin(15, db)
+    expect(db.execute.mock.calls[2][0]).toContain('INSERT INTO login_logs')
+    await users.updateNickname(15, 'たろう', db)
+    await users.updatePartner(15, 'logic', 'セージ', db)
+    await users.setCurrentCourse(15, 3, db)
+    await users.addExp(15, { exp: 10, level: 3, today: '2026-10-20' }, db)
+    expect(db.execute.mock.calls.at(-1)[1]).toEqual({ userId: 15, exp: 10, level: 3, today: D('2026-10-20') })
+    await users.setDailyMessage(15, 'やあ', '2026-10-20', db)
+    await users.updateStreak(15, 7, '2026-10-20', db)
+    expect(db.execute.mock.calls.at(-1)[1]).toEqual({ userId: 15, streakDays: 7, today: D('2026-10-20') })
+  })
+  it('listForAdmin は許可された列と向きだけを使う', async () => {
+    const db = fakeDb({ rows: [{ user_id: 1, roles: '[]' }] })
+    await users.listForAdmin({ sort: 'lastLogin', order: 'desc' }, db)
+    expect(db.query.mock.calls[0][0]).toContain('ORDER BY u.last_login_at DESC')
+    await users.listForAdmin(undefined, db)
+    expect(db.query.mock.calls[1][0]).toContain('ORDER BY u.user_id ASC')
+    expect(db.query.mock.calls[1][1]).toEqual({ q: '', status: null, limit: 50, offset: 0 })
+  })
+  it('create・setRoles・markDeleted・restore・purge', async () => {
+    const db = fakeDb({ rows: [{ user_id: 20 }] })
+    expect(await users.create({ sub: 's', email: 'a@x.jp', fullName: '山田', roles: ['learner', 'course_admin'] }, db)).toBe(20)
+    expect(db.execute.mock.calls.filter((c) => c[0].includes('INSERT INTO user_roles'))).toHaveLength(2)
+    expect(db.execute.mock.calls.at(-1)[0]).toContain('notify_settings')
+    expect(await users.markDeleted(20, '2026-11-19', db)).toBe(true)
+    expect(db.execute.mock.calls.at(-1)[1]).toEqual({ userId: 20, deleteOn: D('2026-11-19') })
+    expect(await users.restore(20, fakeDb({ updated: 0 }))).toBe(false)
+    expect(await users.purge(20, db)).toBe(true)
+  })
+  it('listPurgeTargets・listForStreak', async () => {
+    const db = fakeDb({ rows: [{ user_id: 20, cognito_sub: 's' }] })
+    expect(await users.listPurgeTargets('2026-10-20', db)).toEqual([{ userId: 20, cognitoSub: 's' }])
+    expect(db.query.mock.calls[0][0]).toContain('LIMIT')
+    expect(await users.listForStreak('2026-10-20', db)).toEqual([{ userId: 20, cognitoSub: 's' }])
+  })
+})
+describe('M-D03 補足 courses・enrollments', () => {
+  it('courses の各関数', async () => {
+    const db = fakeDb({ rows: [{ course_id: 3, name: 'NW' }] })
+    expect(await courses.listWithProgress(15, db)).toEqual([{ courseId: 3, name: 'NW' }])
+    expect(await courses.findById(3, db)).toEqual({ courseId: 3, name: 'NW' })
+    expect(await courses.create({ name: 'NW', certification: 'ネスペ' }, db)).toBe(3)
+    expect(db.query.mock.calls.at(-1)[1]).toEqual({ name: 'NW', certification: 'ネスペ', description: null })
+    expect(await courses.update(3, { name: 'NW', certification: 'ネスペ' }, db)).toBe(true)
+    await courses.assignAdmins(3, [2, 4], db)
+    expect(db.execute.mock.calls.filter((c) => c[0].includes('INSERT INTO course_admins'))).toHaveLength(2)
+    expect(await courses.listAdminCourses(2, db)).toEqual([{ courseId: 3, name: 'NW' }])
+    expect(await courses.isAdmin(3, 2, db)).toBe(true)
+    expect(await courses.isAdmin(3, 9, fakeDb())).toBe(false)
+    await courses.dashboardRows(3, undefined, db)
+    expect(db.query.mock.calls.at(-1)[1]).toEqual({ courseId: 3, limit: 1000, offset: 0 })
+  })
+  it('enrollments の各関数', async () => {
+    const db = fakeDb({ rows: [{ course_id: 3 }] })
+    await enrollments.enroll(15, 3, '2026-10-20', db)
+    expect(db.execute.mock.calls[0][1]).toEqual({ userId: 15, courseId: 3, today: D('2026-10-20') })
+    expect(await enrollments.isEnrolled(15, 3, db)).toBe(true)
+    expect(await enrollments.listCourseIds(15, db)).toEqual([3])
+    const empty = fakeDb()
+    expect(await enrollments.nicknameTaken([], 'たろう', 15, empty)).toBe(false)
+    expect(empty.query).not.toHaveBeenCalled()
+  })
+})
+describe('M-D03 補足 questions', () => {
+  it('取得系は選択肢・キーワードのJSONを配列にする', async () => {
+    const row = { question_id: 42, choices: '["ア","イ"]', keywords: '[{"keywordId":1,"keyword":"DNS"}]' }
+    const db = fakeDb({ rows: [row] })
+    const q = await questions.findForLearner(42, 3, db)
+    expect(q.choices).toEqual(['ア', 'イ'])
+    expect(q.keywords).toEqual([{ keywordId: 1, keyword: 'DNS' }])
+    expect(db.query.mock.calls[0][0]).toContain("q.status = 'published'")
+    expect((await questions.findById(42, fakeDb({ rows: [{ question_id: 42, choices: [], keywords: [] }] }))).choices).toEqual([])
+    expect(await questions.findById(1, fakeDb())).toBeNull()
+    expect(await questions.findDraftsByImport(8, db)).toHaveLength(1)
+    expect(await questions.findKeyword(1, fakeDb({ rows: [{ keyword_id: 1, course_id: 3 }] }))).toEqual({ keywordId: 1, courseId: 3 })
+  })
+  it('update は選択肢とキーワードを置き換える', async () => {
+    const db = fakeDb()
+    const ok = await questions.update(42, { body: 'b', choices: ['ア', 'イ', 'ウ', 'エ'], correct: 2, explanation: 'e', keywords: ['DNS'], status: 'draft' }, 2, db)
+    expect(ok).toBe(true)
+    const sqls = db.execute.mock.calls.map((c) => c[0])
+    expect(sqls.filter((s) => s.startsWith('INSERT INTO choices'))).toHaveLength(4)
+    expect(sqls.filter((s) => s.startsWith('INSERT INTO keywords'))).toHaveLength(1)
+    const none = fakeDb({ updated: 0 })
+    expect(await questions.update(42, { body: 'b', choices: [], explanation: '', keywords: [], status: 'draft' }, 2, none)).toBe(false)
+    expect(none.execute).toHaveBeenCalledTimes(1)
+    expect(none.execute.mock.calls[0][1].correct).toBeNull()
+  })
+  it('publish・deleteOrArchive', async () => {
+    expect(await questions.publish(42, 2, fakeDb())).toBe(true)
+    expect(await questions.deleteOrArchive(42, 2, fakeDb({ rows: [{ used: 1 }] }))).toBe('archived')
+    expect(await questions.deleteOrArchive(42, 2, fakeDb({ rows: [] }))).toBe('deleted')
+  })
+})
+describe('M-D03 補足 reviews・answers・exp', () => {
+  it('reviews の各関数', async () => {
+    const db = fakeDb({ rows: [{ cnt: 5, question_id: 1, keyword_id: 9 }] })
+    await reviews.findItem({ userId: 15, kind: 'explain', keywordId: 9 }, db)
+    expect(db.query.mock.calls[0][1]).toEqual({ userId: 15, keywordId: 9 })
+    await reviews.upsertItem({ userId: 15, courseId: 3, kind: 'explain', questionId: 1, keywordId: 9, stage: 6, nextReviewOn: null, correct: false, today: '2026-10-20', mastered: true }, db)
+    const [sql, p] = db.execute.mock.calls[0]
+    expect(sql).toContain("ON CONFLICT (user_id, keyword_id) WHERE kind = 'explain'")
+    expect(p.nextReviewOn).toBeNull()
+    expect(p.correctInc).toBe(0)
+    expect(p.mastered).toBe(true)
+    expect(await reviews.countDue(15, 3, '2026-10-20', db)).toBe(5)
+    expect(await reviews.countDue(15, 3, '2026-10-20', fakeDb())).toBe(0)
+    await reviews.listDue(15, 3, 'choice', '2026-10-20', db)
+    expect(db.query.mock.calls.at(-1)[0]).toContain('ORDER BY r.next_review_on, r.review_id')
+    await reviews.listUnlearned(15, 3, 'choice', db)
+    expect(db.query.mock.calls.at(-1)[0]).toContain('ORDER BY q.question_id')
+    await reviews.listUnlearned(15, 3, 'explain', db)
+    expect(db.query.mock.calls.at(-1)[0]).toContain('DISTINCT ON (q.question_id)')
+    await reviews.listLearned(15, 3, 'choice', db)
+    expect(db.query.mock.calls.at(-1)[0]).toContain('ORDER BY correct_rate')
+  })
+  it('answers の各関数', async () => {
+    const db = fakeDb({ rows: [{ answer_id: 777, cnt: 4, answer_count: 2 }] })
+    expect(await answers.insert({ userId: 15, courseId: 3, questionId: 42, kind: 'choice', selectedChoice: 2, isCorrect: true, answeredOn: '2026-10-20' }, db)).toBe(777)
+    const p = db.query.mock.calls[0][1]
+    expect(p).toMatchObject({ keywordId: null, adventureId: null, score: null, explanationText: null, isReview: false, isNew: false, answeredOn: D('2026-10-20') })
+    expect(await answers.statsForUser(15, 3, db)).toMatchObject({ answerCount: 2 })
+    expect(await answers.countOnDate(15, '2026-10-19', db)).toBe(4)
+    expect(await answers.countOnDate(15, '2026-10-19', fakeDb())).toBe(0)
+    expect(await answers.masteredCount(15, db)).toBe(4)
+    expect(await answers.masteredCount(15, fakeDb())).toBe(0)
+  })
+  it('exp の各関数', async () => {
+    const db = fakeDb({ rows: [{ total: 120 }] })
+    await exp.insertLog({ userId: 15, courseId: 3, reason: 'choice', exp: 10, weekStart: '2026-10-19' }, db)
+    expect(db.execute.mock.calls[0][1]).toEqual({ userId: 15, courseId: 3, reason: 'choice', refId: null, exp: 10, isReview: false, weekStart: D('2026-10-19') })
+    expect(await exp.weeklyTotalForUser(15, '2026-10-19', db)).toBe(120)
+    expect(await exp.weeklyTotalForUser(15, '2026-10-19', fakeDb())).toBe(0)
+  })
+})
+describe('M-D03 補足 quests・badges・rankings', () => {
+  it('quests の各関数', async () => {
+    const db = fakeDb({ rows: [{ user_quest_id: 1, quest_code: 'Q-01' }] })
+    expect(await quests.listToday(15, '2026-10-20', db)).toEqual([{ userQuestId: 1, questCode: 'Q-01' }])
+    await quests.insertAssignments(15, '2026-10-20', [{ code: 'Q-04', target: 5 }, { code: 'Q-01', target: 5 }], db)
+    expect(db.execute).toHaveBeenCalledTimes(2)
+    expect(db.execute.mock.calls[0][1]).toEqual({ userId: 15, today: D('2026-10-20'), code: 'Q-04', target: 5 })
+    await quests.saveProgress([{ userQuestId: 1, progress: 5, achieved: true }, { userQuestId: 2, progress: 1 }], db)
+    expect(db.execute.mock.calls.at(-1)[1]).toEqual({ id: 2, progress: 1, achieved: false })
+    expect(await quests.listDefs(db)).toHaveLength(1)
+  })
+  it('badges の各関数', async () => {
+    const db = fakeDb({ rows: [{ badge_code: 'streak_bronze' }] })
+    expect(await badges.listOwned(15, db)).toEqual(['streak_bronze'])
+    await badges.grant(15, ['mastery_bronze', 'mastery_silver'], db)
+    expect(db.execute).toHaveBeenCalledTimes(2)
+    expect(await badges.listDefs(db)).toEqual([{ badgeCode: 'streak_bronze' }])
+  })
+  it('rankings の各関数', async () => {
+    const db = fakeDb({ rows: [{ user_id: 15, weekly_exp: 120 }] })
+    expect(await rankings.currentWeek(3, '2026-10-19', db)).toEqual([{ userId: 15, weeklyExp: 120 }])
+    expect(await rankings.history(3, '2026-10-12', db)).toEqual([{ userId: 15, weeklyExp: 120 }])
+    expect(await rankings.closeWeek([], db)).toBe(0)
+  })
+})
+describe('M-D03 補足 gradings・imports・adventures・audit・notify', () => {
+  it('gradings の各関数', async () => {
+    const db = fakeDb({ rows: [{ grading_id: 456, result: '{"score":72}', created_at: 'x' }] })
+    expect(await gradings.create({ userId: 15, courseId: 3, keywordId: 9, explanationText: 't' }, db)).toEqual({ gradingId: 456, result: '{"score":72}', createdAt: 'x' })
+    expect(db.query.mock.calls[0][1].adventureId).toBeNull()
+    expect((await gradings.find(456, 15, db)).result).toEqual({ score: 72 })
+    expect(db.query.mock.calls[1][0]).toContain('user_id = :userId')
+    expect(await gradings.find(456, undefined, fakeDb({ rows: [{ grading_id: 456, result: null }] }))).toEqual({ gradingId: 456, result: null })
+    expect(await gradings.find(1, 15, fakeDb())).toBeNull()
+    expect(await gradings.fail(456, 'ai_timeout', db)).toBe(true)
+    expect(db.execute.mock.calls[0][0]).toContain("status = 'processing'")
+    expect(await gradings.deleteOlderThan(30, fakeDb({ updated: 12 }))).toBe(12)
+  })
+  it('imports の各関数', async () => {
+    const db = fakeDb({ rows: [{ import_id: 8, question_id: 100 }] })
+    expect(await imports.create({ courseId: 3, userId: 2, sourceType: 'pdf', fileName: 'a.pdf', s3Key: 'uploads/c_3/imp.pdf' }, db)).toBe(8)
+    expect(await imports.find(8, db)).toMatchObject({ importId: 8 })
+    expect(await imports.findByKey('uploads/x', db)).toMatchObject({ importId: 8 })
+    expect(await imports.setStatus(8, 'extracting', { from: 'waiting' }, db)).toBe(true)
+    expect(db.execute.mock.calls[0][1]).toEqual({ importId: 8, status: 'extracting', from: 'waiting', extractedCount: null, errorMessage: null })
+    expect(await imports.setStatus(8, 'failed', undefined, fakeDb({ updated: 0 }))).toBe(false)
+    const n = await imports.insertDrafts(8, 3, [
+      { body: '問1', choices: ['ア', 'イ', 'ウ', 'エ'], correct: 1, explanation: 'e', keywords: ['DNS'], status: 'draft' },
+      { body: '問2', choices: ['ア', 'イ'], correct: null, keywords: [], status: 'needs_review' }
+    ], db)
+    expect(n).toBe(2)
+    expect(db.query.mock.calls.at(-1)[1]).toMatchObject({ correct: null, explanation: '', status: 'needs_review' })
+  })
+  it('adventures の各関数', async () => {
+    const db = fakeDb({ rows: [{ adventure_id: 90, served: '[{"k":"choice","q":42}]' }] })
+    expect((await adventures.start(15, 3, db)).served).toEqual([{ k: 'choice', q: 42 }])
+    expect((await adventures.find(90, 15, fakeDb({ rows: [{ adventure_id: 90, served: [] }] }))).served).toEqual([])
+    expect(await adventures.find(90, 16, fakeDb())).toBeNull()
+    expect(await adventures.incrementServed(90, { k: 'explain', kw: 9 }, db)).toBe(true)
+    expect(db.execute.mock.calls[0][1]).toEqual({ adventureId: 90, kind: 'explain', entry: { json: [{ k: 'explain', kw: 9 }] } })
+    await adventures.finish(90, db)
+    expect(adventures.ADVENTURE_SIZE).toBe(10)
+  })
+  it('audit.write', async () => {
+    const db = fakeDb()
+    await audit.write(2, 'question.publish', { type: 'question', id: 42 }, { status: 'published' }, db)
+    expect(db.execute.mock.calls[0][1]).toEqual({ actorId: 2, action: 'question.publish', targetType: 'question', targetId: 42, detail: { json: { status: 'published' } } })
+    await audit.write(2, 'dashboard.csv', { type: 'course' }, undefined, db)
+    expect(db.execute.mock.calls[1][1]).toMatchObject({ targetId: null, detail: { json: {} } })
+  })
+  it('notify の各関数', async () => {
+    const db = fakeDb({ rows: [{ email_enabled: true, send_time: '07:30' }] })
+    expect(await notify.get(15, db)).toEqual({ emailEnabled: true, sendTime: '07:30' })
+    await notify.put(15, { emailEnabled: false, sendTime: '21:00' }, db)
+    expect(db.execute.mock.calls[0][1]).toEqual({ userId: 15, emailEnabled: false, sendTime: '21:00' })
+    await notify.listForSlotBuild('2026-10-20', db)
+    expect(db.query.mock.calls.at(-1)[1]).toEqual({ today: D('2026-10-20') })
+  })
+})
