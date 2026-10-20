@@ -1,0 +1,5331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPG学習アプリ AWS構築手順書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;family=Noto+Sans+Mono&amp;family=BIZ+UDPGothic:wght@400;700&amp;family=Shippori+Mincho:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+
+:root {
+  /* DADS color tokens */
+  --blue-1000: #00118F;
+  --blue-900: #0017C1;
+  --blue-700: #264AF4;
+  --blue-200: #C5D7FB;
+  --blue-100: #D9E6FF;
+  --blue-50: #E8F1FE;
+  --gray-900: #1A1A1C;
+  --gray-700: #414141;
+  --gray-600: #626264;
+  --gray-536: #767676;
+  --gray-300: #B4B4B4;
+  --gray-100: #E6E6E6;
+  --gray-50: #F2F2F2;
+  --white: #FFFFFF;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --focus: #FFD43D;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--gray-900);
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+a { color: var(--blue-900); text-underline-offset: 3px; }
+a:hover { color: var(--blue-1000); }
+a:focus-visible { outline: 4px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.site-header {
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--white);
+}
+.site-header .inner {
+  max-width: 1120px; margin: 0 auto; padding: 40px 16px 32px;
+}
+.eyebrow {
+  display: inline-block; font-size: 14px; font-weight: 700; color: var(--blue-900);
+  background: var(--blue-50); border-radius: 999px; padding: 2px 12px; margin-bottom: 12px;
+}
+.site-header h1 {
+  font-size: 32px; line-height: 1.4; margin: 0 0 16px; font-weight: 700;
+}
+.meta {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding: 0; list-style: none;
+  font-size: 14px; color: var(--gray-600);
+}
+.meta b { color: var(--gray-900); font-weight: 700; margin-left: 4px; }
+
+.layout {
+  max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px;
+}
+nav.toc { position: sticky; top: 24px; align-self: start; }
+nav.toc p { font-size: 14px; font-weight: 700; color: var(--gray-600); margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--gray-100); }
+nav.toc a {
+  display: block; padding: 6px 12px; margin-left: -2px; border-left: 2px solid transparent;
+  color: var(--gray-700); text-decoration: none; font-size: 15px;
+}
+nav.toc a:hover { color: var(--blue-900); border-left-color: var(--blue-900); background: var(--blue-50); }
+
+main { min-width: 0; }
+.chapter { padding-bottom: 48px; margin-bottom: 48px; border-bottom: 1px solid var(--gray-100); scroll-margin-top: 24px; }
+.chapter:last-child { border-bottom: none; }
+h2 {
+  font-size: 28px; line-height: 1.4; margin: 0 0 24px; padding-left: 16px;
+  border-left: 6px solid var(--blue-900);
+}
+h3 {
+  font-size: 20px; line-height: 1.5; margin: 32px 0 12px; color: var(--blue-1000);
+}
+p { margin: 0 0 16px; }
+.h-ico { color: var(--blue-900); display: inline-block; width: 1.2em; text-align: center; margin-right: 0.45em; font-size: 0.9em; vertical-align: 0.02em; }
+h3 .h-ico { font-size: 0.85em; margin-right: 0.4em; }
+ul, ol { margin: 0 0 16px; padding-left: 1.5em; }
+li { margin: 4px 0; }
+li::marker { color: var(--blue-900); }
+
+.table-wrap { overflow-x: auto; margin: 0 0 24px; border: 1px solid var(--gray-300); border-radius: var(--radius-8); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--gray-100); }
+th { background: var(--blue-50); color: var(--gray-900); font-weight: 700; border-bottom: 2px solid var(--blue-900); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+.mermaid .node rect, .mermaid rect.actor, .mermaid .statediagram-state rect { rx: 8px; ry: 8px; }
+.mermaid .edgeLabel, .mermaid .edgeLabel p { font-size: 13px; color: var(--gray-700); }
+
+figure.diagram {
+  margin: 8px 0 32px; padding: 24px 16px; background: var(--white);
+  border: 1px solid var(--gray-300); border-radius: var(--radius-12); overflow-x: auto;
+  text-align: center;
+}
+.mermaid { font-family: "Noto Sans JP", sans-serif; }
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* ===== chapter visuals (DADS components) ===== */
+.vis {
+  background: var(--blue-50); border-radius: var(--radius-12); padding: 24px;
+  margin: 0 0 32px; display: grid; gap: 16px;
+}
+.vis p { margin: 0; }
+.vis-grid { display: grid; gap: 16px; }
+.vis-grid.c1 { grid-template-columns: minmax(220px, 1fr) 2fr; }
+.vis-grid.c2 { grid-template-columns: 1fr 1fr; }
+.vis-grid.c5 { grid-template-columns: 280px 1fr; align-items: center; }
+.vis-grid.cards4 { grid-template-columns: repeat(4, 1fr); }
+.vis-grid.cards4.c6 { grid-template-columns: repeat(2, 1fr); }
+.vis-grid.tiles4 { grid-template-columns: repeat(4, 1fr); }
+.vis-stack { display: grid; gap: 16px; }
+.card, .role, .tile, .kpi-hero {
+  background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px;
+}
+.vis-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin-bottom: 8px !important; }
+.vis-label.inline { margin: 0 8px 0 0 !important; }
+.vis-title { font-size: 17px; font-weight: 700; }
+.count { font-size: 13px; color: var(--white); background: var(--blue-900); border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
+.lead { font-size: 17px; font-weight: 400; line-height: 1.6; }
+.lead strong { color: var(--blue-900); }
+.note { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-top: 6px !important; }
+.tag-row, .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-row { margin-top: 12px; }
+.tag { display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; line-height: 1.4; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.tag.solid { background: var(--blue-900); color: var(--white); }
+.tag.line { background: var(--white); color: var(--blue-900); border: 1px solid var(--blue-900); }
+.tag.mute { background: var(--gray-50); color: var(--gray-600); border: 1px solid var(--gray-300); }
+.pill { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--blue-100); color: var(--blue-1000); }
+.scope { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+/* KPI hero */
+.kpi-hero { background: var(--blue-900); border-color: var(--blue-900); color: var(--white); display: flex; flex-direction: column; justify-content: center; }
+.kpi-hero .vis-label { color: var(--blue-100); }
+.kpi-num { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: 0; }
+.kpi-num span { font-size: 32px; margin-left: 2px; }
+.kpi-num small { font-size: 16px; margin-left: 6px; font-weight: 400; }
+.kpi-name { font-size: 17px; font-weight: 700; margin-top: 12px !important; }
+.kpi-def { font-size: 14px; color: var(--blue-100); margin-top: 4px !important; }
+/* scale */
+.scale { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.scale-pt { display: flex; align-items: center; gap: 10px; }
+.scale-num { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1; }
+.scale-num small { font-size: 15px; margin-left: 2px; }
+.scale-cap { font-size: 13px; color: var(--gray-600); line-height: 1.4; }
+.scale-bar { height: 8px; background: var(--blue-100); border-radius: 999px; position: relative; }
+.scale-bar span { position: absolute; inset: 0; background: linear-gradient(90deg, var(--blue-200), var(--blue-900)); border-radius: 999px; }
+.scale-bar::after { content: ""; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); border-left: 12px solid var(--blue-900); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+/* role */
+.ico { width: 44px; height: 44px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; margin-bottom: 10px; }
+.ico.sm { width: 32px; height: 32px; margin: 0; }
+.ico.sm svg { width: 18px; height: 18px; }
+.role.ai { border-style: dashed; border-color: var(--blue-700); }
+.role-name { font-size: 17px; font-weight: 700; margin-bottom: 6px !important; }
+ul.mini, ul.checks { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--gray-700); }
+ul.mini li { padding-left: 14px; position: relative; margin: 2px 0; }
+ul.mini li::before { content: ""; position: absolute; left: 0; top: 0.7em; width: 6px; height: 6px; border-radius: 50%; background: var(--blue-900); }
+.info-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* feature map */
+.vis-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--gray-700); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.lg.l1, .feat.l1 { background: var(--white); border: 1px solid var(--blue-900); }
+.lg.l2, .feat.l2 { background: var(--blue-900); border: 1px solid var(--blue-900); color: var(--white); }
+.lg.l3, .feat.l3 { background: var(--gray-900); border: 1px solid var(--gray-900); color: var(--white); }
+.fmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fcol { display: flex; flex-direction: column; gap: 8px; }
+.fcol-h { font-size: 14px; font-weight: 700; color: var(--blue-1000); border-bottom: 2px solid var(--blue-900); padding-bottom: 4px; }
+.feat { display: flex; align-items: baseline; gap: 8px; font-size: 14px; padding: 8px 12px; border-radius: 6px; }
+.feat b { font-family: "Noto Sans Mono", monospace; font-size: 12px; opacity: 0.8; }
+.interval { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+ol.steps-mini { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+ol.steps-mini li { position: relative; font-size: 13px; color: var(--gray-700); background: var(--blue-50); border: 1px solid var(--blue-200); border-radius: 6px; padding: 6px 12px 6px 12px; margin: 0; }
+ol.steps-mini li b { font-size: 18px; color: var(--blue-900); margin-right: 2px; }
+ol.steps-mini li:not(:last-child)::after { content: "›"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--blue-900); font-weight: 700; }
+ol.steps-mini li.done { background: var(--blue-900); color: var(--white); border-color: var(--blue-900); font-weight: 700; display: flex; align-items: center; }
+/* tiles */
+.tile { text-align: center; }
+.tile.strong { border: 2px solid var(--blue-900); }
+.tile-num { font-size: 36px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.tile-num small { font-size: 14px; margin-left: 4px; }
+.tile-num.sm { font-size: 26px; }
+.tile-cap { font-size: 13px; color: var(--gray-700); margin-top: 6px !important; }
+ul.checks li { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--gray-100); }
+ul.checks li::before { content: ""; width: 16px; height: 16px; flex: none; border: 2px solid var(--blue-900); border-radius: 4px; }
+.badges { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 20px; }
+.badge { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--gray-700); }
+.medal { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--blue-900); background: var(--blue-50); border: 2px solid var(--blue-900); box-shadow: 0 0 0 3px var(--blue-100); }
+/* phone */
+.phone { background: var(--gray-900); border-radius: 32px; padding: 10px; width: 260px; justify-self: center; }
+.phone-in { background: var(--white); border-radius: 24px; padding: 18px 14px; display: grid; gap: 10px; font-size: 12px; }
+.ph-lv { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 8px; }
+.ph-badge { grid-row: span 2; background: var(--blue-900); color: var(--white); font-weight: 700; border-radius: 8px; padding: 6px 8px; font-size: 14px; }
+.ph-bar { height: 8px; background: var(--blue-100); border-radius: 999px; overflow: hidden; }
+.ph-bar span { display: block; height: 100%; background: var(--blue-900); }
+.ph-exp { font-size: 11px; color: var(--gray-600); }
+.ph-say { display: flex; gap: 8px; align-items: flex-start; }
+.ph-ava { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; }
+.ph-ava svg { width: 16px; height: 16px; }
+.ph-say p { background: var(--blue-50); border-radius: 0 10px 10px 10px; padding: 8px 10px; line-height: 1.5; }
+.ph-quest { border: 1px solid var(--gray-100); border-radius: 10px; padding: 8px 10px; }
+.ph-quest p { font-weight: 700; margin-bottom: 4px !important; }
+.ph-quest ul { list-style: none; margin: 0; padding: 0; }
+.ph-quest li { display: flex; gap: 6px; align-items: center; margin: 3px 0; color: var(--gray-700); }
+.ph-quest li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--blue-900); border-radius: 3px; flex: none; }
+.ph-quest li.ok { color: var(--gray-536); text-decoration: line-through; }
+.ph-quest li.ok::before { background: var(--blue-900); }
+.ph-btn { background: var(--blue-900); color: var(--white); text-align: center; font-weight: 700; border-radius: 8px; padding: 10px; font-size: 13px; }
+ol.prio-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+ol.prio-list li { display: flex; gap: 12px; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px 14px; margin: 0; }
+ol.prio-list li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--blue-900); color: var(--white); display: grid; place-items: center; font-size: 14px; }
+ol.prio-list span { font-weight: 700; display: flex; flex-direction: column; }
+ol.prio-list small { font-weight: 400; font-size: 13px; color: var(--gray-600); }
+.mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-stats > div { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px; text-align: center; }
+/* non-functional */
+.nf-h { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 10px; }
+ul.model { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 14px; }
+ul.model li { display: flex; align-items: center; gap: 8px; margin: 0; }
+ul.model .tag { min-width: 72px; justify-content: center; }
+.auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.arrow { color: var(--blue-900); font-weight: 700; }
+ol.tl { list-style: none; padding: 0 0 0 14px; margin: 0; border-left: 2px solid var(--blue-200); display: grid; gap: 8px; font-size: 14px; }
+ol.tl li { position: relative; margin: 0; color: var(--gray-700); }
+ol.tl li::before { content: ""; position: absolute; left: -21px; top: 0.45em; width: 12px; height: 12px; border-radius: 50%; background: var(--white); border: 2px solid var(--blue-900); }
+ol.tl li:last-child::before { background: var(--blue-900); }
+ol.tl b { display: block; color: var(--gray-900); font-size: 13px; }
+/* step navigation */
+ol.stepnav { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1.5fr auto 1fr 1fr; gap: 12px; align-items: stretch; }
+ol.stepnav > li { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px; display: flex; gap: 12px; margin: 0; }
+ol.stepnav > li.current { border: 2px solid var(--blue-900); }
+.sn-num { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue-900); color: var(--blue-900); display: grid; place-items: center; font-weight: 700; }
+li.current .sn-num { background: var(--blue-900); color: var(--white); }
+.sn-h { font-weight: 700; font-size: 17px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sn-sub { font-size: 13px; color: var(--blue-900); font-weight: 700; }
+ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-items: center; }
+.gate-in { font-size: 12px; text-align: center; color: var(--gray-700); border: 2px dashed var(--blue-900); border-radius: var(--radius-8); padding: 8px 10px; background: var(--white); line-height: 1.5; }
+.gate-in b { color: var(--blue-900); }
+/* banner */
+.banner { display: flex; gap: 14px; align-items: flex-start; background: var(--white); border: 1px solid var(--blue-900); border-left: 6px solid var(--blue-900); border-radius: var(--radius-8); padding: 16px 20px; }
+.banner-ico { color: var(--blue-900); flex: none; }
+.banner-h { font-size: 17px; font-weight: 700; }
+.banner-h b { color: var(--blue-900); font-size: 22px; }
+.cat-n { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.cat-n small { font-size: 14px; margin-left: 2px; }
+.cat-h { font-weight: 700; margin-top: 4px !important; }
+
+@media (max-width: 860px) {
+  .vis { padding: 16px; }
+  .card, .role, .tile, .kpi-hero { padding: 14px; }
+  .role-name, .cat-h { font-size: 15px; }
+  .vis-grid.c1, .vis-grid.c2, .vis-grid.c5, .scope, .fmap { grid-template-columns: 1fr; }
+  .vis-grid.tiles4, .mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .mini-stats { grid-template-columns: repeat(3, 1fr); }
+  ol.stepnav { grid-template-columns: 1fr; }
+  .vis-grid.cards4 { grid-template-columns: repeat(2, 1fr); }
+  .vis-grid.cards4.c6 { grid-template-columns: 1fr; }
+  ol.stepnav > li.gate { justify-content: center; }
+  .scale { grid-template-columns: 1fr; text-align: left; }
+  .scale-bar { height: 6px; margin-right: 12px; }
+  .kpi-num { font-size: 52px; }
+}
+@media print { .vis { break-inside: avoid; } }
+
+.site-footer { border-top: 1px solid var(--gray-100); color: var(--gray-600); font-size: 14px; }
+.site-footer .inner { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }
+  nav.toc { position: static; background: var(--gray-50); border-radius: var(--radius-8); padding: 16px; }
+  nav.toc ol { border-left: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  nav.toc a { padding: 6px 4px; border-left: none; font-size: 14px; }
+  .site-header h1 { font-size: 26px; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 18px; }
+  th, td { padding: 10px 12px; font-size: 14px; }
+}
+@media print {
+  nav.toc { display: none; }
+  .layout { display: block; }
+  .chapter { break-inside: auto; }
+  figure.diagram { break-inside: avoid; }
+}
+
+/* ===== アプリ用デザインシステム（冒険者ギルド）: 画面構成イメージ専用。.gd-scope の中だけに適用 ===== */
+/* 冒険者ギルド — generated from tokens.json */
+.gd-scope{--parchment:#f5ecd9;--parchment-raised:#fbf6ea;--parchment-sunk:#ebdfc6;--line:#d6c6a5;--line-strong:#8f7a58;--ink:#2e2219;--ink-muted:#6b5843;--crimson:#9e2b25;--on-crimson:#fff8ef;--crimson-soft:#f3dcd3;--teal:#1d6763;--on-teal:#fbf6ea;--teal-soft:#d6e8e2;--gold:#a0701a;--gold-ink:#7a5406;--gold-soft:#f1e0b5;--correct:#1d5a8c;--correct-soft:#dbe6f0;--wrong:#a3441a;--wrong-soft:#f5ddcf;--bronze:#8c5a2e;--silver:#6c7075;--shadow-card:0 1px 0 #d6c6a5, 0 2px 8px rgba(46,34,25,0.08);--shadow-press:inset 0 2px 0 rgba(46,34,25,0.18);}.gd-scope{--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;--radius-sm:4px;--radius-md:8px;--radius-pill:999px;--font-serif:"Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;--font-sans:"BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;}.gd-scope .display{font-family:var(--font-serif);font-size:30px;line-height:40px;font-weight:700}.gd-scope .title{font-family:var(--font-serif);font-size:21px;line-height:30px;font-weight:700}.gd-scope .numeral{font-family:var(--font-serif);font-size:28px;line-height:32px;font-weight:800}.gd-scope .question{font-family:var(--font-sans);font-size:17px;line-height:30px;font-weight:400}.gd-scope .body{font-family:var(--font-sans);font-size:15px;line-height:26px;font-weight:400}.gd-scope .label{font-family:var(--font-sans);font-size:15px;line-height:20px;font-weight:700}.gd-scope .meta{font-family:var(--font-sans);font-size:13px;line-height:20px;font-weight:400}.gd-scope .caption{font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:700}
+
+.gd-stack { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); max-width: 420px; }
+.gd-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-4); }
+.gd-serif { font-family: var(--font-serif); }
+/* focus: solid teal ring, 3:1+ on every parchment surface */
+.gd-focus:focus-visible, .gd-btn:focus-visible, .gd-choice:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+/* Button */
+.gd-btn { font-family: var(--font-sans); font-size: 15px; line-height: 20px; font-weight: 700; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--parchment-raised); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); letter-spacing: .04em; }
+.gd-btn:active { box-shadow: var(--shadow-press); }
+.gd-btn[disabled] { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.gd-btn-primary { background: var(--crimson); border-color: var(--crimson); color: var(--on-crimson); }
+.gd-btn-quiet { background: transparent; border-color: transparent; color: var(--teal); text-decoration: underline; text-underline-offset: 3px; }
+.gd-btn-sm { min-height: 36px; font-size: 13px; padding: 0 var(--space-3); }
+.gd-btn-block { display: flex; width: 100%; }
+/* Card frame: the notice-board double rule */
+.gd-card { background: var(--parchment-raised); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: inset 0 0 0 3px var(--parchment-raised), inset 0 0 0 4px var(--line), var(--shadow-card); padding: var(--space-4); }
+/* ExpBar */
+.gd-exp { display: flex; align-items: center; gap: var(--space-3); }
+.gd-crest { flex: none; width: 56px; height: 56px; border-radius: var(--radius-pill); background: var(--gold-soft); border: 3px solid var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold-ink); font-family: var(--font-serif); }
+.gd-crest small { font-size: 11px; line-height: 12px; font-weight: 700; letter-spacing: .06em; }
+.gd-crest b { font-size: 22px; line-height: 24px; font-weight: 800; }
+.gd-exp-main { flex: 1; min-width: 0; }
+.gd-exp-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; line-height: 20px; color: var(--ink-muted); }
+.gd-exp-gain { color: var(--gold-ink); font-weight: 700; }
+.gd-track { height: 10px; border-radius: var(--radius-pill); background: var(--parchment-sunk); overflow: hidden; margin-top: var(--space-1); }
+.gd-fill { height: 100%; border-radius: var(--radius-pill); background: var(--gold); }
+/* QuestCard */
+.gd-quest { position: relative; display: flex; gap: var(--space-3); align-items: flex-start; }
+.gd-quest-body { flex: 1; min-width: 0; }
+.gd-quest-title { margin: 0; font-family: var(--font-serif); font-size: 17px; line-height: 24px; font-weight: 700; }
+.gd-quest-meta { margin-top: var(--space-1); font-size: 13px; line-height: 20px; color: var(--ink-muted); display: flex; gap: var(--space-3); }
+.gd-quest-reward { color: var(--gold-ink); font-weight: 700; }
+.gd-quest .gd-track { height: 6px; margin-top: var(--space-2); }
+.gd-quest-done { background: var(--crimson-soft); box-shadow: inset 0 0 0 3px var(--crimson-soft), inset 0 0 0 4px var(--line), var(--shadow-card); }
+.gd-stamp { flex: none; align-self: center; font-family: var(--font-serif); font-weight: 800; font-size: 15px; line-height: 20px; color: var(--crimson); border: 2px solid var(--crimson); border-radius: var(--radius-sm); padding: 2px var(--space-2); transform: rotate(-8deg); letter-spacing: .1em; }
+/* ChoiceOption */
+.gd-choice { width: 100%; text-align: left; font: inherit; font-size: 15px; line-height: 26px; color: var(--ink); background: var(--parchment-raised); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: var(--space-3); display: flex; gap: var(--space-3); align-items: flex-start; cursor: pointer; }
+.gd-choice-key { flex: none; width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); font-family: var(--font-serif); font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.gd-choice-text { flex: 1; }
+.gd-choice-mark { flex: none; font-size: 13px; line-height: 26px; font-weight: 700; white-space: nowrap; }
+.gd-choice-selected { border: 2px solid var(--teal); padding: 11px; }
+.gd-choice-selected .gd-choice-key { background: var(--teal); border-color: var(--teal); color: var(--on-teal); }
+.gd-choice-correct { background: var(--correct-soft); border: 2px solid var(--correct); padding: 11px; }
+.gd-choice-correct .gd-choice-key { background: var(--correct); border-color: var(--correct); color: var(--parchment-raised); }
+.gd-choice-correct .gd-choice-mark { color: var(--correct); }
+.gd-choice-wrong { background: var(--wrong-soft); border: 2px solid var(--wrong); padding: 11px; }
+.gd-choice-wrong .gd-choice-key { background: var(--wrong); border-color: var(--wrong); color: var(--parchment-raised); }
+.gd-choice-wrong .gd-choice-mark { color: var(--wrong); }
+.gd-choice-dim { color: var(--ink-muted); border-color: var(--line); cursor: default; }
+/* PartnerBubble */
+.gd-partner { display: flex; gap: var(--space-3); align-items: flex-start; }
+.gd-sigil { flex: none; width: 44px; height: 44px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 20px; border: 2px solid currentColor; background: var(--parchment-raised); }
+.gd-sigil-encourage { color: var(--gold-ink); }
+.gd-sigil-logic { color: var(--teal); }
+.gd-sigil-rival { color: var(--crimson); }
+.gd-bubble { position: relative; flex: 1; min-width: 0; background: var(--teal-soft); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-card); }
+.gd-bubble::before { content: ""; position: absolute; left: -6px; top: 16px; width: 12px; height: 12px; background: var(--teal-soft); transform: rotate(45deg); }
+.gd-bubble-name { font-size: 13px; line-height: 20px; font-weight: 700; color: var(--teal); }
+.gd-bubble-name span { color: var(--ink-muted); font-weight: 400; margin-left: var(--space-2); }
+.gd-dots { display: inline-flex; gap: 6px; padding: var(--space-2) 0; }
+.gd-dots i { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--teal); animation: gd-bob 1.2s ease-in-out infinite; }
+.gd-dots i:nth-child(2) { animation-delay: .15s; } .gd-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes gd-bob { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .gd-dots i { animation: none; opacity: 1; } }
+/* ScoreMeter */
+.gd-score-head { display: flex; align-items: baseline; gap: var(--space-3); }
+.gd-score-num { font-family: var(--font-serif); font-size: 28px; line-height: 32px; font-weight: 800; }
+.gd-score-num small { font-size: 15px; font-weight: 700; margin-left: 2px; }
+.gd-verdict { font-size: 15px; line-height: 20px; font-weight: 700; }
+.gd-verdict-pass { color: var(--correct); }
+.gd-verdict-near { color: var(--gold-ink); }
+.gd-score .gd-track { position: relative; height: 12px; overflow: visible; margin-top: var(--space-2); }
+.gd-score-fill-pass { background: var(--correct); }
+.gd-score-fill-near { background: var(--gold); }
+.gd-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+.gd-tick-label { position: absolute; top: 16px; transform: translateX(-50%); font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); white-space: nowrap; }
+.gd-score-foot { margin-top: var(--space-6); font-size: 13px; line-height: 20px; color: var(--ink-muted); }
+/* ReviewStage */
+.gd-review { display: flex; align-items: center; gap: var(--space-3); }
+.gd-review-kind { flex: none; font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); width: 2.5em; }
+.gd-pips { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-1); flex: 1; }
+.gd-pip { text-align: center; font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); }
+.gd-pip::before { content: ""; display: block; height: 8px; border-radius: var(--radius-pill); background: var(--parchment-sunk); border: 1px solid var(--line-strong); margin-bottom: 2px; }
+.gd-pip-on { color: var(--gold-ink); }
+.gd-pip-on::before { background: var(--gold); border-color: var(--gold); }
+.gd-pip-now { color: var(--ink); }
+.gd-pip-now::before { background: var(--parchment-raised); border: 2px solid var(--gold); }
+.gd-mastered { flex: none; font-family: var(--font-serif); font-weight: 800; font-size: 13px; line-height: 20px; color: var(--crimson); border: 2px solid var(--crimson); border-radius: var(--radius-sm); padding: 0 var(--space-2); }
+.gd-review-state { flex: none; width: 5em; font-size: 12px; line-height: 16px; color: var(--ink-muted); text-align: right; }
+/* RankingRow */
+.gd-rank { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--parchment-raised); border-bottom: 1px solid var(--line); }
+.gd-rank-me { background: var(--gold-soft); }
+.gd-rank-pos { flex: none; width: 36px; height: 36px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 17px; color: var(--ink-muted); }
+.gd-rank-1 { color: var(--gold-ink); border: 2px solid var(--gold); background: var(--gold-soft); }
+.gd-rank-2 { color: var(--silver); border: 2px solid var(--silver); }
+.gd-rank-3 { color: var(--bronze); border: 2px solid var(--bronze); }
+.gd-rank-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gd-rank-name small { font-weight: 400; font-size: 13px; color: var(--ink-muted); margin-left: var(--space-2); }
+.gd-rank-exp { flex: none; font-family: var(--font-serif); font-weight: 800; font-size: 17px; color: var(--gold-ink); }
+.gd-rank-exp small { font-family: var(--font-sans); font-size: 12px; font-weight: 700; margin-left: 2px; }
+/* GuildBadge */
+.gd-badge { display: inline-flex; flex-direction: column; align-items: center; gap: var(--space-1); width: 88px; text-align: center; }
+.gd-emblem { width: 64px; height: 64px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 26px; background: var(--parchment-raised); border: 3px double currentColor; box-shadow: inset 0 0 0 3px var(--parchment-raised), inset 0 0 0 4px currentColor; }
+.gd-emblem-bronze { color: var(--bronze); } .gd-emblem-silver { color: var(--silver); } .gd-emblem-gold { color: var(--gold-ink); background: var(--gold-soft); box-shadow: inset 0 0 0 3px var(--gold-soft), inset 0 0 0 4px currentColor; }
+.gd-emblem-locked { color: var(--line-strong); border-style: dashed; box-shadow: none; }
+.gd-badge-name { font-size: 13px; line-height: 18px; font-weight: 700; }
+.gd-badge-date { font-size: 12px; line-height: 16px; color: var(--ink-muted); }
+
+/* ===== 外部設計書 追加スタイル ===== */
+h4 { font-size: 17px; margin: 28px 0 10px; color: var(--gray-900); padding-bottom: 4px; border-bottom: 1px dashed var(--blue-200); }
+code { font-family: "Noto Sans Mono", monospace; font-size: 0.88em; background: var(--blue-50); color: var(--blue-1000); padding: 1px 6px; border-radius: 4px; }
+pre { background: var(--gray-50); border: 1px solid var(--gray-100); border-radius: var(--radius-8); padding: 16px; overflow-x: auto; font-size: 14px; }
+pre code { background: none; padding: 0; color: var(--gray-900); }
+strong { color: var(--blue-1000); }
+blockquote { margin: 0 0 16px; padding: 12px 16px; border-left: 4px solid var(--blue-900); background: var(--blue-50); border-radius: 0 var(--radius-8) var(--radius-8) 0; }
+td code, th code { white-space: nowrap; }
+figure.diagram.wide .mermaid svg { min-width: 760px; }
+/* mermaid DADS adjust */
+.mermaid .cluster rect { rx: 12px; ry: 12px; stroke-dasharray: 4 3; }
+.mermaid .cluster-label, .mermaid .cluster-label span { font-weight: 700; color: var(--blue-1000) !important; }
+.mermaid .label foreignObject div { line-height: 1.45; }
+.mermaid .flowchart-link, .mermaid .relation { stroke-width: 1.5px; }
+.mermaid .node polygon { fill: var(--white) !important; stroke: var(--blue-900) !important; stroke-width: 2px; }
+/* ===== 画面構成イメージ（アプリ用デザインシステム） ===== */
+.mock { background: var(--gray-50); border: 1px solid var(--gray-300); border-radius: var(--radius-12); padding: 20px 20px 16px; margin: 8px 0 32px; }
+.mock-label { font-size: 13px; font-weight: 700; color: var(--blue-900); margin: 0 0 14px !important; }
+.mock-label i { margin-right: 6px; }
+.mock-note { font-size: 13px; color: var(--gray-600); margin: 12px 0 0 !important; }
+.mock-row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: flex-start; }
+.gd-scope { font-family: var(--font-sans); color: var(--ink); font-size: 13px; line-height: 20px; letter-spacing: 0; }
+.gd-scope p { margin: 0; }
+.gd-scope ul { list-style: none; margin: 0; padding: 0; }
+.gd-scope li { margin: 0; }
+.gd-scope li::marker { content: ""; }
+.gd-scope strong, .gd-scope b { color: inherit; }
+.ph-frame { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ph-screen { width: 300px; min-height: 600px; background: var(--parchment); border: 10px solid #2a2622; border-radius: 34px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.mk-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--parchment-raised); border-bottom: 1px solid var(--line); }
+.mk-app { font-weight: 800; font-size: 15px; }
+.mk-course { font-size: 11px; color: var(--ink-muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 0 8px; }
+.mk-body { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.mk-body .gd-card { padding: 12px; }
+.mk-body .gd-quest-title { font-size: 14px; line-height: 20px; }
+.mk-body .gd-crest { width: 46px; height: 46px; }
+.mk-body .gd-crest b { font-size: 18px; }
+.mk-body .gd-btn { font-size: 14px; min-height: 40px; }
+.mk-body .gd-btn-sm { min-height: 30px; font-size: 12px; }
+.mk-body .gd-bubble { font-size: 13px; line-height: 20px; padding: 8px 12px; }
+.mk-body .gd-sigil { width: 38px; height: 38px; font-size: 17px; }
+.mk-body .gd-score-num { font-size: 26px; }
+.mk-body .gd-review-state { width: 4.5em; }
+.mk-h { font-family: var(--font-serif); font-weight: 700; font-size: 15px; margin-top: 2px !important; }
+.mk-num { font-family: var(--font-serif); font-size: 22px; color: var(--crimson) !important; }
+.mk-meta { font-size: 12px; color: var(--ink-muted); }
+.mk-title { font-size: 19px; line-height: 28px; font-weight: 700; margin: 4px 0 !important; }
+.mk-fold { color: var(--teal); }
+.mk-tag { font-size: 11px; font-weight: 700; color: var(--gold-ink); background: var(--gold-soft); border-radius: 4px; padding: 1px 6px; }
+.mk-ta { background: var(--parchment-raised); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px; font-size: 13px; line-height: 21px; min-height: 150px; }
+.mk-count { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-muted); }
+.mk-count b { color: var(--ink); }
+.mk-nav { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--parchment-raised); border-top: 1px solid var(--line); }
+.mk-nav span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 10px; color: var(--ink-muted); }
+.mk-nav span i { font-size: 15px; }
+.mk-nav span.on { color: var(--crimson); font-weight: 700; }
+.mk-cap { font-size: 12px; color: var(--gray-600); margin: 0 !important; text-align: center; }
+/* 管理画面（ギルド管理局） */
+.ad-wrap { width: 100%; overflow-x: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ad-frame { width: 860px; background: var(--parchment); border: 1px solid #9a9a9a; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.ad-head { display: flex; align-items: center; gap: 12px; background: var(--ink); color: var(--parchment); padding: 10px 16px; }
+.ad-head .gd-serif { font-weight: 800; font-size: 15px; }
+.ad-label { font-size: 11px; font-weight: 700; color: var(--ink); background: var(--gold-soft); border-radius: 4px; padding: 1px 8px; letter-spacing: .1em; }
+.ad-role { margin-left: auto; font-size: 11px; color: var(--line); }
+.ad-main { display: grid; grid-template-columns: 180px 1fr; min-height: 380px; }
+.ad-side { background: var(--parchment-sunk); border-right: 1px solid var(--line); padding: 10px 0 !important; }
+.ad-side li { padding: 9px 14px; font-size: 12px; color: var(--ink-muted); display: flex; gap: 8px; align-items: center; }
+.ad-side li i { width: 14px; text-align: center; }
+.ad-side li.on { background: var(--parchment-raised); color: var(--ink); font-weight: 700; border-left: 3px solid var(--crimson); }
+.ad-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.ad-top { display: flex; justify-content: space-between; align-items: center; }
+.ad-h { font-size: 18px; font-weight: 700; }
+.ad-sel { font-size: 12px; border: 1px solid var(--line-strong); background: var(--parchment-raised); border-radius: 6px; padding: 4px 10px; }
+.ad-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.ad-kpis > div { background: var(--parchment-raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
+.ad-kpis small { display: block; font-size: 11px; color: var(--ink-muted); }
+.ad-kpis b { font-family: var(--font-serif); font-size: 22px; line-height: 28px; margin-right: 2px; }
+.gd-scope table.ad-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--parchment-raised); border: 1px solid var(--line); }
+.gd-scope .ad-table th { background: var(--parchment-sunk); color: var(--ink); border-bottom: 1px solid var(--line-strong); padding: 7px 10px; font-weight: 700; }
+.gd-scope .ad-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); font-weight: 400; color: var(--ink); }
+.ad-act { display: flex; justify-content: flex-end; gap: 8px; }
+.ad-act .gd-btn { font-size: 13px; min-height: 36px; }
+.ad-chars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ad-char { display: flex; gap: 10px; align-items: center; background: var(--parchment-raised); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 12px; }
+.ad-char.on { border: 2px solid var(--teal); padding: 9px; }
+.ad-char small { color: var(--ink-muted); font-size: 11px; }
+.ad-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ad-drop { border: 2px dashed var(--line-strong); border-radius: 8px; text-align: center; padding: 18px 10px; color: var(--ink-muted); font-size: 12px; }
+.ad-drop i { font-size: 22px; color: var(--teal); }
+.ad-prev { background: var(--parchment-sunk); border-radius: 8px; padding: 10px; }
+.ad-prev .gd-bubble { font-size: 12px; padding: 6px 10px; }
+@media print { .mock { break-inside: avoid; } }
+
+</style>
+<style>
+.env-badge{display:inline-block;font-size:14px;font-weight:700;border-radius:999px;padding:2px 12px;margin-left:12px;vertical-align:4px}
+.env-dev{background:var(--blue-50);color:var(--blue-900);border:1px solid var(--blue-200)}
+.env-stg{background:#F2F2F2;color:#414141;border:1px solid #B4B4B4}
+.env-prod{background:#00118F;color:#fff;border:1px solid #00118F}
+.toc ol ol{margin:4px 0 8px;padding-left:16px;font-size:13px}
+.toc ol ol li{margin:2px 0}
+.chapter ol li, .chapter ul li{margin:4px 0}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <span class="eyebrow">AWS構築手順書</span>
+    <h1><i class="fa-brands fa-aws h-ico" aria-hidden="true"></i>RPG学習アプリ AWS構築手順書</h1>
+    <ul class="meta">
+      <li>版数<b>第0.3版（ドラフト）</b></li>
+      <li>作成日<b>2026-10-19</b></li>
+      <li>入力文書<b>RPG学習アプリ 外部設計書 第0.6版（第2章 システム方式設計、第6章、第8章）</b></li>
+      <li>対象<b>Phase 1（MVP）のパイロット環境。Phase 3 で行う作業（AWS WAF のルールの見直しなど）は第7章にまとめる</b></li>
+      <li>作業方法<b>AWSマネジメントコンソール（Web画面）だけで構築する</b></li>
+    </ul>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p>目次</p>
+    <ol>
+<li><a href="#ch1">1. はじめに</a></li>
+<li><a href="#ch2">2. アカウントで1回だけ行う作業</a></li>
+<li><a href="#ch3">3. dev 環境の構築</a></li>
+<li><a href="#ch4">4. stg 環境の構築</a></li>
+<li><a href="#ch5">5. prod 環境の構築</a></li>
+<li><a href="#ch6">6. ドメイン決定後の作業（prod から。stg・dev は必要なら）</a></li>
+<li><a href="#ch7">7. Phase 3（全社展開）で行う作業</a></li>
+<li><a href="#ch8">8. 確認したいこと（未決事項）</a></li>
+    </ol>
+  </nav>
+  <main>
+<section class="chapter" id="ch1"><h2><i aria-hidden="true" class="fa-solid fa-book-open h-ico"></i>1. はじめに</h2>
+<h3 id="s1-1"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.1 この手順書の使い方</h3>
+<ul>
+<li>第2章（アカウントで1回だけ行う作業）を最初に行い、そのあと <strong>dev → stg → prod の順</strong> に第3〜5章を進める</li>
+<li>第3〜5章は同じ手順を環境ごとに書いている。各章の中は上から順に作業すればよく、他の章を見なくてよい</li>
+<li>手順の中の <code>&lt;アカウントID&gt;</code> などの山かっこは、自分の環境の値に置き換える</li>
+<li>作業中に控える値（ARN・ID）は、各章の最初にある「控える値」表に書き込む</li>
+<li>コンソールの項目名は2026年10月時点の想定。画面の文言が少し違う場合は、意味の近い項目を選ぶ</li>
+</ul>
+<h3 id="s1-2"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.2 前提</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWSアカウント</td>
+<td>1つ（dev・stg・prod を同じアカウントに作る）。AWSの無料利用枠のみのアカウントではないこと</td>
+</tr>
+<tr>
+<td>作業者の権限</td>
+<td>管理者権限（AdministratorAccess）を持つIAMユーザーまたはIAM Identity Centerのユーザー。MFA必須</td>
+</tr>
+<tr>
+<td>リージョン</td>
+<td>アジアパシフィック（東京） <code>ap-northeast-1</code>。ACM の CloudFront 用証明書だけ 米国東部（バージニア北部） <code>us-east-1</code></td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>未定。決まるまではCloudFrontの既定ドメイン（<code>xxxx.cloudfront.net</code>）で動かす。決定後の作業は第6章</td>
+</tr>
+<tr>
+<td>アプリの資材</td>
+<td>Lambda関数4つのzipファイルと、画面一式（HTML・CSS・JS）は開発チームから受け取る。初回はzipがなくても関数の作成までは進められる</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s1-3"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.3 名前とタグの決まり</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>リソース名</td>
+<td><code>rpg-{環境}-{用途}</code></td>
+<td><code>rpg-dev-api-handler</code></td>
+</tr>
+<tr>
+<td>S3バケット名</td>
+<td>世界で重複できないため、末尾にアカウントIDを付ける <code>rpg-{環境}-{用途}-&lt;アカウントID&gt;</code></td>
+<td><code>rpg-dev-web-123456789012</code></td>
+</tr>
+<tr>
+<td>タグ（必須）</td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>dev</code>／<code>stg</code>／<code>prod</code></td>
+<td>すべてのリソースに付ける（タグを付けられないものを除く）</td>
+</tr>
+</tbody>
+</table></div>
+<p>タグは請求を環境ごとに分けるのに使う。作成画面にタグの欄がない場合は、作成後に各リソースの「タグ」タブで付ける。</p>
+<h3 id="s1-4"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.4 構築の順番</h3>
+<figure class="diagram"><div class="mermaid">flowchart TD
+  C0["第2章 アカウントで1回&lt;br&gt;CloudTrail・Bedrock申請・SES・Budgets"] --&gt; E1
+  subgraph ENV["第3〜5章 環境ごと dev → stg → prod"]
+    E1["1 SNS 通知先"] --&gt; E2["2 S3 バケット4つ"]
+    E2 --&gt; E3["3 SQS キューとDLQ"]
+    E3 --&gt; E4["4 Aurora Serverless v2"]
+    E4 --&gt; E5["5 CloudFront 画面配信"]
+    E5 --&gt; E6["6 Cognito ユーザープール"]
+    E6 --&gt; E7["7 IAM ロール"]
+    E7 --&gt; E8["8 Lambda 4関数"]
+    E8 --&gt; E9["9 API Gateway"]
+    E9 --&gt; E10["10 CloudFront に /api/* 追加"]
+    E10 --&gt; E11["11 EventBridge Scheduler"]
+    E11 --&gt; E12["12 CloudWatch アラーム"]
+    E12 --&gt; E13["13 画面の配置と動作確認"]
+  end
+  E13 --&gt; D6["第6章 ドメイン決定後&lt;br&gt;ACM・Route 53・SES DKIM"]
+  D6 --&gt; W7["第7章 Phase 3&lt;br&gt;WAFルールなどの見直し"]</div></figure>
+<ul>
+<li>CloudFront を Cognito より先に作るのは、Cognito のログイン後の戻り先URLに CloudFront のドメインが必要なため</li>
+<li>API Gateway を作ったあとで CloudFront に <code>/api/*</code> を追加する（API Gateway のURLが必要なため）</li>
+</ul>
+<h3 id="s1-5"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.5 環境ごとの設定値</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>dev</th>
+<th>stg</th>
+<th>prod</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aurora の容量</td>
+<td>0〜1 ACU</td>
+<td>0〜2 ACU</td>
+<td>0〜4 ACU</td>
+</tr>
+<tr>
+<td>Aurora の自動停止</td>
+<td>無操作300秒で停止</td>
+<td>無操作300秒で停止</td>
+<td>無操作300秒で停止</td>
+</tr>
+<tr>
+<td>Aurora のバックアップ保持</td>
+<td>1日</td>
+<td>1日</td>
+<td>7日</td>
+</tr>
+<tr>
+<td>削除保護（Aurora・Cognito）</td>
+<td>オフ</td>
+<td>オフ</td>
+<td><strong>オン</strong></td>
+</tr>
+<tr>
+<td>Lambda のログ保持</td>
+<td>30日</td>
+<td>30日</td>
+<td>90日</td>
+</tr>
+<tr>
+<td>招待メールの送信元（Cognito）</td>
+<td>Cognito の既定</td>
+<td>Cognito の既定</td>
+<td>SES（ドメイン決定後。それまでは既定）</td>
+</tr>
+<tr>
+<td>メール送信の定期処理（B-03）</td>
+<td>作成するが無効（確認時だけ有効にする）</td>
+<td>有効</td>
+<td>有効</td>
+</tr>
+<tr>
+<td>アラームの通知先</td>
+<td>開発者</td>
+<td>開発者</td>
+<td>システム管理者・開発者</td>
+</tr>
+<tr>
+<td>CloudFront の料金プラン</td>
+<td>定額プラン Free（AWS WAF 付き）</td>
+<td>定額プラン Free（AWS WAF 付き）</td>
+<td>定額プラン Free（AWS WAF 付き）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s1-6"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.6 CloudFront の料金プラン（決定：Free プラン）</h3>
+<p>2025年11月から、CloudFront の作成画面で定額の料金プラン（Free・Pro・Business・Premium）を選ぶ形になった。本書では <strong>全環境で Free プラン（月額0ドル）</strong> を使う（2026-10-19 決定。外部設計書 第0.6版 2.3・2.9 に反映済み）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>Free プランの内容</th>
+<th>本書での扱い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>料金</td>
+<td>月額0ドル。配信・リクエスト・AWS WAF の料金を含む</td>
+<td>追加の費用なし</td>
+</tr>
+<tr>
+<td>数</td>
+<td>1つのアカウントで3つまで</td>
+<td>dev・stg・prod で3つを使い切る</td>
+</tr>
+<tr>
+<td>利用量の目安</td>
+<td>月100万リクエスト・100GB。超えても追加料金はなく、続くと速度が調整される</td>
+<td>パイロット10名なら十分に収まる</td>
+</tr>
+<tr>
+<td>AWS WAF</td>
+<td>Web ACL の関連付けが必須（外せない）。ルールは5つまで</td>
+<td>Phase 1 はプランの既定の保護を使う。ルールの見直しは第7章</td>
+</tr>
+<tr>
+<td>ビヘイビア</td>
+<td>5つまで</td>
+<td>本書では3つ（<code>/api/*</code>・<code>/partners/*</code>・既定）</td>
+</tr>
+<tr>
+<td>使えない機能</td>
+<td>アクセスログ、独自のキャッシュポリシー・レスポンスヘッダーポリシー</td>
+<td>AWS 管理のポリシー（<code>CachingOptimized</code>・<code>CachingDisabled</code>・<code>AllViewerExceptHostHeader</code>）だけを使うため影響なし</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>アクセスログやセキュリティヘッダー（CSP など）が必要になったら、Pro プラン（月15ドル）に変える（第7章）</li>
+<li>AWS の無料利用枠（Free Tier）で使っているアカウントは、料金プランに加入できない。作業の前に、アカウントが通常の有料アカウントであることを確かめる（1.2 の前提）</li>
+</ul>
+<h3 id="s1-7"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>1.7 控える値の一覧</h3>
+<p>各環境の作業中に、次の値を控える。Lambda の環境変数や、開発チームへの連絡に使う。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>記号</th>
+<th>値</th>
+<th>控えるタイミング</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V-01</td>
+<td>AWSアカウントID（12桁）</td>
+<td>第2章</td>
+</tr>
+<tr>
+<td>V-02</td>
+<td>高精度モデルのモデルID（Sonnet）</td>
+<td>第2章</td>
+</tr>
+<tr>
+<td>V-03</td>
+<td>軽量モデルのモデルID（Haiku 5.5）</td>
+<td>第2章</td>
+</tr>
+<tr>
+<td>V-04</td>
+<td>SNS トピックの ARN</td>
+<td>各環境の手順1</td>
+</tr>
+<tr>
+<td>V-05</td>
+<td>SQS キューの ARN・URL</td>
+<td>各環境の手順3</td>
+</tr>
+<tr>
+<td>V-06</td>
+<td>Aurora クラスターの ARN</td>
+<td>各環境の手順4</td>
+</tr>
+<tr>
+<td>V-07</td>
+<td>Aurora のシークレットの ARN</td>
+<td>各環境の手順4</td>
+</tr>
+<tr>
+<td>V-08</td>
+<td>CloudFront のドメイン名・ディストリビューションID</td>
+<td>各環境の手順5</td>
+</tr>
+<tr>
+<td>V-09</td>
+<td>Cognito ユーザープールID・アプリクライアントID・ドメイン</td>
+<td>各環境の手順6</td>
+</tr>
+<tr>
+<td>V-10</td>
+<td>API Gateway の API ID・URL</td>
+<td>各環境の手順9</td>
+</tr>
+</tbody>
+</table></div>
+
+</section><section class="chapter" id="ch2"><h2><i aria-hidden="true" class="fa-solid fa-user-shield h-ico"></i>2. アカウントで1回だけ行う作業</h2>
+<h3 id="s2-1"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>2.1 サインインとリージョン</h3>
+<ol>
+<li>管理者権限のユーザーでマネジメントコンソールにサインインする（ルートユーザーは使わない）</li>
+<li>画面右上のリージョンを <strong>アジアパシフィック（東京）ap-northeast-1</strong> にする</li>
+<li>画面右上のアカウント名を押し、表示される12桁の <strong>アカウントID</strong> を控える（V-01）</li>
+</ol>
+<h3 id="s2-2"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>2.2 CloudTrail（操作記録）</h3>
+<ol>
+<li>「CloudTrail」を開き、「証跡の作成」を押す</li>
+<li>次のとおり入力して作成する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>証跡名</td>
+<td><code>rpg-trail</code></td>
+</tr>
+<tr>
+<td>ストレージの場所</td>
+<td>新しいS3バケットを作成 <code>rpg-trail-&lt;アカウントID&gt;</code></td>
+</tr>
+<tr>
+<td>ログファイルの暗号化</td>
+<td>SSE-KMS をオフ（S3 の既定の暗号化を使う）</td>
+</tr>
+<tr>
+<td>ログのイベント</td>
+<td>管理イベント（読み取り・書き込みとも）</td>
+</tr>
+<tr>
+<td>タグ</td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>common</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>作成したバケットを開き、「管理」タブ →「ライフサイクルルールを作成」で、全オブジェクトを <strong>365日後に削除</strong> する</li>
+</ol>
+<h3 id="s2-3"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>2.3 Amazon Bedrock（利用申請とモデルの確認）</h3>
+<p>2025年10月から、Bedrock のモデルは最初から有効になっている（以前の「モデルアクセス」画面は廃止）。ただし Anthropic のモデル（Claude）は、<strong>最初に1回だけ利用目的の申請</strong> が必要になる。本節の進め方（利用目的の申請、モデル呼び出しログを記録しない）は 2026-10-19 に決定した。</p>
+<ol>
+<li>リージョンが東京であることを確認し、「Amazon Bedrock」を開く</li>
+<li>左メニューの「プレイグラウンド」→「チャット／テキスト」を開き、モデルの選択で Anthropic の <strong>Claude Sonnet 5.5</strong> を選ぶ</li>
+<li>利用目的の入力画面（初回だけ）が出たら、次のように入力して送信する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>入力例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>会社名・URL</td>
+<td>自社の名称とWebサイト</td>
+</tr>
+<tr>
+<td>業種</td>
+<td>社内教育</td>
+</tr>
+<tr>
+<td>想定する利用者</td>
+<td>社内の従業員（資格学習）</td>
+</tr>
+<tr>
+<td>利用目的</td>
+<td>資格試験の問題の抽出、学習者の説明文の採点、学習を励ますコメントの生成。外部への公開はしない</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="4">
+<li>プレイグラウンドで「こんにちは」と送り、応答が返ることを確かめる</li>
+<li>同じように <strong>Claude Haiku 5.5</strong> でも応答を確かめる</li>
+<li>左メニューの「モデルカタログ」で各モデルを開き、<strong>モデルID</strong> を控える（V-02・V-03）</li>
+</ol>
+<p><strong>モデルの確認ポイント（重要）</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>確認すること</th>
+<th>判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sonnet 5.5 が東京リージョンで「オンデマンド」で使えるか</td>
+<td>使える → そのモデルIDを使う</td>
+</tr>
+<tr>
+<td>Haiku 5.5 が東京リージョンで「オンデマンド」で使えるか</td>
+<td>使える → そのモデルIDを使う</td>
+</tr>
+<tr>
+<td>東京で使えない、または推論プロファイル（<code>jp.</code> や <code>apac.</code> で始まるID）経由でしか使えない</td>
+<td>東京でオンデマンドで使える別バージョンの Sonnet（Haiku 5.5 の場合は Haiku）を選ぶ。推論プロファイルは東京以外のリージョンにデータが送られるため、外部設計書 2.8 の方針では使わない。どうしても必要なら第8章 No.2 で相談する</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="7">
+<li>「設定」→「モデル呼び出しのログ記録」は <strong>オフのまま</strong> にする（学習者の説明文を余計に保存しないため）</li>
+</ol>
+<h3 id="s2-4"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>2.4 Amazon SES（メール送信）</h3>
+<p>SES は東京リージョンにアカウントで1つの設定。dev・stg・prod で共用する。</p>
+<p><strong>(1) 送信元の登録（ドメイン決定前）</strong></p>
+<ol>
+<li>「Amazon SES」を開き、左メニューの「ID（Identities）」→「IDの作成」を押す</li>
+<li>「Eメールアドレス」を選び、テスト用の送信元アドレス（開発チームが受信できるもの）を入力して作成する</li>
+<li>届いた確認メールのリンクを押す。状態が「検証済み」になったことを確かめる</li>
+<li>dev・stg のテストで送り先にする開発者・コース管理者のアドレスも、同じ手順で登録する（サンドボックスの間は、登録したアドレスにしか送れないため）</li>
+</ol>
+<p><strong>(2) 本番利用の申請（サンドボックスの解除）</strong></p>
+<p>ドメイン決定後（第6章で送信ドメインを登録したあと）に行う。審査に1日程度かかるため、パイロット開始の1週間前までに出す。</p>
+<ol>
+<li>左メニューの「アカウントダッシュボード」→「本番アクセスをリクエスト」を押す</li>
+<li>次のとおり入力して送信する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>入力例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>メールタイプ</td>
+<td>トランザクション</td>
+</tr>
+<tr>
+<td>WebサイトのURL</td>
+<td><code>https://app.example.co.jp</code>（決定したドメイン）</td>
+</tr>
+<tr>
+<td>ユースケースの説明</td>
+<td>社内向け学習アプリの通知です。送信先は社内の登録利用者のみで、1日最大約1,000通です。学習のお知らせ・招待・アカウント停止のお知らせを送ります。各メールに通知設定へのリンクを入れ、利用者が配信を止められます。バウンスと苦情はSESの通知で確認し、該当アドレスへの送信を止めます</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>承認のメールが届いたら、アカウントダッシュボードで「本番アクセス」になったことを確かめる</li>
+</ol>
+<h3 id="s2-5"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>2.5 請求の管理（コスト配分タグと予算）</h3>
+<p><strong>(1) コスト配分タグの有効化</strong></p>
+<ol>
+<li>「請求とコスト管理（Billing and Cost Management）」を開く</li>
+<li>左メニューの「コスト配分タグ」→「ユーザー定義のコスト配分タグ」で、<code>Project</code> と <code>Environment</code> を選んで「有効化」を押す<ul>
+<li>タグが一覧に出てくるのは、タグを付けたリソースを作ってから最大24時間後。第3章のあとで行ってもよい</li>
+</ul>
+</li>
+</ol>
+<p><strong>(2) 予算（AWS Budgets）</strong></p>
+<ol>
+<li>左メニューの「予算（Budgets）」→「予算を作成」を押す</li>
+<li>「カスタマイズ」→「コスト予算」を選び、次のとおり入力する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>予算名</td>
+<td><code>rpg-monthly</code></td>
+</tr>
+<tr>
+<td>期間</td>
+<td>毎月、定期的な予算</td>
+</tr>
+<tr>
+<td>予算額</td>
+<td>100 USD（約15,000円。外部設計書 8.4）</td>
+</tr>
+<tr>
+<td>範囲</td>
+<td>すべての AWS サービス</td>
+</tr>
+<tr>
+<td>アラート1</td>
+<td><strong>予測</strong> コストが予算の 100% を超えたとき → システム管理者・開発者のメールアドレス</td>
+</tr>
+<tr>
+<td>アラート2</td>
+<td><strong>実際の</strong> コストが予算の 80% を超えたとき → 同上</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>内訳を見たいときは「Cost Explorer」でタグ <code>Environment</code> ごとにグループ化する</li>
+</ol>
+
+</section><section class="chapter" id="ch3"><h2><i aria-hidden="true" class="fa-solid fa-flask h-ico"></i>3. dev 環境の構築<span class="env-badge env-dev">dev・開発</span></h2>
+<p>最初に作る環境。ここで手順と画面を確かめ、つまずいた点は本書に書き足してから stg に進む。</p>
+<h3 id="s3-0"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.0 この章で使う値</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>dev の値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>接頭辞</td>
+<td><code>rpg-dev-</code></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>dev</code></td>
+</tr>
+<tr>
+<td>Aurora の容量</td>
+<td>0〜1 ACU（自動停止）</td>
+</tr>
+<tr>
+<td>Aurora のバックアップ保持</td>
+<td>1日</td>
+</tr>
+<tr>
+<td>削除保護</td>
+<td>オフ</td>
+</tr>
+<tr>
+<td>ログの保持</td>
+<td>30日</td>
+</tr>
+<tr>
+<td>アラームの通知先</td>
+<td>開発者</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>控える値（この環境）</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>記号</th>
+<th>値</th>
+<th>メモ欄</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V-04</td>
+<td>SNS トピック ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-05</td>
+<td>SQS キュー ARN・URL</td>
+<td></td>
+</tr>
+<tr>
+<td>V-06</td>
+<td>Aurora クラスター ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-07</td>
+<td>Aurora シークレット ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-08</td>
+<td>CloudFront ドメイン名・ディストリビューションID</td>
+<td></td>
+</tr>
+<tr>
+<td>V-09</td>
+<td>Cognito ユーザープールID・アプリクライアントID・ドメイン</td>
+<td></td>
+</tr>
+<tr>
+<td>V-10</td>
+<td>API ID・API のURL</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s3-1"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.1 SNS（アラームの通知先）</h3>
+<ol>
+<li>「Amazon SNS」→「トピック」→「トピックの作成」</li>
+<li>タイプ <strong>スタンダード</strong>、名前 <code>rpg-dev-alerts</code>、タグ <code>Project</code>・<code>Environment</code> を付けて作成する</li>
+<li>トピックの ARN を控える（V-04）</li>
+<li>「サブスクリプションの作成」→ プロトコル <strong>Eメール</strong>、エンドポイントに 開発者 のアドレスを入れて作成する。複数人なら人数分作る</li>
+<li>届いたメールの「Confirm subscription」を押す。状態が「確認済み」になったことを確かめる</li>
+</ol>
+<h3 id="s3-2"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.2 S3（バケット4つ）</h3>
+<p>「Amazon S3」→「バケットを作成」で、次の4つを作る。どれも共通の設定は下の表のとおり。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>バケット名</th>
+<th>用途</th>
+<th>追加の設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-dev-web-&lt;アカウントID&gt;</code></td>
+<td>画面（HTML・CSS・JS）</td>
+<td>なし</td>
+</tr>
+<tr>
+<td><code>rpg-dev-assets-&lt;アカウントID&gt;</code></td>
+<td>AIパートナーの紋章画像（<code>partners/</code> の下）</td>
+<td>CORS（下記）</td>
+</tr>
+<tr>
+<td><code>rpg-dev-import-&lt;アカウントID&gt;</code></td>
+<td>問題取り込みの原本</td>
+<td>CORS（下記）、90日で削除</td>
+</tr>
+<tr>
+<td><code>rpg-dev-notify-&lt;アカウントID&gt;</code></td>
+<td>通知の送信リスト（<code>notify/日付/時刻.json</code>）</td>
+<td>7日で削除</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>共通の設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>リージョン</td>
+<td>アジアパシフィック（東京）</td>
+</tr>
+<tr>
+<td>バケットタイプ</td>
+<td>汎用</td>
+</tr>
+<tr>
+<td>オブジェクト所有者</td>
+<td>ACL無効（推奨）</td>
+</tr>
+<tr>
+<td>パブリックアクセスをすべてブロック</td>
+<td><strong>オン</strong>（4つのチェックすべて）</td>
+</tr>
+<tr>
+<td>バージョニング</td>
+<td>無効</td>
+</tr>
+<tr>
+<td>タグ</td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>dev</code></td>
+</tr>
+<tr>
+<td>暗号化</td>
+<td>SSE-S3（既定のまま）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>ライフサイクル（import・notify）</strong></p>
+<ol>
+<li>バケットを開き「管理」タブ →「ライフサイクルルールを作成する」</li>
+<li>ルール名 <code>expire</code>、範囲「バケット内のすべてのオブジェクトに適用」</li>
+<li>「オブジェクトの現行バージョンを有効期限切れにする」にチェックし、import は <strong>90日</strong>、notify は <strong>7日</strong> を入れて作成する</li>
+</ol>
+<p><strong>CORS（assets・import）</strong></p>
+<p>画面から署名付きURLで直接アップロードするために設定する。バケットを開き「アクセス許可」タブ →「CORS」→「編集」に次を貼り付ける。<code>&lt;CloudFrontのドメイン&gt;</code> は 3.5 のあとで分かるので、3.5 が終わってから戻って入れる。</p>
+<pre><code class="language-json">[
+  {
+    "AllowedOrigins": ["https://&lt;CloudFrontのドメイン&gt;"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["*"],
+    "MaxAgeSeconds": 3000
+  }
+]
+</code></pre>
+<h3 id="s3-3"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.3 SQS（取り込みキューとDLQ）</h3>
+<p><strong>(1) デッドレターキュー（失敗した取り込みの置き場）</strong></p>
+<ol>
+<li>「Amazon SQS」→「キューを作成」</li>
+<li>タイプ <strong>標準</strong>、名前 <code>rpg-dev-import-dlq</code></li>
+<li>メッセージ保持期間 <strong>14日</strong>、その他は既定のまま。タグを付けて作成する</li>
+</ol>
+<p><strong>(2) 取り込みキュー</strong></p>
+<ol>
+<li>「キューを作成」→ タイプ <strong>標準</strong>、名前 <code>rpg-dev-import-queue</code></li>
+<li>次のとおり設定する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可視性タイムアウト</td>
+<td><strong>90分</strong></td>
+<td><code>import-worker</code> のタイムアウト（15分）の6倍（AWSの推奨）</td>
+</tr>
+<tr>
+<td>メッセージ保持期間</td>
+<td>4日</td>
+<td>既定</td>
+</tr>
+<tr>
+<td>受信メッセージ待機時間</td>
+<td>20秒</td>
+<td>空振りの受信を減らす</td>
+</tr>
+<tr>
+<td>デッドレターキュー</td>
+<td>有効。<code>rpg-dev-import-dlq</code>、最大受信数 <strong>3</strong></td>
+<td>外部設計書 4.10（最大3回やり直し）</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>「アクセスポリシー」で「アドバンスト」を選び、次の JSON に置き換える（S3 からの通知を受け取るため）</li>
+</ol>
+<pre><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3Upload",
+      "Effect": "Allow",
+      "Principal": {"Service": "s3.amazonaws.com"},
+      "Action": "sqs:SendMessage",
+      "Resource": "arn:aws:sqs:ap-northeast-1:&lt;アカウントID&gt;:rpg-dev-import-queue",
+      "Condition": {
+        "ArnLike": {"aws:SourceArn": "arn:aws:s3:::rpg-dev-import-&lt;アカウントID&gt;"},
+        "StringEquals": {"aws:SourceAccount": "&lt;アカウントID&gt;"}
+      }
+    }
+  ]
+}
+</code></pre>
+<ol start="4">
+<li>タグを付けて作成する。キューの ARN と URL を控える（V-05）</li>
+</ol>
+<p><strong>(3) S3 からの通知を設定する</strong></p>
+<ol>
+<li>S3 のバケット <code>rpg-dev-import-&lt;アカウントID&gt;</code> を開き「プロパティ」タブ →「イベント通知」→「イベント通知を作成」</li>
+<li>名前 <code>to-import-queue</code>、プレフィックス <code>uploads/</code>、イベントタイプ「すべてのオブジェクト作成イベント」</li>
+<li>送信先「SQS キュー」→ <code>rpg-dev-import-queue</code> を選んで保存する</li>
+</ol>
+<h3 id="s3-4"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.4 Aurora PostgreSQL Serverless v2</h3>
+<p><strong>(1) データベースの作成</strong></p>
+<ol>
+<li>「Amazon RDS」→「データベースの作成」→「標準作成」</li>
+<li>次のとおり設定する（書いていない項目は既定のまま）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>区分</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>エンジン</td>
+<td>エンジンのタイプ</td>
+<td><strong>Aurora (PostgreSQL Compatible)</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>エンジンバージョン</td>
+<td>選べる最新の PostgreSQL 17系 または 16系（16.3 以降。0 ACU に対応したバージョン）</td>
+</tr>
+<tr>
+<td></td>
+<td>RDS Data API</td>
+<td><strong>有効にする</strong>（「RDS Data API を有効にする」にチェック）</td>
+</tr>
+<tr>
+<td>テンプレート</td>
+<td></td>
+<td><strong>開発/テスト</strong>（Aurora レプリカは作らない＝コスト最小方針）</td>
+</tr>
+<tr>
+<td>設定</td>
+<td>DB クラスター識別子</td>
+<td><code>rpg-dev-db</code></td>
+</tr>
+<tr>
+<td></td>
+<td>マスターユーザー名</td>
+<td><code>rpgadmin</code></td>
+</tr>
+<tr>
+<td></td>
+<td>認証情報の管理</td>
+<td><strong>AWS Secrets Manager で管理</strong></td>
+</tr>
+<tr>
+<td>クラスターストレージ</td>
+<td>設定</td>
+<td>Aurora スタンダード</td>
+</tr>
+<tr>
+<td>インスタンスの設定</td>
+<td>DB インスタンスクラス</td>
+<td><strong>Serverless v2</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>最小キャパシティ</td>
+<td><strong>0 ACU</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>最大キャパシティ</td>
+<td><strong>1 ACU</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>非アクティブ後に一時停止するまでの時間</td>
+<td><strong>300 秒</strong>（5分）</td>
+</tr>
+<tr>
+<td>可用性</td>
+<td>Aurora レプリカ</td>
+<td>作成しない</td>
+</tr>
+<tr>
+<td>接続</td>
+<td>コンピューティングリソース</td>
+<td>EC2 に接続しない</td>
+</tr>
+<tr>
+<td></td>
+<td>VPC</td>
+<td>デフォルト VPC</td>
+</tr>
+<tr>
+<td></td>
+<td>パブリックアクセス</td>
+<td><strong>なし</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>VPC セキュリティグループ</td>
+<td>新規作成 <code>rpg-dev-db-sg</code>（インバウンドのルールは追加しない。Data API だけで使う）</td>
+</tr>
+<tr>
+<td>モニタリング</td>
+<td>Performance Insights・拡張モニタリング</td>
+<td>オフ（費用を抑える）</td>
+</tr>
+<tr>
+<td>追加設定</td>
+<td>最初のデータベース名</td>
+<td><code>rpg</code></td>
+</tr>
+<tr>
+<td></td>
+<td>バックアップ保持期間</td>
+<td><strong>1日</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>暗号化</td>
+<td>有効（既定の <code>aws/rds</code> キー）</td>
+</tr>
+<tr>
+<td></td>
+<td>ログのエクスポート</td>
+<td>オフ</td>
+</tr>
+<tr>
+<td></td>
+<td>削除保護</td>
+<td><strong>オフ</strong></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td></td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>dev</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>「データベースの作成」を押す。作成には10〜20分かかる</li>
+<li>作成後、クラスター <code>rpg-dev-db</code> を開き、次を確かめて控える<ul>
+<li>「設定」タブ：容量 0〜1 ACU、一時停止までの時間 300秒</li>
+<li>「接続とセキュリティ」タブ：RDS Data API が <strong>有効</strong>（無効なら「変更」から有効にする）</li>
+<li>クラスターの ARN（V-06）</li>
+<li>「設定」タブの「マスター認証情報 ARN」＝シークレットの ARN（V-07）</li>
+</ul>
+</li>
+</ol>
+<p><strong>(2) テーブルの作成（クエリエディタ）</strong></p>
+<ol>
+<li>RDS の左メニュー「クエリエディタ」を開く</li>
+<li>データベース <code>rpg-dev-db</code>、ユーザー「Secrets Manager ARN で接続」に V-07、データベース名 <code>rpg</code> を入れて接続する<ul>
+<li>止まっている場合は起動に15〜30秒かかる。エラーになったら少し待ってもう一度接続する</li>
+</ul>
+</li>
+<li>開発チームから受け取ったテーブル作成のSQL（外部設計書 第7章に基づくもの）を貼り付けて実行する</li>
+<li><code>SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';</code> を実行し、テーブルができたことを確かめる</li>
+</ol>
+<blockquote>
+<p>マスターユーザーのパスワードは Secrets Manager が7日ごとに自動で変える。Data API は常に最新の値を読むので、アプリ側の作業はない。</p>
+</blockquote>
+<h3 id="s3-5"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.5 CloudFront（画面の配信）</h3>
+<p><strong>(1) ディストリビューションの作成</strong></p>
+<ol>
+<li>「CloudFront」→「ディストリビューションを作成」</li>
+<li>料金プランで <strong>Free</strong> を選ぶ（第1.6節）</li>
+<li>次のとおり設定する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ディストリビューション名</td>
+<td><code>rpg-dev-cdn</code></td>
+</tr>
+<tr>
+<td>種類</td>
+<td>単一のWebサイトまたはアプリ</td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>指定しない（ドメイン決定後に第6章で追加）</td>
+</tr>
+<tr>
+<td>オリジンのタイプ</td>
+<td>Amazon S3</td>
+</tr>
+<tr>
+<td>S3 オリジン</td>
+<td><code>rpg-dev-web-&lt;アカウントID&gt;</code></td>
+</tr>
+<tr>
+<td>オリジンの設定</td>
+<td>「推奨設定を使う」（オリジンアクセスコントロール（OAC）を作り、バケットポリシーも自動で更新する）</td>
+</tr>
+<tr>
+<td>キャッシュの設定</td>
+<td>推奨設定（CachingOptimized）</td>
+</tr>
+<tr>
+<td>セキュリティ（WAF）</td>
+<td>Free プランに付く AWS WAF の既定の保護をそのまま使う（外せない。ルールの見直しは第7章）</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="4">
+<li>作成後、ディストリビューションを開き「一般」タブの「設定」→「編集」で、<strong>デフォルトルートオブジェクト</strong> に <code>index.html</code> を入れて保存する</li>
+<li>「ディストリビューションドメイン名」（<code>xxxx.cloudfront.net</code>）とディストリビューションIDを控える（V-08）</li>
+<li>S3 のバケット <code>rpg-dev-web-&lt;アカウントID&gt;</code> の「アクセス許可」→「バケットポリシー」に、CloudFront からの読み取りを許可する文が入っていることを確かめる</li>
+</ol>
+<p><strong>(2) 紋章画像のオリジンを追加する</strong></p>
+<ol>
+<li>ディストリビューションの「オリジン」タブ →「オリジンを作成」</li>
+<li>オリジンドメインで <code>rpg-dev-assets-&lt;アカウントID&gt;</code> を選び、「オリジンアクセス」で <strong>Origin access control settings</strong> を選ぶ。OAC は「新規作成」で <code>rpg-dev-assets-oac</code></li>
+<li>作成後に表示される「ポリシーをコピー」を押し、S3 の assets バケットの「バケットポリシー」に貼り付けて保存する</li>
+<li>「ビヘイビア」タブ →「ビヘイビアを作成」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>パスパターン</td>
+<td><code>/partners/*</code></td>
+</tr>
+<tr>
+<td>オリジン</td>
+<td>assets バケット</td>
+</tr>
+<tr>
+<td>ビューワープロトコルポリシー</td>
+<td>HTTP を HTTPS にリダイレクト</td>
+</tr>
+<tr>
+<td>許可される HTTP メソッド</td>
+<td>GET, HEAD</td>
+</tr>
+<tr>
+<td>キャッシュポリシー</td>
+<td>CachingOptimized</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="5">
+<li>「3.2 の CORS」に戻り、<code>&lt;CloudFrontのドメイン&gt;</code> を V-08 のドメインにして保存する</li>
+</ol>
+<h3 id="s3-6"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.6 Cognito（ログイン）</h3>
+<p><strong>(1) ユーザープールの作成</strong></p>
+<ol>
+<li>「Amazon Cognito」→「ユーザープールを作成」</li>
+<li>次のとおり入力して作成する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>アプリケーションタイプ</td>
+<td><strong>シングルページアプリケーション（SPA）</strong></td>
+</tr>
+<tr>
+<td>アプリケーション名</td>
+<td><code>rpg-dev-web</code></td>
+</tr>
+<tr>
+<td>サインイン識別子</td>
+<td><strong>メールアドレス</strong></td>
+</tr>
+<tr>
+<td>自己登録</td>
+<td><strong>有効にしない</strong>（管理者が招待する）</td>
+</tr>
+<tr>
+<td>サインアップの必須属性</td>
+<td>email</td>
+</tr>
+<tr>
+<td>リターンURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>作成されたユーザープールを開き、右上の「名前を変更」で <code>rpg-dev-users</code> にする</li>
+<li>ユーザープールID（<code>ap-northeast-1_xxxx</code>）を控える（V-09）</li>
+</ol>
+<p><strong>(2) 認証の設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>メニュー</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>認証方法 → パスワードポリシー</td>
+<td>モード</td>
+<td>カスタム</td>
+</tr>
+<tr>
+<td></td>
+<td>最小文字数</td>
+<td><strong>8</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>必須</td>
+<td><strong>数字・大文字・小文字</strong>（特殊文字は必須にしない）</td>
+</tr>
+<tr>
+<td></td>
+<td>仮パスワードの有効期限</td>
+<td>7日</td>
+</tr>
+<tr>
+<td>認証方法 → 多要素認証</td>
+<td>MFA</td>
+<td>なし（パイロット期間。Phase 3 で見直し）</td>
+</tr>
+<tr>
+<td>サインアップ</td>
+<td>自己登録</td>
+<td>無効</td>
+</tr>
+<tr>
+<td>サインイン → アカウントの復旧</td>
+<td>復旧方法</td>
+<td>Eメールのみ</td>
+</tr>
+<tr>
+<td>設定 → 機能プラン</td>
+<td>プラン</td>
+<td>Essentials（マネージドログインを使うため）</td>
+</tr>
+<tr>
+<td>設定 → 削除保護</td>
+<td></td>
+<td><strong>オフ</strong></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td></td>
+<td><code>Project</code>・<code>Environment</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(3) グループ</strong></p>
+<p>「グループ」→「グループを作成」で3つ作る。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>グループ名</th>
+<th>優先順位</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>system_admin</code></td>
+<td>1</td>
+<td>システム管理者</td>
+</tr>
+<tr>
+<td><code>course_admin</code></td>
+<td>2</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td><code>learner</code></td>
+<td>3</td>
+<td>学習者</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(4) アプリクライアント</strong></p>
+<p>「アプリケーションクライアント」→ <code>rpg-dev-web</code> を開き、各タブを次のとおり編集する。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>タブ</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>アプリケーションクライアント情報</td>
+<td>クライアントシークレット</td>
+<td>なし（SPA のため）</td>
+</tr>
+<tr>
+<td></td>
+<td>認証フロー</td>
+<td><code>ALLOW_REFRESH_TOKEN_AUTH</code>・<code>ALLOW_USER_SRP_AUTH</code></td>
+</tr>
+<tr>
+<td></td>
+<td>IDトークン・アクセストークンの有効期限</td>
+<td><strong>60分</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>更新トークンの有効期限</td>
+<td><strong>7日</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>トークンの取り消し</td>
+<td>有効</td>
+</tr>
+<tr>
+<td>ログインページ</td>
+<td>許可されているコールバックURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+<tr>
+<td></td>
+<td>許可されているサインアウトURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+<tr>
+<td></td>
+<td>OAuth 2.0 許可タイプ</td>
+<td><strong>認証コード付与</strong>（PKCE は画面側で使う）</td>
+</tr>
+<tr>
+<td></td>
+<td>OpenID Connect のスコープ</td>
+<td><code>openid</code>・<code>email</code>・<code>profile</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>アプリクライアントIDを控える（V-09）。</p>
+<p><strong>(5) ドメインとログイン画面</strong></p>
+<ol>
+<li>「ブランディング」→「ドメイン」→「Cognito ドメインを作成」で、プレフィックス <code>rpg-dev-&lt;社名などの短い文字&gt;</code> を入れる（世界で重複できない）。ブランディングのバージョンは <strong>マネージドログイン</strong></li>
+<li>「ブランディング」→「マネージドログイン」→「スタイルを作成」で、アプリクライアント <code>rpg-dev-web</code> を選んで既定のスタイルで作る（色の調整は任意）</li>
+<li>ドメイン（<code>rpg-dev-xxxx.auth.ap-northeast-1.amazoncognito.com</code>）を控える（V-09）<ul>
+<li>画面側はログイン画面を開くときに <code>lang=ja</code> を付けて日本語で表示する</li>
+</ul>
+</li>
+</ol>
+<p><strong>(6) 招待メールの文面</strong></p>
+<p>「認証方法」→「メッセージテンプレート」→「招待メッセージ」を編集する（外部設計書 5.6）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>件名</td>
+<td>【RPG学習アプリ】ギルドへの招待</td>
+</tr>
+<tr>
+<td>本文</td>
+<td>冒険者ギルドへようこそ。<br/>ログインURL：<code>https://&lt;V-08 のドメイン&gt;/</code><br/>メールアドレス：{username}<br/>仮パスワード：{####}<br/>初回ログイン時に新しいパスワードを設定してください。</td>
+</tr>
+</tbody>
+</table></div>
+<p>dev では招待メールは Cognito の既定の送信元（<code>no-reply@verificationemail.com</code>）から送る。1日50通までの制限があるが、dev では十分。</p>
+<p><strong>(7) 最初のシステム管理者を作る</strong></p>
+<ol>
+<li>「ユーザー」→「ユーザーを作成」→「招待メッセージを送信」、メールアドレスを入れ、「Eメールアドレスを検証済みとしてマーク」にチェック、仮パスワードは「パスワードを生成」で作成する</li>
+<li>作成したユーザーを開き「グループにユーザーを追加」→ <code>system_admin</code> と <code>learner</code> に入れる</li>
+</ol>
+<h3 id="s3-7"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.7 IAM ロール（Lambda 4関数用）</h3>
+<p>「IAM」→「ロール」→「ロールを作成」で、関数ごとに1つ作る。手順は4つとも同じ。</p>
+<ol>
+<li>信頼されたエンティティ「AWS のサービス」→ ユースケース <strong>Lambda</strong></li>
+<li>許可ポリシーで <code>AWSLambdaBasicExecutionRole</code> を付ける（import-worker は <code>AWSLambdaSQSQueueExecutionRole</code> も付ける）</li>
+<li>ロール名を入れ、タグを付けて作成する</li>
+<li>作成したロールを開き「許可を追加」→「インラインポリシーを作成」→「JSON」に下のポリシーを貼り、名前 <code>app</code> で保存する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ロール名</th>
+<th>インラインポリシー</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-dev-api-handler-role</code></td>
+<td>共通DB ＋ Haiku ＋ 採点の起動 ＋ 画像・取り込みのURL発行 ＋ 利用者管理 ＋ メール</td>
+</tr>
+<tr>
+<td><code>rpg-dev-grading-worker-role</code></td>
+<td>共通DB ＋ Sonnet</td>
+</tr>
+<tr>
+<td><code>rpg-dev-import-worker-role</code></td>
+<td>共通DB ＋ Sonnet ＋ 原本の読み取り</td>
+</tr>
+<tr>
+<td><code>rpg-dev-batch-runner-role</code></td>
+<td>共通DB ＋ 送信リスト ＋ メール ＋ 利用者の削除</td>
+</tr>
+</tbody>
+</table></div>
+<p>ポリシーは、下の部品（Statement）を組み合わせて1つの JSON にする。<code>&lt;アカウントID&gt;</code>・<code>&lt;V-02&gt;</code> などは控えた値に置き換える。</p>
+<pre><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DataApi",
+      "Effect": "Allow",
+      "Action": ["rds-data:ExecuteStatement", "rds-data:BatchExecuteStatement", "rds-data:BeginTransaction", "rds-data:CommitTransaction", "rds-data:RollbackTransaction"],
+      "Resource": "&lt;V-06 クラスターARN&gt;"
+    },
+    {
+      "Sid": "DbSecret",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "&lt;V-07 シークレットARN&gt;"
+    }
+  ]
+}
+</code></pre>
+<p><strong>関数ごとに追加する部品</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>部品</th>
+<th>付けるロール</th>
+<th>Action</th>
+<th>Resource</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Haiku</td>
+<td>api-handler</td>
+<td><code>bedrock:InvokeModel</code></td>
+<td><code>arn:aws:bedrock:ap-northeast-1::foundation-model/&lt;V-03&gt;</code></td>
+</tr>
+<tr>
+<td>Sonnet</td>
+<td>grading-worker、import-worker</td>
+<td><code>bedrock:InvokeModel</code></td>
+<td><code>arn:aws:bedrock:ap-northeast-1::foundation-model/&lt;V-02&gt;</code></td>
+</tr>
+<tr>
+<td>採点の起動</td>
+<td>api-handler</td>
+<td><code>lambda:InvokeFunction</code></td>
+<td><code>arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-dev-grading-worker</code></td>
+</tr>
+<tr>
+<td>URL発行</td>
+<td>api-handler</td>
+<td><code>s3:PutObject</code>,<code>s3:DeleteObject</code></td>
+<td><code>arn:aws:s3:::rpg-dev-import-&lt;アカウントID&gt;/uploads/*</code>,<code>arn:aws:s3:::rpg-dev-assets-&lt;アカウントID&gt;/partners/*</code></td>
+</tr>
+<tr>
+<td>原本の読み取り</td>
+<td>import-worker</td>
+<td><code>s3:GetObject</code></td>
+<td><code>arn:aws:s3:::rpg-dev-import-&lt;アカウントID&gt;/uploads/*</code></td>
+</tr>
+<tr>
+<td>送信リスト</td>
+<td>batch-runner</td>
+<td><code>s3:PutObject</code>,<code>s3:GetObject</code></td>
+<td><code>arn:aws:s3:::rpg-dev-notify-&lt;アカウントID&gt;/notify/*</code></td>
+</tr>
+<tr>
+<td>メール</td>
+<td>api-handler、batch-runner</td>
+<td><code>ses:SendEmail</code>,<code>ses:SendRawEmail</code></td>
+<td><code>arn:aws:ses:ap-northeast-1:&lt;アカウントID&gt;:identity/*</code></td>
+</tr>
+<tr>
+<td>利用者管理</td>
+<td>api-handler</td>
+<td><code>cognito-idp:AdminCreateUser</code>,<code>AdminAddUserToGroup</code>,<code>AdminRemoveUserFromGroup</code>,<code>AdminDisableUser</code>,<code>AdminEnableUser</code>,<code>AdminGetUser</code>,<code>ListUsers</code></td>
+<td><code>arn:aws:cognito-idp:ap-northeast-1:&lt;アカウントID&gt;:userpool/&lt;V-09 ユーザープールID&gt;</code></td>
+</tr>
+<tr>
+<td>利用者の削除</td>
+<td>batch-runner</td>
+<td><code>cognito-idp:AdminDeleteUser</code></td>
+<td>同上</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Action の <code>cognito-idp:</code> の接頭辞は各項目に付ける（表では2つ目以降を省略）</li>
+<li>どのロールも、自分の環境（<code>rpg-dev-</code>）のリソースしか指定しない。これで環境どうしの誤操作を防ぐ</li>
+</ul>
+<h3 id="s3-8"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.8 Lambda（4関数）</h3>
+<p><strong>(1) ロググループを先に作る（保持期間を決めるため）</strong></p>
+<p>「CloudWatch」→「ロググループ」→「ロググループを作成」で、次の4つを作る。保持期間はすべて <strong>30日</strong>、タグを付ける。</p>
+<ul>
+<li><code>/aws/lambda/rpg-dev-api-handler</code></li>
+<li><code>/aws/lambda/rpg-dev-grading-worker</code></li>
+<li><code>/aws/lambda/rpg-dev-import-worker</code></li>
+<li><code>/aws/lambda/rpg-dev-batch-runner</code></li>
+</ul>
+<p><strong>(2) 関数の作成</strong></p>
+<p>「Lambda」→「関数の作成」→「一から作成」で、次の4つを作る。共通の設定はランタイム <strong>Node.js 22.x</strong>、アーキテクチャ <strong>arm64</strong>、実行ロール「既存のロールを使用する」。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>関数名</th>
+<th>実行ロール</th>
+<th>メモリ</th>
+<th>タイムアウト</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-dev-api-handler</code></td>
+<td><code>rpg-dev-api-handler-role</code></td>
+<td>512 MB</td>
+<td><strong>29秒</strong></td>
+</tr>
+<tr>
+<td><code>rpg-dev-grading-worker</code></td>
+<td><code>rpg-dev-grading-worker-role</code></td>
+<td>512 MB</td>
+<td><strong>60秒</strong></td>
+</tr>
+<tr>
+<td><code>rpg-dev-import-worker</code></td>
+<td><code>rpg-dev-import-worker-role</code></td>
+<td>1024 MB</td>
+<td><strong>15分</strong></td>
+</tr>
+<tr>
+<td><code>rpg-dev-batch-runner</code></td>
+<td><code>rpg-dev-batch-runner-role</code></td>
+<td>256 MB</td>
+<td><strong>15分</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>作成後、関数ごとに次を行う。</p>
+<ol>
+<li>「コード」→「アップロード元」→「.zip ファイル」で、開発チームから受け取った zip をアップロードする</li>
+<li>「設定」→「一般設定」→「編集」で、メモリとタイムアウトを上の表のとおりにする</li>
+<li>「設定」→「タグ」で <code>Project</code>・<code>Environment</code> を付ける</li>
+<li>「設定」→「環境変数」で、次の値を入れる（変数名は 2026-10-19 に決定）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変数名</th>
+<th>値</th>
+<th>使う関数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>APP_ENV</code></td>
+<td><code>dev</code></td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ARN</code></td>
+<td>V-06</td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_SECRET_ARN</code></td>
+<td>V-07</td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_NAME</code></td>
+<td><code>rpg</code></td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>MODEL_HIGH</code></td>
+<td>V-02</td>
+<td>grading-worker、import-worker</td>
+</tr>
+<tr>
+<td><code>MODEL_LIGHT</code></td>
+<td>V-03</td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>GRADING_FUNCTION</code></td>
+<td><code>rpg-dev-grading-worker</code></td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>IMPORT_BUCKET</code></td>
+<td><code>rpg-dev-import-&lt;アカウントID&gt;</code></td>
+<td>api-handler、import-worker</td>
+</tr>
+<tr>
+<td><code>ASSETS_BUCKET</code></td>
+<td><code>rpg-dev-assets-&lt;アカウントID&gt;</code></td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>NOTIFY_BUCKET</code></td>
+<td><code>rpg-dev-notify-&lt;アカウントID&gt;</code></td>
+<td>batch-runner</td>
+</tr>
+<tr>
+<td><code>USER_POOL_ID</code></td>
+<td>V-09 のユーザープールID</td>
+<td>api-handler、batch-runner</td>
+</tr>
+<tr>
+<td><code>MAIL_FROM</code></td>
+<td>2.4 で登録した送信元（ドメイン決定後は <code>no-reply@&lt;ドメイン&gt;</code>）</td>
+<td>api-handler、batch-runner</td>
+</tr>
+<tr>
+<td><code>APP_URL</code></td>
+<td><code>https://&lt;V-08 のドメイン&gt;</code></td>
+<td>api-handler、batch-runner</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(3) 関数ごとに追加設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>関数</th>
+<th>追加の設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>grading-worker</td>
+<td>「設定」→「非同期呼び出し」→ 再試行 <strong>0回</strong>（同じ説明文を二重に採点しない。失敗時は学習者が「もう一度採点してもらう」を押す）</td>
+</tr>
+<tr>
+<td>import-worker</td>
+<td>「トリガーを追加」→ SQS <code>rpg-dev-import-queue</code>、バッチサイズ <strong>1</strong>、「部分的なバッチ応答を報告」オン</td>
+</tr>
+<tr>
+<td>import-worker</td>
+<td>「設定」→「同時実行」→ 予約された同時実行 <strong>2</strong>（Bedrock の使いすぎを防ぐ）</td>
+</tr>
+<tr>
+<td>batch-runner</td>
+<td>「設定」→「非同期呼び出し」→ 再試行 <strong>2回</strong>（外部設計書 6.3）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>予約された同時実行を設定できない（アカウントの同時実行数の上限が10など小さい）場合は、設定せずに進め、「Service Quotas」で Lambda の「同時実行数」の引き上げを申請する</li>
+</ul>
+<p><strong>(4) 動作の確認</strong></p>
+<p><code>rpg-dev-api-handler</code> の「テスト」タブで、開発チームが用意した確認用イベント（例：ヘルスチェック）を実行し、成功することを確かめる。DB が止まっている場合、1回目は起動待ちで失敗することがある。</p>
+<h3 id="s3-9"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.9 API Gateway（HTTP API）</h3>
+<ol>
+<li>「API Gateway」→「API を作成」→ <strong>HTTP API</strong> の「構築」</li>
+<li>統合「Lambda」→ <code>rpg-dev-api-handler</code>、バージョン 2.0。API 名 <code>rpg-dev-api</code></li>
+<li>ルート：メソッド <strong>ANY</strong>、パス <strong><code>/api/{proxy+}</code></strong>、統合先 <code>rpg-dev-api-handler</code></li>
+<li>ステージ：<code>$default</code>、自動デプロイ オン。作成する</li>
+<li>左メニュー「認可」→「ルートに認可をアタッチ」→ <code>ANY /api/{proxy+}</code> を選び「オーソライザーを作成してアタッチ」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>タイプ</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>名前</td>
+<td><code>rpg-dev-cognito</code></td>
+</tr>
+<tr>
+<td>ID ソース</td>
+<td><code>$request.header.Authorization</code></td>
+</tr>
+<tr>
+<td>発行者URL</td>
+<td><code>https://cognito-idp.ap-northeast-1.amazonaws.com/&lt;V-09 ユーザープールID&gt;</code></td>
+</tr>
+<tr>
+<td>対象者</td>
+<td>V-09 のアプリクライアントID</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="6">
+<li>左メニュー「スロットリング」→ <code>$default</code> ステージを編集し、バーストの制限 <strong>50</strong>、レートの制限 <strong>20</strong> にする</li>
+<li>左メニュー「ログ記録」→ <code>$default</code> を選び、アクセスログを有効にする。ロググループは先に CloudWatch で <code>/aws/apigateway/rpg-dev-api</code>（保持 30日）を作って指定し、ログの形式は JSON</li>
+<li>「タグ」を付ける。API ID と「呼び出しURL」を控える（V-10）</li>
+</ol>
+<ul>
+<li>CORS は設定しない（画面とAPIを CloudFront の同じドメインで出すため）</li>
+<li>画面からは CloudFront 経由でしか呼ばないが、API Gateway のURLは公開される。JWT で守られているため、パイロット期間はこのままとする</li>
+</ul>
+<h3 id="s3-10"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.10 CloudFront に API を追加する</h3>
+<ol>
+<li>CloudFront の <code>rpg-dev-cdn</code> →「オリジン」→「オリジンを作成」<ul>
+<li>オリジンドメイン：<code>&lt;V-10 の API ID&gt;.execute-api.ap-northeast-1.amazonaws.com</code></li>
+<li>プロトコル：<strong>HTTPS のみ</strong>、名前 <code>api</code></li>
+</ul>
+</li>
+<li>「ビヘイビア」→「ビヘイビアを作成」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>パスパターン</td>
+<td><code>/api/*</code></td>
+</tr>
+<tr>
+<td>オリジン</td>
+<td><code>api</code></td>
+</tr>
+<tr>
+<td>ビューワープロトコルポリシー</td>
+<td>HTTPS のみ</td>
+</tr>
+<tr>
+<td>許可される HTTP メソッド</td>
+<td>GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE</td>
+</tr>
+<tr>
+<td>キャッシュポリシー</td>
+<td><strong>CachingDisabled</strong></td>
+</tr>
+<tr>
+<td>オリジンリクエストポリシー</td>
+<td><strong>AllViewerExceptHostHeader</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>ビヘイビアの並び順が <code>/api/*</code> → <code>/partners/*</code> → デフォルト <code>*</code> になっていることを確かめる（ビヘイビアは3つ。Free プランの上限は5つ）</li>
+<li>状態が「デプロイ済み」になるまで待つ（数分）</li>
+</ol>
+<h3 id="s3-11"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.11 EventBridge Scheduler（定期処理）</h3>
+<p>「Amazon EventBridge」→「スケジューラ」→「スケジュール」→「スケジュールを作成」で2つ作る。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>日次処理（B-01・B-02）</th>
+<th>メール送信（B-03）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>名前</td>
+<td><code>rpg-dev-daily</code></td>
+<td><code>rpg-dev-mail</code></td>
+</tr>
+<tr>
+<td>スケジュールのパターン</td>
+<td>定期的なスケジュール・cron ベース</td>
+<td>同左</td>
+</tr>
+<tr>
+<td>cron 式</td>
+<td><code>0 0 * * ? *</code></td>
+<td><code>0/30 6-22 * * ? *</code></td>
+</tr>
+<tr>
+<td>タイムゾーン</td>
+<td><strong>Asia/Tokyo</strong></td>
+<td><strong>Asia/Tokyo</strong></td>
+</tr>
+<tr>
+<td>フレックスタイムウィンドウ</td>
+<td>オフ</td>
+<td>オフ</td>
+</tr>
+<tr>
+<td>ターゲット</td>
+<td>AWS Lambda Invoke → <code>rpg-dev-batch-runner</code></td>
+<td>同左</td>
+</tr>
+<tr>
+<td>ペイロード</td>
+<td><code>{"job": "daily"}</code></td>
+<td><code>{"job": "mail"}</code></td>
+</tr>
+<tr>
+<td>再試行ポリシー</td>
+<td>最大再試行回数 2</td>
+<td>最大再試行回数 0（次の30分で送る）</td>
+</tr>
+<tr>
+<td>実行ロール</td>
+<td>新しいロールを作成 <code>rpg-dev-scheduler-role</code></td>
+<td>既存のロール <code>rpg-dev-scheduler-role</code></td>
+</tr>
+<tr>
+<td>状態</td>
+<td>有効</td>
+<td><strong>無効（確認するときだけ有効にする）</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>メール送信の cron は 6:00〜22:30 に動くが、22:30 の送信リストは作られないため何も送らない（外部設計書 6.1 の 6:00〜22:00 の範囲になる）</li>
+<li>ペイロードの形は開発チームと合わせる</li>
+</ul>
+<h3 id="s3-12"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.12 CloudWatch アラーム（監視）</h3>
+<p>「CloudWatch」→「アラーム」→「アラームの作成」で、次の5つを作る。通知はすべて SNS <code>rpg-dev-alerts</code>、欠落データは「欠落データを良好として扱う」。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>アラーム名</th>
+<th>メトリクス</th>
+<th>条件</th>
+<th>期間</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-dev-api-5xx</code></td>
+<td>ApiGateway → <code>5xx</code>（ApiId＝V-10、Stage＝<code>$default</code>）合計</td>
+<td>5 以上</td>
+<td>5分</td>
+</tr>
+<tr>
+<td><code>rpg-dev-grading-errors</code></td>
+<td>Lambda → <code>Errors</code>（<code>rpg-dev-grading-worker</code>）合計</td>
+<td>3 以上</td>
+<td>1時間</td>
+</tr>
+<tr>
+<td><code>rpg-dev-grading-timeout</code></td>
+<td>下記のメトリクスフィルター <code>GradingTimeout</code> 合計</td>
+<td>3 以上</td>
+<td>1時間</td>
+</tr>
+<tr>
+<td><code>rpg-dev-batch-errors</code></td>
+<td>Lambda → <code>Errors</code>（<code>rpg-dev-batch-runner</code>）合計</td>
+<td>1 以上</td>
+<td>5分</td>
+</tr>
+<tr>
+<td><code>rpg-dev-import-dlq</code></td>
+<td>SQS → <code>ApproximateNumberOfMessagesVisible</code>（<code>rpg-dev-import-dlq</code>）最大</td>
+<td>1 以上</td>
+<td>5分</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>採点30秒超えのメトリクスフィルター</strong></p>
+<ol>
+<li>ロググループ <code>/aws/lambda/rpg-dev-api-handler</code> を開き「メトリクスフィルター」→「メトリクスフィルターを作成」</li>
+<li>フィルターパターン <code>GRADING_TIMEOUT</code>（画面に 504 を返すときにアプリが出すログ。開発チームと合わせる）</li>
+<li>名前空間 <code>rpg/dev</code>、メトリクス名 <code>GradingTimeout</code>、値 <code>1</code></li>
+</ol>
+<h3 id="s3-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>3.13 画面の配置と動作確認</h3>
+<p><strong>(1) 画面の配置</strong></p>
+<ol>
+<li>S3 の <code>rpg-dev-web-&lt;アカウントID&gt;</code> に、開発チームから受け取った画面一式（<code>index.html</code>・<code>manifest.webmanifest</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> など）をフォルダの構成のままアップロードする</li>
+<li>画面の設定ファイル（例：<code>js/config.js</code>）に、V-08・V-09 の値（CloudFront ドメイン、ユーザープールID、アプリクライアントID、Cognito ドメイン）が入っていることを確かめる</li>
+<li>CloudFront の <code>rpg-dev-cdn</code> →「キャッシュ削除」→「キャッシュ削除を作成」→ パス <code>/*</code></li>
+<li>キャラクター画像がある場合は、S-14 から登録する（ない場合は頭文字の表示のままでよい）</li>
+</ol>
+<p><strong>(2) 動作確認</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認すること</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code> を開く</td>
+<td>画面が表示され、Cognito のログイン画面に移る</td>
+</tr>
+<tr>
+<td>2</td>
+<td>3.6 で作った管理者でログイン</td>
+<td>新しいパスワードの設定を求められる。設定後に S-13 が開く</td>
+</tr>
+<tr>
+<td>3</td>
+<td>朝一番など、DB が止まっているときに操作する</td>
+<td>「ギルドの扉を開けています…」が出て、30秒以内に表示される</td>
+</tr>
+<tr>
+<td>4</td>
+<td>S-13 で学習者を1人招待する</td>
+<td>招待メールが届く</td>
+</tr>
+<tr>
+<td>5</td>
+<td>学習者でログイン</td>
+<td>ニックネーム → コース選択 → パートナー選択 → ホームの順に進む</td>
+</tr>
+<tr>
+<td>6</td>
+<td>S-11 で問題を取り込む（テキスト貼り付け）</td>
+<td>数分で下書きができ、公開できる</td>
+</tr>
+<tr>
+<td>7</td>
+<td>四肢択一とキーワード説明を解く</td>
+<td>結果とEXPが表示される。説明の採点が30秒以内に返る</td>
+</tr>
+<tr>
+<td>8</td>
+<td>10分ほど操作しない</td>
+<td>RDS コンソールで <code>rpg-dev-db</code> のインスタンスが「一時停止」（0 ACU）になる</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Lambda <code>rpg-dev-batch-runner</code> を「テスト」で <code>{"job": "daily"}</code> を付けて実行</td>
+<td>S3 の notify バケットに当日の送信リストができる</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>rpg-dev-mail</code> を一時的に有効にし、通知時刻を直近の30分枠にした学習者（SES に登録済みのアドレス）で待つ。確認後は無効に戻す</td>
+<td>送信時刻にメールが届く</td>
+</tr>
+<tr>
+<td>11</td>
+<td>API Gateway のURLに直接トークンなしでアクセス</td>
+<td>401 が返る</td>
+</tr>
+<tr>
+<td>12</td>
+<td>請求の画面 → Cost Explorer をタグ <code>Environment</code> で絞る</td>
+<td><code>dev</code> の費用が見える（反映は翌日以降）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>dev の完了条件</strong>：上の確認がすべて終わり、つまずいた点を本書に反映したこと。</p>
+
+</section><section class="chapter" id="ch4"><h2><i aria-hidden="true" class="fa-solid fa-vial-circle-check h-ico"></i>4. stg 環境の構築<span class="env-badge env-stg">stg・検証</span></h2>
+<p>受け入れ確認とパイロット前の検証に使う環境。第3章（dev）で書き足した点も含めて、上から順に作業する。コース管理者にも触ってもらう。</p>
+<h3 id="s4-0"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.0 この章で使う値</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>stg の値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>接頭辞</td>
+<td><code>rpg-stg-</code></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>stg</code></td>
+</tr>
+<tr>
+<td>Aurora の容量</td>
+<td>0〜2 ACU（自動停止）</td>
+</tr>
+<tr>
+<td>Aurora のバックアップ保持</td>
+<td>1日</td>
+</tr>
+<tr>
+<td>削除保護</td>
+<td>オフ</td>
+</tr>
+<tr>
+<td>ログの保持</td>
+<td>30日</td>
+</tr>
+<tr>
+<td>アラームの通知先</td>
+<td>開発者</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>控える値（この環境）</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>記号</th>
+<th>値</th>
+<th>メモ欄</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V-04</td>
+<td>SNS トピック ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-05</td>
+<td>SQS キュー ARN・URL</td>
+<td></td>
+</tr>
+<tr>
+<td>V-06</td>
+<td>Aurora クラスター ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-07</td>
+<td>Aurora シークレット ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-08</td>
+<td>CloudFront ドメイン名・ディストリビューションID</td>
+<td></td>
+</tr>
+<tr>
+<td>V-09</td>
+<td>Cognito ユーザープールID・アプリクライアントID・ドメイン</td>
+<td></td>
+</tr>
+<tr>
+<td>V-10</td>
+<td>API ID・API のURL</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s4-1"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.1 SNS（アラームの通知先）</h3>
+<ol>
+<li>「Amazon SNS」→「トピック」→「トピックの作成」</li>
+<li>タイプ <strong>スタンダード</strong>、名前 <code>rpg-stg-alerts</code>、タグ <code>Project</code>・<code>Environment</code> を付けて作成する</li>
+<li>トピックの ARN を控える（V-04）</li>
+<li>「サブスクリプションの作成」→ プロトコル <strong>Eメール</strong>、エンドポイントに 開発者 のアドレスを入れて作成する。複数人なら人数分作る</li>
+<li>届いたメールの「Confirm subscription」を押す。状態が「確認済み」になったことを確かめる</li>
+</ol>
+<h3 id="s4-2"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.2 S3（バケット4つ）</h3>
+<p>「Amazon S3」→「バケットを作成」で、次の4つを作る。どれも共通の設定は下の表のとおり。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>バケット名</th>
+<th>用途</th>
+<th>追加の設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-stg-web-&lt;アカウントID&gt;</code></td>
+<td>画面（HTML・CSS・JS）</td>
+<td>なし</td>
+</tr>
+<tr>
+<td><code>rpg-stg-assets-&lt;アカウントID&gt;</code></td>
+<td>AIパートナーの紋章画像（<code>partners/</code> の下）</td>
+<td>CORS（下記）</td>
+</tr>
+<tr>
+<td><code>rpg-stg-import-&lt;アカウントID&gt;</code></td>
+<td>問題取り込みの原本</td>
+<td>CORS（下記）、90日で削除</td>
+</tr>
+<tr>
+<td><code>rpg-stg-notify-&lt;アカウントID&gt;</code></td>
+<td>通知の送信リスト（<code>notify/日付/時刻.json</code>）</td>
+<td>7日で削除</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>共通の設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>リージョン</td>
+<td>アジアパシフィック（東京）</td>
+</tr>
+<tr>
+<td>バケットタイプ</td>
+<td>汎用</td>
+</tr>
+<tr>
+<td>オブジェクト所有者</td>
+<td>ACL無効（推奨）</td>
+</tr>
+<tr>
+<td>パブリックアクセスをすべてブロック</td>
+<td><strong>オン</strong>（4つのチェックすべて）</td>
+</tr>
+<tr>
+<td>バージョニング</td>
+<td>無効</td>
+</tr>
+<tr>
+<td>タグ</td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>stg</code></td>
+</tr>
+<tr>
+<td>暗号化</td>
+<td>SSE-S3（既定のまま）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>ライフサイクル（import・notify）</strong></p>
+<ol>
+<li>バケットを開き「管理」タブ →「ライフサイクルルールを作成する」</li>
+<li>ルール名 <code>expire</code>、範囲「バケット内のすべてのオブジェクトに適用」</li>
+<li>「オブジェクトの現行バージョンを有効期限切れにする」にチェックし、import は <strong>90日</strong>、notify は <strong>7日</strong> を入れて作成する</li>
+</ol>
+<p><strong>CORS（assets・import）</strong></p>
+<p>画面から署名付きURLで直接アップロードするために設定する。バケットを開き「アクセス許可」タブ →「CORS」→「編集」に次を貼り付ける。<code>&lt;CloudFrontのドメイン&gt;</code> は 4.5 のあとで分かるので、4.5 が終わってから戻って入れる。</p>
+<pre><code class="language-json">[
+  {
+    "AllowedOrigins": ["https://&lt;CloudFrontのドメイン&gt;"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["*"],
+    "MaxAgeSeconds": 3000
+  }
+]
+</code></pre>
+<h3 id="s4-3"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.3 SQS（取り込みキューとDLQ）</h3>
+<p><strong>(1) デッドレターキュー（失敗した取り込みの置き場）</strong></p>
+<ol>
+<li>「Amazon SQS」→「キューを作成」</li>
+<li>タイプ <strong>標準</strong>、名前 <code>rpg-stg-import-dlq</code></li>
+<li>メッセージ保持期間 <strong>14日</strong>、その他は既定のまま。タグを付けて作成する</li>
+</ol>
+<p><strong>(2) 取り込みキュー</strong></p>
+<ol>
+<li>「キューを作成」→ タイプ <strong>標準</strong>、名前 <code>rpg-stg-import-queue</code></li>
+<li>次のとおり設定する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可視性タイムアウト</td>
+<td><strong>90分</strong></td>
+<td><code>import-worker</code> のタイムアウト（15分）の6倍（AWSの推奨）</td>
+</tr>
+<tr>
+<td>メッセージ保持期間</td>
+<td>4日</td>
+<td>既定</td>
+</tr>
+<tr>
+<td>受信メッセージ待機時間</td>
+<td>20秒</td>
+<td>空振りの受信を減らす</td>
+</tr>
+<tr>
+<td>デッドレターキュー</td>
+<td>有効。<code>rpg-stg-import-dlq</code>、最大受信数 <strong>3</strong></td>
+<td>外部設計書 4.10（最大3回やり直し）</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>「アクセスポリシー」で「アドバンスト」を選び、次の JSON に置き換える（S3 からの通知を受け取るため）</li>
+</ol>
+<pre><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3Upload",
+      "Effect": "Allow",
+      "Principal": {"Service": "s3.amazonaws.com"},
+      "Action": "sqs:SendMessage",
+      "Resource": "arn:aws:sqs:ap-northeast-1:&lt;アカウントID&gt;:rpg-stg-import-queue",
+      "Condition": {
+        "ArnLike": {"aws:SourceArn": "arn:aws:s3:::rpg-stg-import-&lt;アカウントID&gt;"},
+        "StringEquals": {"aws:SourceAccount": "&lt;アカウントID&gt;"}
+      }
+    }
+  ]
+}
+</code></pre>
+<ol start="4">
+<li>タグを付けて作成する。キューの ARN と URL を控える（V-05）</li>
+</ol>
+<p><strong>(3) S3 からの通知を設定する</strong></p>
+<ol>
+<li>S3 のバケット <code>rpg-stg-import-&lt;アカウントID&gt;</code> を開き「プロパティ」タブ →「イベント通知」→「イベント通知を作成」</li>
+<li>名前 <code>to-import-queue</code>、プレフィックス <code>uploads/</code>、イベントタイプ「すべてのオブジェクト作成イベント」</li>
+<li>送信先「SQS キュー」→ <code>rpg-stg-import-queue</code> を選んで保存する</li>
+</ol>
+<h3 id="s4-4"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.4 Aurora PostgreSQL Serverless v2</h3>
+<p><strong>(1) データベースの作成</strong></p>
+<ol>
+<li>「Amazon RDS」→「データベースの作成」→「標準作成」</li>
+<li>次のとおり設定する（書いていない項目は既定のまま）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>区分</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>エンジン</td>
+<td>エンジンのタイプ</td>
+<td><strong>Aurora (PostgreSQL Compatible)</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>エンジンバージョン</td>
+<td>選べる最新の PostgreSQL 17系 または 16系（16.3 以降。0 ACU に対応したバージョン）</td>
+</tr>
+<tr>
+<td></td>
+<td>RDS Data API</td>
+<td><strong>有効にする</strong>（「RDS Data API を有効にする」にチェック）</td>
+</tr>
+<tr>
+<td>テンプレート</td>
+<td></td>
+<td><strong>開発/テスト</strong>（Aurora レプリカは作らない＝コスト最小方針）</td>
+</tr>
+<tr>
+<td>設定</td>
+<td>DB クラスター識別子</td>
+<td><code>rpg-stg-db</code></td>
+</tr>
+<tr>
+<td></td>
+<td>マスターユーザー名</td>
+<td><code>rpgadmin</code></td>
+</tr>
+<tr>
+<td></td>
+<td>認証情報の管理</td>
+<td><strong>AWS Secrets Manager で管理</strong></td>
+</tr>
+<tr>
+<td>クラスターストレージ</td>
+<td>設定</td>
+<td>Aurora スタンダード</td>
+</tr>
+<tr>
+<td>インスタンスの設定</td>
+<td>DB インスタンスクラス</td>
+<td><strong>Serverless v2</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>最小キャパシティ</td>
+<td><strong>0 ACU</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>最大キャパシティ</td>
+<td><strong>2 ACU</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>非アクティブ後に一時停止するまでの時間</td>
+<td><strong>300 秒</strong>（5分）</td>
+</tr>
+<tr>
+<td>可用性</td>
+<td>Aurora レプリカ</td>
+<td>作成しない</td>
+</tr>
+<tr>
+<td>接続</td>
+<td>コンピューティングリソース</td>
+<td>EC2 に接続しない</td>
+</tr>
+<tr>
+<td></td>
+<td>VPC</td>
+<td>デフォルト VPC</td>
+</tr>
+<tr>
+<td></td>
+<td>パブリックアクセス</td>
+<td><strong>なし</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>VPC セキュリティグループ</td>
+<td>新規作成 <code>rpg-stg-db-sg</code>（インバウンドのルールは追加しない。Data API だけで使う）</td>
+</tr>
+<tr>
+<td>モニタリング</td>
+<td>Performance Insights・拡張モニタリング</td>
+<td>オフ（費用を抑える）</td>
+</tr>
+<tr>
+<td>追加設定</td>
+<td>最初のデータベース名</td>
+<td><code>rpg</code></td>
+</tr>
+<tr>
+<td></td>
+<td>バックアップ保持期間</td>
+<td><strong>1日</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>暗号化</td>
+<td>有効（既定の <code>aws/rds</code> キー）</td>
+</tr>
+<tr>
+<td></td>
+<td>ログのエクスポート</td>
+<td>オフ</td>
+</tr>
+<tr>
+<td></td>
+<td>削除保護</td>
+<td><strong>オフ</strong></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td></td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>stg</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>「データベースの作成」を押す。作成には10〜20分かかる</li>
+<li>作成後、クラスター <code>rpg-stg-db</code> を開き、次を確かめて控える<ul>
+<li>「設定」タブ：容量 0〜2 ACU、一時停止までの時間 300秒</li>
+<li>「接続とセキュリティ」タブ：RDS Data API が <strong>有効</strong>（無効なら「変更」から有効にする）</li>
+<li>クラスターの ARN（V-06）</li>
+<li>「設定」タブの「マスター認証情報 ARN」＝シークレットの ARN（V-07）</li>
+</ul>
+</li>
+</ol>
+<p><strong>(2) テーブルの作成（クエリエディタ）</strong></p>
+<ol>
+<li>RDS の左メニュー「クエリエディタ」を開く</li>
+<li>データベース <code>rpg-stg-db</code>、ユーザー「Secrets Manager ARN で接続」に V-07、データベース名 <code>rpg</code> を入れて接続する<ul>
+<li>止まっている場合は起動に15〜30秒かかる。エラーになったら少し待ってもう一度接続する</li>
+</ul>
+</li>
+<li>開発チームから受け取ったテーブル作成のSQL（外部設計書 第7章に基づくもの）を貼り付けて実行する</li>
+<li><code>SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';</code> を実行し、テーブルができたことを確かめる</li>
+</ol>
+<blockquote>
+<p>マスターユーザーのパスワードは Secrets Manager が7日ごとに自動で変える。Data API は常に最新の値を読むので、アプリ側の作業はない。</p>
+</blockquote>
+<h3 id="s4-5"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.5 CloudFront（画面の配信）</h3>
+<p><strong>(1) ディストリビューションの作成</strong></p>
+<ol>
+<li>「CloudFront」→「ディストリビューションを作成」</li>
+<li>料金プランで <strong>Free</strong> を選ぶ（第1.6節）</li>
+<li>次のとおり設定する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ディストリビューション名</td>
+<td><code>rpg-stg-cdn</code></td>
+</tr>
+<tr>
+<td>種類</td>
+<td>単一のWebサイトまたはアプリ</td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>指定しない（ドメイン決定後に第6章で追加）</td>
+</tr>
+<tr>
+<td>オリジンのタイプ</td>
+<td>Amazon S3</td>
+</tr>
+<tr>
+<td>S3 オリジン</td>
+<td><code>rpg-stg-web-&lt;アカウントID&gt;</code></td>
+</tr>
+<tr>
+<td>オリジンの設定</td>
+<td>「推奨設定を使う」（オリジンアクセスコントロール（OAC）を作り、バケットポリシーも自動で更新する）</td>
+</tr>
+<tr>
+<td>キャッシュの設定</td>
+<td>推奨設定（CachingOptimized）</td>
+</tr>
+<tr>
+<td>セキュリティ（WAF）</td>
+<td>Free プランに付く AWS WAF の既定の保護をそのまま使う（外せない。ルールの見直しは第7章）</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="4">
+<li>作成後、ディストリビューションを開き「一般」タブの「設定」→「編集」で、<strong>デフォルトルートオブジェクト</strong> に <code>index.html</code> を入れて保存する</li>
+<li>「ディストリビューションドメイン名」（<code>xxxx.cloudfront.net</code>）とディストリビューションIDを控える（V-08）</li>
+<li>S3 のバケット <code>rpg-stg-web-&lt;アカウントID&gt;</code> の「アクセス許可」→「バケットポリシー」に、CloudFront からの読み取りを許可する文が入っていることを確かめる</li>
+</ol>
+<p><strong>(2) 紋章画像のオリジンを追加する</strong></p>
+<ol>
+<li>ディストリビューションの「オリジン」タブ →「オリジンを作成」</li>
+<li>オリジンドメインで <code>rpg-stg-assets-&lt;アカウントID&gt;</code> を選び、「オリジンアクセス」で <strong>Origin access control settings</strong> を選ぶ。OAC は「新規作成」で <code>rpg-stg-assets-oac</code></li>
+<li>作成後に表示される「ポリシーをコピー」を押し、S3 の assets バケットの「バケットポリシー」に貼り付けて保存する</li>
+<li>「ビヘイビア」タブ →「ビヘイビアを作成」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>パスパターン</td>
+<td><code>/partners/*</code></td>
+</tr>
+<tr>
+<td>オリジン</td>
+<td>assets バケット</td>
+</tr>
+<tr>
+<td>ビューワープロトコルポリシー</td>
+<td>HTTP を HTTPS にリダイレクト</td>
+</tr>
+<tr>
+<td>許可される HTTP メソッド</td>
+<td>GET, HEAD</td>
+</tr>
+<tr>
+<td>キャッシュポリシー</td>
+<td>CachingOptimized</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="5">
+<li>「4.2 の CORS」に戻り、<code>&lt;CloudFrontのドメイン&gt;</code> を V-08 のドメインにして保存する</li>
+</ol>
+<h3 id="s4-6"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.6 Cognito（ログイン）</h3>
+<p><strong>(1) ユーザープールの作成</strong></p>
+<ol>
+<li>「Amazon Cognito」→「ユーザープールを作成」</li>
+<li>次のとおり入力して作成する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>アプリケーションタイプ</td>
+<td><strong>シングルページアプリケーション（SPA）</strong></td>
+</tr>
+<tr>
+<td>アプリケーション名</td>
+<td><code>rpg-stg-web</code></td>
+</tr>
+<tr>
+<td>サインイン識別子</td>
+<td><strong>メールアドレス</strong></td>
+</tr>
+<tr>
+<td>自己登録</td>
+<td><strong>有効にしない</strong>（管理者が招待する）</td>
+</tr>
+<tr>
+<td>サインアップの必須属性</td>
+<td>email</td>
+</tr>
+<tr>
+<td>リターンURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>作成されたユーザープールを開き、右上の「名前を変更」で <code>rpg-stg-users</code> にする</li>
+<li>ユーザープールID（<code>ap-northeast-1_xxxx</code>）を控える（V-09）</li>
+</ol>
+<p><strong>(2) 認証の設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>メニュー</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>認証方法 → パスワードポリシー</td>
+<td>モード</td>
+<td>カスタム</td>
+</tr>
+<tr>
+<td></td>
+<td>最小文字数</td>
+<td><strong>8</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>必須</td>
+<td><strong>数字・大文字・小文字</strong>（特殊文字は必須にしない）</td>
+</tr>
+<tr>
+<td></td>
+<td>仮パスワードの有効期限</td>
+<td>7日</td>
+</tr>
+<tr>
+<td>認証方法 → 多要素認証</td>
+<td>MFA</td>
+<td>なし（パイロット期間。Phase 3 で見直し）</td>
+</tr>
+<tr>
+<td>サインアップ</td>
+<td>自己登録</td>
+<td>無効</td>
+</tr>
+<tr>
+<td>サインイン → アカウントの復旧</td>
+<td>復旧方法</td>
+<td>Eメールのみ</td>
+</tr>
+<tr>
+<td>設定 → 機能プラン</td>
+<td>プラン</td>
+<td>Essentials（マネージドログインを使うため）</td>
+</tr>
+<tr>
+<td>設定 → 削除保護</td>
+<td></td>
+<td><strong>オフ</strong></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td></td>
+<td><code>Project</code>・<code>Environment</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(3) グループ</strong></p>
+<p>「グループ」→「グループを作成」で3つ作る。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>グループ名</th>
+<th>優先順位</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>system_admin</code></td>
+<td>1</td>
+<td>システム管理者</td>
+</tr>
+<tr>
+<td><code>course_admin</code></td>
+<td>2</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td><code>learner</code></td>
+<td>3</td>
+<td>学習者</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(4) アプリクライアント</strong></p>
+<p>「アプリケーションクライアント」→ <code>rpg-stg-web</code> を開き、各タブを次のとおり編集する。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>タブ</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>アプリケーションクライアント情報</td>
+<td>クライアントシークレット</td>
+<td>なし（SPA のため）</td>
+</tr>
+<tr>
+<td></td>
+<td>認証フロー</td>
+<td><code>ALLOW_REFRESH_TOKEN_AUTH</code>・<code>ALLOW_USER_SRP_AUTH</code></td>
+</tr>
+<tr>
+<td></td>
+<td>IDトークン・アクセストークンの有効期限</td>
+<td><strong>60分</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>更新トークンの有効期限</td>
+<td><strong>7日</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>トークンの取り消し</td>
+<td>有効</td>
+</tr>
+<tr>
+<td>ログインページ</td>
+<td>許可されているコールバックURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+<tr>
+<td></td>
+<td>許可されているサインアウトURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+<tr>
+<td></td>
+<td>OAuth 2.0 許可タイプ</td>
+<td><strong>認証コード付与</strong>（PKCE は画面側で使う）</td>
+</tr>
+<tr>
+<td></td>
+<td>OpenID Connect のスコープ</td>
+<td><code>openid</code>・<code>email</code>・<code>profile</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>アプリクライアントIDを控える（V-09）。</p>
+<p><strong>(5) ドメインとログイン画面</strong></p>
+<ol>
+<li>「ブランディング」→「ドメイン」→「Cognito ドメインを作成」で、プレフィックス <code>rpg-stg-&lt;社名などの短い文字&gt;</code> を入れる（世界で重複できない）。ブランディングのバージョンは <strong>マネージドログイン</strong></li>
+<li>「ブランディング」→「マネージドログイン」→「スタイルを作成」で、アプリクライアント <code>rpg-stg-web</code> を選んで既定のスタイルで作る（色の調整は任意）</li>
+<li>ドメイン（<code>rpg-stg-xxxx.auth.ap-northeast-1.amazoncognito.com</code>）を控える（V-09）<ul>
+<li>画面側はログイン画面を開くときに <code>lang=ja</code> を付けて日本語で表示する</li>
+</ul>
+</li>
+</ol>
+<p><strong>(6) 招待メールの文面</strong></p>
+<p>「認証方法」→「メッセージテンプレート」→「招待メッセージ」を編集する（外部設計書 5.6）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>件名</td>
+<td>【RPG学習アプリ】ギルドへの招待</td>
+</tr>
+<tr>
+<td>本文</td>
+<td>冒険者ギルドへようこそ。<br/>ログインURL：<code>https://&lt;V-08 のドメイン&gt;/</code><br/>メールアドレス：{username}<br/>仮パスワード：{####}<br/>初回ログイン時に新しいパスワードを設定してください。</td>
+</tr>
+</tbody>
+</table></div>
+<p>stg でも招待メールは Cognito の既定の送信元（<code>no-reply@verificationemail.com</code>）から送る。1日50通までの制限があるが、stg では十分。SES がサンドボックスの間は、学習のお知らせメールは 2.4 で登録したアドレスにしか届かない。</p>
+<p><strong>(7) 最初のシステム管理者を作る</strong></p>
+<ol>
+<li>「ユーザー」→「ユーザーを作成」→「招待メッセージを送信」、メールアドレスを入れ、「Eメールアドレスを検証済みとしてマーク」にチェック、仮パスワードは「パスワードを生成」で作成する</li>
+<li>作成したユーザーを開き「グループにユーザーを追加」→ <code>system_admin</code> と <code>learner</code> に入れる</li>
+</ol>
+<h3 id="s4-7"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.7 IAM ロール（Lambda 4関数用）</h3>
+<p>「IAM」→「ロール」→「ロールを作成」で、関数ごとに1つ作る。手順は4つとも同じ。</p>
+<ol>
+<li>信頼されたエンティティ「AWS のサービス」→ ユースケース <strong>Lambda</strong></li>
+<li>許可ポリシーで <code>AWSLambdaBasicExecutionRole</code> を付ける（import-worker は <code>AWSLambdaSQSQueueExecutionRole</code> も付ける）</li>
+<li>ロール名を入れ、タグを付けて作成する</li>
+<li>作成したロールを開き「許可を追加」→「インラインポリシーを作成」→「JSON」に下のポリシーを貼り、名前 <code>app</code> で保存する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ロール名</th>
+<th>インラインポリシー</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-stg-api-handler-role</code></td>
+<td>共通DB ＋ Haiku ＋ 採点の起動 ＋ 画像・取り込みのURL発行 ＋ 利用者管理 ＋ メール</td>
+</tr>
+<tr>
+<td><code>rpg-stg-grading-worker-role</code></td>
+<td>共通DB ＋ Sonnet</td>
+</tr>
+<tr>
+<td><code>rpg-stg-import-worker-role</code></td>
+<td>共通DB ＋ Sonnet ＋ 原本の読み取り</td>
+</tr>
+<tr>
+<td><code>rpg-stg-batch-runner-role</code></td>
+<td>共通DB ＋ 送信リスト ＋ メール ＋ 利用者の削除</td>
+</tr>
+</tbody>
+</table></div>
+<p>ポリシーは、下の部品（Statement）を組み合わせて1つの JSON にする。<code>&lt;アカウントID&gt;</code>・<code>&lt;V-02&gt;</code> などは控えた値に置き換える。</p>
+<pre><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DataApi",
+      "Effect": "Allow",
+      "Action": ["rds-data:ExecuteStatement", "rds-data:BatchExecuteStatement", "rds-data:BeginTransaction", "rds-data:CommitTransaction", "rds-data:RollbackTransaction"],
+      "Resource": "&lt;V-06 クラスターARN&gt;"
+    },
+    {
+      "Sid": "DbSecret",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "&lt;V-07 シークレットARN&gt;"
+    }
+  ]
+}
+</code></pre>
+<p><strong>関数ごとに追加する部品</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>部品</th>
+<th>付けるロール</th>
+<th>Action</th>
+<th>Resource</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Haiku</td>
+<td>api-handler</td>
+<td><code>bedrock:InvokeModel</code></td>
+<td><code>arn:aws:bedrock:ap-northeast-1::foundation-model/&lt;V-03&gt;</code></td>
+</tr>
+<tr>
+<td>Sonnet</td>
+<td>grading-worker、import-worker</td>
+<td><code>bedrock:InvokeModel</code></td>
+<td><code>arn:aws:bedrock:ap-northeast-1::foundation-model/&lt;V-02&gt;</code></td>
+</tr>
+<tr>
+<td>採点の起動</td>
+<td>api-handler</td>
+<td><code>lambda:InvokeFunction</code></td>
+<td><code>arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-stg-grading-worker</code></td>
+</tr>
+<tr>
+<td>URL発行</td>
+<td>api-handler</td>
+<td><code>s3:PutObject</code>,<code>s3:DeleteObject</code></td>
+<td><code>arn:aws:s3:::rpg-stg-import-&lt;アカウントID&gt;/uploads/*</code>,<code>arn:aws:s3:::rpg-stg-assets-&lt;アカウントID&gt;/partners/*</code></td>
+</tr>
+<tr>
+<td>原本の読み取り</td>
+<td>import-worker</td>
+<td><code>s3:GetObject</code></td>
+<td><code>arn:aws:s3:::rpg-stg-import-&lt;アカウントID&gt;/uploads/*</code></td>
+</tr>
+<tr>
+<td>送信リスト</td>
+<td>batch-runner</td>
+<td><code>s3:PutObject</code>,<code>s3:GetObject</code></td>
+<td><code>arn:aws:s3:::rpg-stg-notify-&lt;アカウントID&gt;/notify/*</code></td>
+</tr>
+<tr>
+<td>メール</td>
+<td>api-handler、batch-runner</td>
+<td><code>ses:SendEmail</code>,<code>ses:SendRawEmail</code></td>
+<td><code>arn:aws:ses:ap-northeast-1:&lt;アカウントID&gt;:identity/*</code></td>
+</tr>
+<tr>
+<td>利用者管理</td>
+<td>api-handler</td>
+<td><code>cognito-idp:AdminCreateUser</code>,<code>AdminAddUserToGroup</code>,<code>AdminRemoveUserFromGroup</code>,<code>AdminDisableUser</code>,<code>AdminEnableUser</code>,<code>AdminGetUser</code>,<code>ListUsers</code></td>
+<td><code>arn:aws:cognito-idp:ap-northeast-1:&lt;アカウントID&gt;:userpool/&lt;V-09 ユーザープールID&gt;</code></td>
+</tr>
+<tr>
+<td>利用者の削除</td>
+<td>batch-runner</td>
+<td><code>cognito-idp:AdminDeleteUser</code></td>
+<td>同上</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Action の <code>cognito-idp:</code> の接頭辞は各項目に付ける（表では2つ目以降を省略）</li>
+<li>どのロールも、自分の環境（<code>rpg-stg-</code>）のリソースしか指定しない。これで環境どうしの誤操作を防ぐ</li>
+</ul>
+<h3 id="s4-8"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.8 Lambda（4関数）</h3>
+<p><strong>(1) ロググループを先に作る（保持期間を決めるため）</strong></p>
+<p>「CloudWatch」→「ロググループ」→「ロググループを作成」で、次の4つを作る。保持期間はすべて <strong>30日</strong>、タグを付ける。</p>
+<ul>
+<li><code>/aws/lambda/rpg-stg-api-handler</code></li>
+<li><code>/aws/lambda/rpg-stg-grading-worker</code></li>
+<li><code>/aws/lambda/rpg-stg-import-worker</code></li>
+<li><code>/aws/lambda/rpg-stg-batch-runner</code></li>
+</ul>
+<p><strong>(2) 関数の作成</strong></p>
+<p>「Lambda」→「関数の作成」→「一から作成」で、次の4つを作る。共通の設定はランタイム <strong>Node.js 22.x</strong>、アーキテクチャ <strong>arm64</strong>、実行ロール「既存のロールを使用する」。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>関数名</th>
+<th>実行ロール</th>
+<th>メモリ</th>
+<th>タイムアウト</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-stg-api-handler</code></td>
+<td><code>rpg-stg-api-handler-role</code></td>
+<td>512 MB</td>
+<td><strong>29秒</strong></td>
+</tr>
+<tr>
+<td><code>rpg-stg-grading-worker</code></td>
+<td><code>rpg-stg-grading-worker-role</code></td>
+<td>512 MB</td>
+<td><strong>60秒</strong></td>
+</tr>
+<tr>
+<td><code>rpg-stg-import-worker</code></td>
+<td><code>rpg-stg-import-worker-role</code></td>
+<td>1024 MB</td>
+<td><strong>15分</strong></td>
+</tr>
+<tr>
+<td><code>rpg-stg-batch-runner</code></td>
+<td><code>rpg-stg-batch-runner-role</code></td>
+<td>256 MB</td>
+<td><strong>15分</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>作成後、関数ごとに次を行う。</p>
+<ol>
+<li>「コード」→「アップロード元」→「.zip ファイル」で、開発チームから受け取った zip をアップロードする</li>
+<li>「設定」→「一般設定」→「編集」で、メモリとタイムアウトを上の表のとおりにする</li>
+<li>「設定」→「タグ」で <code>Project</code>・<code>Environment</code> を付ける</li>
+<li>「設定」→「環境変数」で、次の値を入れる（変数名は 2026-10-19 に決定）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変数名</th>
+<th>値</th>
+<th>使う関数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>APP_ENV</code></td>
+<td><code>stg</code></td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ARN</code></td>
+<td>V-06</td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_SECRET_ARN</code></td>
+<td>V-07</td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_NAME</code></td>
+<td><code>rpg</code></td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>MODEL_HIGH</code></td>
+<td>V-02</td>
+<td>grading-worker、import-worker</td>
+</tr>
+<tr>
+<td><code>MODEL_LIGHT</code></td>
+<td>V-03</td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>GRADING_FUNCTION</code></td>
+<td><code>rpg-stg-grading-worker</code></td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>IMPORT_BUCKET</code></td>
+<td><code>rpg-stg-import-&lt;アカウントID&gt;</code></td>
+<td>api-handler、import-worker</td>
+</tr>
+<tr>
+<td><code>ASSETS_BUCKET</code></td>
+<td><code>rpg-stg-assets-&lt;アカウントID&gt;</code></td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>NOTIFY_BUCKET</code></td>
+<td><code>rpg-stg-notify-&lt;アカウントID&gt;</code></td>
+<td>batch-runner</td>
+</tr>
+<tr>
+<td><code>USER_POOL_ID</code></td>
+<td>V-09 のユーザープールID</td>
+<td>api-handler、batch-runner</td>
+</tr>
+<tr>
+<td><code>MAIL_FROM</code></td>
+<td>2.4 で登録した送信元（ドメイン決定後は <code>no-reply@&lt;ドメイン&gt;</code>）</td>
+<td>api-handler、batch-runner</td>
+</tr>
+<tr>
+<td><code>APP_URL</code></td>
+<td><code>https://&lt;V-08 のドメイン&gt;</code></td>
+<td>api-handler、batch-runner</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(3) 関数ごとに追加設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>関数</th>
+<th>追加の設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>grading-worker</td>
+<td>「設定」→「非同期呼び出し」→ 再試行 <strong>0回</strong>（同じ説明文を二重に採点しない。失敗時は学習者が「もう一度採点してもらう」を押す）</td>
+</tr>
+<tr>
+<td>import-worker</td>
+<td>「トリガーを追加」→ SQS <code>rpg-stg-import-queue</code>、バッチサイズ <strong>1</strong>、「部分的なバッチ応答を報告」オン</td>
+</tr>
+<tr>
+<td>import-worker</td>
+<td>「設定」→「同時実行」→ 予約された同時実行 <strong>2</strong>（Bedrock の使いすぎを防ぐ）</td>
+</tr>
+<tr>
+<td>batch-runner</td>
+<td>「設定」→「非同期呼び出し」→ 再試行 <strong>2回</strong>（外部設計書 6.3）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>予約された同時実行を設定できない（アカウントの同時実行数の上限が10など小さい）場合は、設定せずに進め、「Service Quotas」で Lambda の「同時実行数」の引き上げを申請する</li>
+</ul>
+<p><strong>(4) 動作の確認</strong></p>
+<p><code>rpg-stg-api-handler</code> の「テスト」タブで、開発チームが用意した確認用イベント（例：ヘルスチェック）を実行し、成功することを確かめる。DB が止まっている場合、1回目は起動待ちで失敗することがある。</p>
+<h3 id="s4-9"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.9 API Gateway（HTTP API）</h3>
+<ol>
+<li>「API Gateway」→「API を作成」→ <strong>HTTP API</strong> の「構築」</li>
+<li>統合「Lambda」→ <code>rpg-stg-api-handler</code>、バージョン 2.0。API 名 <code>rpg-stg-api</code></li>
+<li>ルート：メソッド <strong>ANY</strong>、パス <strong><code>/api/{proxy+}</code></strong>、統合先 <code>rpg-stg-api-handler</code></li>
+<li>ステージ：<code>$default</code>、自動デプロイ オン。作成する</li>
+<li>左メニュー「認可」→「ルートに認可をアタッチ」→ <code>ANY /api/{proxy+}</code> を選び「オーソライザーを作成してアタッチ」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>タイプ</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>名前</td>
+<td><code>rpg-stg-cognito</code></td>
+</tr>
+<tr>
+<td>ID ソース</td>
+<td><code>$request.header.Authorization</code></td>
+</tr>
+<tr>
+<td>発行者URL</td>
+<td><code>https://cognito-idp.ap-northeast-1.amazonaws.com/&lt;V-09 ユーザープールID&gt;</code></td>
+</tr>
+<tr>
+<td>対象者</td>
+<td>V-09 のアプリクライアントID</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="6">
+<li>左メニュー「スロットリング」→ <code>$default</code> ステージを編集し、バーストの制限 <strong>50</strong>、レートの制限 <strong>20</strong> にする</li>
+<li>左メニュー「ログ記録」→ <code>$default</code> を選び、アクセスログを有効にする。ロググループは先に CloudWatch で <code>/aws/apigateway/rpg-stg-api</code>（保持 30日）を作って指定し、ログの形式は JSON</li>
+<li>「タグ」を付ける。API ID と「呼び出しURL」を控える（V-10）</li>
+</ol>
+<ul>
+<li>CORS は設定しない（画面とAPIを CloudFront の同じドメインで出すため）</li>
+<li>画面からは CloudFront 経由でしか呼ばないが、API Gateway のURLは公開される。JWT で守られているため、パイロット期間はこのままとする</li>
+</ul>
+<h3 id="s4-10"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.10 CloudFront に API を追加する</h3>
+<ol>
+<li>CloudFront の <code>rpg-stg-cdn</code> →「オリジン」→「オリジンを作成」<ul>
+<li>オリジンドメイン：<code>&lt;V-10 の API ID&gt;.execute-api.ap-northeast-1.amazonaws.com</code></li>
+<li>プロトコル：<strong>HTTPS のみ</strong>、名前 <code>api</code></li>
+</ul>
+</li>
+<li>「ビヘイビア」→「ビヘイビアを作成」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>パスパターン</td>
+<td><code>/api/*</code></td>
+</tr>
+<tr>
+<td>オリジン</td>
+<td><code>api</code></td>
+</tr>
+<tr>
+<td>ビューワープロトコルポリシー</td>
+<td>HTTPS のみ</td>
+</tr>
+<tr>
+<td>許可される HTTP メソッド</td>
+<td>GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE</td>
+</tr>
+<tr>
+<td>キャッシュポリシー</td>
+<td><strong>CachingDisabled</strong></td>
+</tr>
+<tr>
+<td>オリジンリクエストポリシー</td>
+<td><strong>AllViewerExceptHostHeader</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>ビヘイビアの並び順が <code>/api/*</code> → <code>/partners/*</code> → デフォルト <code>*</code> になっていることを確かめる（ビヘイビアは3つ。Free プランの上限は5つ）</li>
+<li>状態が「デプロイ済み」になるまで待つ（数分）</li>
+</ol>
+<h3 id="s4-11"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.11 EventBridge Scheduler（定期処理）</h3>
+<p>「Amazon EventBridge」→「スケジューラ」→「スケジュール」→「スケジュールを作成」で2つ作る。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>日次処理（B-01・B-02）</th>
+<th>メール送信（B-03）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>名前</td>
+<td><code>rpg-stg-daily</code></td>
+<td><code>rpg-stg-mail</code></td>
+</tr>
+<tr>
+<td>スケジュールのパターン</td>
+<td>定期的なスケジュール・cron ベース</td>
+<td>同左</td>
+</tr>
+<tr>
+<td>cron 式</td>
+<td><code>0 0 * * ? *</code></td>
+<td><code>0/30 6-22 * * ? *</code></td>
+</tr>
+<tr>
+<td>タイムゾーン</td>
+<td><strong>Asia/Tokyo</strong></td>
+<td><strong>Asia/Tokyo</strong></td>
+</tr>
+<tr>
+<td>フレックスタイムウィンドウ</td>
+<td>オフ</td>
+<td>オフ</td>
+</tr>
+<tr>
+<td>ターゲット</td>
+<td>AWS Lambda Invoke → <code>rpg-stg-batch-runner</code></td>
+<td>同左</td>
+</tr>
+<tr>
+<td>ペイロード</td>
+<td><code>{"job": "daily"}</code></td>
+<td><code>{"job": "mail"}</code></td>
+</tr>
+<tr>
+<td>再試行ポリシー</td>
+<td>最大再試行回数 2</td>
+<td>最大再試行回数 0（次の30分で送る）</td>
+</tr>
+<tr>
+<td>実行ロール</td>
+<td>新しいロールを作成 <code>rpg-stg-scheduler-role</code></td>
+<td>既存のロール <code>rpg-stg-scheduler-role</code></td>
+</tr>
+<tr>
+<td>状態</td>
+<td>有効</td>
+<td><strong>有効</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>メール送信の cron は 6:00〜22:30 に動くが、22:30 の送信リストは作られないため何も送らない（外部設計書 6.1 の 6:00〜22:00 の範囲になる）</li>
+<li>ペイロードの形は開発チームと合わせる</li>
+</ul>
+<h3 id="s4-12"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.12 CloudWatch アラーム（監視）</h3>
+<p>「CloudWatch」→「アラーム」→「アラームの作成」で、次の5つを作る。通知はすべて SNS <code>rpg-stg-alerts</code>、欠落データは「欠落データを良好として扱う」。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>アラーム名</th>
+<th>メトリクス</th>
+<th>条件</th>
+<th>期間</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-stg-api-5xx</code></td>
+<td>ApiGateway → <code>5xx</code>（ApiId＝V-10、Stage＝<code>$default</code>）合計</td>
+<td>5 以上</td>
+<td>5分</td>
+</tr>
+<tr>
+<td><code>rpg-stg-grading-errors</code></td>
+<td>Lambda → <code>Errors</code>（<code>rpg-stg-grading-worker</code>）合計</td>
+<td>3 以上</td>
+<td>1時間</td>
+</tr>
+<tr>
+<td><code>rpg-stg-grading-timeout</code></td>
+<td>下記のメトリクスフィルター <code>GradingTimeout</code> 合計</td>
+<td>3 以上</td>
+<td>1時間</td>
+</tr>
+<tr>
+<td><code>rpg-stg-batch-errors</code></td>
+<td>Lambda → <code>Errors</code>（<code>rpg-stg-batch-runner</code>）合計</td>
+<td>1 以上</td>
+<td>5分</td>
+</tr>
+<tr>
+<td><code>rpg-stg-import-dlq</code></td>
+<td>SQS → <code>ApproximateNumberOfMessagesVisible</code>（<code>rpg-stg-import-dlq</code>）最大</td>
+<td>1 以上</td>
+<td>5分</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>採点30秒超えのメトリクスフィルター</strong></p>
+<ol>
+<li>ロググループ <code>/aws/lambda/rpg-stg-api-handler</code> を開き「メトリクスフィルター」→「メトリクスフィルターを作成」</li>
+<li>フィルターパターン <code>GRADING_TIMEOUT</code>（画面に 504 を返すときにアプリが出すログ。開発チームと合わせる）</li>
+<li>名前空間 <code>rpg/stg</code>、メトリクス名 <code>GradingTimeout</code>、値 <code>1</code></li>
+</ol>
+<h3 id="s4-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>4.13 画面の配置と動作確認</h3>
+<p><strong>(1) 画面の配置</strong></p>
+<ol>
+<li>S3 の <code>rpg-stg-web-&lt;アカウントID&gt;</code> に、開発チームから受け取った画面一式（<code>index.html</code>・<code>manifest.webmanifest</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> など）をフォルダの構成のままアップロードする</li>
+<li>画面の設定ファイル（例：<code>js/config.js</code>）に、V-08・V-09 の値（CloudFront ドメイン、ユーザープールID、アプリクライアントID、Cognito ドメイン）が入っていることを確かめる</li>
+<li>CloudFront の <code>rpg-stg-cdn</code> →「キャッシュ削除」→「キャッシュ削除を作成」→ パス <code>/*</code></li>
+<li>キャラクター画像がある場合は、S-14 から登録する（ない場合は頭文字の表示のままでよい）</li>
+</ol>
+<p><strong>(2) 動作確認</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認すること</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code> を開く</td>
+<td>画面が表示され、Cognito のログイン画面に移る</td>
+</tr>
+<tr>
+<td>2</td>
+<td>4.6 で作った管理者でログイン</td>
+<td>新しいパスワードの設定を求められる。設定後に S-13 が開く</td>
+</tr>
+<tr>
+<td>3</td>
+<td>朝一番など、DB が止まっているときに操作する</td>
+<td>「ギルドの扉を開けています…」が出て、30秒以内に表示される</td>
+</tr>
+<tr>
+<td>4</td>
+<td>S-13 で学習者を1人招待する</td>
+<td>招待メールが届く</td>
+</tr>
+<tr>
+<td>5</td>
+<td>学習者でログイン</td>
+<td>ニックネーム → コース選択 → パートナー選択 → ホームの順に進む</td>
+</tr>
+<tr>
+<td>6</td>
+<td>S-11 で問題を取り込む（テキスト貼り付け）</td>
+<td>数分で下書きができ、公開できる</td>
+</tr>
+<tr>
+<td>7</td>
+<td>四肢択一とキーワード説明を解く</td>
+<td>結果とEXPが表示される。説明の採点が30秒以内に返る</td>
+</tr>
+<tr>
+<td>8</td>
+<td>10分ほど操作しない</td>
+<td>RDS コンソールで <code>rpg-stg-db</code> のインスタンスが「一時停止」（0 ACU）になる</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Lambda <code>rpg-stg-batch-runner</code> を「テスト」で <code>{"job": "daily"}</code> を付けて実行</td>
+<td>S3 の notify バケットに当日の送信リストができる</td>
+</tr>
+<tr>
+<td>10</td>
+<td>通知時刻を直近の30分枠にした学習者（SES に登録済みのアドレス）で待つ</td>
+<td>送信時刻にメールが届く</td>
+</tr>
+<tr>
+<td>11</td>
+<td>API Gateway のURLに直接トークンなしでアクセス</td>
+<td>401 が返る</td>
+</tr>
+<tr>
+<td>12</td>
+<td>請求の画面 → Cost Explorer をタグ <code>Environment</code> で絞る</td>
+<td><code>stg</code> の費用が見える（反映は翌日以降）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>stg の完了条件</strong>：上の確認がすべて終わり、コース管理者が S-11〜S-14 を操作して問題がないこと。</p>
+
+</section><section class="chapter" id="ch5"><h2><i aria-hidden="true" class="fa-solid fa-rocket h-ico"></i>5. prod 環境の構築<span class="env-badge env-prod">prod・本番</span></h2>
+<p>パイロット本番の環境。stg での確認が終わってから作る。<strong>削除保護をオンにする</strong> 点と、アラームの通知先にシステム管理者を入れる点が dev・stg と違う。</p>
+<h3 id="s5-0"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.0 この章で使う値</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>prod の値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>接頭辞</td>
+<td><code>rpg-prod-</code></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>prod</code></td>
+</tr>
+<tr>
+<td>Aurora の容量</td>
+<td>0〜4 ACU（自動停止）</td>
+</tr>
+<tr>
+<td>Aurora のバックアップ保持</td>
+<td><strong>7日</strong></td>
+</tr>
+<tr>
+<td>削除保護</td>
+<td><strong>オン</strong></td>
+</tr>
+<tr>
+<td>ログの保持</td>
+<td><strong>90日</strong></td>
+</tr>
+<tr>
+<td>アラームの通知先</td>
+<td>システム管理者・開発者</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>控える値（この環境）</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>記号</th>
+<th>値</th>
+<th>メモ欄</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V-04</td>
+<td>SNS トピック ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-05</td>
+<td>SQS キュー ARN・URL</td>
+<td></td>
+</tr>
+<tr>
+<td>V-06</td>
+<td>Aurora クラスター ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-07</td>
+<td>Aurora シークレット ARN</td>
+<td></td>
+</tr>
+<tr>
+<td>V-08</td>
+<td>CloudFront ドメイン名・ディストリビューションID</td>
+<td></td>
+</tr>
+<tr>
+<td>V-09</td>
+<td>Cognito ユーザープールID・アプリクライアントID・ドメイン</td>
+<td></td>
+</tr>
+<tr>
+<td>V-10</td>
+<td>API ID・API のURL</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s5-1"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.1 SNS（アラームの通知先）</h3>
+<ol>
+<li>「Amazon SNS」→「トピック」→「トピックの作成」</li>
+<li>タイプ <strong>スタンダード</strong>、名前 <code>rpg-prod-alerts</code>、タグ <code>Project</code>・<code>Environment</code> を付けて作成する</li>
+<li>トピックの ARN を控える（V-04）</li>
+<li>「サブスクリプションの作成」→ プロトコル <strong>Eメール</strong>、エンドポイントに システム管理者・開発者 のアドレスを入れて作成する。複数人なら人数分作る</li>
+<li>届いたメールの「Confirm subscription」を押す。状態が「確認済み」になったことを確かめる</li>
+</ol>
+<h3 id="s5-2"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.2 S3（バケット4つ）</h3>
+<p>「Amazon S3」→「バケットを作成」で、次の4つを作る。どれも共通の設定は下の表のとおり。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>バケット名</th>
+<th>用途</th>
+<th>追加の設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-prod-web-&lt;アカウントID&gt;</code></td>
+<td>画面（HTML・CSS・JS）</td>
+<td>なし</td>
+</tr>
+<tr>
+<td><code>rpg-prod-assets-&lt;アカウントID&gt;</code></td>
+<td>AIパートナーの紋章画像（<code>partners/</code> の下）</td>
+<td>CORS（下記）</td>
+</tr>
+<tr>
+<td><code>rpg-prod-import-&lt;アカウントID&gt;</code></td>
+<td>問題取り込みの原本</td>
+<td>CORS（下記）、90日で削除</td>
+</tr>
+<tr>
+<td><code>rpg-prod-notify-&lt;アカウントID&gt;</code></td>
+<td>通知の送信リスト（<code>notify/日付/時刻.json</code>）</td>
+<td>7日で削除</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>共通の設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>リージョン</td>
+<td>アジアパシフィック（東京）</td>
+</tr>
+<tr>
+<td>バケットタイプ</td>
+<td>汎用</td>
+</tr>
+<tr>
+<td>オブジェクト所有者</td>
+<td>ACL無効（推奨）</td>
+</tr>
+<tr>
+<td>パブリックアクセスをすべてブロック</td>
+<td><strong>オン</strong>（4つのチェックすべて）</td>
+</tr>
+<tr>
+<td>バージョニング</td>
+<td>無効</td>
+</tr>
+<tr>
+<td>タグ</td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>prod</code></td>
+</tr>
+<tr>
+<td>暗号化</td>
+<td>SSE-S3（既定のまま）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>ライフサイクル（import・notify）</strong></p>
+<ol>
+<li>バケットを開き「管理」タブ →「ライフサイクルルールを作成する」</li>
+<li>ルール名 <code>expire</code>、範囲「バケット内のすべてのオブジェクトに適用」</li>
+<li>「オブジェクトの現行バージョンを有効期限切れにする」にチェックし、import は <strong>90日</strong>、notify は <strong>7日</strong> を入れて作成する</li>
+</ol>
+<p><strong>CORS（assets・import）</strong></p>
+<p>画面から署名付きURLで直接アップロードするために設定する。バケットを開き「アクセス許可」タブ →「CORS」→「編集」に次を貼り付ける。<code>&lt;CloudFrontのドメイン&gt;</code> は 5.5 のあとで分かるので、5.5 が終わってから戻って入れる。</p>
+<pre><code class="language-json">[
+  {
+    "AllowedOrigins": ["https://&lt;CloudFrontのドメイン&gt;"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["*"],
+    "MaxAgeSeconds": 3000
+  }
+]
+</code></pre>
+<h3 id="s5-3"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.3 SQS（取り込みキューとDLQ）</h3>
+<p><strong>(1) デッドレターキュー（失敗した取り込みの置き場）</strong></p>
+<ol>
+<li>「Amazon SQS」→「キューを作成」</li>
+<li>タイプ <strong>標準</strong>、名前 <code>rpg-prod-import-dlq</code></li>
+<li>メッセージ保持期間 <strong>14日</strong>、その他は既定のまま。タグを付けて作成する</li>
+</ol>
+<p><strong>(2) 取り込みキュー</strong></p>
+<ol>
+<li>「キューを作成」→ タイプ <strong>標準</strong>、名前 <code>rpg-prod-import-queue</code></li>
+<li>次のとおり設定する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可視性タイムアウト</td>
+<td><strong>90分</strong></td>
+<td><code>import-worker</code> のタイムアウト（15分）の6倍（AWSの推奨）</td>
+</tr>
+<tr>
+<td>メッセージ保持期間</td>
+<td>4日</td>
+<td>既定</td>
+</tr>
+<tr>
+<td>受信メッセージ待機時間</td>
+<td>20秒</td>
+<td>空振りの受信を減らす</td>
+</tr>
+<tr>
+<td>デッドレターキュー</td>
+<td>有効。<code>rpg-prod-import-dlq</code>、最大受信数 <strong>3</strong></td>
+<td>外部設計書 4.10（最大3回やり直し）</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>「アクセスポリシー」で「アドバンスト」を選び、次の JSON に置き換える（S3 からの通知を受け取るため）</li>
+</ol>
+<pre><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3Upload",
+      "Effect": "Allow",
+      "Principal": {"Service": "s3.amazonaws.com"},
+      "Action": "sqs:SendMessage",
+      "Resource": "arn:aws:sqs:ap-northeast-1:&lt;アカウントID&gt;:rpg-prod-import-queue",
+      "Condition": {
+        "ArnLike": {"aws:SourceArn": "arn:aws:s3:::rpg-prod-import-&lt;アカウントID&gt;"},
+        "StringEquals": {"aws:SourceAccount": "&lt;アカウントID&gt;"}
+      }
+    }
+  ]
+}
+</code></pre>
+<ol start="4">
+<li>タグを付けて作成する。キューの ARN と URL を控える（V-05）</li>
+</ol>
+<p><strong>(3) S3 からの通知を設定する</strong></p>
+<ol>
+<li>S3 のバケット <code>rpg-prod-import-&lt;アカウントID&gt;</code> を開き「プロパティ」タブ →「イベント通知」→「イベント通知を作成」</li>
+<li>名前 <code>to-import-queue</code>、プレフィックス <code>uploads/</code>、イベントタイプ「すべてのオブジェクト作成イベント」</li>
+<li>送信先「SQS キュー」→ <code>rpg-prod-import-queue</code> を選んで保存する</li>
+</ol>
+<h3 id="s5-4"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.4 Aurora PostgreSQL Serverless v2</h3>
+<p><strong>(1) データベースの作成</strong></p>
+<ol>
+<li>「Amazon RDS」→「データベースの作成」→「標準作成」</li>
+<li>次のとおり設定する（書いていない項目は既定のまま）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>区分</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>エンジン</td>
+<td>エンジンのタイプ</td>
+<td><strong>Aurora (PostgreSQL Compatible)</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>エンジンバージョン</td>
+<td>選べる最新の PostgreSQL 17系 または 16系（16.3 以降。0 ACU に対応したバージョン）</td>
+</tr>
+<tr>
+<td></td>
+<td>RDS Data API</td>
+<td><strong>有効にする</strong>（「RDS Data API を有効にする」にチェック）</td>
+</tr>
+<tr>
+<td>テンプレート</td>
+<td></td>
+<td><strong>開発/テスト</strong>（Aurora レプリカは作らない＝コスト最小方針）</td>
+</tr>
+<tr>
+<td>設定</td>
+<td>DB クラスター識別子</td>
+<td><code>rpg-prod-db</code></td>
+</tr>
+<tr>
+<td></td>
+<td>マスターユーザー名</td>
+<td><code>rpgadmin</code></td>
+</tr>
+<tr>
+<td></td>
+<td>認証情報の管理</td>
+<td><strong>AWS Secrets Manager で管理</strong></td>
+</tr>
+<tr>
+<td>クラスターストレージ</td>
+<td>設定</td>
+<td>Aurora スタンダード</td>
+</tr>
+<tr>
+<td>インスタンスの設定</td>
+<td>DB インスタンスクラス</td>
+<td><strong>Serverless v2</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>最小キャパシティ</td>
+<td><strong>0 ACU</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>最大キャパシティ</td>
+<td><strong>4 ACU</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>非アクティブ後に一時停止するまでの時間</td>
+<td><strong>300 秒</strong>（5分）</td>
+</tr>
+<tr>
+<td>可用性</td>
+<td>Aurora レプリカ</td>
+<td>作成しない</td>
+</tr>
+<tr>
+<td>接続</td>
+<td>コンピューティングリソース</td>
+<td>EC2 に接続しない</td>
+</tr>
+<tr>
+<td></td>
+<td>VPC</td>
+<td>デフォルト VPC</td>
+</tr>
+<tr>
+<td></td>
+<td>パブリックアクセス</td>
+<td><strong>なし</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>VPC セキュリティグループ</td>
+<td>新規作成 <code>rpg-prod-db-sg</code>（インバウンドのルールは追加しない。Data API だけで使う）</td>
+</tr>
+<tr>
+<td>モニタリング</td>
+<td>Performance Insights・拡張モニタリング</td>
+<td>オフ（費用を抑える）</td>
+</tr>
+<tr>
+<td>追加設定</td>
+<td>最初のデータベース名</td>
+<td><code>rpg</code></td>
+</tr>
+<tr>
+<td></td>
+<td>バックアップ保持期間</td>
+<td><strong>7日</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>暗号化</td>
+<td>有効（既定の <code>aws/rds</code> キー）</td>
+</tr>
+<tr>
+<td></td>
+<td>ログのエクスポート</td>
+<td>オフ</td>
+</tr>
+<tr>
+<td></td>
+<td>削除保護</td>
+<td><strong>オン</strong></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td></td>
+<td><code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>prod</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>「データベースの作成」を押す。作成には10〜20分かかる</li>
+<li>作成後、クラスター <code>rpg-prod-db</code> を開き、次を確かめて控える<ul>
+<li>「設定」タブ：容量 0〜4 ACU、一時停止までの時間 300秒</li>
+<li>「接続とセキュリティ」タブ：RDS Data API が <strong>有効</strong>（無効なら「変更」から有効にする）</li>
+<li>クラスターの ARN（V-06）</li>
+<li>「設定」タブの「マスター認証情報 ARN」＝シークレットの ARN（V-07）</li>
+</ul>
+</li>
+</ol>
+<p><strong>(2) テーブルの作成（クエリエディタ）</strong></p>
+<ol>
+<li>RDS の左メニュー「クエリエディタ」を開く</li>
+<li>データベース <code>rpg-prod-db</code>、ユーザー「Secrets Manager ARN で接続」に V-07、データベース名 <code>rpg</code> を入れて接続する<ul>
+<li>止まっている場合は起動に15〜30秒かかる。エラーになったら少し待ってもう一度接続する</li>
+</ul>
+</li>
+<li>開発チームから受け取ったテーブル作成のSQL（外部設計書 第7章に基づくもの）を貼り付けて実行する</li>
+<li><code>SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';</code> を実行し、テーブルができたことを確かめる</li>
+</ol>
+<blockquote>
+<p>マスターユーザーのパスワードは Secrets Manager が7日ごとに自動で変える。Data API は常に最新の値を読むので、アプリ側の作業はない。</p>
+</blockquote>
+<h3 id="s5-5"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.5 CloudFront（画面の配信）</h3>
+<p><strong>(1) ディストリビューションの作成</strong></p>
+<ol>
+<li>「CloudFront」→「ディストリビューションを作成」</li>
+<li>料金プランで <strong>Free</strong> を選ぶ（第1.6節）</li>
+<li>次のとおり設定する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ディストリビューション名</td>
+<td><code>rpg-prod-cdn</code></td>
+</tr>
+<tr>
+<td>種類</td>
+<td>単一のWebサイトまたはアプリ</td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>指定しない（ドメイン決定後に第6章で追加）</td>
+</tr>
+<tr>
+<td>オリジンのタイプ</td>
+<td>Amazon S3</td>
+</tr>
+<tr>
+<td>S3 オリジン</td>
+<td><code>rpg-prod-web-&lt;アカウントID&gt;</code></td>
+</tr>
+<tr>
+<td>オリジンの設定</td>
+<td>「推奨設定を使う」（オリジンアクセスコントロール（OAC）を作り、バケットポリシーも自動で更新する）</td>
+</tr>
+<tr>
+<td>キャッシュの設定</td>
+<td>推奨設定（CachingOptimized）</td>
+</tr>
+<tr>
+<td>セキュリティ（WAF）</td>
+<td>Free プランに付く AWS WAF の既定の保護をそのまま使う（外せない。ルールの見直しは第7章）</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="4">
+<li>作成後、ディストリビューションを開き「一般」タブの「設定」→「編集」で、<strong>デフォルトルートオブジェクト</strong> に <code>index.html</code> を入れて保存する</li>
+<li>「ディストリビューションドメイン名」（<code>xxxx.cloudfront.net</code>）とディストリビューションIDを控える（V-08）</li>
+<li>S3 のバケット <code>rpg-prod-web-&lt;アカウントID&gt;</code> の「アクセス許可」→「バケットポリシー」に、CloudFront からの読み取りを許可する文が入っていることを確かめる</li>
+</ol>
+<p><strong>(2) 紋章画像のオリジンを追加する</strong></p>
+<ol>
+<li>ディストリビューションの「オリジン」タブ →「オリジンを作成」</li>
+<li>オリジンドメインで <code>rpg-prod-assets-&lt;アカウントID&gt;</code> を選び、「オリジンアクセス」で <strong>Origin access control settings</strong> を選ぶ。OAC は「新規作成」で <code>rpg-prod-assets-oac</code></li>
+<li>作成後に表示される「ポリシーをコピー」を押し、S3 の assets バケットの「バケットポリシー」に貼り付けて保存する</li>
+<li>「ビヘイビア」タブ →「ビヘイビアを作成」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>パスパターン</td>
+<td><code>/partners/*</code></td>
+</tr>
+<tr>
+<td>オリジン</td>
+<td>assets バケット</td>
+</tr>
+<tr>
+<td>ビューワープロトコルポリシー</td>
+<td>HTTP を HTTPS にリダイレクト</td>
+</tr>
+<tr>
+<td>許可される HTTP メソッド</td>
+<td>GET, HEAD</td>
+</tr>
+<tr>
+<td>キャッシュポリシー</td>
+<td>CachingOptimized</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="5">
+<li>「5.2 の CORS」に戻り、<code>&lt;CloudFrontのドメイン&gt;</code> を V-08 のドメインにして保存する</li>
+</ol>
+<h3 id="s5-6"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.6 Cognito（ログイン）</h3>
+<p><strong>(1) ユーザープールの作成</strong></p>
+<ol>
+<li>「Amazon Cognito」→「ユーザープールを作成」</li>
+<li>次のとおり入力して作成する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>アプリケーションタイプ</td>
+<td><strong>シングルページアプリケーション（SPA）</strong></td>
+</tr>
+<tr>
+<td>アプリケーション名</td>
+<td><code>rpg-prod-web</code></td>
+</tr>
+<tr>
+<td>サインイン識別子</td>
+<td><strong>メールアドレス</strong></td>
+</tr>
+<tr>
+<td>自己登録</td>
+<td><strong>有効にしない</strong>（管理者が招待する）</td>
+</tr>
+<tr>
+<td>サインアップの必須属性</td>
+<td>email</td>
+</tr>
+<tr>
+<td>リターンURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>作成されたユーザープールを開き、右上の「名前を変更」で <code>rpg-prod-users</code> にする</li>
+<li>ユーザープールID（<code>ap-northeast-1_xxxx</code>）を控える（V-09）</li>
+</ol>
+<p><strong>(2) 認証の設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>メニュー</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>認証方法 → パスワードポリシー</td>
+<td>モード</td>
+<td>カスタム</td>
+</tr>
+<tr>
+<td></td>
+<td>最小文字数</td>
+<td><strong>8</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>必須</td>
+<td><strong>数字・大文字・小文字</strong>（特殊文字は必須にしない）</td>
+</tr>
+<tr>
+<td></td>
+<td>仮パスワードの有効期限</td>
+<td>7日</td>
+</tr>
+<tr>
+<td>認証方法 → 多要素認証</td>
+<td>MFA</td>
+<td>なし（パイロット期間。Phase 3 で見直し）</td>
+</tr>
+<tr>
+<td>サインアップ</td>
+<td>自己登録</td>
+<td>無効</td>
+</tr>
+<tr>
+<td>サインイン → アカウントの復旧</td>
+<td>復旧方法</td>
+<td>Eメールのみ</td>
+</tr>
+<tr>
+<td>設定 → 機能プラン</td>
+<td>プラン</td>
+<td>Essentials（マネージドログインを使うため）</td>
+</tr>
+<tr>
+<td>設定 → 削除保護</td>
+<td></td>
+<td><strong>オン</strong></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td></td>
+<td><code>Project</code>・<code>Environment</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(3) グループ</strong></p>
+<p>「グループ」→「グループを作成」で3つ作る。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>グループ名</th>
+<th>優先順位</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>system_admin</code></td>
+<td>1</td>
+<td>システム管理者</td>
+</tr>
+<tr>
+<td><code>course_admin</code></td>
+<td>2</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td><code>learner</code></td>
+<td>3</td>
+<td>学習者</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(4) アプリクライアント</strong></p>
+<p>「アプリケーションクライアント」→ <code>rpg-prod-web</code> を開き、各タブを次のとおり編集する。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>タブ</th>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>アプリケーションクライアント情報</td>
+<td>クライアントシークレット</td>
+<td>なし（SPA のため）</td>
+</tr>
+<tr>
+<td></td>
+<td>認証フロー</td>
+<td><code>ALLOW_REFRESH_TOKEN_AUTH</code>・<code>ALLOW_USER_SRP_AUTH</code></td>
+</tr>
+<tr>
+<td></td>
+<td>IDトークン・アクセストークンの有効期限</td>
+<td><strong>60分</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>更新トークンの有効期限</td>
+<td><strong>7日</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>トークンの取り消し</td>
+<td>有効</td>
+</tr>
+<tr>
+<td>ログインページ</td>
+<td>許可されているコールバックURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+<tr>
+<td></td>
+<td>許可されているサインアウトURL</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code></td>
+</tr>
+<tr>
+<td></td>
+<td>OAuth 2.0 許可タイプ</td>
+<td><strong>認証コード付与</strong>（PKCE は画面側で使う）</td>
+</tr>
+<tr>
+<td></td>
+<td>OpenID Connect のスコープ</td>
+<td><code>openid</code>・<code>email</code>・<code>profile</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>アプリクライアントIDを控える（V-09）。</p>
+<p><strong>(5) ドメインとログイン画面</strong></p>
+<ol>
+<li>「ブランディング」→「ドメイン」→「Cognito ドメインを作成」で、プレフィックス <code>rpg-prod-&lt;社名などの短い文字&gt;</code> を入れる（世界で重複できない）。ブランディングのバージョンは <strong>マネージドログイン</strong></li>
+<li>「ブランディング」→「マネージドログイン」→「スタイルを作成」で、アプリクライアント <code>rpg-prod-web</code> を選んで既定のスタイルで作る（色の調整は任意）</li>
+<li>ドメイン（<code>rpg-prod-xxxx.auth.ap-northeast-1.amazoncognito.com</code>）を控える（V-09）<ul>
+<li>画面側はログイン画面を開くときに <code>lang=ja</code> を付けて日本語で表示する</li>
+</ul>
+</li>
+</ol>
+<p><strong>(6) 招待メールの文面</strong></p>
+<p>「認証方法」→「メッセージテンプレート」→「招待メッセージ」を編集する（外部設計書 5.6）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>件名</td>
+<td>【RPG学習アプリ】ギルドへの招待</td>
+</tr>
+<tr>
+<td>本文</td>
+<td>冒険者ギルドへようこそ。<br/>ログインURL：<code>https://&lt;V-08 のドメイン&gt;/</code><br/>メールアドレス：{username}<br/>仮パスワード：{####}<br/>初回ログイン時に新しいパスワードを設定してください。</td>
+</tr>
+</tbody>
+</table></div>
+<p>ドメインが決まるまでは、招待メールは Cognito の既定の送信元（<code>no-reply@verificationemail.com</code>）から送る。1日50通までの制限があるが、パイロット10名なら足りる。ドメイン決定後に第6章で SES からの送信に切り替える。</p>
+<blockquote>
+<p>SES がサンドボックスの間は、学習のお知らせメールは 2.4 で登録したアドレスにしか届かない。パイロット開始までに、第6章でドメインを登録して本番利用の申請（2.4 (2)）を済ませる。間に合わない場合は、パイロットの10名のアドレスを 2.4 (1) の手順で登録しておく。</p>
+</blockquote>
+<p><strong>(7) 最初のシステム管理者を作る</strong></p>
+<ol>
+<li>「ユーザー」→「ユーザーを作成」→「招待メッセージを送信」、メールアドレスを入れ、「Eメールアドレスを検証済みとしてマーク」にチェック、仮パスワードは「パスワードを生成」で作成する</li>
+<li>作成したユーザーを開き「グループにユーザーを追加」→ <code>system_admin</code> と <code>learner</code> に入れる</li>
+</ol>
+<h3 id="s5-7"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.7 IAM ロール（Lambda 4関数用）</h3>
+<p>「IAM」→「ロール」→「ロールを作成」で、関数ごとに1つ作る。手順は4つとも同じ。</p>
+<ol>
+<li>信頼されたエンティティ「AWS のサービス」→ ユースケース <strong>Lambda</strong></li>
+<li>許可ポリシーで <code>AWSLambdaBasicExecutionRole</code> を付ける（import-worker は <code>AWSLambdaSQSQueueExecutionRole</code> も付ける）</li>
+<li>ロール名を入れ、タグを付けて作成する</li>
+<li>作成したロールを開き「許可を追加」→「インラインポリシーを作成」→「JSON」に下のポリシーを貼り、名前 <code>app</code> で保存する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ロール名</th>
+<th>インラインポリシー</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-prod-api-handler-role</code></td>
+<td>共通DB ＋ Haiku ＋ 採点の起動 ＋ 画像・取り込みのURL発行 ＋ 利用者管理 ＋ メール</td>
+</tr>
+<tr>
+<td><code>rpg-prod-grading-worker-role</code></td>
+<td>共通DB ＋ Sonnet</td>
+</tr>
+<tr>
+<td><code>rpg-prod-import-worker-role</code></td>
+<td>共通DB ＋ Sonnet ＋ 原本の読み取り</td>
+</tr>
+<tr>
+<td><code>rpg-prod-batch-runner-role</code></td>
+<td>共通DB ＋ 送信リスト ＋ メール ＋ 利用者の削除</td>
+</tr>
+</tbody>
+</table></div>
+<p>ポリシーは、下の部品（Statement）を組み合わせて1つの JSON にする。<code>&lt;アカウントID&gt;</code>・<code>&lt;V-02&gt;</code> などは控えた値に置き換える。</p>
+<pre><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DataApi",
+      "Effect": "Allow",
+      "Action": ["rds-data:ExecuteStatement", "rds-data:BatchExecuteStatement", "rds-data:BeginTransaction", "rds-data:CommitTransaction", "rds-data:RollbackTransaction"],
+      "Resource": "&lt;V-06 クラスターARN&gt;"
+    },
+    {
+      "Sid": "DbSecret",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "&lt;V-07 シークレットARN&gt;"
+    }
+  ]
+}
+</code></pre>
+<p><strong>関数ごとに追加する部品</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>部品</th>
+<th>付けるロール</th>
+<th>Action</th>
+<th>Resource</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Haiku</td>
+<td>api-handler</td>
+<td><code>bedrock:InvokeModel</code></td>
+<td><code>arn:aws:bedrock:ap-northeast-1::foundation-model/&lt;V-03&gt;</code></td>
+</tr>
+<tr>
+<td>Sonnet</td>
+<td>grading-worker、import-worker</td>
+<td><code>bedrock:InvokeModel</code></td>
+<td><code>arn:aws:bedrock:ap-northeast-1::foundation-model/&lt;V-02&gt;</code></td>
+</tr>
+<tr>
+<td>採点の起動</td>
+<td>api-handler</td>
+<td><code>lambda:InvokeFunction</code></td>
+<td><code>arn:aws:lambda:ap-northeast-1:&lt;アカウントID&gt;:function:rpg-prod-grading-worker</code></td>
+</tr>
+<tr>
+<td>URL発行</td>
+<td>api-handler</td>
+<td><code>s3:PutObject</code>,<code>s3:DeleteObject</code></td>
+<td><code>arn:aws:s3:::rpg-prod-import-&lt;アカウントID&gt;/uploads/*</code>,<code>arn:aws:s3:::rpg-prod-assets-&lt;アカウントID&gt;/partners/*</code></td>
+</tr>
+<tr>
+<td>原本の読み取り</td>
+<td>import-worker</td>
+<td><code>s3:GetObject</code></td>
+<td><code>arn:aws:s3:::rpg-prod-import-&lt;アカウントID&gt;/uploads/*</code></td>
+</tr>
+<tr>
+<td>送信リスト</td>
+<td>batch-runner</td>
+<td><code>s3:PutObject</code>,<code>s3:GetObject</code></td>
+<td><code>arn:aws:s3:::rpg-prod-notify-&lt;アカウントID&gt;/notify/*</code></td>
+</tr>
+<tr>
+<td>メール</td>
+<td>api-handler、batch-runner</td>
+<td><code>ses:SendEmail</code>,<code>ses:SendRawEmail</code></td>
+<td><code>arn:aws:ses:ap-northeast-1:&lt;アカウントID&gt;:identity/*</code></td>
+</tr>
+<tr>
+<td>利用者管理</td>
+<td>api-handler</td>
+<td><code>cognito-idp:AdminCreateUser</code>,<code>AdminAddUserToGroup</code>,<code>AdminRemoveUserFromGroup</code>,<code>AdminDisableUser</code>,<code>AdminEnableUser</code>,<code>AdminGetUser</code>,<code>ListUsers</code></td>
+<td><code>arn:aws:cognito-idp:ap-northeast-1:&lt;アカウントID&gt;:userpool/&lt;V-09 ユーザープールID&gt;</code></td>
+</tr>
+<tr>
+<td>利用者の削除</td>
+<td>batch-runner</td>
+<td><code>cognito-idp:AdminDeleteUser</code></td>
+<td>同上</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Action の <code>cognito-idp:</code> の接頭辞は各項目に付ける（表では2つ目以降を省略）</li>
+<li>どのロールも、自分の環境（<code>rpg-prod-</code>）のリソースしか指定しない。これで環境どうしの誤操作を防ぐ</li>
+</ul>
+<h3 id="s5-8"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.8 Lambda（4関数）</h3>
+<p><strong>(1) ロググループを先に作る（保持期間を決めるため）</strong></p>
+<p>「CloudWatch」→「ロググループ」→「ロググループを作成」で、次の4つを作る。保持期間はすべて <strong>90日</strong>、タグを付ける。</p>
+<ul>
+<li><code>/aws/lambda/rpg-prod-api-handler</code></li>
+<li><code>/aws/lambda/rpg-prod-grading-worker</code></li>
+<li><code>/aws/lambda/rpg-prod-import-worker</code></li>
+<li><code>/aws/lambda/rpg-prod-batch-runner</code></li>
+</ul>
+<p><strong>(2) 関数の作成</strong></p>
+<p>「Lambda」→「関数の作成」→「一から作成」で、次の4つを作る。共通の設定はランタイム <strong>Node.js 22.x</strong>、アーキテクチャ <strong>arm64</strong>、実行ロール「既存のロールを使用する」。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>関数名</th>
+<th>実行ロール</th>
+<th>メモリ</th>
+<th>タイムアウト</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-prod-api-handler</code></td>
+<td><code>rpg-prod-api-handler-role</code></td>
+<td>512 MB</td>
+<td><strong>29秒</strong></td>
+</tr>
+<tr>
+<td><code>rpg-prod-grading-worker</code></td>
+<td><code>rpg-prod-grading-worker-role</code></td>
+<td>512 MB</td>
+<td><strong>60秒</strong></td>
+</tr>
+<tr>
+<td><code>rpg-prod-import-worker</code></td>
+<td><code>rpg-prod-import-worker-role</code></td>
+<td>1024 MB</td>
+<td><strong>15分</strong></td>
+</tr>
+<tr>
+<td><code>rpg-prod-batch-runner</code></td>
+<td><code>rpg-prod-batch-runner-role</code></td>
+<td>256 MB</td>
+<td><strong>15分</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>作成後、関数ごとに次を行う。</p>
+<ol>
+<li>「コード」→「アップロード元」→「.zip ファイル」で、開発チームから受け取った zip をアップロードする</li>
+<li>「設定」→「一般設定」→「編集」で、メモリとタイムアウトを上の表のとおりにする</li>
+<li>「設定」→「タグ」で <code>Project</code>・<code>Environment</code> を付ける</li>
+<li>「設定」→「環境変数」で、次の値を入れる（変数名は 2026-10-19 に決定）</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変数名</th>
+<th>値</th>
+<th>使う関数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>APP_ENV</code></td>
+<td><code>prod</code></td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_CLUSTER_ARN</code></td>
+<td>V-06</td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_SECRET_ARN</code></td>
+<td>V-07</td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>DB_NAME</code></td>
+<td><code>rpg</code></td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>MODEL_HIGH</code></td>
+<td>V-02</td>
+<td>grading-worker、import-worker</td>
+</tr>
+<tr>
+<td><code>MODEL_LIGHT</code></td>
+<td>V-03</td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>GRADING_FUNCTION</code></td>
+<td><code>rpg-prod-grading-worker</code></td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>IMPORT_BUCKET</code></td>
+<td><code>rpg-prod-import-&lt;アカウントID&gt;</code></td>
+<td>api-handler、import-worker</td>
+</tr>
+<tr>
+<td><code>ASSETS_BUCKET</code></td>
+<td><code>rpg-prod-assets-&lt;アカウントID&gt;</code></td>
+<td>api-handler</td>
+</tr>
+<tr>
+<td><code>NOTIFY_BUCKET</code></td>
+<td><code>rpg-prod-notify-&lt;アカウントID&gt;</code></td>
+<td>batch-runner</td>
+</tr>
+<tr>
+<td><code>USER_POOL_ID</code></td>
+<td>V-09 のユーザープールID</td>
+<td>api-handler、batch-runner</td>
+</tr>
+<tr>
+<td><code>MAIL_FROM</code></td>
+<td>2.4 で登録した送信元（ドメイン決定後は <code>no-reply@&lt;ドメイン&gt;</code>）</td>
+<td>api-handler、batch-runner</td>
+</tr>
+<tr>
+<td><code>APP_URL</code></td>
+<td><code>https://&lt;V-08 のドメイン&gt;</code></td>
+<td>api-handler、batch-runner</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>(3) 関数ごとに追加設定</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>関数</th>
+<th>追加の設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>grading-worker</td>
+<td>「設定」→「非同期呼び出し」→ 再試行 <strong>0回</strong>（同じ説明文を二重に採点しない。失敗時は学習者が「もう一度採点してもらう」を押す）</td>
+</tr>
+<tr>
+<td>import-worker</td>
+<td>「トリガーを追加」→ SQS <code>rpg-prod-import-queue</code>、バッチサイズ <strong>1</strong>、「部分的なバッチ応答を報告」オン</td>
+</tr>
+<tr>
+<td>import-worker</td>
+<td>「設定」→「同時実行」→ 予約された同時実行 <strong>2</strong>（Bedrock の使いすぎを防ぐ）</td>
+</tr>
+<tr>
+<td>batch-runner</td>
+<td>「設定」→「非同期呼び出し」→ 再試行 <strong>2回</strong>（外部設計書 6.3）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>予約された同時実行を設定できない（アカウントの同時実行数の上限が10など小さい）場合は、設定せずに進め、「Service Quotas」で Lambda の「同時実行数」の引き上げを申請する</li>
+</ul>
+<p><strong>(4) 動作の確認</strong></p>
+<p><code>rpg-prod-api-handler</code> の「テスト」タブで、開発チームが用意した確認用イベント（例：ヘルスチェック）を実行し、成功することを確かめる。DB が止まっている場合、1回目は起動待ちで失敗することがある。</p>
+<h3 id="s5-9"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.9 API Gateway（HTTP API）</h3>
+<ol>
+<li>「API Gateway」→「API を作成」→ <strong>HTTP API</strong> の「構築」</li>
+<li>統合「Lambda」→ <code>rpg-prod-api-handler</code>、バージョン 2.0。API 名 <code>rpg-prod-api</code></li>
+<li>ルート：メソッド <strong>ANY</strong>、パス <strong><code>/api/{proxy+}</code></strong>、統合先 <code>rpg-prod-api-handler</code></li>
+<li>ステージ：<code>$default</code>、自動デプロイ オン。作成する</li>
+<li>左メニュー「認可」→「ルートに認可をアタッチ」→ <code>ANY /api/{proxy+}</code> を選び「オーソライザーを作成してアタッチ」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>タイプ</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>名前</td>
+<td><code>rpg-prod-cognito</code></td>
+</tr>
+<tr>
+<td>ID ソース</td>
+<td><code>$request.header.Authorization</code></td>
+</tr>
+<tr>
+<td>発行者URL</td>
+<td><code>https://cognito-idp.ap-northeast-1.amazonaws.com/&lt;V-09 ユーザープールID&gt;</code></td>
+</tr>
+<tr>
+<td>対象者</td>
+<td>V-09 のアプリクライアントID</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="6">
+<li>左メニュー「スロットリング」→ <code>$default</code> ステージを編集し、バーストの制限 <strong>50</strong>、レートの制限 <strong>20</strong> にする</li>
+<li>左メニュー「ログ記録」→ <code>$default</code> を選び、アクセスログを有効にする。ロググループは先に CloudWatch で <code>/aws/apigateway/rpg-prod-api</code>（保持 90日）を作って指定し、ログの形式は JSON</li>
+<li>「タグ」を付ける。API ID と「呼び出しURL」を控える（V-10）</li>
+</ol>
+<ul>
+<li>CORS は設定しない（画面とAPIを CloudFront の同じドメインで出すため）</li>
+<li>画面からは CloudFront 経由でしか呼ばないが、API Gateway のURLは公開される。JWT で守られているため、パイロット期間はこのままとする</li>
+</ul>
+<h3 id="s5-10"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.10 CloudFront に API を追加する</h3>
+<ol>
+<li>CloudFront の <code>rpg-prod-cdn</code> →「オリジン」→「オリジンを作成」<ul>
+<li>オリジンドメイン：<code>&lt;V-10 の API ID&gt;.execute-api.ap-northeast-1.amazonaws.com</code></li>
+<li>プロトコル：<strong>HTTPS のみ</strong>、名前 <code>api</code></li>
+</ul>
+</li>
+<li>「ビヘイビア」→「ビヘイビアを作成」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>パスパターン</td>
+<td><code>/api/*</code></td>
+</tr>
+<tr>
+<td>オリジン</td>
+<td><code>api</code></td>
+</tr>
+<tr>
+<td>ビューワープロトコルポリシー</td>
+<td>HTTPS のみ</td>
+</tr>
+<tr>
+<td>許可される HTTP メソッド</td>
+<td>GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE</td>
+</tr>
+<tr>
+<td>キャッシュポリシー</td>
+<td><strong>CachingDisabled</strong></td>
+</tr>
+<tr>
+<td>オリジンリクエストポリシー</td>
+<td><strong>AllViewerExceptHostHeader</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>ビヘイビアの並び順が <code>/api/*</code> → <code>/partners/*</code> → デフォルト <code>*</code> になっていることを確かめる（ビヘイビアは3つ。Free プランの上限は5つ）</li>
+<li>状態が「デプロイ済み」になるまで待つ（数分）</li>
+</ol>
+<h3 id="s5-11"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.11 EventBridge Scheduler（定期処理）</h3>
+<p>「Amazon EventBridge」→「スケジューラ」→「スケジュール」→「スケジュールを作成」で2つ作る。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>日次処理（B-01・B-02）</th>
+<th>メール送信（B-03）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>名前</td>
+<td><code>rpg-prod-daily</code></td>
+<td><code>rpg-prod-mail</code></td>
+</tr>
+<tr>
+<td>スケジュールのパターン</td>
+<td>定期的なスケジュール・cron ベース</td>
+<td>同左</td>
+</tr>
+<tr>
+<td>cron 式</td>
+<td><code>0 0 * * ? *</code></td>
+<td><code>0/30 6-22 * * ? *</code></td>
+</tr>
+<tr>
+<td>タイムゾーン</td>
+<td><strong>Asia/Tokyo</strong></td>
+<td><strong>Asia/Tokyo</strong></td>
+</tr>
+<tr>
+<td>フレックスタイムウィンドウ</td>
+<td>オフ</td>
+<td>オフ</td>
+</tr>
+<tr>
+<td>ターゲット</td>
+<td>AWS Lambda Invoke → <code>rpg-prod-batch-runner</code></td>
+<td>同左</td>
+</tr>
+<tr>
+<td>ペイロード</td>
+<td><code>{"job": "daily"}</code></td>
+<td><code>{"job": "mail"}</code></td>
+</tr>
+<tr>
+<td>再試行ポリシー</td>
+<td>最大再試行回数 2</td>
+<td>最大再試行回数 0（次の30分で送る）</td>
+</tr>
+<tr>
+<td>実行ロール</td>
+<td>新しいロールを作成 <code>rpg-prod-scheduler-role</code></td>
+<td>既存のロール <code>rpg-prod-scheduler-role</code></td>
+</tr>
+<tr>
+<td>状態</td>
+<td>有効</td>
+<td><strong>有効</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>メール送信の cron は 6:00〜22:30 に動くが、22:30 の送信リストは作られないため何も送らない（外部設計書 6.1 の 6:00〜22:00 の範囲になる）</li>
+<li>ペイロードの形は開発チームと合わせる</li>
+</ul>
+<h3 id="s5-12"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.12 CloudWatch アラーム（監視）</h3>
+<p>「CloudWatch」→「アラーム」→「アラームの作成」で、次の5つを作る。通知はすべて SNS <code>rpg-prod-alerts</code>、欠落データは「欠落データを良好として扱う」。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>アラーム名</th>
+<th>メトリクス</th>
+<th>条件</th>
+<th>期間</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-prod-api-5xx</code></td>
+<td>ApiGateway → <code>5xx</code>（ApiId＝V-10、Stage＝<code>$default</code>）合計</td>
+<td>5 以上</td>
+<td>5分</td>
+</tr>
+<tr>
+<td><code>rpg-prod-grading-errors</code></td>
+<td>Lambda → <code>Errors</code>（<code>rpg-prod-grading-worker</code>）合計</td>
+<td>3 以上</td>
+<td>1時間</td>
+</tr>
+<tr>
+<td><code>rpg-prod-grading-timeout</code></td>
+<td>下記のメトリクスフィルター <code>GradingTimeout</code> 合計</td>
+<td>3 以上</td>
+<td>1時間</td>
+</tr>
+<tr>
+<td><code>rpg-prod-batch-errors</code></td>
+<td>Lambda → <code>Errors</code>（<code>rpg-prod-batch-runner</code>）合計</td>
+<td>1 以上</td>
+<td>5分</td>
+</tr>
+<tr>
+<td><code>rpg-prod-import-dlq</code></td>
+<td>SQS → <code>ApproximateNumberOfMessagesVisible</code>（<code>rpg-prod-import-dlq</code>）最大</td>
+<td>1 以上</td>
+<td>5分</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>採点30秒超えのメトリクスフィルター</strong></p>
+<ol>
+<li>ロググループ <code>/aws/lambda/rpg-prod-api-handler</code> を開き「メトリクスフィルター」→「メトリクスフィルターを作成」</li>
+<li>フィルターパターン <code>GRADING_TIMEOUT</code>（画面に 504 を返すときにアプリが出すログ。開発チームと合わせる）</li>
+<li>名前空間 <code>rpg/prod</code>、メトリクス名 <code>GradingTimeout</code>、値 <code>1</code></li>
+</ol>
+<h3 id="s5-13"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>5.13 画面の配置と動作確認</h3>
+<p><strong>(1) 画面の配置</strong></p>
+<ol>
+<li>S3 の <code>rpg-prod-web-&lt;アカウントID&gt;</code> に、開発チームから受け取った画面一式（<code>index.html</code>・<code>manifest.webmanifest</code>・<code>sw.js</code>・<code>css/</code>・<code>js/</code> など）をフォルダの構成のままアップロードする</li>
+<li>画面の設定ファイル（例：<code>js/config.js</code>）に、V-08・V-09 の値（CloudFront ドメイン、ユーザープールID、アプリクライアントID、Cognito ドメイン）が入っていることを確かめる</li>
+<li>CloudFront の <code>rpg-prod-cdn</code> →「キャッシュ削除」→「キャッシュ削除を作成」→ パス <code>/*</code></li>
+<li>キャラクター画像がある場合は、S-14 から登録する（ない場合は頭文字の表示のままでよい）</li>
+</ol>
+<p><strong>(2) 動作確認</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認すること</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>https://&lt;V-08 のドメイン&gt;/</code> を開く</td>
+<td>画面が表示され、Cognito のログイン画面に移る</td>
+</tr>
+<tr>
+<td>2</td>
+<td>5.6 で作った管理者でログイン</td>
+<td>新しいパスワードの設定を求められる。設定後に S-13 が開く</td>
+</tr>
+<tr>
+<td>3</td>
+<td>朝一番など、DB が止まっているときに操作する</td>
+<td>「ギルドの扉を開けています…」が出て、30秒以内に表示される</td>
+</tr>
+<tr>
+<td>4</td>
+<td>S-13 で学習者を1人招待する</td>
+<td>招待メールが届く</td>
+</tr>
+<tr>
+<td>5</td>
+<td>学習者でログイン</td>
+<td>ニックネーム → コース選択 → パートナー選択 → ホームの順に進む</td>
+</tr>
+<tr>
+<td>6</td>
+<td>S-11 で問題を取り込む（テキスト貼り付け）</td>
+<td>数分で下書きができ、公開できる</td>
+</tr>
+<tr>
+<td>7</td>
+<td>四肢択一とキーワード説明を解く</td>
+<td>結果とEXPが表示される。説明の採点が30秒以内に返る</td>
+</tr>
+<tr>
+<td>8</td>
+<td>10分ほど操作しない</td>
+<td>RDS コンソールで <code>rpg-prod-db</code> のインスタンスが「一時停止」（0 ACU）になる</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Lambda <code>rpg-prod-batch-runner</code> を「テスト」で <code>{"job": "daily"}</code> を付けて実行</td>
+<td>S3 の notify バケットに当日の送信リストができる</td>
+</tr>
+<tr>
+<td>10</td>
+<td>通知時刻を直近の30分枠にした学習者（SES に登録済みのアドレス）で待つ</td>
+<td>送信時刻にメールが届く</td>
+</tr>
+<tr>
+<td>11</td>
+<td>API Gateway のURLに直接トークンなしでアクセス</td>
+<td>401 が返る</td>
+</tr>
+<tr>
+<td>12</td>
+<td>請求の画面 → Cost Explorer をタグ <code>Environment</code> で絞る</td>
+<td><code>prod</code> の費用が見える（反映は翌日以降）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>prod の完了条件</strong>：上の確認がすべて終わり、次も確かめたこと。</p>
+<ul>
+<li>RDS の <code>rpg-prod-db</code> と Cognito の <code>rpg-prod-users</code> で削除保護が <strong>オン</strong> になっている</li>
+<li>確認に使った学習者・問題を削除し、システム管理者だけが残っている</li>
+<li>システム管理者が SNS の確認メールを承認し、アラームのメールを受け取れる</li>
+</ul>
+
+</section><section class="chapter" id="ch6"><h2><i aria-hidden="true" class="fa-solid fa-globe h-ico"></i>6. ドメイン決定後の作業（prod から。stg・dev は必要なら）</h2>
+<p>独自ドメインが決まったら行う。本章では prod のドメインを <code>app.example.co.jp</code>、送信ドメインも同じ <code>app.example.co.jp</code> として書く（決まった値に置き換える）。stg・dev に独自ドメインを付ける場合は、<code>stg.app.example.co.jp</code> のようにして同じ手順を繰り返す。</p>
+<h3 id="s6-1"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>6.1 Route 53（ホストゾーン）</h3>
+<ol>
+<li>「Route 53」→「ホストゾーン」→「ホストゾーンの作成」</li>
+<li>ドメイン名 <code>app.example.co.jp</code>、タイプ <strong>パブリックホストゾーン</strong>、タグ <code>Project</code> = <code>rpg-learning</code>、<code>Environment</code> = <code>prod</code></li>
+<li>作成後に表示される <strong>NS レコードの4つの値</strong> を、親ドメイン（<code>example.co.jp</code>）を管理する部署に渡し、委任の登録を依頼する</li>
+<li>委任が済んだら、パソコンで <code>nslookup -type=NS app.example.co.jp</code> を実行し、4つの値が返ることを確かめる</li>
+</ol>
+<blockquote>
+<p>ホストゾーンを CloudFront の Free プランに紐付けると、ホストゾーンの料金とクエリの料金がプランに含まれる（6.3 の手順で紐付く）。</p>
+</blockquote>
+<h3 id="s6-2"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>6.2 ACM（証明書。us-east-1）</h3>
+<ol>
+<li>画面右上のリージョンを <strong>米国東部（バージニア北部）us-east-1</strong> に変える（CloudFront 用の証明書は us-east-1 でしか使えない）</li>
+<li>「Certificate Manager」→「リクエスト」→「パブリック証明書をリクエスト」</li>
+<li>ドメイン名 <code>app.example.co.jp</code>、検証方法 <strong>DNS 検証</strong>、キーアルゴリズム RSA 2048、タグを付けてリクエストする</li>
+<li>証明書を開き「Route 53 でレコードを作成」を押す。数分〜30分で状態が「発行済み」になる</li>
+<li>リージョンを <strong>東京</strong> に戻す</li>
+</ol>
+<h3 id="s6-3"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>6.3 CloudFront に独自ドメインを付ける</h3>
+<ol>
+<li>CloudFront の <code>rpg-prod-cdn</code> →「一般」タブ →「代替ドメイン名を追加」（または「設定」→「編集」）</li>
+<li>代替ドメイン名 <code>app.example.co.jp</code>、カスタム SSL 証明書に 6.2 の証明書を選ぶ。セキュリティポリシーは推奨（TLS 1.2 以上）</li>
+<li>Route 53 に A レコード（エイリアス）を作る画面が出たら作成する。出ない場合は、Route 53 のホストゾーンで「レコードを作成」→ レコード名は空欄、タイプ <strong>A</strong>、エイリアス オン、トラフィックのルーティング先「CloudFront ディストリビューションへのエイリアス」→ <code>rpg-prod-cdn</code> を選ぶ。同じように <strong>AAAA</strong> も作る</li>
+<li>状態が「デプロイ済み」になったら、<code>https://app.example.co.jp/</code> で画面が開くことを確かめる</li>
+</ol>
+<h3 id="s6-4"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>6.4 ドメインを変えたことによる設定の更新</h3>
+<p>旧ドメイン（<code>xxxx.cloudfront.net</code>）を書いた場所を、すべて新しいドメインに変える。切り替えの間は旧ドメインも残しておき、確認後に消す。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>場所</th>
+<th>変更内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cognito</td>
+<td><code>rpg-prod-users</code> →「アプリケーションクライアント」→ <code>rpg-prod-web</code> →「ログインページ」</td>
+<td>コールバックURL・サインアウトURLに <code>https://app.example.co.jp/</code> を追加。確認後に旧ドメインを削除</td>
+</tr>
+<tr>
+<td>Cognito</td>
+<td>「認証方法」→「メッセージテンプレート」→「招待メッセージ」</td>
+<td>本文のログインURLを <code>https://app.example.co.jp/</code> に変更</td>
+</tr>
+<tr>
+<td>S3 CORS</td>
+<td><code>rpg-prod-assets-&lt;アカウントID&gt;</code>・<code>rpg-prod-import-&lt;アカウントID&gt;</code></td>
+<td><code>AllowedOrigins</code> を <code>https://app.example.co.jp</code> に変更</td>
+</tr>
+<tr>
+<td>Lambda</td>
+<td><code>rpg-prod-api-handler</code>・<code>rpg-prod-batch-runner</code> の環境変数</td>
+<td><code>APP_URL</code> を <code>https://app.example.co.jp</code> に変更</td>
+</tr>
+<tr>
+<td>画面</td>
+<td>画面の設定ファイル（例：<code>js/config.js</code>）</td>
+<td>リダイレクト先を新しいドメインに変え、アップロードし直して CloudFront のキャッシュを削除（<code>/*</code>）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s6-5"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>6.5 SES（送信ドメインの認証）</h3>
+<ol>
+<li>「Amazon SES」→「ID」→「IDの作成」→ <strong>ドメイン</strong>、<code>app.example.co.jp</code></li>
+<li>「カスタム MAIL FROM ドメインを使用」にチェックし、<code>mail.app.example.co.jp</code>、MX が見つからないときの動作は「デフォルトの MAIL FROM を使用」</li>
+<li>「ドメインの検証」で <strong>Easy DKIM</strong>、キーの長さ <strong>RSA_2048_BIT</strong>、「Route 53 への DNS レコードの発行」をオンにする</li>
+<li>タグを付けて作成する。数分〜72時間で、ドメインの状態が「検証済み」、DKIM が「成功」、MAIL FROM が「成功」になる</li>
+<li>DMARC を設定する。Route 53 のホストゾーンで「レコードを作成」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>レコード名</td>
+<td><code>_dmarc</code></td>
+</tr>
+<tr>
+<td>タイプ</td>
+<td>TXT</td>
+</tr>
+<tr>
+<td>値</td>
+<td><code>"v=DMARC1; p=none; rua=mailto:&lt;システム管理者のアドレス&gt;"</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="6">
+<li>2.4 (2) の <strong>本番利用の申請</strong> を出す（まだの場合）。承認されると、登録していないアドレスにも送れるようになる</li>
+<li>Lambda <code>rpg-prod-api-handler</code>・<code>rpg-prod-batch-runner</code> の環境変数 <code>MAIL_FROM</code> を <code>no-reply@app.example.co.jp</code> に変える</li>
+</ol>
+<ul>
+<li>DMARC は最初は <code>p=none</code>（監視だけ）にする。届かない・迷惑メールに入るなどの問題がなければ、パイロット後に <code>p=quarantine</code> を検討する</li>
+</ul>
+<h3 id="s6-6"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>6.6 Cognito の招待メールを SES から送る</h3>
+<ol>
+<li>Cognito の <code>rpg-prod-users</code> →「認証方法」→「メール」→「編集」</li>
+<li>次のとおり設定して保存する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>メールプロバイダー</td>
+<td><strong>Amazon SES でメールを送信（推奨）</strong></td>
+</tr>
+<tr>
+<td>SES のリージョン</td>
+<td>アジアパシフィック（東京）</td>
+</tr>
+<tr>
+<td>送信元のEメールアドレス</td>
+<td><code>no-reply@app.example.co.jp</code></td>
+</tr>
+<tr>
+<td>送信者名</td>
+<td><code>RPG学習アプリ</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>自分あてに招待を送り、新しい送信元から届くこと、迷惑メールに入らないことを確かめる</li>
+</ol>
+<h3 id="s6-7"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>6.7 ドメイン切り替え後の確認</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認すること</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>https://app.example.co.jp/</code> を開く</td>
+<td>鍵マークが付き、ログイン画面に移る</td>
+</tr>
+<tr>
+<td>2</td>
+<td>ログインしてホームまで進む</td>
+<td>新しいドメインに戻ってくる</td>
+</tr>
+<tr>
+<td>3</td>
+<td>S-14 で紋章画像を差し替える</td>
+<td>アップロードでき、画面に表示される</td>
+</tr>
+<tr>
+<td>4</td>
+<td>招待メールを送る</td>
+<td><code>no-reply@app.example.co.jp</code> から届く</td>
+</tr>
+<tr>
+<td>5</td>
+<td>受信したメールのヘッダーを見る</td>
+<td><code>dkim=pass</code>・<code>spf=pass</code>・<code>dmarc=pass</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>学習のお知らせメールを待つ</td>
+<td>選んだ時刻に届く</td>
+</tr>
+</tbody>
+</table></div>
+
+</section><section class="chapter" id="ch7"><h2><i aria-hidden="true" class="fa-solid fa-shield-halved h-ico"></i>7. Phase 3（全社展開）で行う作業</h2>
+<p>約1,000名への全社展開の前に行う。パイロットの実績（利用量・費用・アラームの記録）を見て判断する。</p>
+<h3 id="s7-1"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>7.1 AWS WAF のルールを見直す</h3>
+<p>Free プランの CloudFront には AWS WAF が最初から付いている（第1.6節）。全社展開の前に、ルールを次の構成に見直す。ルールの数は Free プランの上限（5つ）に収まる。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>優先順位</th>
+<th>ルール</th>
+<th>種類</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>rate-limit</code></td>
+<td>レートベース</td>
+<td>同じIPアドレスから <strong>5分間に1,000件</strong> を超えたら遮断</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>AWSManagedRulesAmazonIpReputationList</code></td>
+<td>AWS マネージド</td>
+<td>悪用が知られているIPアドレスを遮断</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>AWSManagedRulesCommonRuleSet</code></td>
+<td>AWS マネージド</td>
+<td>よくある攻撃を遮断</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>AWSManagedRulesKnownBadInputsRuleSet</code></td>
+<td>AWS マネージド</td>
+<td>既知の不正な入力を遮断</td>
+</tr>
+</tbody>
+</table></div>
+<ol>
+<li>CloudFront の <code>rpg-prod-cdn</code> →「セキュリティ」タブを開き、関連付けられた Web ACL を確かめる</li>
+<li>「AWS WAF」→「Web ACL」→ その Web ACL を開き、「ルール」タブで上の表のとおりにルールを追加・変更する</li>
+<li>追加したルールは、最初の <strong>1週間は「カウント」（記録だけ）</strong> にする。正しい操作が遮断の対象になっていないかをサンプルリクエストで確かめてから「ブロック」に変える<ul>
+<li>説明文の入力（50〜400文字）や問題の取り込み（テキスト貼り付け）は、<code>AWSManagedRulesCommonRuleSet</code> の本文サイズの制限（<code>SizeRestrictions_BODY</code>）に引っかかることがある。引っかかる場合は、そのルールだけ「カウント」のまま残す</li>
+</ul>
+</li>
+<li>stg でも同じ構成にして、先に確かめてから prod に入れる</li>
+</ol>
+<h3 id="s7-2"><i aria-hidden="true" class="fa-solid fa-caret-right h-ico"></i>7.2 そのほかの見直し</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>見直す内容</th>
+<th>判断の材料</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CloudFront の料金プラン</td>
+<td>利用量が Free プランの目安（月100万リクエスト・100GB）を超える場合や、アクセスログ・セキュリティヘッダーが必要な場合は <strong>Pro プラン（月15ドル）</strong> に変える</td>
+<td>CloudFront の「料金プラン」画面の利用量</td>
+</tr>
+<tr>
+<td>Aurora</td>
+<td>最小容量（日中だけ 0.5 ACU にするかなど）、最大容量（4 ACU で足りるか）</td>
+<td>起動待ちの頻度、CPU・ACU の使用率</td>
+</tr>
+<tr>
+<td>Lambda</td>
+<td>予約された同時実行、メモリ</td>
+<td>スロットリング・実行時間</td>
+</tr>
+<tr>
+<td>API Gateway</td>
+<td>スロットリング（バースト50・レート20）</td>
+<td>429 の件数</td>
+</tr>
+<tr>
+<td>Cognito</td>
+<td>MFA の有効化、社内のIDプロバイダー（SAML／OIDC）との連携</td>
+<td>社内の認証の方針</td>
+</tr>
+<tr>
+<td>SES</td>
+<td>1日の送信上限（1,000名分の通知が送れるか）</td>
+<td>SES の「アカウントダッシュボード」の送信クォータ</td>
+</tr>
+<tr>
+<td>予算</td>
+<td><code>rpg-monthly</code> の金額</td>
+<td>全社展開後の試算</td>
+</tr>
+</tbody>
+</table></div>
+
+</section><section class="chapter" id="ch8"><h2><i aria-hidden="true" class="fa-solid fa-circle-question h-ico"></i>8. 確認したいこと（未決事項）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>項目</th>
+<th>現在の扱い</th>
+<th>決める時期</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>CloudFront の料金プラン</td>
+<td><strong>決定（2026-10-19）</strong>：全環境で Free プラン（月0ドル、AWS WAF 付き）を使う（第1.6節）</td>
+<td>決定済み</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Sonnet 5.5・Haiku 5.5 の東京リージョンでの提供状況</td>
+<td>東京でオンデマンドで使えなければ、東京で使える別バージョンの Sonnet・Haiku を使う（2.3）。Bedrock の進め方（利用目的の申請、モデル呼び出しログを記録しない）は <strong>2026-10-19 に決定</strong></td>
+<td>第2章の作業時</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Lambda の環境変数の名前、定期処理のペイロード</td>
+<td><strong>決定（2026-10-19）</strong>：3.8・3.11 の案のとおり（<code>APP_ENV</code> など13個、<code>{"job": "daily"}</code>・<code>{"job": "mail"}</code>）</td>
+<td>決定済み</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Lambda のメモリ</td>
+<td>3.8 の案（256〜1024 MB）</td>
+<td>dev での動作確認後</td>
+</tr>
+<tr>
+<td>5</td>
+<td>テーブルの作り方</td>
+<td>クエリエディタで SQL を実行する（3.4 (2)）</td>
+<td>開発チームとの打ち合わせ</td>
+</tr>
+<tr>
+<td>6</td>
+<td>アラームの通知先</td>
+<td>dev・stg は開発者、prod はシステム管理者と開発者</td>
+<td>prod 構築前</td>
+</tr>
+</tbody>
+</table></div></section>
+  </main>
+</div>
+<footer class="site-footer"><div class="inner">RPG学習アプリ AWS構築手順書 第0.3版（ドラフト）</div></footer>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+  startOnLoad: true, securityLevel: "loose", theme: "base",
+  fontFamily: '"Noto Sans JP", sans-serif',
+  themeVariables: {
+    fontFamily: '"Noto Sans JP", sans-serif', fontSize: "14px",
+    primaryColor: "#E8F1FE", primaryBorderColor: "#0017C1", primaryTextColor: "#1A1A1C",
+    secondaryColor: "#F2F2F2", tertiaryColor: "#FFFFFF",
+    lineColor: "#414141", textColor: "#1A1A1C",
+    clusterBkg: "#FFFFFF", clusterBorder: "#B4B4B4",
+    edgeLabelBackground: "#FFFFFF",
+    actorBkg: "#E8F1FE", actorBorder: "#0017C1", actorTextColor: "#1A1A1C",
+    signalColor: "#414141", signalTextColor: "#1A1A1C",
+    noteBkgColor: "#FFF5C2", noteBorderColor: "#B4B4B4", noteTextColor: "#1A1A1C",
+    labelBoxBkgColor: "#E8F1FE", labelBoxBorderColor: "#0017C1", loopTextColor: "#00118F",
+    pie1: "#0017C1", pie2: "#264AF4", pie3: "#7096F8", pie4: "#00118F", pie5: "#9DB7F9", pie6: "#626264", pie7: "#C5D7FB",
+    pieStrokeColor: "#FFFFFF", pieOuterStrokeColor: "#B4B4B4", pieTitleTextSize: "16px", pieSectionTextColor: "#FFFFFF",
+    sectionBkgColor: "#E8F1FE", altSectionBkgColor: "#FFFFFF", taskBkgColor: "#0017C1", taskBorderColor: "#00118F", taskTextColor: "#FFFFFF", taskTextOutsideColor: "#1A1A1C", gridColor: "#E6E6E6", todayLineColor: "#00118F"
+  },
+  flowchart: { htmlLabels: true, curve: "basis", padding: 12 },
+  er: { useMaxWidth: true }, sequence: { useMaxWidth: true, mirrorActors: false }
+});
+</script>
+</body>
+</html>
