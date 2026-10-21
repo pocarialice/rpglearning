@@ -6,7 +6,7 @@ import {
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
-import { addDays } from '../../shared/util/date-jst.js'
+import { addDays, parseDbTimestamp, toIsoJst } from '../../shared/util/date-jst.js'
 import { ROLES } from '../../shared/util/authz.js'
 import { withTx } from '../../shared/db/tx.js'
 import * as users from '../../shared/db/repositories/users.js'
@@ -24,7 +24,7 @@ function validRoles(roles) {
 }
 const view = (u) => ({
   id: encodeId(PREFIX.user, u.userId), fullName: u.fullName, nickname: u.nickname ?? null, email: u.email, roles: u.roles,
-  status: u.status, deleteScheduledOn: u.deleteScheduledOn ?? null, lastLoginAt: u.lastLoginAt ?? null
+  status: u.status, deleteScheduledOn: u.deleteScheduledOn ?? null, lastLoginAt: u.lastLoginAt ? toIsoJst(parseDbTimestamp(u.lastLoginAt)) : null
 })
 export async function list(ctx) {
   const q = ctx.query

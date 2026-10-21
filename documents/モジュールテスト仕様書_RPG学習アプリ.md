@@ -3,9 +3,9 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第1.0版（ドラフト：第1〜6章、HTML版あり。A-01 の担当コース、A-14 の一覧の日時、管理局と初回の流れのテストを追加）       |
+| 版数     | 第1.1版（ドラフト：第1〜6章、HTML版あり。A-19 の一覧の日時、A-22 の性格名と初期名のテストを追加）       |
 | 作成日    | 2026-10-20                                      |
-| 入力文書   | 詳細設計書 第1.0版、外部設計書 第1.0版                          |
+| 入力文書   | 詳細設計書 第1.1版、外部設計書 第1.0版                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
 
 ---
@@ -768,6 +768,7 @@ describe('M-D01 data-api', () => {
 | MT-H12-07 | 復活                | 論理削除中の利用者                                                  | `status='active'`・削除予定日が空、`AdminEnableUser`、操作記録 `user.restore`       | 状  |
 | MT-H12-08 | 有効な利用者の復活         | `status='active'`                                          | 409（状態の食い違い）                                                         | 状  |
 | MT-H12-09 | 利用者管理の異常系 | 入力の不正4種、ない利用者、削除済みの削除、更新0件、メールの失敗、ロールを外す、一覧の範囲外の limit・offset | 400／404／409／409／200（WARN ログ）／`AdminRemoveUserFromGroup`／limit 200・offset 0 に丸める | 異 |
+| MT-H12-10 | 一覧の最終ログイン日時 | DBの最終ログイン `'2026-10-19 15:00:00'`（UTC）／なし | `'2026-10-20T00:00:00+09:00'`／`null` | 境 |
 
 #### M-H13 `routes/admin-courses.js`（A-21）・M-H14 `routes/admin-partners.js`（A-22）
 
@@ -782,6 +783,7 @@ describe('M-D01 data-api', () => {
 | MT-H14-03 | 画像の確定          | `{action:'commit', imageKey}`、古い画像あり                   | `partners.image_key` を更新し、古いキーの `DeleteObject`。操作記録 `partner.image` | 状  |
 | MT-H14-04 | 画像を外す          | `DELETE`                                              | `image_key=null`、`DeleteObject`                                  | 状  |
 | MT-H14-05 | 画像の取得・WebP・不正な操作 | 取得、WebP の準備、他人のキー・`../x`、知らない action、知らない性格、古い画像なし | URL／`.webp`／400／400／404／`DeleteObject` を呼ばない | 異 |
+| MT-H14-06 | 取得の性格名と初期名 | DBに行あり（初期名 カイ）／行なし | `label`・`defaultName` はDBの値／定数の値（論理型・セージ） | 同 |
 
 ### 5.2 grading-worker
 
@@ -929,7 +931,7 @@ describe('M-D01 data-api', () => {
 | 4.8 バッジ                | 3.5 M-G04           | badge、update-streak             | MT-G04-01〜07、MT-W03-04〜06                 |
 | 4.9 説明の採点、2.5 非同期方式    | 4.3、5.2 A-09・A-10、7.3 | grading-worker、gradings、prompts | MT-W01-01〜12、MT-H07-01〜10、MT-A02、MT-A04   |
 | 4.10 問題取り込み            | 4.4、5.3 A-13〜A-16、7.4 | import-worker、admin-imports、admin-questions | MT-W02-01〜16、MT-H09-01〜08、MT-H10              |
-| 4.11 アカウント管理、6.3 物理削除  | 5.3 A-19・A-20、4.5.1 | admin-users、purge-users         | MT-H12-01〜09、MT-W03-09〜10                 |
+| 4.11 アカウント管理、6.3 物理削除  | 5.3 A-19・A-20、4.5.1 | admin-users、purge-users         | MT-H12-01〜10、MT-W03-09〜10                 |
 | 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01、6.1 | errors、data-api、api.js          | MT-U01、MT-D01-08〜10、MT-F02-02〜03          |
 | 5.4 CSV出力              | 5.3 A-17・A-18       | admin-dashboard                 | MT-H11-01〜08                              |
 | 5.5 Bedrock連携          | 3.6、7章              | bedrock、json-guard、persona、prompts | MT-A01〜MT-A04                            |

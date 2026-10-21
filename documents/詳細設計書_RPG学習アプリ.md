@@ -3,7 +3,7 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.0版（ドラフト：第1〜12章、HTML版あり。A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに、管理局は初回の流れの対象外に）      |
+| 版数     | 第1.1版（ドラフト：第1〜12章、HTML版あり。A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加）      |
 | 作成日    | 2026-10-20                                                 |
 | 入力文書   | 要件定義書 第1.1版（ドラフト）、外部設計書 第1.0版、AWS構築手順書 第0.5版                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
@@ -867,6 +867,7 @@ flowchart TD
 
 - 自分自身の削除・`system_admin` ロールの解除はできない（`409`）。最後の `system_admin` を守るため
 - 有効な利用者の「復活」、論理削除中の利用者の「削除」は状態の食い違いとして `409`
+- 一覧（GET）は `{ users: [{ id, fullName, nickname, email, roles, status, deleteScheduledOn, lastLoginAt }] }`。最終ログイン日時 `lastLoginAt` は `+09:00` 付き
 
 #### A-21 コース管理
 
@@ -876,7 +877,7 @@ flowchart TD
 
 | メソッド    | 処理                                                                                                                  |
 | ------- | ------------------------------------------------------------------------------------------------------------------- |
-| GET     | `{ persona, imageUrl }`（`APP_URL + '/' + image_key`、なければ null）                                                       |
+| GET     | `{ persona, label, defaultName, imageUrl }`（`imageUrl` は `APP_URL + '/' + image_key`、なければ null。性格名と初期名は S-14 の一覧に使う） |
 | PUT     | `{ action: 'prepare', contentType, size }` → PNG・WebP、2MBまでを確認 → キー `partners/{persona}-{yyyyMMddHHmmss}.{拡張子}` の署名付きURLを返す。`{ action: 'commit', imageKey }` → `partners.image_key` を更新し、古い画像を削除 |
 | DELETE  | `image_key` を空にして画像を削除（頭文字の表示に戻る）                                                                                 |
 

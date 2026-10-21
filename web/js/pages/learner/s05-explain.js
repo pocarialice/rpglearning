@@ -18,7 +18,7 @@ export async function render(root, _params, { pollOptions = {} } = {}) {
   const { api, getState, setState, go } = getContext()
   const { quest, adventureId, user } = getState()
   if (!quest || quest.kind !== 'explain') return go('/home')
-  const partner = { persona: user?.partner?.persona ?? 'encourage', name: partnerName(user?.partner) }
+  const partner = { persona: user?.partner?.persona ?? 'encourage', name: partnerName(user?.partner), imageUrl: user?.partner?.imageUrl ?? null }
   root.innerHTML = `${progressLine(quest)}
 <section class="gd-card app-section"><p class="meta">このキーワードを説明しよう</p><h1 class="title">${escapeHtml(quest.keyword.text)}</h1>
 <details class="app-source"><summary class="meta">出典の問題文を見る</summary><p class="body">${escapeHtml(quest.question.body).replace(/\n/g, '<br>')}</p></details></section>

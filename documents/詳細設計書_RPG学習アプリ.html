@@ -392,7 +392,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.0版（ドラフト：第1〜12章、HTML版あり。A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに、管理局は初回の流れの対象外に）</b></li>
+      <li>版数<b>第1.1版（ドラフト：第1〜12章、HTML版あり。A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加）</b></li>
       <li>作成日<b>2026-10-20</b></li>
       <li>入力文書<b>要件定義書 第1.1版（ドラフト）、外部設計書 第1.0版、AWS構築手順書 第0.5版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
@@ -1188,6 +1188,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <ul>
 <li>自分自身の削除・<code>system_admin</code> ロールの解除はできない（<code>409</code>）。最後の <code>system_admin</code> を守るため</li>
 <li>有効な利用者の「復活」、論理削除中の利用者の「削除」は状態の食い違いとして <code>409</code></li>
+<li>一覧（GET）は <code>{ users: [{ id, fullName, nickname, email, roles, status, deleteScheduledOn, lastLoginAt }] }</code>。最終ログイン日時 <code>lastLoginAt</code> は <code>+09:00</code> 付き</li>
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-21 コース管理</h4>
 <ul>
@@ -1197,7 +1198,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <div class="table-wrap"><table>
 <thead><tr><th>メソッド</th><th>処理</th></tr></thead>
 <tbody>
-<tr><td>GET</td><td><code>{ persona, imageUrl }</code>（<code>APP_URL + '/' + image_key</code>、なければ null）</td></tr>
+<tr><td>GET</td><td><code>{ persona, label, defaultName, imageUrl }</code>（<code>imageUrl</code> は <code>APP_URL + '/' + image_key</code>、なければ null。性格名と初期名は S-14 の一覧に使う）</td></tr>
 <tr><td>PUT</td><td><code>{ action: 'prepare', contentType, size }</code> → PNG・WebP、2MBまでを確認 → キー <code>partners/{persona}-{yyyyMMddHHmmss}.{拡張子}</code> の署名付きURLを返す。<code>{ action: 'commit', imageKey }</code> → <code>partners.image_key</code> を更新し、古い画像を削除</td></tr>
 <tr><td>DELETE</td><td><code>image_key</code> を空にして画像を削除（頭文字の表示に戻る）</td></tr>
 </tbody></table></div>
@@ -2264,6 +2265,6 @@ jobs:
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.0版（ドラフト：第1〜12章、HTML版あり。A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに、管理局は初回の流れの対象外に）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.1版（ドラフト：第1〜12章、HTML版あり。A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加）</div></footer>
 </body>
 </html>

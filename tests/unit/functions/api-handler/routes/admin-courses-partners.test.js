@@ -106,4 +106,10 @@ describe('M-H14 admin-partners（A-22）', () => {
     await call({ method: 'DELETE', path: '/api/admin/partners/encourage/image' })
     expect(s3.commandCalls(DeleteObjectCommand)).toHaveLength(0)
   })
+  it('MT-H14-06 取得に性格名と初期名を含める', async () => {
+    partners.get.mockResolvedValue({ persona: 'rival', label: 'ライバル型', defaultName: 'カイ', imageKey: null })
+    expect(parse(await call({ path: '/api/admin/partners/rival/image' }))).toEqual({ persona: 'rival', label: 'ライバル型', defaultName: 'カイ', imageUrl: null })
+    partners.get.mockResolvedValue(null)
+    expect(parse(await call({ path: '/api/admin/partners/logic/image' }))).toMatchObject({ label: '論理型', defaultName: 'セージ' })
+  })
 })

@@ -21,7 +21,8 @@ const deleteImage = (key) => s3Client().send(new DeleteObjectCommand({ Bucket: p
 export async function get(ctx) {
   const persona = personaOf(ctx)
   const p = await partners.get(persona)
-  return ok({ persona, imageUrl: imageUrl(p?.imageKey) })
+  // S-14 の一覧に性格名と初期名も出す
+  return ok({ persona, label: p?.label ?? PERSONAS[persona].label, defaultName: p?.defaultName ?? PERSONAS[persona].defaultName, imageUrl: imageUrl(p?.imageKey) })
 }
 export async function put(ctx) {
   const persona = personaOf(ctx)

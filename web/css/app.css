@@ -166,3 +166,23 @@ select.app-input:disabled { opacity: .5; }
 /* ダークテーマでは ink が明るくなるため、管理局のヘッダーは最も暗い地にして「濃い帯」を保つ */
 [data-theme="dark"] .app-admin .app-header { background: var(--parchment-sunk); color: var(--ink); border-bottom: 1px solid var(--line); }
 [data-theme="dark"] .app-admin .app-name, [data-theme="dark"] .app-admin .app-area-link { color: var(--ink); }
+.app-sigil-img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+/* 利用者・コース・権限管理（S-13） */
+.app-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--line-strong); }
+.app-tab { font: inherit; font-weight: 700; font-size: 15px; color: var(--ink-muted); background: none; border: 1px solid transparent; border-bottom: none; border-radius: var(--radius-md) var(--radius-md) 0 0; padding: var(--space-2) var(--space-4); cursor: pointer; margin-bottom: -1px; }
+.app-tab[aria-selected="true"] { color: var(--crimson); background: var(--parchment-raised); border-color: var(--line-strong); box-shadow: inset 0 3px 0 var(--crimson); }
+.app-tab:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app-tabpanel { margin-top: var(--space-4); }
+.app-search { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
+.app-search .app-field:first-child { min-width: 280px; }
+.app-pager { justify-content: space-between; }
+.app-pager:empty { display: none; }
+.app-row-ops { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.app-dialog-form { display: flex; flex-direction: column; gap: var(--space-3); }
+.app-dialog-msg:empty { display: none; }
+/* AIパートナー設定（S-14） */
+.app-partner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+.app-partner-card h2 { display: flex; align-items: baseline; gap: var(--space-2); }
+.app-partner-sample { background: var(--parchment); border: 1px dashed var(--line-strong); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+.app-partner-sample .caption { margin: 0; color: var(--ink-muted); }
+.app-card-result:empty { display: none; }
