@@ -15,9 +15,15 @@ function applyTheme(win) {
   set()
   mq?.addEventListener?.('change', set)
 }
+// 冒険中（S-04〜S-06）と初回の流れでは下部ナビを隠し、操作をその画面の主ボタンに絞る（外部設計書 3.7 S-05）
+const HIDE_NAV = [/^\/quest\//, /^\/onboarding$/]
+export const navVisible = (path) => !HIDE_NAV.some((re) => re.test(path))
 function markNav(doc, hash) {
   const path = (hash.replace(/^#/, '') || '/home').split('?')[0]
-  for (const a of doc.querySelectorAll('.app-nav a')) {
+  const nav = doc.querySelector('.app-nav')
+  nav.hidden = !navVisible(path)
+  doc.querySelector('.app-shell').classList.toggle('app-no-nav', nav.hidden)
+  for (const a of nav.querySelectorAll('a')) {
     if (a.getAttribute('href') === `#${path}`) a.setAttribute('aria-current', 'page')
     else a.removeAttribute('aria-current')
   }
