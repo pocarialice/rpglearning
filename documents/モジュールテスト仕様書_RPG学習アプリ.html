@@ -392,9 +392,9 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第0.5版（ドラフト：第1〜6章、HTML版あり。stg 環境をなくし、システムテスト・受け入れ確認を dev に変更）</b></li>
+      <li>版数<b>第0.6版（ドラフト：第1〜6章、HTML版あり。ci.yml の内容と結合テストへの申し送り No.4 を追加）</b></li>
       <li>作成日<b>2026-10-20</b></li>
-      <li>入力文書<b>詳細設計書 第0.5版、外部設計書 第0.9版</b></li>
+      <li>入力文書<b>詳細設計書 第0.6版、外部設計書 第0.9版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
   </div>
@@ -591,7 +591,7 @@ export default defineConfig({
 <div class="table-wrap"><table>
 <thead><tr><th>ワークフロー（ジョブ）</th><th>きっかけ</th><th>実行するもの</th><th>失敗したとき</th></tr></thead>
 <tbody>
-<tr><td><code>ci.yml</code></td><td><code>main</code> へのプルリクエスト</td><td><code>npm test -- --coverage</code></td><td>マージできない（ブランチのルールで <code>ci</code> の成功を必須にしている）</td></tr>
+<tr><td><code>ci.yml</code></td><td><code>main</code> へのプルリクエスト</td><td><code>npm test -- --coverage</code> → <code>npm run build:functions -- --verify</code></td><td>マージできない（ブランチのルールで <code>ci</code> の成功を必須にしている）</td></tr>
 <tr><td><code>release.yml</code>（<code>build</code>）</td><td><code>main</code> への push、タグ <code>release-*</code> の push</td><td><code>npm test -- --coverage</code></td><td>配置のジョブが動かない（dev・prod のどちらにも配置されない）</td></tr>
 </tbody></table></div>
 <ul>
@@ -1391,10 +1391,11 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>1</td><td>Data API は timestamptz を UTC の <code>YYYY-MM-DD HH:MM:SS</code> で返す（<code>parseDbTimestamp</code> で読む）</td><td>採点を依頼し、A-10 が30秒以内は <code>processing</code> を返すこと、A-01 のログイン記録が30分おきになることを確かめる</td><td>日時が9時間ずれて読まれ、採点がすぐ「時間切れ」になる、またはログイン回数を数えすぎる</td></tr>
 <tr><td>2</td><td>Cognito の Username に利用者の <code>sub</code> を渡せる（メールを別名にしたユーザープールでは Username＝sub）</td><td>管理画面から利用者のロール変更・論理削除・復活、日次処理の物理削除を1回ずつ行う</td><td>「利用者が見つからない」で、ロール変更・削除・停止・物理削除が失敗する</td></tr>
 <tr><td>3</td><td>署名付きURLは <code>content-type</code> を署名に含む（画面は同じ <code>Content-Type</code> を付けて PUT する）</td><td>S-11・S-14 から PDF・画像をアップロードする</td><td>アップロードが403で拒否され、問題やキャラクター画像を登録できない</td></tr>
+<tr><td>4</td><td>Lambda の束ね（esbuild）で <code>@aws-sdk/*</code> を外部扱いにしているため、使っている AWS SDK のパッケージ（<code>client-*</code> と <code>s3-request-presigner</code>）がすべて Lambda の Node.js 22 ランタイムに同梱されている</td><td>dev に配置し、取り込みの登録（署名付きURLの発行）・採点・日次処理を1回ずつ動かして、<code>Cannot find package</code> が出ないことを確かめる</td><td>その機能を初めて使ったときに Lambda が起動に失敗する（例：取り込みの登録で500）。同梱されていないパッケージは、外部扱いから外して zip に束ねる</td></tr>
 </tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.5版（ドラフト：第1〜6章、HTML版あり。stg 環境をなくし、システムテスト・受け入れ確認を dev に変更）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.6版（ドラフト：第1〜6章、HTML版あり。ci.yml の内容と結合テストへの申し送り No.4 を追加）</div></footer>
 </body>
 </html>

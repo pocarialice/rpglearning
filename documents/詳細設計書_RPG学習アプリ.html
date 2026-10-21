@@ -392,7 +392,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.5版（ドラフト：第1〜12章、HTML版あり。stg 環境をなくし dev・prod の2環境に変更）</b></li>
+      <li>版数<b>第0.6版（ドラフト：第1〜12章、HTML版あり。ci.yml を作成し、画面のビルドは画面の実装時に足すと明記）</b></li>
       <li>作成日<b>2026-10-20</b></li>
       <li>入力文書<b>要件定義書 第1.1版（ドラフト）、外部設計書 第0.9版、AWS構築手順書 第0.5版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
@@ -1982,7 +1982,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <div class="table-wrap"><table>
 <thead><tr><th>ファイル</th><th>きっかけ</th><th>処理</th></tr></thead>
 <tbody>
-<tr><td><code>ci.yml</code></td><td><code>main</code> へのプルリクエスト</td><td><code>npm ci</code> → <code>npm test -- --coverage</code> → <code>build:functions</code> → <code>build:web</code>（2環境）。AWS には接続しない</td></tr>
+<tr><td><code>ci.yml</code></td><td><code>main</code> へのプルリクエスト</td><td><code>npm ci</code> → <code>npm test -- --coverage</code>（カバレッジの要約をジョブの概要に書き、<code>coverage-{実行番号}</code> を14日保管）→ <code>build:functions -- --verify</code>（束ねたファイルを読み込んで <code>handler</code> を確かめる）→ <code>build:web</code>（2環境）。AWS には接続しない。<strong>画面とその構成ファイルができるまでは <code>build:web</code> を除いた形で動かす</strong>（2026-10-21 作成。画面の実装時に足す）</td></tr>
 <tr><td><code>release.yml</code></td><td><code>main</code> への push、タグ <code>release-*</code> の push、手動（<code>main</code> を選んで dev に配置し直すとき）</td><td>ジョブ <code>build</code> → <code>deploy-dev</code>（main のとき。Variables <code>DEV_DEPLOY_PAUSED</code> が <code>true</code> の間は動かさない）／<code>publish</code> → <code>deploy-prod</code>（タグのとき）</td></tr>
 <tr><td><code>deploy.yml</code></td><td><code>release.yml</code> から呼ばれる（<code>workflow_call</code>）</td><td>1つの環境への配置（DB → Lambda → 画面 → ヘルスチェック）。入力は環境名とリリース番号</td></tr>
 <tr><td><code>rollback.yml</code></td><td>手動（<code>workflow_dispatch</code>）。戻したいタグを選んで実行</td><td>GitHub Release に保管した前回の成果物で Lambda・画面を戻す。DB は戻さない</td></tr>
@@ -2050,6 +2050,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
   minify: false, sourcemap: &#x27;inline&#x27; // 障害時にスタックの行番号が分かるようにする
 })
 // archiver で dist/build/{name}/ を dist/functions/{name}.zip にする（zipの直下に index.mjs）</code></pre>
+<ul><li><code>--verify</code> を付けると、束ねた <code>index.mjs</code> を実際に読み込み、<code>handler</code> が関数であることを確かめる（依存の取り込み漏れや ESM／CommonJS の食い違いを、配置の前に見つけるため）。読み込みに使う環境変数はダミーの値で、AWS には接続しない</li><li>各 zip が50MB以上なら失敗させる。サイズはジョブの概要に書く</li></ul>
 <ul>
 <li>Lambda のハンドラ設定は既定の <code>index.handler</code> のまま（構築手順書 3.8 の設定を変えない）</li>
 <li>zip は同じリリース番号なら dev・prod で同じものを使う（環境の違いは Lambda の環境変数で吸収する）</li>
@@ -2255,7 +2256,7 @@ jobs:
 <tr><td>4</td><td><code>login_logs</code> の保持期間</td><td>永続（1年で約30万行）。Phase 3 で1年より古い行の削除を検討</td><td>Phase 3</td></tr>
 <tr><td>5</td><td>prod の確認用テストコース</td><td><code>[確認用]</code> コースを作り、ランキング・ダッシュボードの集計から除く設定は設けない（受講者が確認用の利用者だけのため）</td><td>パイロット開始前</td></tr>
 <tr><td>6</td><td>リリースの自動化</td><td><strong>決定（2026-10-20）</strong>：Phase 1 から GitHub Actions で配置する（第11章）。AWSリソースの定義（IaC。AWS SAM など）への移行は、利用者数と構成変更の頻度が増えたら検討</td><td>Phase 2 の計画時</td></tr>
-<tr><td>7</td><td><code>esbuild</code> が使う依存ライブラリのライセンス確認</td><td>pdf-lib（MIT）。追加のたびに確認</td><td>ライブラリ追加時</td></tr>
+<tr><td>7</td><td><code>esbuild</code> が使う依存ライブラリのライセンス確認</td><td>pdf-lib（MIT）、esbuild（MIT）、archiver（MIT。2026-10-21 確認）。追加のたびに確認</td><td>ライブラリ追加時</td></tr>
 <tr><td>8</td><td>GitHub のリポジトリ名・承認者</td><td><code>&lt;オーナー&gt;/rpg-learning-app</code>。prod の承認者はシステム管理者と開発リーダーの2名を仮置き</td><td>dev 構築前</td></tr>
 <tr><td>9</td><td>通知メールの文言</td><td>パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を <code>mail/templates.js</code> に仮置き。外部設計書 10 No.10 で確定する</td><td>パイロット開始前</td></tr>
 <tr><td>10</td><td>stg 環境を作り直すか</td><td><strong>決定（2026-10-21）</strong>：コスト削減のため Phase 1 では作らない（外部設計書 10 No.11）。受け入れ確認は dev を凍結して行い（11.1）、prod は配置のたびにスナップショットを取る。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める</td><td>Phase 3 の計画時</td></tr>
@@ -2263,6 +2264,6 @@ jobs:
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.5版（ドラフト：第1〜12章、HTML版あり。stg 環境をなくし dev・prod の2環境に変更）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.6版（ドラフト：第1〜12章、HTML版あり。ci.yml を作成し、画面のビルドは画面の実装時に足すと明記）</div></footer>
 </body>
 </html>
