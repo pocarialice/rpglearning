@@ -1,5 +1,4 @@
 # プルリクエストごとのテストとビルド（詳細設計書 11.2）。AWS には接続しない
-# 画面のビルド（build:web）は、画面とビルドスクリプトを作るときに足す
 name: ci
 on:
   pull_request:
@@ -44,3 +43,5 @@ jobs:
           if-no-files-found: ignore
       - name: Lambda のビルド（4関数の zip・読み込みの確認）
         run: npm run build:functions -- --verify
+      - name: 画面のビルド（dev・prod の2環境。config の差し込みとキャッシュ名の確認）
+        run: npm run build:web -- --release=ci-${{ github.run_number }}

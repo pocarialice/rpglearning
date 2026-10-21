@@ -1,0 +1,42 @@
+/* 画面固有の調整（外部設計書 3.4・3.5）。色・文字・余白はアプリ用デザインシステムのトークンだけを使う */
+body { background: var(--parchment); color: var(--ink); }
+.app-shell { max-width: 420px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+.app-header { position: sticky; top: 0; z-index: 2; background: var(--parchment-raised); border-bottom: 1px solid var(--line); padding: var(--space-3) var(--space-4); }
+.app-name { font-family: var(--font-serif); font-weight: 700; font-size: 18px; color: var(--ink); text-decoration: none; }
+.app-name:focus-visible, .app-nav a:focus-visible, .app-textarea:focus-visible, .app-source summary:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app-main { flex: 1; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-4) calc(72px + var(--space-4)); }
+.app-main:focus { outline: none; }
+.app-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; display: flex; background: var(--parchment-raised); border-top: 1px solid var(--line); z-index: 2; }
+.app-nav a { flex: 1; text-align: center; padding: var(--space-3) 0 calc(var(--space-3) + env(safe-area-inset-bottom)); font-size: 13px; line-height: 20px; font-weight: 700; color: var(--ink-muted); text-decoration: none; }
+.app-nav a[aria-current="page"] { color: var(--crimson); box-shadow: inset 0 3px 0 var(--crimson); }
+.app-section { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
+.app-section h1, .app-section h2, .app-section p { margin: 0; }
+.app-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.app-loading { display: flex; justify-content: center; }
+.app-error { background: var(--wrong-soft); color: var(--ink); border-left: 4px solid var(--wrong); border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4); font-size: 15px; line-height: 24px; }
+.app-error-slot:empty { display: none; }
+.app-notice { background: var(--teal-soft); color: var(--ink); border-left: 4px solid var(--teal); border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4); }
+.app-resuming { display: flex; align-items: center; justify-content: center; gap: var(--space-2); background: var(--teal-soft); color: var(--ink); padding: var(--space-2) var(--space-4); font-size: 13px; }
+.app-resuming[hidden] { display: none; }
+.app-progress { margin: 0; color: var(--ink-muted); display: flex; align-items: center; gap: var(--space-2); }
+.app-chip { font-size: 12px; line-height: 16px; font-weight: 700; color: var(--teal); border: 1px solid var(--teal); border-radius: var(--radius-sm); padding: 0 var(--space-1); }
+.app-total { margin: calc(var(--space-2) * -1) 0 0; color: var(--ink-muted); text-align: right; }
+.app-release { margin: var(--space-6) 0 0; color: var(--ink-muted); text-align: center; }
+.app-center { text-align: center; margin: 0; color: var(--ink-muted); }
+.app-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.app-source summary { cursor: pointer; color: var(--teal); }
+.app-source p { margin: var(--space-2) 0 0; }
+.app-explain-form { display: flex; flex-direction: column; gap: var(--space-2); }
+.app-explain-form[hidden], .app-waiting[hidden] { display: none; }
+.app-textarea { width: 100%; box-sizing: border-box; background: var(--parchment-sunk); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: var(--space-3); resize: vertical; min-height: 200px; }
+.app-counter { display: flex; justify-content: space-between; align-items: center; }
+.app-hint { margin: 0; color: var(--wrong); min-height: 20px; }
+.app-waiting { display: flex; flex-direction: column; gap: var(--space-3); }
+.app-verdict { font-family: var(--font-serif); font-weight: 800; font-size: 24px; line-height: 32px; }
+.app-verdict-correct { color: var(--correct); }
+.app-verdict-wrong { color: var(--wrong); }
+.app-levelup { font-family: var(--font-serif); font-weight: 700; color: var(--gold-ink); }
+.app-list { margin: 0; padding-left: 1.2em; }
+.app-model-label { margin: var(--space-3) 0 0; }
+.app-badges { display: flex; flex-wrap: wrap; gap: var(--space-4); justify-content: center; }
+.app-actions { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
