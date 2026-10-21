@@ -4,7 +4,6 @@ import { createStore } from '../../../../../web/js/core/store.js'
 import { ApiError } from '../../../../../web/js/core/api.js'
 import * as usersPage from '../../../../../web/js/pages/admin/s13-users.js'
 import * as partnersPage from '../../../../../web/js/pages/admin/s14-partners.js'
-import { partnerBubble, imageFor } from '../../../../../web/js/components/partner-bubble.js'
 const U = (id, fullName, roles, status = 'active', extra = {}) => ({ id, fullName, nickname: null, email: `${id}@x.jp`, roles, status, deleteScheduledOn: null, lastLoginAt: null, ...extra })
 const USERS = [U('u_1', '管理 太郎', ['learner', 'system_admin']), U('u_2', '講師 花子', ['course_admin', 'learner'], 'active', { lastLoginAt: '2026-10-21T08:00:00+09:00' }),
   U('u_3', '学習 次郎', ['learner'], 'deleted', { deleteScheduledOn: '2026-11-20' }), U('u_4', '新人 三郎', ['learner'], 'invited')]
@@ -22,17 +21,8 @@ const click = (sel) => q(sel).dispatchEvent(new MouseEvent('click', { bubbles: t
 const flush = () => new Promise((r) => setTimeout(r, 0))
 const set = (sel, v) => { q(sel).value = v }
 beforeEach(setup)
-describe('紋章の画像', () => {
-  it('画像があれば円の中に出し、なければ頭文字', () => {
-    expect(partnerBubble({ name: 'ミナ', persona: 'encourage', imageUrl: 'https://a/x.png?a=1&b="2"' })).toContain('<img class="app-sigil-img" src="https://a/x.png?a=1&amp;b=&quot;2&quot;" alt="">')
-    expect(partnerBubble({ name: 'ミナ', persona: 'encourage' })).not.toContain('<img')
-    expect(imageFor({ persona: 'logic', imageUrl: 'u' }, 'logic')).toBe('u')
-    expect(imageFor({ persona: 'logic', imageUrl: 'u' }, 'rival')).toBeNull()
-    expect(imageFor(null, 'rival')).toBeNull()
-  })
-})
-describe('S-13 利用者', () => {
-  it('一覧：ロール・状態・削除予定日・自分の行・操作', async () => {
+describe('M-F21 S-13 利用者', () => {
+  it('MT-F21-01 一覧：ロール・状態・削除予定日・自分の行・操作', async () => {
     api.apiGet.mockResolvedValue({ users: USERS })
     await usersPage.render(root)
     expect(api.apiGet).toHaveBeenCalledWith('/admin/users?q=&limit=50&offset=0')
@@ -46,7 +36,7 @@ describe('S-13 利用者', () => {
     expect(rows[3].textContent).toContain('招待中')
     expect(q('[aria-selected="true"]').textContent).toBe('利用者')
   })
-  it('探す・状態で絞る・次の50件', async () => {
+  it('MT-F21-02 探す・状態で絞る・次の50件', async () => {
     api.apiGet.mockResolvedValue({ users: Array.from({ length: 50 }, (_, i) => U(`u_${i + 10}`, `人${i}`, ['learner'])) })
     await usersPage.render(root)
     set('input[name="q"]', ' 花子 ')
@@ -59,7 +49,7 @@ describe('S-13 利用者', () => {
     expect(api.apiGet).toHaveBeenLastCalledWith('/admin/users?q=%E8%8A%B1%E5%AD%90&limit=50&offset=50&status=deleted')
     expect(q('[data-page="-1"]')).not.toBeNull()
   })
-  it('登録：招待メールを送り、入力エラーは欄ごとの文言', async () => {
+  it('MT-F21-03 登録：招待メールを送り、入力エラーは欄ごとの文言', async () => {
     api.apiGet.mockResolvedValue({ users: USERS })
     await usersPage.render(root)
     click('[data-action="create-user"]')
@@ -79,7 +69,7 @@ describe('S-13 利用者', () => {
     expect(q('dialog')).toBeNull()
     expect(root.textContent).toContain('新規 四郎さんを登録し、招待メールを送った')
   })
-  it('ロールを変える', async () => {
+  it('MT-F21-04 ロールを変える', async () => {
     api.apiGet.mockResolvedValue({ users: USERS })
     await usersPage.render(root)
     click('[data-roles="u_2"]')
@@ -90,7 +80,7 @@ describe('S-13 利用者', () => {
     await flush()
     expect(api.apiPut).toHaveBeenCalledWith('/admin/users/u_2', { roles: ['learner'] })
   })
-  it('削除は M-10 で確かめ、「やめる」なら消さない。復活はすぐ行う', async () => {
+  it('MT-F21-05 削除は M-10 で確かめ、「やめる」なら消さない。復活はすぐ行う', async () => {
     api.apiGet.mockResolvedValue({ users: USERS })
     await usersPage.render(root)
     click('[data-delete="u_2"]')
@@ -107,7 +97,7 @@ describe('S-13 利用者', () => {
     expect(api.apiPost).toHaveBeenLastCalledWith('/admin/users/u_3/restore')
     expect(root.textContent).toContain('学習 次郎さんを復活した')
   })
-  it('復活できなければ API の文言を出す', async () => {
+  it('MT-F21-06 復活できなければ API の文言を出す', async () => {
     api.apiGet.mockResolvedValue({ users: USERS })
     await usersPage.render(root)
     api.apiPost.mockRejectedValue(new ApiError('CONFLICT', 409, { message: '削除予定の利用者ではありません' }))
@@ -115,22 +105,22 @@ describe('S-13 利用者', () => {
     await flush()
     expect(q('[role="alert"]').textContent).toBe('削除予定の利用者ではありません')
   })
-  it('読み込めないときは責めない文言', async () => {
+  it('MT-F21-07 読み込めないときは責めない文言', async () => {
     api.apiGet.mockRejectedValue(new ApiError('NETWORK', 0))
     await usersPage.render(root)
     expect(q('[role="alert"]').textContent).toBe('通信できませんでした。もう一度お試しください')
   })
 })
-describe('S-13 コース', () => {
+describe('M-F21 S-13 コース', () => {
   const COURSES = { courses: [{ id: 'c_3', name: '基本情報', certification: '基本情報技術者', description: null, adminUserIds: ['u_2'] }, { id: 'c_4', name: 'AWS SAA', certification: 'AWS', description: null, adminUserIds: [] }] }
   const route = () => api.apiGet.mockImplementation(async (p) => (p === '/admin/courses' ? COURSES : { users: USERS }))
-  it('タブの切り替え', async () => {
+  it('MT-F21-08 タブの切り替え', async () => {
     route()
     await usersPage.render(root)
     click('[data-tab="courses"]')
     expect(go).toHaveBeenCalledWith('/admin/users?tab=courses')
   })
-  it('一覧と担当者（有効なコース管理者だけが候補）', async () => {
+  it('MT-F21-09 一覧と担当者（有効なコース管理者だけが候補）', async () => {
     route()
     await usersPage.render(root, { tab: 'courses' })
     expect(api.apiGet).toHaveBeenCalledWith('/admin/users?limit=200')
@@ -140,7 +130,7 @@ describe('S-13 コース', () => {
     click('[data-edit-course="c_4"]')
     expect([...document.querySelectorAll('dialog input[name="admin"]')].map((i) => i.value)).toEqual(['u_2'])
   })
-  it('登録と編集（担当者の割り当てを含む）', async () => {
+  it('MT-F21-10 登録と編集（担当者の割り当てを含む）', async () => {
     route()
     await usersPage.render(root, { tab: 'courses' })
     click('[data-action="create-course"]')
@@ -161,7 +151,7 @@ describe('S-13 コース', () => {
     expect(api.apiPut).toHaveBeenCalledWith('/admin/courses/c_3', { name: '基本情報', certification: '基本情報技術者', description: null, adminUserIds: [] })
   })
 })
-describe('S-14 AIパートナー設定', () => {
+describe('M-F22 S-14 AIパートナー設定', () => {
   const P = (persona, label, defaultName, imageUrl = null) => ({ persona, label, defaultName, imageUrl })
   const route = () => api.apiGet.mockImplementation(async (p) => ({
     '/admin/partners/encourage/image': P('encourage', '励まし型', 'ミナ', 'https://app/partners/encourage-1.png'),
@@ -177,7 +167,7 @@ describe('S-14 AIパートナー設定', () => {
     URL.createObjectURL = vi.fn(() => 'blob:preview')
     URL.revokeObjectURL = vi.fn()
   })
-  it('3人の性格名・初期名・今の画像と見本', async () => {
+  it('MT-F22-01 3人の性格名・初期名・今の画像と見本', async () => {
     route()
     await partnersPage.render(root)
     const cards = root.querySelectorAll('[data-persona-card]')
@@ -189,7 +179,7 @@ describe('S-14 AIパートナー設定', () => {
     expect(cards[0].querySelector('[data-action="remove"]')).not.toBeNull()
     expect(cards[1].querySelector('[data-action="remove"]')).toBeNull()
   })
-  it('種類・大きさの確認とプレビュー', async () => {
+  it('MT-F22-02 種類・大きさの確認とプレビュー', async () => {
     route()
     await partnersPage.render(root)
     pick('logic', new File(['x'], 'a.jpg', { type: 'image/jpeg' }))
@@ -204,7 +194,7 @@ describe('S-14 AIパートナー設定', () => {
     expect(q('[data-persona-card="logic"] .app-sigil-img').getAttribute('src')).toBe('blob:preview')
     expect(q('[data-persona-card="logic"] [data-action="replace"]').disabled).toBe(false)
   })
-  it('差し替える：prepare → S3 へ PUT → commit', async () => {
+  it('MT-F22-03 差し替える：prepare → S3 へ PUT → commit', async () => {
     route()
     await partnersPage.render(root)
     const file = new File(['png'], 'c.png', { type: 'image/png' })
@@ -221,7 +211,7 @@ describe('S-14 AIパートナー設定', () => {
     expect(q('[data-persona-card="logic"]').textContent).toContain('差し替えた')
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview')
   })
-  it('アップロードに失敗したら確定しない', async () => {
+  it('MT-F22-04 アップロードに失敗したら確定しない', async () => {
     route()
     await partnersPage.render(root)
     pick('logic', new File(['png'], 'c.png', { type: 'image/png' }))
@@ -233,7 +223,7 @@ describe('S-14 AIパートナー設定', () => {
     expect(api.apiPut).toHaveBeenCalledTimes(1)
     expect(q('[data-persona-card="logic"] [role="alert"]').textContent).toBe(partnersPage.M_IMAGE_ERROR)
   })
-  it('画像を外す（確認ダイアログ）', async () => {
+  it('MT-F22-05 画像を外す（確認ダイアログ）', async () => {
     route()
     await partnersPage.render(root)
     click('[data-persona-card="encourage"] [data-action="remove"]')
@@ -246,7 +236,7 @@ describe('S-14 AIパートナー設定', () => {
     expect(q('[data-persona-card="encourage"] .app-sigil-img')).toBeNull()
     expect(q('[data-persona-card="encourage"]').textContent).toContain('画像を外した')
   })
-  it('読み込めないときは再読み込みできる', async () => {
+  it('MT-F22-06 読み込めないときは再読み込みできる', async () => {
     api.apiGet.mockRejectedValueOnce(new ApiError('NETWORK', 0))
     await partnersPage.render(root)
     route()

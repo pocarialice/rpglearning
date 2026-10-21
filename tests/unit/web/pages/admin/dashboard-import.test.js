@@ -26,22 +26,22 @@ const flush = () => new Promise((r) => setTimeout(r, 0))
 const col = (i) => [...root.querySelectorAll('tbody tr')].map((tr) => tr.children[i].textContent)
 beforeEach(() => setup())
 afterEach(() => vi.useRealTimers())
-describe('管理局のコースの切り替え', () => {
-  it('URL → 前に選んだコース → 先頭。担当外は使わない', () => {
+describe('M-F20 S-12 管理局のコースの切り替え', () => {
+  it('MT-F20-01 URL → 前に選んだコース → 先頭。担当外は使わない', () => {
     expect(pickCourse(COURSES, { course: 'c_4' }, {})).toBe('c_4')
     expect(pickCourse(COURSES, { course: 'c_9' }, { adminCourseId: 'c_4' })).toBe('c_4')
     expect(pickCourse(COURSES, {}, {})).toBe('c_3')
     expect(pickCourse([], {}, {})).toBeNull()
   })
 })
-describe('S-12 学習状況ダッシュボード', () => {
-  it('担当コースがないときは案内だけ', async () => {
+describe('M-F20 S-12 学習状況ダッシュボード', () => {
+  it('MT-F20-02 担当コースがないときは案内だけ', async () => {
     setup({ user: { roles: ['course_admin'], adminCourses: [] } })
     await dashboard.render(root)
     expect(root.textContent).toContain('担当しているコースがない')
     expect(api.apiGet).not.toHaveBeenCalled()
   })
-  it('集計と受講者一覧（氏名順）を表示し、コースを切り替えられる', async () => {
+  it('MT-F20-03 集計と受講者一覧（氏名順）を表示し、コースを切り替えられる', async () => {
     api.apiGet.mockResolvedValue(DASH)
     await dashboard.render(root, { course: 'c_3' })
     expect(api.apiGet).toHaveBeenCalledWith('/admin/dashboard?course=c_3')
@@ -54,7 +54,7 @@ describe('S-12 学習状況ダッシュボード', () => {
     expect(store.getState().adminCourseId).toBe('c_4')
     expect(go).toHaveBeenCalledWith('/admin/dashboard?course=c_4')
   })
-  it('見出しで並べ替え（値がないものは最後）', async () => {
+  it('MT-F20-04 見出しで並べ替え（値がないものは最後）', async () => {
     api.apiGet.mockResolvedValue(DASH)
     await dashboard.render(root)
     click('[data-sort="coveragePct"]')
@@ -64,7 +64,7 @@ describe('S-12 学習状況ダッシュボード', () => {
     expect(col(2)).toEqual(['80.0%', '40.0%', '-'])
     expect(q('th[aria-sort="descending"]')).not.toBeNull()
   })
-  it('CSVで出力する（BOM を付け直して保存）', async () => {
+  it('MT-F20-05 CSVで出力する（BOM を付け直して保存）', async () => {
     api.apiGet.mockImplementation(async (path, opts) => (opts?.raw ? '氏名,ニックネーム\r\n' : DASH))
     const blobs = []
     URL.createObjectURL = vi.fn((b) => { blobs.push(b); return 'blob:x' })
@@ -78,7 +78,7 @@ describe('S-12 学習状況ダッシュボード', () => {
     expect([...new Uint8Array(await blobs[0].arrayBuffer()).slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
     expect(dashboard.withBom('\ufeffa')).toBe('\ufeffa')
   })
-  it('読み込めないときは再読み込みできる', async () => {
+  it('MT-F20-06 読み込めないときは再読み込みできる', async () => {
     api.apiGet.mockRejectedValueOnce(new ApiError('NETWORK', 0)).mockResolvedValue(DASH)
     await dashboard.render(root)
     click('[data-action="reload"]')
@@ -88,10 +88,10 @@ describe('S-12 学習状況ダッシュボード', () => {
 })
 const DRAFT = (id, extra = {}) => ({ id, bodyHead: '問題文の先頭', body: '問題文の先頭', choiceCount: 4, choices: ['ア1', 'イ2', 'ウ3', 'エ4'], correctChoice: 2, explanation: '解説', keywordCount: 1, keywords: ['DNS'], status: 'draft', ...extra })
 const IMPORTS = (status = 'done') => ({ imports: [{ importId: 'imp_8', sourceType: 'pdf', fileName: 'kakomon.pdf', status, extractedCount: 2, errorMessage: null, createdAt: '2026-10-20T10:30:00+09:00' }] })
-describe('S-11 問題取り込み・レビュー', () => {
+describe('M-F19 S-11 問題取り込み・レビュー', () => {
   const routeGet = (imports, drafts = [DRAFT('q_1'), DRAFT('q_2', { status: 'needs_review', choiceCount: 3, choices: ['a', 'b', 'c'], correctChoice: null })]) =>
     api.apiGet.mockImplementation(async (p) => (p.startsWith('/admin/imports?') ? imports() : { importId: 'imp_8', drafts }))
-  it('取り込み状況と、下書き一覧', async () => {
+  it('MT-F19-01 取り込み状況と、下書き一覧', async () => {
     routeGet(() => IMPORTS())
     await importPage.render(root, { course: 'c_3' })
     expect(api.apiGet).toHaveBeenCalledWith('/admin/imports?course=c_3')
@@ -105,7 +105,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     expect(rows[1]).toContain('選択肢3つ')
     expect(rows[1]).toContain('要確認')
   })
-  it('待機中・抽出中があれば5秒ごとに確かめ、終わったら止める', async () => {
+  it('MT-F19-02 待機中・抽出中があれば5秒ごとに確かめ、終わったら止める', async () => {
     vi.useFakeTimers()
     const seq = [IMPORTS('waiting'), IMPORTS('extracting'), IMPORTS('done')]
     routeGet(() => seq.shift() ?? IMPORTS('done'))
@@ -119,7 +119,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     await vi.advanceTimersByTimeAsync(15000)
     expect(api.apiGet.mock.calls.length).toBe(calls)
   })
-  it('別の画面に移ったら確かめるのをやめる', async () => {
+  it('MT-F19-03 別の画面に移ったら確かめるのをやめる', async () => {
     vi.useFakeTimers()
     routeGet(() => IMPORTS('waiting'))
     await importPage.render(root)
@@ -127,7 +127,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     await vi.advanceTimersByTimeAsync(10000)
     expect(api.apiGet).toHaveBeenCalledTimes(1)
   })
-  it('テキストの取り込み', async () => {
+  it('MT-F19-04 テキストの取り込み', async () => {
     routeGet(() => ({ imports: [] }))
     await importPage.render(root)
     q('input[value="text"]').checked = true
@@ -143,7 +143,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     expect(api.apiPost).toHaveBeenCalledWith('/admin/imports', { courseId: 'c_3', sourceType: 'text', text: '問1 ...' })
     expect(root.textContent).toContain('受け付けた')
   })
-  it('PDFは署名付きURLへ Content-Type を付けて PUT する。大きすぎるファイルは送らない', async () => {
+  it('MT-F19-05 PDFは署名付きURLへ Content-Type を付けて PUT する。大きすぎるファイルは送らない', async () => {
     routeGet(() => ({ imports: [] }))
     await importPage.render(root)
     const input = q('input[type="file"]')
@@ -165,7 +165,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith('https://s3.example/put', { method: 'PUT', headers: { 'Content-Type': 'application/pdf' }, body: pdf })
     expect(root.textContent).toContain('受け付けた')
   })
-  it('アップロードに失敗したら責めない文言', async () => {
+  it('MT-F19-06 アップロードに失敗したら責めない文言', async () => {
     routeGet(() => ({ imports: [] }))
     await importPage.render(root)
     const input = q('input[type="file"]')
@@ -178,7 +178,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     await flush()
     expect(q('[role="alert"]').textContent).toBe(importPage.M_UPLOAD_ERROR)
   })
-  it('下書きを修正して保存する（空の選択肢は送らず、正解の番号を詰める）', async () => {
+  it('MT-F19-07 下書きを修正して保存する（空の選択肢は送らず、正解の番号を詰める）', async () => {
     routeGet(() => IMPORTS())
     await importPage.render(root, { import: 'imp_8' })
     click('[data-edit="q_1"]')
@@ -191,7 +191,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     expect(api.apiPut).toHaveBeenCalledWith('/admin/questions/q_1', { body: '問題文の先頭', choices: ['ア1', 'ウ3', 'エ4'], correctChoice: 2, explanation: '解説', keywords: ['DNS'] })
     expect(root.textContent).toContain('「要確認」のまま')
   })
-  it('公開する：足りなければ M-12、そろっていれば保存してから公開', async () => {
+  it('MT-F19-08 公開する：足りなければ M-12、そろっていれば保存してから公開', async () => {
     routeGet(() => IMPORTS())
     await importPage.render(root, { import: 'imp_8' })
     click('[data-edit="q_2"]')
@@ -210,7 +210,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     expect(api.apiPost).toHaveBeenCalledWith('/admin/questions/q_2/publish')
     expect(root.textContent).toContain('公開した')
   })
-  it('削除する：確認ダイアログで「やめる」なら消さない、「削除する」で消す', async () => {
+  it('MT-F19-09 削除する：確認ダイアログで「やめる」なら消さない、「削除する」で消す', async () => {
     routeGet(() => IMPORTS())
     await importPage.render(root, { import: 'imp_8' })
     click('[data-edit="q_1"]')
@@ -228,7 +228,7 @@ describe('S-11 問題取り込み・レビュー', () => {
     expect(q('dialog')).toBeNull()
     expect(root.textContent).toContain('削除した')
   })
-  it('選択肢が5つ以上の下書きは案内を出す', async () => {
+  it('MT-F19-10 選択肢が5つ以上の下書きは案内を出す', async () => {
     routeGet(() => IMPORTS(), [DRAFT('q_5', { choiceCount: 5, choices: ['a', 'b', 'c', 'd', 'e'] })])
     await importPage.render(root, { import: 'imp_8' })
     click('[data-edit="q_5"]')

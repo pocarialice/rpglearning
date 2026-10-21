@@ -24,8 +24,8 @@ const click = (sel) => q(sel).dispatchEvent(new MouseEvent('click', { bubbles: t
 const change = (sel, v) => { const el = q(sel); if (typeof v === 'boolean') el.checked = v; else el.value = v; el.dispatchEvent(new Event('change')) }
 const flush = () => new Promise((r) => setTimeout(r, 0))
 beforeEach(setup)
-describe('S-07 週間ランキング', () => {
-  it('コース名・集計期間・リセットまでの日数と、上位10名＋圏外の自分', async () => {
+describe('M-F15 S-07 週間ランキング', () => {
+  it('MT-F15-01 コース名・集計期間・リセットまでの日数と、上位10名＋圏外の自分', async () => {
     api.apiGet.mockResolvedValue(THIS_WEEK)
     await ranking.render(root)
     expect(api.apiGet).toHaveBeenCalledWith('/rankings')
@@ -39,7 +39,7 @@ describe('S-07 週間ランキング', () => {
     expect(rows[10].textContent).toContain('あなた')
     expect(rows[0].querySelector('.gd-rank-1')).not.toBeNull()
   })
-  it('過去週の切り替え', async () => {
+  it('MT-F15-02 過去週の切り替え', async () => {
     api.apiGet.mockResolvedValue(THIS_WEEK)
     await ranking.render(root)
     expect([...root.querySelectorAll('[data-week]')].map((b) => b.textContent)).toEqual(['今週', '10/12〜', '10/05〜'])
@@ -49,7 +49,7 @@ describe('S-07 週間ランキング', () => {
     click('[data-week="2026-10-12"]')
     expect(go).toHaveBeenCalledWith('/ranking?week=2026-10-12')
   })
-  it('過去週は確定済みと表示し、「今週」で戻る', async () => {
+  it('MT-F15-03 過去週は確定済みと表示し、「今週」で戻る', async () => {
     api.apiGet.mockResolvedValue({ ...THIS_WEEK, weekStart: '2026-10-12', weekEnd: '2026-10-18', rows: [person(1, 0, true)], me: person(1, 0, true) })
     await ranking.render(root, { week: '2026-10-12' })
     expect(api.apiGet).toHaveBeenCalledWith('/rankings?week=2026-10-12')
@@ -59,13 +59,13 @@ describe('S-07 週間ランキング', () => {
     click('[data-week=""]')
     expect(go).toHaveBeenCalledWith('/ranking')
   })
-  it('だれもいない週と、ランキングに入っていない自分', async () => {
+  it('MT-F15-04 だれもいない週と、ランキングに入っていない自分', async () => {
     api.apiGet.mockResolvedValue({ ...THIS_WEEK, rows: [], me: null, weeks: [] })
     await ranking.render(root)
     expect(root.textContent).toContain('最初の1問で1位になろう')
     expect(root.textContent).toContain('あなたはまだランキングに入っていない')
   })
-  it('読み込めないときは再読み込みできる', async () => {
+  it('MT-F15-05 読み込めないときは再読み込みできる', async () => {
     api.apiGet.mockRejectedValueOnce(new ApiError('NETWORK', 0)).mockResolvedValue(THIS_WEEK)
     await ranking.render(root)
     click('[data-action="reload"]')
@@ -73,14 +73,14 @@ describe('S-07 週間ランキング', () => {
     expect(root.querySelectorAll('.gd-rank')).toHaveLength(11)
   })
 })
-describe('S-10 通知設定', () => {
-  it('6:00〜22:00 の30分刻み', () => {
+describe('M-F18 S-10 通知設定', () => {
+  it('MT-F18-01 6:00〜22:00 の30分刻み', () => {
     expect(notify.SEND_TIMES).toHaveLength(33)
     expect(notify.SEND_TIMES[0]).toBe('06:00')
     expect(notify.SEND_TIMES[1]).toBe('06:30')
     expect(notify.SEND_TIMES.at(-1)).toBe('22:00')
   })
-  it('今の設定を表示し、変えたときだけ保存でき、保存したら M-09', async () => {
+  it('MT-F18-02 今の設定を表示し、変えたときだけ保存でき、保存したら M-09', async () => {
     api.apiGet.mockResolvedValue({ emailEnabled: true, sendTime: '07:30' })
     await notify.render(root)
     expect(q('#email-enabled').checked).toBe(true)
@@ -98,7 +98,7 @@ describe('S-10 通知設定', () => {
     expect(q('.app-notice').textContent).toBe('保存した。変更は明日の通知から反映されます')
     expect(q('[data-action="save"]').disabled).toBe(true)
   })
-  it('メールをオフにすると時刻は選べない', async () => {
+  it('MT-F18-03 メールをオフにすると時刻は選べない', async () => {
     api.apiGet.mockResolvedValue({ emailEnabled: true, sendTime: '07:30' })
     await notify.render(root)
     change('#email-enabled', false)
@@ -106,7 +106,7 @@ describe('S-10 通知設定', () => {
     expect(q('[data-state-for="email-enabled"]').textContent).toBe('オフ')
     expect(q('[data-action="save"]').disabled).toBe(false)
   })
-  it('保存できないときは責めない文言で、もう一度押せる', async () => {
+  it('MT-F18-04 保存できないときは責めない文言で、もう一度押せる', async () => {
     api.apiGet.mockResolvedValue({ emailEnabled: false, sendTime: '07:30' })
     await notify.render(root)
     expect(q('#send-time').disabled).toBe(true)
@@ -117,7 +117,7 @@ describe('S-10 通知設定', () => {
     expect(q('[role="alert"]').textContent).toBe(notify.M_NOTIFY_SAVE_ERROR)
     expect(q('[data-action="save"]').disabled).toBe(false)
   })
-  it('「プロフィールへ戻る」', async () => {
+  it('MT-F18-05 「プロフィールへ戻る」', async () => {
     api.apiGet.mockResolvedValue({ emailEnabled: true, sendTime: '07:30' })
     await notify.render(root)
     click('[data-action="back"]')

@@ -22,13 +22,13 @@ const click = (sel) => q(sel).dispatchEvent(new MouseEvent('click', { bubbles: t
 const type = (sel, v) => { q(sel).value = v; q(sel).dispatchEvent(new Event('input')) }
 const flush = () => new Promise((r) => setTimeout(r, 0))
 beforeEach(() => setup())
-describe('初回の流れ（はじめての冒険）', () => {
-  it('済んでいればホームへ', async () => {
+describe('M-F09 初回の流れ', () => {
+  it('MT-F09-01 済んでいればホームへ', async () => {
     setup({ needNickname: false, needCourse: false, needPartner: false })
     await onboarding.render(root)
     expect(go).toHaveBeenCalledWith('/home')
   })
-  it('ステップ1：ニックネームの入力チェックと登録', async () => {
+  it('MT-F09-02 ステップ1：ニックネームの入力チェックと登録', async () => {
     await onboarding.render(root)
     expect(q('[aria-current="step"] .app-step-label').textContent).toBe('ニックネーム')
     expect(root.textContent).toContain('ステップ 1 / 3')
@@ -48,7 +48,7 @@ describe('初回の流れ（はじめての冒険）', () => {
     expect(store.getState().user.nickname).toBe('たろう')
     expect(q('[aria-current="step"] .app-step-label').textContent).toBe('コース')
   })
-  it('ニックネームの重複（M-08）は責めずに知らせる', async () => {
+  it('MT-F09-03 ニックネームの重複（M-08）は責めずに知らせる', async () => {
     await onboarding.render(root)
     type('#nickname', 'たろう')
     api.apiPut.mockRejectedValue(new ApiError('CONFLICT', 409, { message: 'このニックネームはすでに使われています' }))
@@ -57,7 +57,7 @@ describe('初回の流れ（はじめての冒険）', () => {
     expect(q('[role="alert"]').textContent).toBe('このニックネームはすでに使われています')
     expect(q('[data-action="nickname"]').disabled).toBe(false)
   })
-  it('ステップ2：コース一覧と受講中の印、選ぶと次へ', async () => {
+  it('MT-F09-04 ステップ2：コース一覧と受講中の印、選ぶと次へ', async () => {
     setup({ ...NEW_USER, needNickname: false }, { nickname: 'たろう' })
     api.apiGet.mockResolvedValue(COURSES)
     await onboarding.render(root)
@@ -77,7 +77,7 @@ describe('初回の流れ（はじめての冒険）', () => {
     expect(store.getState().user.currentCourseId).toBe('c_1')
     expect(q('[aria-current="step"] .app-step-label').textContent).toBe('仲間')
   })
-  it('コースの中でニックネームが重なったら、ニックネームの段階に戻して案内する', async () => {
+  it('MT-F09-05 コースの中でニックネームが重なったら、ニックネームの段階に戻して案内する', async () => {
     setup({ ...NEW_USER, needNickname: false }, { nickname: 'たろう' })
     api.apiGet.mockResolvedValue(COURSES)
     await onboarding.render(root)
@@ -94,7 +94,7 @@ describe('初回の流れ（はじめての冒険）', () => {
     expect(q('[aria-current="step"] .app-step-label').textContent).toBe('コース')
     expect(store.getState().onboardingNotice).toBeNull()
   })
-  it('コースを読み込めないときは再読み込みできる', async () => {
+  it('MT-F09-06 コースを読み込めないときは再読み込みできる', async () => {
     setup({ ...NEW_USER, needNickname: false })
     api.apiGet.mockRejectedValueOnce(new ApiError('NETWORK', 0)).mockResolvedValue(COURSES)
     await onboarding.render(root)
@@ -103,7 +103,7 @@ describe('初回の流れ（はじめての冒険）', () => {
     await flush()
     expect(root.querySelectorAll('.app-course')).toHaveLength(2)
   })
-  it('ステップ3：仲間を選ぶまで押せず、名前を省くと初期名、決まったらホームへ', async () => {
+  it('MT-F09-07 ステップ3：仲間を選ぶまで押せず、名前を省くと初期名、決まったらホームへ', async () => {
     setup({ needNickname: false, needCourse: false, needPartner: true }, { nickname: 'たろう' })
     await onboarding.render(root)
     expect(root.querySelectorAll('[data-persona]')).toHaveLength(3)

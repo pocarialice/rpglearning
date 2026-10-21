@@ -27,8 +27,8 @@ function setup(state = {}) {
 const click = (sel) => root.querySelector(sel).dispatchEvent(new MouseEvent('click', { bubbles: true }))
 const flush = () => new Promise((r) => setTimeout(r, 0))
 beforeEach(() => setup())
-describe('S-02 ホーム', () => {
-  it('EXPバー → ひとこと → クエスト → 今日の復習の順に表示する', async () => {
+describe('M-F10 S-02 ホーム', () => {
+  it('MT-F10-01 EXPバー → ひとこと → クエスト → 今日の復習の順に表示する', async () => {
     api.apiGet.mockResolvedValue(HOME)
     await home.render(root)
     expect(api.apiGet).toHaveBeenCalledWith('/home')
@@ -39,7 +39,7 @@ describe('S-02 ホーム', () => {
     expect(root.textContent).toContain('リリース 20261105-01')
     expect(store.getState().questTitles['Q-03']).toBe('キーワード説明を1問合格する')
   })
-  it('「冒険に出る」で冒険IDを空にして次の問題へ移る', async () => {
+  it('MT-F10-02 「冒険に出る」で冒険IDを空にして次の問題へ移る', async () => {
     setup({ adventureId: 'adv_old' })
     api.apiGet.mockResolvedValueOnce(HOME).mockResolvedValueOnce(CHOICE_Q)
     await home.render(root)
@@ -49,14 +49,14 @@ describe('S-02 ホーム', () => {
     expect(store.getState().quest).toBe(CHOICE_Q)
     expect(go).toHaveBeenCalledWith('/quest/choice')
   })
-  it('冒険の終わりのお知らせを1回だけ出す', async () => {
+  it('MT-F10-03 冒険の終わりのお知らせを1回だけ出す', async () => {
     setup({ notice: NOTICE_DONE })
     api.apiGet.mockResolvedValue(HOME)
     await home.render(root)
     expect(root.querySelector('.app-notice').textContent).toBe(NOTICE_DONE)
     expect(store.getState().notice).toBeNull()
   })
-  it('読み込めないときは責めない文言と再読み込み', async () => {
+  it('MT-F10-04 読み込めないときは責めない文言と再読み込み', async () => {
     api.apiGet.mockRejectedValueOnce(new ApiError('NETWORK', 0)).mockResolvedValue(HOME)
     await home.render(root)
     expect(root.querySelector('[role="alert"]').textContent).toBe('通信できませんでした。もう一度お試しください')
@@ -65,12 +65,12 @@ describe('S-02 ホーム', () => {
     expect(root.querySelector('.gd-exp')).not.toBeNull()
   })
 })
-describe('S-04 演習（四肢択一）', () => {
-  it('問題がなければホームへ戻す', async () => {
+describe('M-F12 S-04 演習（四肢択一）', () => {
+  it('MT-F12-01 問題がなければホームへ戻す', async () => {
     await choice.render(root)
     expect(go).toHaveBeenCalledWith('/home')
   })
-  it('選ぶまで「答える」を押せず、答えると S-06 へ', async () => {
+  it('MT-F12-02 選ぶまで「答える」を押せず、答えると S-06 へ', async () => {
     setup({ quest: CHOICE_Q, adventureId: 'adv_1' })
     await choice.render(root)
     expect(root.querySelector('.app-progress').textContent).toBe('3 / 10問復習')
@@ -87,7 +87,7 @@ describe('S-04 演習（四肢択一）', () => {
     expect(store.getState().result).toEqual({ kind: 'choice', quest: CHOICE_Q, selected: 2, res })
     expect(go).toHaveBeenCalledWith('/quest/result')
   })
-  it('送れなかったら選んだまま、もう一度押せる', async () => {
+  it('MT-F12-03 送れなかったら選んだまま、もう一度押せる', async () => {
     setup({ quest: CHOICE_Q })
     await choice.render(root)
     click('[data-choice="1"]')
@@ -98,13 +98,13 @@ describe('S-04 演習（四肢択一）', () => {
     expect(root.querySelector('[data-action="answer"]').disabled).toBe(false)
   })
 })
-describe('S-05 キーワード説明', () => {
+describe('M-F13 S-05 キーワード説明', () => {
   const type = (text) => {
     const ta = root.querySelector('#explain-text')
     ta.value = text
     ta.dispatchEvent(new Event('input'))
   }
-  it('文字数と M-03・M-04 を入力のたびに表示し、送れるかを切り替える', async () => {
+  it('MT-F13-01 文字数と M-03・M-04 を入力のたびに表示し、送れるかを切り替える', async () => {
     setup({ quest: EXPLAIN_Q })
     await explain.render(root)
     const submit = root.querySelector('[data-action="submit"]')
@@ -121,7 +121,7 @@ describe('S-05 キーワード説明', () => {
     expect(submit.disabled).toBe(false)
     expect(root.querySelector('[data-action="heading"]')).toBeNull()
   })
-  it('送信後はパートナーの採点待ちを出し、結果が出たら S-06 へ', async () => {
+  it('MT-F13-02 送信後はパートナーの採点待ちを出し、結果が出たら S-06 へ', async () => {
     setup({ quest: EXPLAIN_Q, adventureId: 'adv_1' })
     await explain.render(root)
     type('あ'.repeat(60))
@@ -138,7 +138,7 @@ describe('S-05 キーワード説明', () => {
     expect(store.getState().result.kind).toBe('explain')
     expect(go).toHaveBeenCalledWith('/quest/result')
   })
-  it('時間切れは M-07 を出して入力を残す', async () => {
+  it('MT-F13-03 時間切れは M-07 を出して入力を残す', async () => {
     setup({ quest: EXPLAIN_Q })
     await explain.render(root)
     type('あ'.repeat(60))
@@ -151,7 +151,7 @@ describe('S-05 キーワード説明', () => {
     expect(root.querySelector('.app-explain-form').hidden).toBe(false)
     expect(root.querySelector('#explain-text').value).toBe('あ'.repeat(60))
   })
-  it('採点の失敗はもう一度送れる形に戻す', async () => {
+  it('MT-F13-04 採点の失敗はもう一度送れる形に戻す', async () => {
     setup({ quest: EXPLAIN_Q })
     await explain.render(root)
     type('あ'.repeat(60))
@@ -164,8 +164,8 @@ describe('S-05 キーワード説明', () => {
     expect(root.querySelector('[data-action="submit"]').disabled).toBe(false)
   })
 })
-describe('S-06 結果・フィードバック', () => {
-  it('択一：正解・選んだ選択肢・EXP・復習段階・達成を表示する', async () => {
+describe('M-F14 S-06 結果・フィードバック', () => {
+  it('MT-F14-01 択一：正解・選んだ選択肢・EXP・復習段階・達成を表示する', async () => {
     const res = { correct: false, correctChoice: 3, explanation: '正解はウ', comment: { partnerName: 'セージ', persona: 'logic', text: '次はここを押さえましょう' }, ...OUTCOME }
     setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 2, res }, questTitles: { 'Q-01': '今日の復習をすべて終える' } })
     await result.render(root)
@@ -181,7 +181,7 @@ describe('S-06 結果・フィードバック', () => {
     expect(root.querySelector('.gd-badge-name').textContent).toBe('習得の証（銅）')
     expect(root.textContent).toContain('正解はウ')
   })
-  it('説明：点数・足りない観点・模範説明', async () => {
+  it('MT-F14-02 説明：点数・足りない観点・模範説明', async () => {
     const res = { status: 'done', score: 45, passed: false, modelAnswer: 'VPCは<論理的に>分離された', missingPoints: ['サブネット'], comment: { partnerName: 'レン', persona: 'rival', text: '次は負けないぞ' }, ...OUTCOME, quests: [], badges: [] }
     setup({ result: { kind: 'explain', quest: EXPLAIN_Q, res } })
     await result.render(root)
@@ -191,7 +191,7 @@ describe('S-06 結果・フィードバック', () => {
     expect(root.querySelector('.gd-review-kind').textContent).toBe('説明')
     expect(root.textContent).not.toContain('達成')
   })
-  it('「次の問題へ」は同じ冒険で A-07 を呼ぶ', async () => {
+  it('MT-F14-03 「次の問題へ」は同じ冒険で A-07 を呼ぶ', async () => {
     const res = { correct: true, correctChoice: 1, explanation: '', comment: { text: 'いいね' }, ...OUTCOME }
     setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res }, adventureId: 'adv_1' })
     await result.render(root)
@@ -201,7 +201,7 @@ describe('S-06 結果・フィードバック', () => {
     expect(api.apiGet).toHaveBeenCalledWith('/quests/next?adventureId=adv_1')
     expect(go).toHaveBeenCalledWith('/quest/explain')
   })
-  it('冒険の終わり（done）はホームへ戻してお知らせを出す', async () => {
+  it('MT-F14-04 冒険の終わり（done）はホームへ戻してお知らせを出す', async () => {
     const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
     setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res }, adventureId: 'adv_1' })
     await result.render(root)
@@ -212,7 +212,7 @@ describe('S-06 結果・フィードバック', () => {
     expect(store.getState().adventureId).toBeNull()
     expect(go).toHaveBeenCalledWith('/home')
   })
-  it('10問目のあとは「ホームへ」だけ', async () => {
+  it('MT-F14-05 10問目のあとは「ホームへ」だけ', async () => {
     const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
     setup({ result: { kind: 'choice', quest: { ...CHOICE_Q, index: 10 }, selected: 1, res }, adventureId: 'adv_1' })
     await result.render(root)

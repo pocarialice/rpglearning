@@ -27,8 +27,8 @@ const type = (sel, v) => { q(sel).value = v; q(sel).dispatchEvent(new Event('inp
 const flush = () => new Promise((r) => setTimeout(r, 0))
 const mockProfile = () => api.apiGet.mockImplementation(async (p) => (p === '/me/stats' ? STATS : BADGES))
 beforeEach(() => setup())
-describe('S-08 プロフィール', () => {
-  it('レベル・学習記録・バッジ・メニューを表示する', async () => {
+describe('M-F16 S-08 プロフィール', () => {
+  it('MT-F16-01 レベル・学習記録・バッジ・メニューを表示する', async () => {
     mockProfile()
     await profile.render(root)
     expect(api.apiGet).toHaveBeenCalledWith('/me/stats')
@@ -44,7 +44,7 @@ describe('S-08 プロフィール', () => {
     expect(locked.querySelector('.app-badge-cond').textContent).toBe('習得済みの問題が10問')
     expect(root.textContent).toContain('リリース 20261105-01')
   })
-  it('メニューから各画面へ移り、ログアウトできる', async () => {
+  it('MT-F16-02 メニューから各画面へ移り、ログアウトできる', async () => {
     mockProfile()
     await profile.render(root)
     click('[data-go="/courses"]')
@@ -54,7 +54,7 @@ describe('S-08 プロフィール', () => {
     click('[data-action="logout"]')
     expect(auth.logout).toHaveBeenCalled()
   })
-  it('ニックネームをダイアログで変える', async () => {
+  it('MT-F16-03 ニックネームをダイアログで変える', async () => {
     mockProfile()
     await profile.render(root)
     click('[data-action="edit-nickname"]')
@@ -69,7 +69,7 @@ describe('S-08 プロフィール', () => {
     expect(q('.app-nickname').textContent).toBe('じろう')
     expect(store.getState().user.nickname).toBe('じろう')
   })
-  it('「やめる」で閉じ、?edit=nickname で開いた状態にする', async () => {
+  it('MT-F16-04 「やめる」で閉じ、?edit=nickname で開いた状態にする', async () => {
     mockProfile()
     await profile.render(root, { edit: 'nickname' })
     expect(q('dialog')).not.toBeNull()
@@ -77,7 +77,7 @@ describe('S-08 プロフィール', () => {
     expect(q('dialog')).toBeNull()
     expect(api.apiPut).not.toHaveBeenCalled()
   })
-  it('読み込めないときは再読み込みできる', async () => {
+  it('MT-F16-05 読み込めないときは再読み込みできる', async () => {
     api.apiGet.mockRejectedValueOnce(new ApiError('NETWORK', 0))
     await profile.render(root)
     expect(q('[role="alert"]')).not.toBeNull()
@@ -87,8 +87,8 @@ describe('S-08 プロフィール', () => {
     expect(q('.app-nickname')).not.toBeNull()
   })
 })
-describe('S-03 コース選択', () => {
-  it('受講中の印。選び直すと冒険を空にしてホームへ', async () => {
+describe('M-F11 S-03 コース選択', () => {
+  it('MT-F11-01 受講中の印。選び直すと冒険を空にしてホームへ', async () => {
     api.apiGet.mockResolvedValue(COURSES)
     await courses.render(root)
     expect(root.querySelectorAll('.app-course')[0].textContent).toContain('受講中')
@@ -99,7 +99,7 @@ describe('S-03 コース選択', () => {
     expect(store.getState().adventureId).toBeNull()
     expect(go).toHaveBeenCalledWith('/home')
   })
-  it('ニックネームの重複（M-08）はニックネームの変更へ案内する', async () => {
+  it('MT-F11-02 ニックネームの重複（M-08）はニックネームの変更へ案内する', async () => {
     api.apiGet.mockResolvedValue(COURSES)
     await courses.render(root)
     api.apiPost.mockRejectedValue(new ApiError('CONFLICT', 409))
@@ -110,21 +110,21 @@ describe('S-03 コース選択', () => {
     expect(go).toHaveBeenCalledWith('/profile?edit=nickname')
     expect(store.getState().user.currentCourseId).toBe('c_3')
   })
-  it('「プロフィールへ戻る」', async () => {
+  it('MT-F11-03 「プロフィールへ戻る」', async () => {
     api.apiGet.mockResolvedValue(COURSES)
     await courses.render(root)
     click('[data-action="back"]')
     expect(go).toHaveBeenCalledWith('/profile')
   })
 })
-describe('S-09 AIパートナー選択', () => {
-  it('今の仲間と名前が選ばれた状態で開く', async () => {
+describe('M-F17 S-09 AIパートナー選択', () => {
+  it('MT-F17-01 今の仲間と名前が選ばれた状態で開く', async () => {
     await partnerPage.render(root)
     expect(q('[data-persona="encourage"]').getAttribute('aria-checked')).toBe('true')
     expect(q('#partner-name').value).toBe('ルナ')
     expect(q('[data-action="partner"]').disabled).toBe(false)
   })
-  it('キャラクターを変えると名前は空（初期名）に戻り、決めるとプロフィールへ', async () => {
+  it('MT-F17-02 キャラクターを変えると名前は空（初期名）に戻り、決めるとプロフィールへ', async () => {
     await partnerPage.render(root)
     click('[data-persona="rival"]')
     expect(q('#partner-name').value).toBe('')
@@ -136,7 +136,7 @@ describe('S-09 AIパートナー選択', () => {
     expect(store.getState().user.partner).toEqual({ persona: 'rival', name: 'レン', imageUrl: null })
     expect(go).toHaveBeenCalledWith('/profile')
   })
-  it('「やめる」は保存せずプロフィールへ', async () => {
+  it('MT-F17-03 「やめる」は保存せずプロフィールへ', async () => {
     await partnerPage.render(root)
     click('[data-action="back"]')
     expect(api.apiPut).not.toHaveBeenCalled()

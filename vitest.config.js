@@ -9,8 +9,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      include: ['functions/**/*.{js,mjs}', 'web/js/core/**', 'web/js/logic/**'],
-      exclude: ['web/js/pages/**', 'web/js/components/**'],
+      include: ['functions/**/*.{js,mjs}', 'web/js/core/**', 'web/js/logic/**', 'web/js/pages/**', 'web/js/parts/**', 'web/js/components/**', 'web/js/shell.js'],
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
         'functions/shared/domain/**': { statements: 100, branches: 100 },
