@@ -3,6 +3,7 @@ import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
+import { parseDbTimestamp, toIsoJst } from '../../shared/util/date-jst.js'
 import { assertValid, validateImportRequest } from '../../shared/util/validators.js'
 import { withTx } from '../../shared/db/tx.js'
 import * as imports from '../../shared/db/repositories/imports.js'
@@ -56,5 +57,5 @@ export async function list(ctx) {
   const courseId = decodeId(PREFIX.course, ctx.query.course)
   await requireCourseAdmin(ctx, courseId)
   const rows = await imports.listByCourse(courseId)
-  return ok({ imports: rows.map((j) => ({ importId: encodeId(PREFIX.import, j.importId), sourceType: j.sourceType, fileName: j.fileName, status: j.status, extractedCount: j.extractedCount, errorMessage: j.errorMessage ?? null, createdAt: j.createdAt })) })
+  return ok({ imports: rows.map((j) => ({ importId: encodeId(PREFIX.import, j.importId), sourceType: j.sourceType, fileName: j.fileName, status: j.status, extractedCount: j.extractedCount, errorMessage: j.errorMessage ?? null, createdAt: toIsoJst(parseDbTimestamp(j.createdAt)) })) })
 }

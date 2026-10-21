@@ -47,6 +47,15 @@ describe('M-F03 core/router', () => {
     expect(window.location.hash).toBe('#/onboarding')
     expect(loads.home).not.toHaveBeenCalled()
   })
+  it('MT-F03-06 管理局は初回の流れの前でも開ける', async () => {
+    const { router, pages } = setup()
+    state.user.roles = ['system_admin', 'learner']
+    state.onboarding.needNickname = true
+    window.location.hash = '#/admin/users'
+    await router.render()
+    expect(window.location.hash).toBe('#/admin/users')
+    expect(pages.users.render).toHaveBeenCalledWith(root, {})
+  })
   it('MT-F03-05 ハッシュの解釈・start で hashchange を聞く・ロールのない状態', async () => {
     expect(parseHash('')).toEqual({ path: '/home', params: {} })
     expect(parseHash(undefined)).toEqual({ path: '/home', params: {} })

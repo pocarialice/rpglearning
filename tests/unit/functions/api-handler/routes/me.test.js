@@ -5,6 +5,7 @@ vi.mock('../../../../../functions/shared/db/repositories/partners.js')
 vi.mock('../../../../../functions/shared/db/repositories/notify.js')
 vi.mock('../../../../../functions/shared/db/repositories/answers.js')
 vi.mock('../../../../../functions/shared/db/repositories/badges.js')
+vi.mock('../../../../../functions/shared/db/repositories/courses.js')
 import * as users from '../../../../../functions/shared/db/repositories/users.js'
 import * as enrollments from '../../../../../functions/shared/db/repositories/enrollments.js'
 import * as partners from '../../../../../functions/shared/db/repositories/partners.js'
@@ -15,7 +16,8 @@ import { main } from '../../../../../functions/api-handler/index.mjs'
 import { httpEvent, parse } from '../../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../../helpers/logger.js'
 import { NOW } from '../../../../helpers/clock.js'
-import { learner } from '../../../../fixtures/users.js'
+import { learner, courseAdmin, systemAdmin } from '../../../../fixtures/users.js'
+import * as courses from '../../../../../functions/shared/db/repositories/courses.js'
 import { levelInfo } from '../../../../../functions/shared/domain/exp.js'
 const call = (opts) => main(httpEvent(opts), { log: memoryLogger(), now: NOW })
 const minutesAgo = (m) => new Date(NOW.getTime() - m * 60000).toISOString().replace('T', ' ').replace('Z', '')
@@ -138,6 +140,17 @@ describe('M-H02 me（A-01〜A-04、A-12）', () => {
     badges.listOwnedDetail.mockResolvedValue([{ badgeCode: 'streak_bronze', earnedAt: '2026-10-19 15:00:00' }])
     const list = parse(await call({ path: '/api/me/badges' })).badges
     expect(list.find((b) => b.code === 'streak_bronze').earnedAt).toBe('2026-10-20T00:00:00+09:00')
+  })
+  it('MT-H02-19 管理局で選べるコース', async () => {
+    courses.listAdminCourses.mockResolvedValue([{ courseId: 3, name: '基本情報' }])
+    courses.listAll.mockResolvedValue([{ courseId: 3, name: '基本情報', adminUserIds: [2] }, { courseId: 4, name: 'AWS SAA', adminUserIds: [] }])
+    expect(parse(await call({ path: '/api/me' })).adminCourses).toEqual([])
+    users.findBySub.mockResolvedValue({ ...courseAdmin })
+    expect(parse(await call({ path: '/api/me' })).adminCourses).toEqual([{ id: 'c_3', name: '基本情報' }])
+    expect(courses.listAdminCourses).toHaveBeenCalledWith(2)
+    users.findBySub.mockResolvedValue({ ...systemAdmin })
+    expect(parse(await call({ path: '/api/me' })).adminCourses).toEqual([{ id: 'c_3', name: '基本情報' }, { id: 'c_4', name: 'AWS SAA' }])
+    expect(courses.listAdminCourses).toHaveBeenCalledTimes(1)
   })
   it('MT-H02-13 バッジ一覧', async () => {
     badges.listDefs.mockResolvedValue(DEFS)

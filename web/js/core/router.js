@@ -22,7 +22,8 @@ export function createRouter({ root, getState, win = window }) {
     if (!route) return go('/home')
     const state = getState()
     const ob = state.onboarding
-    if (ob && (ob.needNickname || ob.needCourse || ob.needPartner) && path !== ONBOARDING_PATH) return go(ONBOARDING_PATH)
+    // 管理局（/admin/…）は学習者の初回の流れが済んでいなくても使える（外部設計書 3.3.2）
+    if (ob && (ob.needNickname || ob.needCourse || ob.needPartner) && path !== ONBOARDING_PATH && !path.startsWith('/admin/')) return go(ONBOARDING_PATH)
     const roles = state.user?.roles ?? []
     if (route.roles && !route.roles.some((r) => roles.includes(r))) {
       root.innerHTML = `<p class="error" role="alert">${escapeHtml(M11)}</p>`

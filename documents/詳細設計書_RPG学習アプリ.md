@@ -3,7 +3,7 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第0.9版（ドラフト：第1〜12章、HTML版あり。A-11 の応答にコース名を追加）      |
+| 版数     | 第1.0版（ドラフト：第1〜12章、HTML版あり。A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに、管理局は初回の流れの対象外に）      |
 | 作成日    | 2026-10-20                                                 |
 | 入力文書   | 要件定義書 第1.1版（ドラフト）、外部設計書 第1.0版、AWS構築手順書 第0.5版                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
@@ -744,7 +744,7 @@ flowchart TD
 
 1. `loadUser`（招待中なら有効にする）
 2. 最後の `login_logs` が30分より前なら1行追加し、`users.last_login_at` を更新（画面の再読み込みを数えすぎないため）
-3. 応答：`{ userId, nickname, roles, partner: {persona, name, imageUrl}, currentCourseId, onboarding: {needNickname, needCourse, needPartner} }`
+3. 応答：`{ userId, nickname, roles, partner: {persona, name, imageUrl}, currentCourseId, onboarding: {needNickname, needCourse, needPartner}, adminCourses: [{id, name}] }`。`adminCourses` は管理局で選べるコース（システム管理者は全コース、コース管理者は担当コース、学習者は空）。S-11・S-12 のコースの切り替えと、ロールで最初の画面を決めるのに使う
 
 #### A-02 `PUT /api/me/profile`
 
@@ -838,7 +838,7 @@ flowchart TD
 #### A-14 `GET /api/admin/imports/{id}`・`GET /api/admin/imports?course=`
 
 - 取り込み状況：`{ importId, courseId, sourceType, fileName, status, extractedCount, errorMessage, drafts }`。`drafts` は S-11 の修正画面でそのまま使えるよう、一覧の項目（問題文の先頭40文字 `bodyHead`・選択肢の数 `choiceCount`・キーワードの数 `keywordCount`・状態）に加えて、問題文・選択肢・正解・解説・キーワードの全項目を返す
-- 一覧：コースの取り込みを新しい順に最大50件
+- 一覧：コースの取り込みを新しい順に最大50件。受け付けた日時 `createdAt` は `+09:00` 付き
 
 #### A-15 `PUT・DELETE /api/admin/questions/{id}`
 
@@ -912,7 +912,7 @@ sequenceDiagram
 | ------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `core/auth.js`      | `ensureLogin`、`getIdToken`、`refresh`、`logout`          | `code_verifier`（64文字）と `state` を `crypto.getRandomValues` で作り、`S256` のチャレンジを付けて移動。戻ったら `state` を照合。トークンはメモリと `sessionStorage`。期限の5分前に `refresh`。失敗したらログイン画面へ |
 | `core/api.js`       | `apiGet`、`apiPost`、`apiPut`、`apiDelete`                 | `/api` に `Authorization: Bearer` を付ける。`503 DB_RESUMING` は2・4・8秒あけて最大3回やり直し、その間 M-01 を表示。`401` は1回だけ `refresh` してやり直す。そのほかは `ApiError(code, status)` を投げる |
-| `core/router.js`    | `register(path, page, roles)`、`start`、`go(path)`        | `#/home` などのハッシュで画面モジュールを選び `render(root, params)` を呼ぶ。知らないハッシュは `#/home` にする。ロールが足りなければ M-11。初回の流れ（ニックネーム→コース→パートナー）が終わるまでほかの画面へ行かせない |
+| `core/router.js`    | `register(path, page, roles)`、`start`、`go(path)`        | `#/home` などのハッシュで画面モジュールを選び `render(root, params)` を呼ぶ。知らないハッシュは `#/home` にする。ロールが足りなければ M-11。初回の流れ（ニックネーム→コース→パートナー）が終わるまでほかの画面へ行かせない（管理局 `/admin/…` は除く。管理者は学習者の初回の流れを済ませなくても管理の作業ができる） |
 | `core/store.js`     | `getState`、`setState`、`subscribe`                      | 利用者・現在のコース・冒険ID などを持つ                                                                              |
 | `logic/format.js`   | `escapeHtml`、`formatDate`、`formatExp`                   | 画面に出す文字はすべて `escapeHtml` を通す（AIの出力・利用者の入力を含む）                                                      |
 | `logic/grading-poller.js` | `pollGrading(id, {intervalMs:2000, limitMs:30000})` | A-10 を2秒ごとに呼ぶ。`done` で結果を返す。30秒または `504` で `GRADING_TIMEOUT` を投げる                                      |

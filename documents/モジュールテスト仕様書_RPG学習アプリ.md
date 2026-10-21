@@ -3,9 +3,9 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第0.9版（ドラフト：第1〜6章、HTML版あり。A-11 のコース名のテストを追加）       |
+| 版数     | 第1.0版（ドラフト：第1〜6章、HTML版あり。A-01 の担当コース、A-14 の一覧の日時、管理局と初回の流れのテストを追加）       |
 | 作成日    | 2026-10-20                                      |
-| 入力文書   | 詳細設計書 第0.9版、外部設計書 第1.0版                          |
+| 入力文書   | 詳細設計書 第1.0版、外部設計書 第1.0版                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
 
 ---
@@ -637,6 +637,7 @@ describe('M-D01 data-api', () => {
 | MT-H02-16 | 通知設定の取得 | 行あり／行なし | 保存値／初期値（オン・07:30） | 境 |
 | MT-H02-17 | 学習記録のレベルとEXP | 累計EXP 330 の利用者で `GET /api/me/stats` | `levelInfo(330)` の `level`・`expInLevel`・`next` と `totalExp:330` を含む | 同 |
 | MT-H02-18 | バッジの獲得日時の形式 | DBの獲得日時 `'2026-10-19 15:00:00'`（UTC） | `earnedAt:'2026-10-20T00:00:00+09:00'` | 境 |
+| MT-H02-19 | 管理局で選べるコース | 学習者／コース管理者（担当 c_3）／システム管理者 | `adminCourses` が空／`[{id:'c_3'}]`（担当コースだけ）／全コース | DT |
 
 #### M-H03 `routes/home.js`（A-05）
 
@@ -724,7 +725,7 @@ describe('M-D01 data-api', () => {
 | MT-H09-04 | ファイル名の無害化    | `'試験 問題(1).pdf'`                                        | キーの末尾が `'______1_.pdf'`                                                  | 異  |
 | MT-H09-05 | サイズ超え        | 21MB                                                    | 400                                                                       | 境  |
 | MT-H09-06 | 取り込み状況       | `GET /api/admin/imports/imp_8`、status done・下書き3件        | 状態と下書き3件（問題文の先頭・形式・キーワード数・状態）                                           | 同  |
-| MT-H09-07 | 取り込みがない・担当外・一覧 | `imp_9` なし／担当外の取り込み／`GET /api/admin/imports?course=c_3` | 404／403／取り込みの一覧 | 異 |
+| MT-H09-07 | 取り込みがない・担当外・一覧 | `imp_9` なし／担当外の取り込み／`GET /api/admin/imports?course=c_3` | 404／403／取り込みの一覧（`createdAt` は `+09:00` 付き） | 異 |
 | MT-H09-08 | 登録の途中で失敗 | `setKey`（仮の値の書き換え）が例外 | 500。登録ごと取り消し（Rollback）、S3 に書かない・署名付きURLを返さない | 異 |
 
 #### M-H10 `routes/admin-questions.js`（A-15・A-16）
@@ -899,6 +900,7 @@ describe('M-D01 data-api', () => {
 | MT-F03-03 | ロール不足             | learner だけで `#/admin/users`                         | M-11 を表示し、画面モジュールは読み込まない                                 | 異  |
 | MT-F03-04 | 初回の流れ             | `onboarding.needNickname=true` で `#/home`           | `#/onboarding` に切り替える                                    | 状  |
 | MT-F03-05 | ハッシュの解釈・hashchange・ロールなし | 空のハッシュ、`start()` 後のハッシュ変更、利用者なし、`needPartner` | `/home`、変更ごとに描画、M-11、`#/onboarding` | 状 |
+| MT-F03-06 | 管理局は初回の流れの前でも開ける | `needNickname=true`、システム管理者で `#/admin/users` | `#/onboarding` に切り替えず、その画面を描画する | 状 |
 | MT-F04-01 | 状態の通知             | `subscribe(fn)` のあと `setState({level:4})`          | `fn` が新しい状態で1回呼ばれる。解除後は呼ばれない                             | 同  |
 | MT-F04-02 | 既定のストア | `subscribe`・`setState`（モジュールの既定）、引数なしの `createStore` | 通知される、初期値は `{}` | 同 |
 | MT-F05-01 | HTMLエスケープ         | `'<img src=x onerror=alert(1)>&"\''`               | `&lt;img src=x onerror=alert(1)&gt;&amp;&quot;&#39;`      | 異  |

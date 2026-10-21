@@ -392,9 +392,9 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第0.9版（ドラフト：第1〜6章、HTML版あり。A-11 のコース名のテストを追加）</b></li>
+      <li>版数<b>第1.0版（ドラフト：第1〜6章、HTML版あり。A-01 の担当コース、A-14 の一覧の日時、管理局と初回の流れのテストを追加）</b></li>
       <li>作成日<b>2026-10-20</b></li>
-      <li>入力文書<b>詳細設計書 第0.9版、外部設計書 第1.0版</b></li>
+      <li>入力文書<b>詳細設計書 第1.0版、外部設計書 第1.0版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
   </div>
@@ -1047,6 +1047,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-H02-16</td><td>通知設定の取得</td><td>行あり／行なし</td><td>保存値／初期値（オン・07:30）</td><td>境</td></tr>
 <tr><td>MT-H02-17</td><td>学習記録のレベルとEXP</td><td>累計EXP 330 の利用者で <code>GET /api/me/stats</code></td><td><code>levelInfo(330)</code> の <code>level</code>・<code>expInLevel</code>・<code>next</code> と <code>totalExp:330</code> を含む</td><td>同</td></tr>
 <tr><td>MT-H02-18</td><td>バッジの獲得日時の形式</td><td>DBの獲得日時 <code>'2026-10-19 15:00:00'</code>（UTC）</td><td><code>earnedAt:'2026-10-20T00:00:00+09:00'</code></td><td>境</td></tr>
+<tr><td>MT-H02-19</td><td>管理局で選べるコース</td><td>学習者／コース管理者（担当 c_3）／システム管理者</td><td><code>adminCourses</code> が空／<code>[{id:'c_3'}]</code>（担当コースだけ）／全コース</td><td>DT</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H03 <code>routes/home.js</code>（A-05）</h4>
 <div class="table-wrap"><table>
@@ -1134,7 +1135,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-H09-04</td><td>ファイル名の無害化</td><td><code>'試験 問題(1).pdf'</code></td><td>キーの末尾が <code>'______1_.pdf'</code></td><td>異</td></tr>
 <tr><td>MT-H09-05</td><td>サイズ超え</td><td>21MB</td><td>400</td><td>境</td></tr>
 <tr><td>MT-H09-06</td><td>取り込み状況</td><td><code>GET /api/admin/imports/imp_8</code>、status done・下書き3件</td><td>状態と下書き3件（問題文の先頭・形式・キーワード数・状態）</td><td>同</td></tr>
-<tr><td>MT-H09-07</td><td>取り込みがない・担当外・一覧</td><td><code>imp_9</code> なし／担当外の取り込み／<code>GET /api/admin/imports?course=c_3</code></td><td>404／403／取り込みの一覧</td><td>異</td></tr>
+<tr><td>MT-H09-07</td><td>取り込みがない・担当外・一覧</td><td><code>imp_9</code> なし／担当外の取り込み／<code>GET /api/admin/imports?course=c_3</code></td><td>404／403／取り込みの一覧（<code>createdAt</code> は <code>+09:00</code> 付き）</td><td>異</td></tr>
 <tr><td>MT-H09-08</td><td>登録の途中で失敗</td><td><code>setKey</code>（仮の値の書き換え）が例外</td><td>500。登録ごと取り消し（Rollback）、S3 に書かない・署名付きURLを返さない</td><td>異</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H10 <code>routes/admin-questions.js</code>（A-15・A-16）</h4>
@@ -1304,6 +1305,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-F03-03</td><td>ロール不足</td><td>learner だけで <code>#/admin/users</code></td><td>M-11 を表示し、画面モジュールは読み込まない</td><td>異</td></tr>
 <tr><td>MT-F03-04</td><td>初回の流れ</td><td><code>onboarding.needNickname=true</code> で <code>#/home</code></td><td><code>#/onboarding</code> に切り替える</td><td>状</td></tr>
 <tr><td>MT-F03-05</td><td>ハッシュの解釈・hashchange・ロールなし</td><td>空のハッシュ、<code>start()</code> 後のハッシュ変更、利用者なし、<code>needPartner</code></td><td><code>/home</code>、変更ごとに描画、M-11、<code>#/onboarding</code></td><td>状</td></tr>
+<tr><td>MT-F03-06</td><td>管理局は初回の流れの前でも開ける</td><td><code>needNickname=true</code>、システム管理者で <code>#/admin/users</code></td><td><code>#/onboarding</code> に切り替えず、その画面を描画する</td><td>状</td></tr>
 <tr><td>MT-F04-01</td><td>状態の通知</td><td><code>subscribe(fn)</code> のあと <code>setState({level:4})</code></td><td><code>fn</code> が新しい状態で1回呼ばれる。解除後は呼ばれない</td><td>同</td></tr>
 <tr><td>MT-F04-02</td><td>既定のストア</td><td><code>subscribe</code>・<code>setState</code>（モジュールの既定）、引数なしの <code>createStore</code></td><td>通知される、初期値は <code>{}</code></td><td>同</td></tr>
 <tr><td>MT-F05-01</td><td>HTMLエスケープ</td><td><code>'&lt;img src=x onerror=alert(1)&gt;&amp;&quot;\''</code></td><td><code>&amp;lt;img src=x onerror=alert(1)&amp;gt;&amp;amp;&amp;quot;&amp;#39;</code></td><td>異</td></tr>
@@ -1401,6 +1403,6 @@ describe('M-D01 data-api', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.9版（ドラフト：第1〜6章、HTML版あり。A-11 のコース名のテストを追加）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.0版（ドラフト：第1〜6章、HTML版あり。A-01 の担当コース、A-14 の一覧の日時、管理局と初回の流れのテストを追加）</div></footer>
 </body>
 </html>

@@ -5,35 +5,21 @@ import { createApi } from './core/api.js'
 import { createRouter } from './core/router.js'
 import { getState, setState } from './core/store.js'
 import { setContext } from './core/context.js'
-import { registerPages } from './pages/index.js'
+import { registerPages, PAGES } from './pages/index.js'
+import { renderShell, updateShell, startPath } from './shell.js'
 import { errorBand, M02 } from './components/status.js'
 export const M01 = 'ギルドの扉を開けています…'
-const NAV = [['/home', 'ホーム'], ['/ranking', 'ランキング'], ['/profile', 'プロフィール']]
 function applyTheme(win) {
   const mq = win.matchMedia?.('(prefers-color-scheme: dark)')
   const set = () => { win.document.documentElement.dataset.theme = mq?.matches ? 'dark' : 'light' }
   set()
   mq?.addEventListener?.('change', set)
 }
-// 冒険中（S-04〜S-06）と初回の流れでは下部ナビを隠し、操作をその画面の主ボタンに絞る（外部設計書 3.7 S-05）
-const HIDE_NAV = [/^\/quest\//, /^\/onboarding$/]
-export const navVisible = (path) => !HIDE_NAV.some((re) => re.test(path))
-function markNav(doc, hash) {
-  const path = (hash.replace(/^#/, '') || '/home').split('?')[0]
-  const nav = doc.querySelector('.app-nav')
-  nav.hidden = !navVisible(path)
-  doc.querySelector('.app-shell').classList.toggle('app-no-nav', nav.hidden)
-  for (const a of nav.querySelectorAll('a')) {
-    if (a.getAttribute('href') === `#${path}`) a.setAttribute('aria-current', 'page')
-    else a.removeAttribute('aria-current')
-  }
-}
 export async function boot({ win = window, config = CONFIG } = {}) {
   const doc = win.document
   const root = doc.getElementById('app')
   const resuming = doc.getElementById('app-resuming')
   applyTheme(win)
-  doc.querySelector('.app-nav').innerHTML = NAV.map(([href, label]) => `<a href="#${href}">${label}</a>`).join('')
   const auth = createAuth({ config, win, onError: (m) => { root.innerHTML = errorBand(m) } })
   const raw = createApi({ auth, base: config.apiBase, onResuming: () => { resuming.hidden = false } })
   // DBの起動待ち（M-01）の表示は、応答が返ったら消す
@@ -57,8 +43,12 @@ export async function boot({ win = window, config = CONFIG } = {}) {
   const router = createRouter({ root, getState, win })
   setContext({ api, getState, setState, go: router.go, config, auth })
   registerPages(router)
-  win.addEventListener('hashchange', () => { markNav(doc, win.location.hash); win.scrollTo?.(0, 0) })
-  markNav(doc, win.location.hash)
+  const shellOpts = { roles: me.roles ?? [], has: (path) => PAGES.some(([p]) => p === path) }
+  renderShell(doc, shellOpts)
+  // ハッシュなしで開いたときは、ロールで最初の画面を決める（外部設計書 3.3.2）
+  if (!win.location.hash) win.history.replaceState(null, '', `#${startPath(shellOpts.roles, shellOpts.has)}`)
+  win.addEventListener('hashchange', () => { updateShell(doc, win.location.hash, shellOpts); win.scrollTo?.(0, 0) })
+  updateShell(doc, win.location.hash, shellOpts)
   await router.start()
   if ('serviceWorker' in win.navigator && config.env !== 'local') win.navigator.serviceWorker.register('./sw.js').catch(() => {})
 }

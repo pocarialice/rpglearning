@@ -392,7 +392,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.9版（ドラフト：第1〜12章、HTML版あり。A-11 の応答にコース名を追加）</b></li>
+      <li>版数<b>第1.0版（ドラフト：第1〜12章、HTML版あり。A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに、管理局は初回の流れの対象外に）</b></li>
       <li>作成日<b>2026-10-20</b></li>
       <li>入力文書<b>要件定義書 第1.1版（ドラフト）、外部設計書 第1.0版、AWS構築手順書 第0.5版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
@@ -1082,7 +1082,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <ol>
 <li><code>loadUser</code>（招待中なら有効にする）</li>
 <li>最後の <code>login_logs</code> が30分より前なら1行追加し、<code>users.last_login_at</code> を更新（画面の再読み込みを数えすぎないため）</li>
-<li>応答：<code>{ userId, nickname, roles, partner: {persona, name, imageUrl}, currentCourseId, onboarding: {needNickname, needCourse, needPartner} }</code></li>
+<li>応答：<code>{ userId, nickname, roles, partner: {persona, name, imageUrl}, currentCourseId, onboarding: {needNickname, needCourse, needPartner}, adminCourses: [{id, name}] }</code>。<code>adminCourses</code> は管理局で選べるコース（システム管理者は全コース、コース管理者は担当コース、学習者は空）。S-11・S-12 のコースの切り替えと、ロールで最初の画面を決めるのに使う</li>
 </ol>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-02 <code>PUT /api/me/profile</code></h4>
 <p><code>{ nickname }</code> → <code>validateNickname</code> → 受講中のコースで <code>enrollments.nicknameTaken</code> → あれば <code>409 CONFLICT</code>（M-08）→ 更新。</p>
@@ -1161,7 +1161,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <li>安全なファイル名：英数字・<code>.</code>・<code>-</code>・<code>_</code> 以外を <code>_</code> に置き換え、100文字まで</li>
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-14 <code>GET /api/admin/imports/{id}</code>・<code>GET /api/admin/imports?course=</code></h4>
-<ul><li>取り込み状況：<code>{ importId, courseId, sourceType, fileName, status, extractedCount, errorMessage, drafts }</code>。<code>drafts</code> は S-11 の修正画面でそのまま使えるよう、一覧の項目（問題文の先頭40文字 <code>bodyHead</code>・選択肢の数 <code>choiceCount</code>・キーワードの数 <code>keywordCount</code>・状態）に加えて、問題文・選択肢・正解・解説・キーワードの全項目を返す</li><li>一覧：コースの取り込みを新しい順に最大50件</li></ul>
+<ul><li>取り込み状況：<code>{ importId, courseId, sourceType, fileName, status, extractedCount, errorMessage, drafts }</code>。<code>drafts</code> は S-11 の修正画面でそのまま使えるよう、一覧の項目（問題文の先頭40文字 <code>bodyHead</code>・選択肢の数 <code>choiceCount</code>・キーワードの数 <code>keywordCount</code>・状態）に加えて、問題文・選択肢・正解・解説・キーワードの全項目を返す</li><li>一覧：コースの取り込みを新しい順に最大50件。受け付けた日時 <code>createdAt</code> は <code>+09:00</code> 付き</li></ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-15 <code>PUT・DELETE /api/admin/questions/{id}</code></h4>
 <ul>
 <li>PUT：<code>{ body, choices: [4つ], correctChoice, explanation, keywords: [最大3つ] }</code>。選択肢とキーワードは**番号（<code>choice_no</code>・<code>sort_order</code>）ごとに更新**し、行を作り直さない（公開後も学習者の復習段階を残すため）。キーワードを減らした場合だけ、その行を削除する（復習段階も消える）</li>
@@ -1228,7 +1228,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tbody>
 <tr><td><code>core/auth.js</code></td><td><code>ensureLogin</code>、<code>getIdToken</code>、<code>refresh</code>、<code>logout</code></td><td><code>code_verifier</code>（64文字）と <code>state</code> を <code>crypto.getRandomValues</code> で作り、<code>S256</code> のチャレンジを付けて移動。戻ったら <code>state</code> を照合。トークンはメモリと <code>sessionStorage</code>。期限の5分前に <code>refresh</code>。失敗したらログイン画面へ</td></tr>
 <tr><td><code>core/api.js</code></td><td><code>apiGet</code>、<code>apiPost</code>、<code>apiPut</code>、<code>apiDelete</code></td><td><code>/api</code> に <code>Authorization: Bearer</code> を付ける。<code>503 DB_RESUMING</code> は2・4・8秒あけて最大3回やり直し、その間 M-01 を表示。<code>401</code> は1回だけ <code>refresh</code> してやり直す。そのほかは <code>ApiError(code, status)</code> を投げる</td></tr>
-<tr><td><code>core/router.js</code></td><td><code>register(path, page, roles)</code>、<code>start</code>、<code>go(path)</code></td><td><code>#/home</code> などのハッシュで画面モジュールを選び <code>render(root, params)</code> を呼ぶ。知らないハッシュは <code>#/home</code> にする。ロールが足りなければ M-11。初回の流れ（ニックネーム→コース→パートナー）が終わるまでほかの画面へ行かせない</td></tr>
+<tr><td><code>core/router.js</code></td><td><code>register(path, page, roles)</code>、<code>start</code>、<code>go(path)</code></td><td><code>#/home</code> などのハッシュで画面モジュールを選び <code>render(root, params)</code> を呼ぶ。知らないハッシュは <code>#/home</code> にする。ロールが足りなければ M-11。初回の流れ（ニックネーム→コース→パートナー）が終わるまでほかの画面へ行かせない（管理局 <code>/admin/…</code> は除く。管理者は学習者の初回の流れを済ませなくても管理の作業ができる）</td></tr>
 <tr><td><code>core/store.js</code></td><td><code>getState</code>、<code>setState</code>、<code>subscribe</code></td><td>利用者・現在のコース・冒険ID などを持つ</td></tr>
 <tr><td><code>logic/format.js</code></td><td><code>escapeHtml</code>、<code>formatDate</code>、<code>formatExp</code></td><td>画面に出す文字はすべて <code>escapeHtml</code> を通す（AIの出力・利用者の入力を含む）</td></tr>
 <tr><td><code>logic/grading-poller.js</code></td><td><code>pollGrading(id, {intervalMs:2000, limitMs:30000})</code></td><td>A-10 を2秒ごとに呼ぶ。<code>done</code> で結果を返す。30秒または <code>504</code> で <code>GRADING_TIMEOUT</code> を投げる</td></tr>
@@ -2264,6 +2264,6 @@ jobs:
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.9版（ドラフト：第1〜12章、HTML版あり。A-11 の応答にコース名を追加）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.0版（ドラフト：第1〜12章、HTML版あり。A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに、管理局は初回の流れの対象外に）</div></footer>
 </body>
 </html>

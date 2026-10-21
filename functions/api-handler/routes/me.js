@@ -12,9 +12,18 @@ import * as partners from '../../shared/db/repositories/partners.js'
 import * as notify from '../../shared/db/repositories/notify.js'
 import * as answers from '../../shared/db/repositories/answers.js'
 import * as badges from '../../shared/db/repositories/badges.js'
+import * as courses from '../../shared/db/repositories/courses.js'
 export const LOGIN_LOG_INTERVAL_MS = 30 * 60 * 1000
 export const imageUrl = (key) => (key ? `${process.env.APP_URL}/${key}` : null)
 const round1 = (n) => Math.round(n * 10) / 10
+// 管理局で選べるコース：システム管理者は全コース、コース管理者は担当コースだけ（外部設計書 3.8 S-11・S-12）
+async function adminCourses(user) {
+  const roles = user.roles ?? []
+  let rows = []
+  if (roles.includes('system_admin')) rows = await courses.listAll()
+  else if (roles.includes('course_admin')) rows = await courses.listAdminCourses(user.userId)
+  return rows.map((c) => ({ id: encodeId(PREFIX.course, c.courseId), name: c.name }))
+}
 export async function get(ctx) {
   const { user, now } = ctx
   const last = await users.lastLoginLogAt(user.userId)
@@ -32,7 +41,8 @@ export async function get(ctx) {
     roles: user.roles,
     partner,
     currentCourseId: user.currentCourseId ? encodeId(PREFIX.course, user.currentCourseId) : null,
-    onboarding: { needNickname: !user.nickname, needCourse: !user.currentCourseId, needPartner: !user.partnerPersona }
+    onboarding: { needNickname: !user.nickname, needCourse: !user.currentCourseId, needPartner: !user.partnerPersona },
+    adminCourses: await adminCourses(user)
   })
 }
 export async function putProfile(ctx) {
