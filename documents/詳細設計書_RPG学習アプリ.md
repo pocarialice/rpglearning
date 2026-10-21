@@ -3,7 +3,7 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第0.3版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第0.1版の指摘を反映）      |
+| 版数     | 第0.4版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第1.1版 7.2 の判断を反映）      |
 | 作成日    | 2026-10-20                                                 |
 | 入力文書   | 要件定義書 第1版（ドラフト）、外部設計書 第0.8版、AWS構築手順書 第0.4版                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
@@ -94,10 +94,11 @@ flowchart LR
 | 層           | 呼んでよい層                     | 呼んではいけない層             |
 | ----------- | -------------------------- | --------------------- |
 | routes・ハンドラ | domain、db、ai、mail、util     | -                     |
+| services | domain、db、util | ai、mail、AWS SDK（DBへの書き込みの組み立てだけを受け持つ） |
 | domain      | util（date-jst・errors だけ）   | db、ai、mail、AWS SDK（純粋関数にするため） |
 | db          | util                       | domain、ai             |
 | ai          | util                       | db、domain             |
-| util        | なし（標準ライブラリのみ）              | すべて                   |
+| util | なし（標準ライブラリと `process.env` のみ） | すべて |
 
 ### 2.2 ディレクトリ構成（AWSリリースを想定した案）
 
@@ -130,7 +131,8 @@ rpg-learning-app/
 │  │  │  ├─ authz.js              # トークンからの利用者・ロール取得、権限確認
 │  │  │  ├─ logger.js             # JSON構造化ログ
 │  │  │  ├─ http.js               # 応答の組み立て、本文の読み取り
-│  │  │  └─ validators.js         # web/js/logic/validators.js を再公開
+│  │  │  ├─ validators.js         # web/js/logic/validators.js を再公開
+│  │  │  └─ env.js                # 環境変数の確認（起動時）
 │  │  ├─ db/
 │  │  │  ├─ data-api.js           # Data API呼び出し・型変換・DB起動中の判定
 │  │  │  ├─ tx.js                 # トランザクション
@@ -149,9 +151,11 @@ rpg-learning-app/
 │  │  │  ├─ json-guard.js         # 出力JSONの取り出しと検証
 │  │  │  ├─ persona.js            # パートナー3人の性格・口調
 │  │  │  └─ prompts/              # grading.js・extraction.js・comment.js・daily-message.js
-│  │  └─ mail/
-│  │     ├─ ses.js                # SES送信
-│  │     └─ templates.js          # メール本文
+│  │  ├─ mail/
+│  │  │  ├─ ses.js                # SES送信
+│  │  │  └─ templates.js          # メール本文
+│  │  └─ services/
+│  │     └─ answer-recorder.js    # 解答の記録（A-08 と grading-worker で共用）
 │  ├─ api-handler/
 │  │  ├─ index.mjs                # Lambdaの入口
 │  │  ├─ router.js                # パスとメソッドからハンドラを選ぶ
@@ -350,6 +354,7 @@ rpg-learning-app/
 | M-U05 | `util/logger.js`              | ログ                                     | `createLogger(fn, ctx)`                                       |
 | M-U06 | `util/http.js`                | 応答・本文                                  | `ok(body, status)`、`csv(text, filename)`、`parseBody(event)`   |
 | M-U07 | `logic/validators.js`（共用）     | 入力チェック                                 | `validateExplanation`、`validateNickname`、`validatePartnerName`、`validateNotifyTime`、`validateImportRequest`、`validateQuestionDraft` |
+| M-U08 | `util/env.js` | 環境変数の確認 | `requireEnv(names)`（足りなければ起動時に例外） |
 | M-D01 | `db/data-api.js`              | SQL実行                                  | `query(sql, params, opts)`、`execute(...)`                     |
 | M-D02 | `db/tx.js`                    | トランザクション                               | `withTx(fn, opts)`                                            |
 | M-D03 | `db/repositories/*.js`        | テーブルごとのSQL                             | 3.4 参照                                                        |
@@ -365,6 +370,7 @@ rpg-learning-app/
 | M-A03 | `ai/persona.js`               | パートナーの性格                               | `PERSONAS`、`personaInstruction(persona, name)`               |
 | M-A04 | `ai/prompts/*.js`             | 指示文の組み立て                               | `buildGradingPrompt`、`buildExtractionPrompt`、`buildCommentPrompt`、`buildDailyMessagePrompt` |
 | M-M01 | `mail/ses.js`・`templates.js`  | メール                                    | `sendMail({to, subject, text})`、`notifyMail(item)`、`deletionMail(user)` |
+| M-S01 | `services/answer-recorder.js` | 解答の記録 | `loadAnswerContext(tx, a)`、`computeOutcome(ctx, a)`、`writeOutcome(tx, outcome, ctx, a)`、`outcomeView(outcome)` |
 
 ### 3.2 util
 
@@ -416,21 +422,22 @@ rpg-learning-app/
 
 | ファイル            | 主な関数                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
-| `users.js`      | `findBySub`、`findById`、`activate`、`touchLogin`、`updateNickname`、`updatePartner`、`addExp`、`setDailyMessage`、`listForAdmin`、`markDeleted`、`restore`、`listPurgeTargets`、`purge` |
-| `courses.js`    | `listWithProgress`、`findById`、`create`、`update`、`assignAdmins`、`listAdminCourses`、`isAdmin`（担当コースの確認）、`dashboardRows`（8.6 のダッシュボードの一覧） |
-| `enrollments.js`| `enroll`、`isEnrolled`、`nicknameTaken(courseIds, nickname, exceptUserId)`                               |
-| `questions.js`  | `findForLearner`、`findDraftsByImport`、`update`（選択肢・キーワードの置き換えを含む）、`publish`、`deleteOrArchive`         |
-| `reviews.js`    | `findItem`、`upsertItem`、`countDue`、`listDue`、`listUnlearned`、`listLearned`                             |
-| `answers.js`    | `insert`、`statsForUser`、`masteredCount`                                                               |
-| `exp.js`        | `insertLog`、`weeklyTotals(courseId, weekStart)`                                                        |
-| `quests.js`     | `listToday`、`insertAssignments`、`saveProgress`                                                        |
-| `badges.js`     | `listOwned`、`grant`、`listDefs`                                                                        |
-| `rankings.js`   | `currentWeek`、`history`、`closeWeek`                                                                   |
-| `gradings.js`   | `create`、`find`、`complete`（`status='processing'` のときだけ更新）、`fail`、`deleteOlderThan`                     |
-| `imports.js`    | `create`、`find`、`setStatus`、`insertDrafts`                                                            |
+| `users.js` | `findBySub`、`findById`、`activate`、`touchLogin`、`lastLoginLogAt`（A-01 のログイン記録の間隔）、`updateNickname`、`updatePartner`、`setCurrentCourse`、`addExp`、`setDailyMessage`、`updateStreak`、`listForStreak`、`listForAdmin`、`create`、`setRoles`、`markDeleted`、`restore`、`listPurgeTargets`、`purge` |
+| `courses.js` | `listWithProgress`、`listAll`（担当者つき）、`listIds`、`findById`、`create`、`update`、`assignAdmins`、`listAdminCourses`、`isAdmin`（担当コースの確認）、`dashboardRows`（8.6 のダッシュボードの一覧） |
+| `enrollments.js` | `enroll`、`isEnrolled`、`listCourseIds`、`nicknameTaken(courseIds, nickname, exceptUserId)` |
+| `questions.js` | `findForLearner`、`findById`、`findKeyword`、`findDraftsByImport`、`update`（選択肢・キーワードは番号ごとに更新。5.3 A-15）、`publish`、`deleteOrArchive(questionId, status, …)`（下書き・要確認は削除、公開済みは archived） |
+| `reviews.js` | `findItem`、`upsertItem`、`countDue`、`countDueByKind`（形式ごとの今日の復習数）、`listDue`、`listUnlearned`、`listLearned` |
+| `answers.js` | `insert`、`statsForUser`、`countOnDate`、`masteredCount` |
+| `exp.js` | `insertLog`、`weeklyTotals(courseId, weekStart)`（利用者の状態 `status` も返す）、`weeklyTotalForUser` |
+| `quests.js` | `listToday`、`insertAssignments`、`saveProgress`、`listAssignTargets(today)`（日次の割り当て対象と復習対象数）、`listDefs` |
+| `badges.js` | `listOwned`、`listOwnedDetail`（獲得日時つき）、`grant`、`listDefs` |
+| `rankings.js` | `currentWeek`、`history`、`weeks`（過去週の開始日。新しい順に最大12）、`closeWeek` |
+| `gradings.js` | `create`、`find`、`complete`（`status='processing'` のときだけ更新）、`fail`、`deleteOlderThan(cutoff)`（cutoff は `+09:00` 付きの日時。日数ではない） |
+| `imports.js` | `create`、`setKey`、`find`、`findByKey`、`listByCourse`、`setStatus`、`insertDrafts` |
 | `adventures.js` | `start`、`find`、`incrementServed`、`finish`                                                             |
 | `audit.js`      | `write(actorId, action, target, detail)`                                                              |
 | `notify.js`     | `get`、`put`、`listForSlotBuild(today)`                                                                 |
+| `partners.js` | `get`、`list`、`setImage`（キャラクター画像のキー。null で外す） |
 
 ### 3.5 domain（純粋関数）
 
@@ -554,6 +561,8 @@ export const handler = async (event, context) => {
   }
 }
 ```
+
+- `now` は api-handler・batch-runner では Date（処理の開始時刻）を渡す。grading-worker だけは、JSONのやり直しの前に経過時間を測るため、**呼ぶたびに今の時刻を返す関数 `now()`** を渡す（時刻そのものを渡すと経過時間が常に0秒になり、時間切れ直前でもやり直してしまう）
 
 | 関数               | メモリ／タイムアウト | Data API の起動待ち（`resumeRetries`） | 起動元               |
 | ---------------- | ---------- | ------------------------------ | ----------------- |
@@ -680,7 +689,7 @@ flowchart TD
 | 重複を防ぐ     | かたまりごとの抽出結果は、全部そろってから1つのトランザクションで保存する。途中で失敗したら何も保存しない（再試行で最初からやり直す）                                 |
 | ページ上限     | PDFは50ページまで。超えていたら抽出せず `failed`（「50ページ以内に分けて取り込んでください」）                                               |
 | 再試行しない失敗  | ページ上限超え・PDFとして読めない・対応していない形式は、やり直しても同じ結果になるため、受信回数にかかわらずすぐ `failed` にしてメッセージを消す |
-| 抽出の正規化    | 問題文・解説の前後の空白を除く。正解が選択肢の番号でなければ `correct_choice = null` で `needs_review`。キーワードは重複を除き最大3つ                      |
+| 抽出の正規化    | 問題文・解説の前後の空白を除く。正解が選択肢の番号でなければ `correct_choice = null` で `needs_review`。キーワードは重複（大文字・小文字を区別しない）を除き最大3つ                      |
 | 受信回数      | `record.attributes.ApproximateReceiveCount`。3回目（DLQの最大受信数と同じ）で失敗したら `failed` にして、メッセージは成功扱いで消す                |
 | 同時実行      | 予約された同時実行2（構築手順書 3.8）                                                                                |
 
@@ -821,15 +830,21 @@ flowchart TD
 `{ courseId, sourceType, fileName, contentType, size, text }`
 
 1. `assertCourseAdmin` → `validateImportRequest`
-2. `import_jobs` に `waiting` で追加
+2. `import_jobs` に `waiting` で追加。キーに取り込みIDを含めるため、仮の値（`pending`）で登録して `setKey` で書き換える。**登録と書き換えは1つのトランザクションで行い**、途中で失敗したら登録ごと取り消す（仮の値の記録を残さない）
 3. PDF・画像：S3 `uploads/{importId}/{安全なファイル名}` への署名付きURL（PUT、15分、`Content-Type` 固定）を返す → `201 { importId, uploadUrl }`
 4. テキスト：api-handler が `uploads/{importId}/source.txt` に直接書き込む → `201 { importId }`（どちらも S3 の通知で import-worker が動く）
 
 - 安全なファイル名：英数字・`.`・`-`・`_` 以外を `_` に置き換え、100文字まで
 
+#### A-14 `GET /api/admin/imports/{id}`・`GET /api/admin/imports?course=`
+
+- 取り込み状況：`{ importId, courseId, sourceType, fileName, status, extractedCount, errorMessage, drafts }`。`drafts` は S-11 の修正画面でそのまま使えるよう、一覧の項目（問題文の先頭40文字 `bodyHead`・選択肢の数 `choiceCount`・キーワードの数 `keywordCount`・状態）に加えて、問題文・選択肢・正解・解説・キーワードの全項目を返す
+- 一覧：コースの取り込みを新しい順に最大50件
+
 #### A-15 `PUT・DELETE /api/admin/questions/{id}`
 
 - PUT：`{ body, choices: [4つ], correctChoice, explanation, keywords: [最大3つ] }`。選択肢とキーワードは**番号（`choice_no`・`sort_order`）ごとに更新**し、行を作り直さない（公開後も学習者の復習段階を残すため）。キーワードを減らした場合だけ、その行を削除する（復習段階も消える）
+- PUT の入力と状態：下書き・要確認の問題は、選択肢2〜10個（各1〜1,000文字）、正解は空または1〜4、キーワード0〜3個を受け付ける。保存後の状態は自動で決める：公開できる形（`validateQuestionDraft` が ok）なら `draft`、そうでなければ `needs_review`。公開済みの問題は、公開できる形を崩す修正を `400`（M-12）で受け付けず、状態は `published` のまま
 - DELETE：下書き・要確認は行ごと削除。公開済みは `status='archived'` にして出題対象から外す（解答履歴を残す）
 
 #### A-16 `POST /api/admin/questions/{id}/publish`
@@ -1029,7 +1044,7 @@ export const PERSONAS = {
 | 選択肢がちょうど4つ、正解が1〜4 | `status='draft'`                     |
 | 選択肢が4つでない          | 選択肢はそのまま保存（最大10）、`status='needs_review'` |
 | 正解が null・範囲外       | `correct_choice = null`、`status='needs_review'` |
-| キーワードが4つ以上         | 先頭から3つ（重複を除いたあと）                     |
+| キーワードの重複・4つ以上 | 前後の空白を除き、重複は**英字の大文字・小文字を区別せずに**判定して除く（最初に出た表記を残す。例：`DNS`・`dns `・`DNS`・`A`・`B` → `DNS`・`A`・`B`）。そのあと先頭から3つ |
 | 問題文が空              | その問題は保存しない（件数にも数えない）                 |
 
 ### 7.5 解説コメント・ひとことの指示文

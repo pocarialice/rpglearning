@@ -392,9 +392,9 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第0.3版（ドラフト：第1〜6章、HTML版あり。テスト結果報告書 第0.1版の補足テストに採番・設定を test.projects に変更）</b></li>
+      <li>版数<b>第0.4版（ドラフト：第1〜6章、HTML版あり。テスト結果報告書 第1.1版 7.2 の判断を反映）</b></li>
       <li>作成日<b>2026-10-20</b></li>
-      <li>入力文書<b>詳細設計書 第0.3版、外部設計書 第0.8版</b></li>
+      <li>入力文書<b>詳細設計書 第0.4版、外部設計書 第0.8版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
   </div>
@@ -423,7 +423,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <div class="lv"><b>受け入れ確認</b>コース管理者</div>
   </div>
   <div class="vis-grid tiles4">
-    <div class="tile strong"><p class="tile-num">428</p><p class="tile-cap">テストケース</p></div>
+    <div class="tile strong"><p class="tile-num">429</p><p class="tile-cap">テストケース</p></div>
     <div class="tile"><p class="tile-num">47</p><p class="tile-cap">対象モジュール（ID単位）</p></div>
     <div class="tile"><p class="tile-num sm">Vitest</p><p class="tile-cap">リリースごとに全件実行</p></div>
     <div class="tile"><p class="tile-num sm">MT-G01-04</p><p class="tile-cap">ID＝モジュール＋連番</p></div>
@@ -992,7 +992,7 @@ describe('M-D01 data-api', () =&gt; {
 <div class="vis">
   <p class="vis-label">Lambda関数・画面のテストケース数</p>
   <div class="bars">
-    <div class="bar-row"><span class="bl"><i class="fa-solid fa-route"></i> api-handler（M-H01〜H14）</span><div class="bt"><span style="width:100%"></span></div><b>115</b></div>
+    <div class="bar-row"><span class="bl"><i class="fa-solid fa-route"></i> api-handler（M-H01〜H14）</span><div class="bt"><span style="width:100%"></span></div><b>116</b></div>
     <div class="bar-row"><span class="bl"><i class="fa-solid fa-gears"></i> ワーカー3関数（M-W01〜W04）</span><div class="bt"><span style="width:43%"></span></div><b>50</b></div>
     <div class="bar-row"><span class="bl"><i class="fa-solid fa-mobile-screen"></i> 画面 core・logic（M-F01〜F06）</span><div class="bt"><span style="width:29%"></span></div><b>33</b></div>
   </div>
@@ -1130,6 +1130,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-H09-05</td><td>サイズ超え</td><td>21MB</td><td>400</td><td>境</td></tr>
 <tr><td>MT-H09-06</td><td>取り込み状況</td><td><code>GET /api/admin/imports/imp_8</code>、status done・下書き3件</td><td>状態と下書き3件（問題文の先頭・形式・キーワード数・状態）</td><td>同</td></tr>
 <tr><td>MT-H09-07</td><td>取り込みがない・担当外・一覧</td><td><code>imp_9</code> なし／担当外の取り込み／<code>GET /api/admin/imports?course=c_3</code></td><td>404／403／取り込みの一覧</td><td>異</td></tr>
+<tr><td>MT-H09-08</td><td>登録の途中で失敗</td><td><code>setKey</code>（仮の値の書き換え）が例外</td><td>500。登録ごと取り消し（Rollback）、S3 に書かない・署名付きURLを返さない</td><td>異</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H10 <code>routes/admin-questions.js</code>（A-15・A-16）</h4>
 <div class="table-wrap"><table>
@@ -1217,7 +1218,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-W02-06</td><td>テキストの分割</td><td>20,000文字（段落ごとに改行2つ）</td><td>8,000文字以下のかたまりが3つ、段落の途中で切らない</td><td>境</td></tr>
 <tr><td>MT-W02-07</td><td>正規化（選択肢の数）</td><td>選択肢3つの問題</td><td><code>status='needs_review'</code>、選択肢3つを保存</td><td>DT</td></tr>
 <tr><td>MT-W02-08</td><td>正規化（正解なし）</td><td><code>correct:null</code> ／ <code>correct:5</code></td><td><code>correct_choice=null</code>、<code>needs_review</code></td><td>DT</td></tr>
-<tr><td>MT-W02-09</td><td>正規化（キーワード）</td><td><code>['DNS','dns ','DNS','A','B']</code></td><td><code>['DNS','A','B']</code>（前後の空白と重複を除いて3つ）※大文字小文字は区別する</td><td>境</td></tr>
+<tr><td>MT-W02-09</td><td>正規化（キーワード）</td><td><code>['DNS','dns ','DNS','A','B']</code></td><td><code>['DNS','A','B']</code>（前後の空白と重複を除いて3つ）※重複は大文字・小文字を区別せずに判定し、最初に出た表記を残す</td><td>境</td></tr>
 <tr><td>MT-W02-10</td><td>正規化（問題文が空）</td><td><code>body:''</code> を含む5問</td><td>4問だけ保存、<code>extracted_count=4</code></td><td>異</td></tr>
 <tr><td>MT-W02-11</td><td>一部のかたまりで失敗</td><td>3つ中2つ目で Bedrock が例外</td><td>何も保存しない（insertDrafts を呼ばない）</td><td>異</td></tr>
 <tr><td>MT-W02-12</td><td>再試行（1・2回目）</td><td><code>ApproximateReceiveCount='1'</code>、抽出が例外</td><td><code>batchItemFailures</code> に messageId、状態は <code>failed</code> にしない</td><td>状</td></tr>
@@ -1338,7 +1339,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>4.7 デイリークエスト</td><td>3.5 M-G03、4.5.1</td><td>quest、assign-quests</td><td>MT-G03-01〜12、MT-W03-07〜08</td></tr>
 <tr><td>4.8 バッジ</td><td>3.5 M-G04</td><td>badge、update-streak</td><td>MT-G04-01〜07、MT-W03-04〜06</td></tr>
 <tr><td>4.9 説明の採点、2.5 非同期方式</td><td>4.3、5.2 A-09・A-10、7.3</td><td>grading-worker、gradings、prompts</td><td>MT-W01-01〜12、MT-H07-01〜10、MT-A02、MT-A04</td></tr>
-<tr><td>4.10 問題取り込み</td><td>4.4、5.3 A-13〜A-16、7.4</td><td>import-worker、admin-imports、admin-questions</td><td>MT-W02-01〜16、MT-H09、MT-H10</td></tr>
+<tr><td>4.10 問題取り込み</td><td>4.4、5.3 A-13〜A-16、7.4</td><td>import-worker、admin-imports、admin-questions</td><td>MT-W02-01〜16、MT-H09-01〜08、MT-H10</td></tr>
 <tr><td>4.11 アカウント管理、6.3 物理削除</td><td>5.3 A-19・A-20、4.5.1</td><td>admin-users、purge-users</td><td>MT-H12-01〜09、MT-W03-09〜10</td></tr>
 <tr><td>5.1 API共通仕様、3.5 DB起動待ち</td><td>2.4.4、3.3 M-D01、6.1</td><td>errors、data-api、api.js</td><td>MT-U01、MT-D01-08〜10、MT-F02-02〜03</td></tr>
 <tr><td>5.4 CSV出力</td><td>5.3 A-17・A-18</td><td>admin-dashboard</td><td>MT-H11-01〜08</td></tr>
@@ -1382,9 +1383,18 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>カバレッジ</td><td>C0・C1（全体と domain・validators）</td></tr>
 <tr><td>失敗したテスト</td><td>ID と Issue 番号（失敗0件ならなし）</td></tr>
 </tbody></table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.5 結合テストへの申し送り</h3>
+<p>モジュールテストでは AWS をモックで差し替えるため、次の前提は本物の AWS でしか確かめられない。dev 環境の結合テスト（別紙）の確認項目に入れる。</p>
+<div class="table-wrap"><table>
+<thead><tr><th>No</th><th>前提（モジュールテストでの扱い）</th><th>結合テストでの確かめ方</th><th>外れていたときに起きること</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Data API は timestamptz を UTC の <code>YYYY-MM-DD HH:MM:SS</code> で返す（<code>parseDbTimestamp</code> で読む）</td><td>採点を依頼し、A-10 が30秒以内は <code>processing</code> を返すこと、A-01 のログイン記録が30分おきになることを確かめる</td><td>日時が9時間ずれて読まれ、採点がすぐ「時間切れ」になる、またはログイン回数を数えすぎる</td></tr>
+<tr><td>2</td><td>Cognito の Username に利用者の <code>sub</code> を渡せる（メールを別名にしたユーザープールでは Username＝sub）</td><td>管理画面から利用者のロール変更・論理削除・復活、日次処理の物理削除を1回ずつ行う</td><td>「利用者が見つからない」で、ロール変更・削除・停止・物理削除が失敗する</td></tr>
+<tr><td>3</td><td>署名付きURLは <code>content-type</code> を署名に含む（画面は同じ <code>Content-Type</code> を付けて PUT する）</td><td>S-11・S-14 から PDF・画像をアップロードする</td><td>アップロードが403で拒否され、問題やキャラクター画像を登録できない</td></tr>
+</tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.3版（ドラフト：第1〜6章、HTML版あり。テスト結果報告書 第0.1版の補足テストに採番・設定を test.projects に変更）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.4版（ドラフト：第1〜6章、HTML版あり。テスト結果報告書 第1.1版 7.2 の判断を反映）</div></footer>
 </body>
 </html>

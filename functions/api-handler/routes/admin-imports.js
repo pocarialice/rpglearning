@@ -4,6 +4,7 @@ import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
 import { assertValid, validateImportRequest } from '../../shared/util/validators.js'
+import { withTx } from '../../shared/db/tx.js'
 import * as imports from '../../shared/db/repositories/imports.js'
 import * as questions from '../../shared/db/repositories/questions.js'
 import { s3Client, presignPut } from '../lib/aws.js'
@@ -19,9 +20,13 @@ export async function create(ctx) {
   assertValid(validateImportRequest(body))
   const isText = body.sourceType === 'text'
   const fileName = isText ? 'source.txt' : safeFileName(body.fileName)
-  const importId = await imports.create({ courseId, userId: ctx.user.userId, sourceType: body.sourceType, fileName: isText ? 'テキスト' : body.fileName, s3Key: 'pending' })
-  const key = `uploads/${importId}/${fileName}`
-  await imports.setKey(importId, key)
+  // キーに取り込みIDを含めるため、仮の値で登録してから書き換える。途中で失敗したら登録ごと取り消し、仮の値を残さない
+  const { importId, key } = await withTx(async (tx) => {
+    const id = await imports.create({ courseId, userId: ctx.user.userId, sourceType: body.sourceType, fileName: isText ? 'テキスト' : body.fileName, s3Key: 'pending' }, tx)
+    const k = `uploads/${id}/${fileName}`
+    await imports.setKey(id, k, tx)
+    return { importId: id, key: k }
+  })
   const res = { importId: encodeId(PREFIX.import, importId) }
   if (isText) {
     await s3Client().send(new PutObjectCommand({ Bucket: process.env.IMPORT_BUCKET, Key: key, Body: body.text, ContentType: 'text/plain; charset=utf-8' }))

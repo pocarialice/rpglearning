@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { CommitTransactionCommand, RollbackTransactionCommand } from '@aws-sdk/client-rds-data'
 vi.mock('../../../../../functions/shared/db/repositories/users.js')
 vi.mock('../../../../../functions/shared/db/repositories/courses.js')
 vi.mock('../../../../../functions/shared/db/repositories/imports.js')
@@ -25,6 +26,8 @@ describe('M-H09 admin-imports（A-13・A-14）', () => {
   beforeEach(() => {
     s3.reset()
     s3.on(PutObjectCommand).resolves({})
+    rds.reset()
+    routeSql(rds, [])
     imports.create.mockResolvedValue(8)
   })
   const create = (body) => call({ method: 'POST', path: '/api/admin/imports', body: { courseId: 'c_3', ...body } })
@@ -38,7 +41,8 @@ describe('M-H09 admin-imports（A-13・A-14）', () => {
     expect(url.pathname).toBe('/uploads/8/sample.pdf')
     expect(url.searchParams.get('X-Amz-Expires')).toBe('900')
     expect(url.searchParams.get('X-Amz-SignedHeaders')).toContain('content-type')
-    expect(imports.setKey).toHaveBeenCalledWith(8, 'uploads/8/sample.pdf')
+    expect(imports.setKey).toHaveBeenCalledWith(8, 'uploads/8/sample.pdf', expect.objectContaining({ transactionId: 'tx-1' }))
+    expect(rds.commandCalls(CommitTransactionCommand)).toHaveLength(1)
     expect(imports.create.mock.calls[0][0]).toMatchObject({ courseId: 3, userId: 2, sourceType: 'pdf', fileName: 'sample.pdf' })
     expect(s3.commandCalls(PutObjectCommand)).toHaveLength(0)
   })
@@ -79,6 +83,15 @@ describe('M-H09 admin-imports（A-13・A-14）', () => {
     expect(body.drafts).toHaveLength(3)
     expect(body.drafts[0]).toMatchObject({ id: 'q_100', bodyHead: 'あ'.repeat(40), choiceCount: 4, keywordCount: 2, status: 'draft' })
     expect(body.drafts[1]).toMatchObject({ choiceCount: 3, keywordCount: 0, status: 'needs_review' })
+  })
+  it('MT-H09-08 登録の途中で失敗（仮の値を残さない）', async () => {
+    imports.setKey.mockRejectedValue(new Error('setKey failed'))
+    const res = await create({ sourceType: 'text', text: 'abc' })
+    expect(res.statusCode).toBe(500)
+    expect(imports.create.mock.calls[0][1].transactionId).toBe('tx-1')
+    expect(rds.commandCalls(RollbackTransactionCommand)).toHaveLength(1)
+    expect(rds.commandCalls(CommitTransactionCommand)).toHaveLength(0)
+    expect(s3.commandCalls(PutObjectCommand)).toHaveLength(0)
   })
   it('MT-H09-07 取り込みがない・担当外・コースごとの一覧', async () => {
     imports.find.mockResolvedValue(null)

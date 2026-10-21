@@ -392,7 +392,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.3版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第0.1版の指摘を反映）</b></li>
+      <li>版数<b>第0.4版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第1.1版 7.2 の判断を反映）</b></li>
       <li>作成日<b>2026-10-20</b></li>
       <li>入力文書<b>要件定義書 第1版（ドラフト）、外部設計書 第0.8版、AWS構築手順書 第0.4版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
@@ -494,10 +494,11 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <thead><tr><th>層</th><th>呼んでよい層</th><th>呼んではいけない層</th></tr></thead>
 <tbody>
 <tr><td>routes・ハンドラ</td><td>domain、db、ai、mail、util</td><td>-</td></tr>
+<tr><td>services</td><td>domain、db、util</td><td>ai、mail、AWS SDK（DBへの書き込みの組み立てだけを受け持つ）</td></tr>
 <tr><td>domain</td><td>util（date-jst・errors だけ）</td><td>db、ai、mail、AWS SDK（純粋関数にするため）</td></tr>
 <tr><td>db</td><td>util</td><td>domain、ai</td></tr>
 <tr><td>ai</td><td>util</td><td>db、domain</td></tr>
-<tr><td>util</td><td>なし（標準ライブラリのみ）</td><td>すべて</td></tr>
+<tr><td>util</td><td>なし（標準ライブラリと <code>process.env</code> のみ）</td><td>すべて</td></tr>
 </tbody></table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 ディレクトリ構成（AWSリリースを想定した案）</h3>
 <pre><code class="language-text">rpg-learning-app/
@@ -528,7 +529,8 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 │  │  │  ├─ authz.js              # トークンからの利用者・ロール取得、権限確認
 │  │  │  ├─ logger.js             # JSON構造化ログ
 │  │  │  ├─ http.js               # 応答の組み立て、本文の読み取り
-│  │  │  └─ validators.js         # web/js/logic/validators.js を再公開
+│  │  │  ├─ validators.js         # web/js/logic/validators.js を再公開
+│  │  │  └─ env.js                # 環境変数の確認（起動時）
 │  │  ├─ db/
 │  │  │  ├─ data-api.js           # Data API呼び出し・型変換・DB起動中の判定
 │  │  │  ├─ tx.js                 # トランザクション
@@ -547,9 +549,11 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 │  │  │  ├─ json-guard.js         # 出力JSONの取り出しと検証
 │  │  │  ├─ persona.js            # パートナー3人の性格・口調
 │  │  │  └─ prompts/              # grading.js・extraction.js・comment.js・daily-message.js
-│  │  └─ mail/
-│  │     ├─ ses.js                # SES送信
-│  │     └─ templates.js          # メール本文
+│  │  ├─ mail/
+│  │  │  ├─ ses.js                # SES送信
+│  │  │  └─ templates.js          # メール本文
+│  │  └─ services/
+│  │     └─ answer-recorder.js    # 解答の記録（A-08 と grading-worker で共用）
 │  ├─ api-handler/
 │  │  ├─ index.mjs                # Lambdaの入口
 │  │  ├─ router.js                # パスとメソッドからハンドラを選ぶ
@@ -757,6 +761,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tr><td>M-U05</td><td><code>util/logger.js</code></td><td>ログ</td><td><code>createLogger(fn, ctx)</code></td></tr>
 <tr><td>M-U06</td><td><code>util/http.js</code></td><td>応答・本文</td><td><code>ok(body, status)</code>、<code>csv(text, filename)</code>、<code>parseBody(event)</code></td></tr>
 <tr><td>M-U07</td><td><code>logic/validators.js</code>（共用）</td><td>入力チェック</td><td><code>validateExplanation</code>、<code>validateNickname</code>、<code>validatePartnerName</code>、<code>validateNotifyTime</code>、<code>validateImportRequest</code>、<code>validateQuestionDraft</code></td></tr>
+<tr><td>M-U08</td><td><code>util/env.js</code></td><td>環境変数の確認</td><td><code>requireEnv(names)</code>（足りなければ起動時に例外）</td></tr>
 <tr><td>M-D01</td><td><code>db/data-api.js</code></td><td>SQL実行</td><td><code>query(sql, params, opts)</code>、<code>execute(...)</code></td></tr>
 <tr><td>M-D02</td><td><code>db/tx.js</code></td><td>トランザクション</td><td><code>withTx(fn, opts)</code></td></tr>
 <tr><td>M-D03</td><td><code>db/repositories/*.js</code></td><td>テーブルごとのSQL</td><td>3.4 参照</td></tr>
@@ -772,6 +777,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tr><td>M-A03</td><td><code>ai/persona.js</code></td><td>パートナーの性格</td><td><code>PERSONAS</code>、<code>personaInstruction(persona, name)</code></td></tr>
 <tr><td>M-A04</td><td><code>ai/prompts/*.js</code></td><td>指示文の組み立て</td><td><code>buildGradingPrompt</code>、<code>buildExtractionPrompt</code>、<code>buildCommentPrompt</code>、<code>buildDailyMessagePrompt</code></td></tr>
 <tr><td>M-M01</td><td><code>mail/ses.js</code>・<code>templates.js</code></td><td>メール</td><td><code>sendMail({to, subject, text})</code>、<code>notifyMail(item)</code>、<code>deletionMail(user)</code></td></tr>
+<tr><td>M-S01</td><td><code>services/answer-recorder.js</code></td><td>解答の記録</td><td><code>loadAnswerContext(tx, a)</code>、<code>computeOutcome(ctx, a)</code>、<code>writeOutcome(tx, outcome, ctx, a)</code>、<code>outcomeView(outcome)</code></td></tr>
 </tbody></table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 util</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-U04 <code>util/authz.js</code></h4>
@@ -818,21 +824,22 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <div class="table-wrap"><table>
 <thead><tr><th>ファイル</th><th>主な関数</th></tr></thead>
 <tbody>
-<tr><td><code>users.js</code></td><td><code>findBySub</code>、<code>findById</code>、<code>activate</code>、<code>touchLogin</code>、<code>updateNickname</code>、<code>updatePartner</code>、<code>addExp</code>、<code>setDailyMessage</code>、<code>listForAdmin</code>、<code>markDeleted</code>、<code>restore</code>、<code>listPurgeTargets</code>、<code>purge</code></td></tr>
-<tr><td><code>courses.js</code></td><td><code>listWithProgress</code>、<code>findById</code>、<code>create</code>、<code>update</code>、<code>assignAdmins</code>、<code>listAdminCourses</code>、<code>isAdmin</code>（担当コースの確認）、<code>dashboardRows</code>（8.6 のダッシュボードの一覧）</td></tr>
-<tr><td><code>enrollments.js</code></td><td><code>enroll</code>、<code>isEnrolled</code>、<code>nicknameTaken(courseIds, nickname, exceptUserId)</code></td></tr>
-<tr><td><code>questions.js</code></td><td><code>findForLearner</code>、<code>findDraftsByImport</code>、<code>update</code>（選択肢・キーワードの置き換えを含む）、<code>publish</code>、<code>deleteOrArchive</code></td></tr>
-<tr><td><code>reviews.js</code></td><td><code>findItem</code>、<code>upsertItem</code>、<code>countDue</code>、<code>listDue</code>、<code>listUnlearned</code>、<code>listLearned</code></td></tr>
-<tr><td><code>answers.js</code></td><td><code>insert</code>、<code>statsForUser</code>、<code>masteredCount</code></td></tr>
-<tr><td><code>exp.js</code></td><td><code>insertLog</code>、<code>weeklyTotals(courseId, weekStart)</code></td></tr>
-<tr><td><code>quests.js</code></td><td><code>listToday</code>、<code>insertAssignments</code>、<code>saveProgress</code></td></tr>
-<tr><td><code>badges.js</code></td><td><code>listOwned</code>、<code>grant</code>、<code>listDefs</code></td></tr>
-<tr><td><code>rankings.js</code></td><td><code>currentWeek</code>、<code>history</code>、<code>closeWeek</code></td></tr>
-<tr><td><code>gradings.js</code></td><td><code>create</code>、<code>find</code>、<code>complete</code>（<code>status='processing'</code> のときだけ更新）、<code>fail</code>、<code>deleteOlderThan</code></td></tr>
-<tr><td><code>imports.js</code></td><td><code>create</code>、<code>find</code>、<code>setStatus</code>、<code>insertDrafts</code></td></tr>
+<tr><td><code>users.js</code></td><td><code>findBySub</code>、<code>findById</code>、<code>activate</code>、<code>touchLogin</code>、<code>lastLoginLogAt</code>（A-01 のログイン記録の間隔）、<code>updateNickname</code>、<code>updatePartner</code>、<code>setCurrentCourse</code>、<code>addExp</code>、<code>setDailyMessage</code>、<code>updateStreak</code>、<code>listForStreak</code>、<code>listForAdmin</code>、<code>create</code>、<code>setRoles</code>、<code>markDeleted</code>、<code>restore</code>、<code>listPurgeTargets</code>、<code>purge</code></td></tr>
+<tr><td><code>courses.js</code></td><td><code>listWithProgress</code>、<code>listAll</code>（担当者つき）、<code>listIds</code>、<code>findById</code>、<code>create</code>、<code>update</code>、<code>assignAdmins</code>、<code>listAdminCourses</code>、<code>isAdmin</code>（担当コースの確認）、<code>dashboardRows</code>（8.6 のダッシュボードの一覧）</td></tr>
+<tr><td><code>enrollments.js</code></td><td><code>enroll</code>、<code>isEnrolled</code>、<code>listCourseIds</code>、<code>nicknameTaken(courseIds, nickname, exceptUserId)</code></td></tr>
+<tr><td><code>questions.js</code></td><td><code>findForLearner</code>、<code>findById</code>、<code>findKeyword</code>、<code>findDraftsByImport</code>、<code>update</code>（選択肢・キーワードは番号ごとに更新。5.3 A-15）、<code>publish</code>、<code>deleteOrArchive(questionId, status, …)</code>（下書き・要確認は削除、公開済みは archived）</td></tr>
+<tr><td><code>reviews.js</code></td><td><code>findItem</code>、<code>upsertItem</code>、<code>countDue</code>、<code>countDueByKind</code>（形式ごとの今日の復習数）、<code>listDue</code>、<code>listUnlearned</code>、<code>listLearned</code></td></tr>
+<tr><td><code>answers.js</code></td><td><code>insert</code>、<code>statsForUser</code>、<code>countOnDate</code>、<code>masteredCount</code></td></tr>
+<tr><td><code>exp.js</code></td><td><code>insertLog</code>、<code>weeklyTotals(courseId, weekStart)</code>（利用者の状態 <code>status</code> も返す）、<code>weeklyTotalForUser</code></td></tr>
+<tr><td><code>quests.js</code></td><td><code>listToday</code>、<code>insertAssignments</code>、<code>saveProgress</code>、<code>listAssignTargets(today)</code>（日次の割り当て対象と復習対象数）、<code>listDefs</code></td></tr>
+<tr><td><code>badges.js</code></td><td><code>listOwned</code>、<code>listOwnedDetail</code>（獲得日時つき）、<code>grant</code>、<code>listDefs</code></td></tr>
+<tr><td><code>rankings.js</code></td><td><code>currentWeek</code>、<code>history</code>、<code>weeks</code>（過去週の開始日。新しい順に最大12）、<code>closeWeek</code></td></tr>
+<tr><td><code>gradings.js</code></td><td><code>create</code>、<code>find</code>、<code>complete</code>（<code>status='processing'</code> のときだけ更新）、<code>fail</code>、<code>deleteOlderThan(cutoff)</code>（cutoff は <code>+09:00</code> 付きの日時。日数ではない）</td></tr>
+<tr><td><code>imports.js</code></td><td><code>create</code>、<code>setKey</code>、<code>find</code>、<code>findByKey</code>、<code>listByCourse</code>、<code>setStatus</code>、<code>insertDrafts</code></td></tr>
 <tr><td><code>adventures.js</code></td><td><code>start</code>、<code>find</code>、<code>incrementServed</code>、<code>finish</code></td></tr>
 <tr><td><code>audit.js</code></td><td><code>write(actorId, action, target, detail)</code></td></tr>
 <tr><td><code>notify.js</code></td><td><code>get</code>、<code>put</code>、<code>listForSlotBuild(today)</code></td></tr>
+<tr><td><code>partners.js</code></td><td><code>get</code>、<code>list</code>、<code>setImage</code>（キャラクター画像のキー。null で外す）</td></tr>
 </tbody></table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 domain（純粋関数）</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-G01 <code>domain/review.js</code> 忘却曲線</h4>
@@ -950,6 +957,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     // api-handler は toErrorResponse(err) を返す。ほかの関数は投げ直す（再試行・DLQに任せる）
   }
 }</code></pre>
+<ul><li><code>now</code> は api-handler・batch-runner では Date（処理の開始時刻）を渡す。grading-worker だけは、JSONのやり直しの前に経過時間を測るため、<strong>呼ぶたびに今の時刻を返す関数 <code>now()</code></strong> を渡す（時刻そのものを渡すと経過時間が常に0秒になり、時間切れ直前でもやり直してしまう）</li></ul>
 <div class="table-wrap"><table>
 <thead><tr><th>関数</th><th>メモリ／タイムアウト</th><th>Data API の起動待ち（<code>resumeRetries</code>）</th><th>起動元</th></tr></thead>
 <tbody>
@@ -1010,7 +1018,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tr><td>重複を防ぐ</td><td>かたまりごとの抽出結果は、全部そろってから1つのトランザクションで保存する。途中で失敗したら何も保存しない（再試行で最初からやり直す）</td></tr>
 <tr><td>ページ上限</td><td>PDFは50ページまで。超えていたら抽出せず <code>failed</code>（「50ページ以内に分けて取り込んでください」）</td></tr>
 <tr><td>再試行しない失敗</td><td>ページ上限超え・PDFとして読めない・対応していない形式は、やり直しても同じ結果になるため、受信回数にかかわらずすぐ <code>failed</code> にしてメッセージを消す</td></tr>
-<tr><td>抽出の正規化</td><td>問題文・解説の前後の空白を除く。正解が選択肢の番号でなければ <code>correct_choice = null</code> で <code>needs_review</code>。キーワードは重複を除き最大3つ</td></tr>
+<tr><td>抽出の正規化</td><td>問題文・解説の前後の空白を除く。正解が選択肢の番号でなければ <code>correct_choice = null</code> で <code>needs_review</code>。キーワードは重複（大文字・小文字を区別しない）を除き最大3つ</td></tr>
 <tr><td>受信回数</td><td><code>record.attributes.ApproximateReceiveCount</code>。3回目（DLQの最大受信数と同じ）で失敗したら <code>failed</code> にして、メッセージは成功扱いで消す</td></tr>
 <tr><td>同時実行</td><td>予約された同時実行2（構築手順書 3.8）</td></tr>
 </tbody></table></div>
@@ -1146,16 +1154,19 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <p><code>{ courseId, sourceType, fileName, contentType, size, text }</code></p>
 <ol>
 <li><code>assertCourseAdmin</code> → <code>validateImportRequest</code></li>
-<li><code>import_jobs</code> に <code>waiting</code> で追加</li>
+<li><code>import_jobs</code> に <code>waiting</code> で追加。キーに取り込みIDを含めるため、仮の値（<code>pending</code>）で登録して <code>setKey</code> で書き換える。<strong>登録と書き換えは1つのトランザクションで行い</strong>、途中で失敗したら登録ごと取り消す（仮の値の記録を残さない）</li>
 <li>PDF・画像：S3 <code>uploads/{importId}/{安全なファイル名}</code> への署名付きURL（PUT、15分、<code>Content-Type</code> 固定）を返す → <code>201 { importId, uploadUrl }</code></li>
 <li>テキスト：api-handler が <code>uploads/{importId}/source.txt</code> に直接書き込む → <code>201 { importId }</code>（どちらも S3 の通知で import-worker が動く）</li>
 </ol>
 <ul>
 <li>安全なファイル名：英数字・<code>.</code>・<code>-</code>・<code>_</code> 以外を <code>_</code> に置き換え、100文字まで</li>
 </ul>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-14 <code>GET /api/admin/imports/{id}</code>・<code>GET /api/admin/imports?course=</code></h4>
+<ul><li>取り込み状況：<code>{ importId, courseId, sourceType, fileName, status, extractedCount, errorMessage, drafts }</code>。<code>drafts</code> は S-11 の修正画面でそのまま使えるよう、一覧の項目（問題文の先頭40文字 <code>bodyHead</code>・選択肢の数 <code>choiceCount</code>・キーワードの数 <code>keywordCount</code>・状態）に加えて、問題文・選択肢・正解・解説・キーワードの全項目を返す</li><li>一覧：コースの取り込みを新しい順に最大50件</li></ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-15 <code>PUT・DELETE /api/admin/questions/{id}</code></h4>
 <ul>
 <li>PUT：<code>{ body, choices: [4つ], correctChoice, explanation, keywords: [最大3つ] }</code>。選択肢とキーワードは**番号（<code>choice_no</code>・<code>sort_order</code>）ごとに更新**し、行を作り直さない（公開後も学習者の復習段階を残すため）。キーワードを減らした場合だけ、その行を削除する（復習段階も消える）</li>
+<li>PUT の入力と状態：下書き・要確認の問題は、選択肢2〜10個（各1〜1,000文字）、正解は空または1〜4、キーワード0〜3個を受け付ける。保存後の状態は自動で決める：公開できる形（<code>validateQuestionDraft</code> が ok）なら <code>draft</code>、そうでなければ <code>needs_review</code>。公開済みの問題は、公開できる形を崩す修正を <code>400</code>（M-12）で受け付けず、状態は <code>published</code> のまま</li>
 <li>DELETE：下書き・要確認は行ごと削除。公開済みは <code>status='archived'</code> にして出題対象から外す（解答履歴を残す）</li>
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-16 <code>POST /api/admin/questions/{id}/publish</code></h4>
@@ -1341,7 +1352,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tr><td>選択肢がちょうど4つ、正解が1〜4</td><td><code>status='draft'</code></td></tr>
 <tr><td>選択肢が4つでない</td><td>選択肢はそのまま保存（最大10）、<code>status='needs_review'</code></td></tr>
 <tr><td>正解が null・範囲外</td><td><code>correct_choice = null</code>、<code>status='needs_review'</code></td></tr>
-<tr><td>キーワードが4つ以上</td><td>先頭から3つ（重複を除いたあと）</td></tr>
+<tr><td>キーワードの重複・4つ以上</td><td>前後の空白を除き、重複は<strong>英字の大文字・小文字を区別せずに</strong>判定して除く（最初に出た表記を残す。例：<code>DNS</code>・<code>dns </code>・<code>DNS</code>・<code>A</code>・<code>B</code> → <code>DNS</code>・<code>A</code>・<code>B</code>）。そのあと先頭から3つ</td></tr>
 <tr><td>問題文が空</td><td>その問題は保存しない（件数にも数えない）</td></tr>
 </tbody></table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.5 解説コメント・ひとことの指示文</h3>
@@ -2244,6 +2255,6 @@ jobs:
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.3版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第0.1版の指摘を反映）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.4版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第1.1版 7.2 の判断を反映）</div></footer>
 </body>
 </html>
