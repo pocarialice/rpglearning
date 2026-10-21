@@ -145,7 +145,7 @@ p('| 項目 | 結果 |')
 p('| --- | --- |')
 p(`| テストケース（仕様書のID） | ${total.cases}件中 合格 ${total.pass}・不合格 ${total.fail}・未実装 ${total.missing} |`)
 p(`| 実行したテスト（\`it\` の数） | ${itTotals.total}件（成功 ${itTotals.passed}・失敗 ${itTotals.failed}・スキップ ${itTotals.skipped}・todo ${itTotals.todo}）、テストファイル ${results.testResults.length} |`)
-p(`| うち仕様書 ${meta.specVersion} で追加したケース | ${addedCount}件（分岐網羅のための追加。第0.1版 7.2 No.10 の提案で採番） |`)
+p(`| うち仕様書 ${meta.specVersion} で追加したケース | ${addedCount}件（${meta.addedNote}） |`)
 p(`| IDのないテスト | ${supplementary.length}件 |`)
 p(`| 実行時間 | 最大 ${(maxMs / 1000).toFixed(2)} 秒（基準：60秒以内） |`)
 p(`| 安定性 | 同じコミットで${runs.length}回実行し、${stable ? 'すべて同じ結果' : '結果が変わった'}（${runs.map((r) => `${r.passed}/${r.total}`).join('、')}） |`)
@@ -335,7 +335,7 @@ H(`<div class="grid-ids" aria-label="ケースごとの結果">${rows.map((r) =>
 H(table(['項目', '結果'], [
   ['テストケース（仕様書のID）', `${total.cases}件中 合格 ${total.pass}・不合格 ${total.fail}・未実装 ${total.missing}`],
   ['実行したテスト（<code>it</code> の数）', `${itTotals.total}件（成功 ${itTotals.passed}・失敗 ${itTotals.failed}・スキップ ${itTotals.skipped}・todo ${itTotals.todo}）、テストファイル ${results.testResults.length}`],
-  [`うち仕様書 ${meta.specVersion} で追加したケース`, `${addedCount}件（分岐網羅のための追加。第0.1版 7.2 No.10 の提案で採番）`],
+  [`うち仕様書 ${meta.specVersion} で追加したケース`, `${addedCount}件（${meta.addedNote}）`],
   ['IDのないテスト', `${supplementary.length}件`],
   ['実行時間', `最大 ${(maxMs / 1000).toFixed(2)} 秒（基準：60秒以内）`],
   ['安定性', `同じコミットで${runs.length}回実行し、${stable ? 'すべて同じ結果' : '結果が変わった'}（${runs.map((r) => `${r.passed}/${r.total}`).join('、')}）`],
