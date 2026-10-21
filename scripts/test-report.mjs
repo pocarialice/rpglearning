@@ -194,12 +194,26 @@ if (meta.defectTable) {
   meta.defectTable.forEach((d, i) => p(`| ${i + 1} | ${d[0]} | ${d[1]} | ${d[2]} | ${d[3]} |`))
 }
 p()
-p('### 7.2 設計書・仕様書の解釈と補足')
+p('### 7.2 決めてほしいこと')
 p()
-p('| No | 対象 | 内容 | 対応の提案 |')
+p(meta.notesIntro)
+p()
+p('| No | 項目 | 決めてほしいこと | おすすめ |')
 p('| --- | --- | --- | --- |')
-meta.notes.forEach((n, i) => p(`| ${i + 1} | ${n[0]} | ${n[1]} | ${n[2]} |`))
+meta.notes.forEach((n, i) => p(`| ${i + 1} | ${n.title} | ${n.decide} | ${n.options.find((o) => o.recommended)?.label ?? '-'} |`))
 p()
+meta.notes.forEach((n, i) => {
+  p(`#### 7.2.${i + 1} ${n.title}`)
+  p()
+  p(`- **関係する文書・場所**：${n.target}`)
+  p(`- **いまの状態**：${n.what}`)
+  p(`- **決めてほしいこと**：${n.decide}`)
+  p()
+  p('| 選択肢 | 選んだときに起こること |')
+  p('| --- | --- |')
+  for (const o of n.options) p(`| ${o.recommended ? '★ ' : ''}${o.label}${o.recommended ? '（おすすめ）' : ''} | ${o.impact} |`)
+  p()
+})
 p('## 8. 判定と次の作業')
 p()
 p('```mermaid')
@@ -253,6 +267,17 @@ details.cases .table-wrap { margin: 0 12px 12px; }
 td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 .res-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .res-tiles .tile-num { font-size: 30px; }
+.decision { border: 1px solid var(--gray-300); border-radius: var(--radius-12); padding: 4px 20px 20px; margin: 0 0 20px; scroll-margin-top: 24px; }
+.dl-plain { display: grid; grid-template-columns: 170px 1fr; gap: 8px 16px; margin: 0 0 16px; font-size: 15px; }
+.dl-plain dt { font-weight: 700; color: var(--blue-1000); }
+.dl-plain dt i { color: var(--blue-900); margin-right: 6px; width: 1em; }
+.dl-plain dd { margin: 0; }
+.opts { display: grid; gap: 10px; }
+.opt { border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 12px 16px; background: var(--white); }
+.opt.rec { border: 2px solid var(--blue-900); background: var(--blue-50); }
+.opt p { margin: 0; font-size: 15px; }
+.opt .opt-h { font-weight: 700; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 860px) { .dl-plain { grid-template-columns: 1fr; gap: 2px; } .dl-plain dd { margin-bottom: 8px; } }
 @media (max-width: 860px) { .cov-row { grid-template-columns: 1fr; } .judge { flex-direction: column; align-items: flex-start; } }
 </style>`
 const h = []
@@ -354,11 +379,16 @@ for (const m of modules) {
 H('</section>')
 // 7
 H(`<section class="chapter" id="s7"><h2>${icon('fa-magnifying-glass')}7. 所見</h2>`)
-H(`<div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合（修正済み）</h5><p class="tile-num sm">${meta.defectCount}<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-pen-ruler"></i>設計の解釈・補足</h5><p class="tile-num sm">${meta.notes.length}<small>件</small></p></div></div></div>`)
+H(`<div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合（修正済み）</h5><p class="tile-num sm">${meta.defectCount}<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-scale-balanced"></i>決めてほしいこと</h5><p class="tile-num sm">${meta.notes.length}<small>件</small></p></div></div></div>`)
 H(`<h3>${icon('fa-caret-right')}7.1 不具合</h3><ul>${meta.defects.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>`)
 if (meta.defectTable) H(table(['No', '見つけたテスト・作業', '重大度', '内容', '対応'], meta.defectTable.map((d, i) => [i + 1, inline(d[0]), inline(d[1]), inline(d[2]), inline(d[3])])))
-H(`<h3>${icon('fa-caret-right')}7.2 設計書・仕様書の解釈と補足</h3>`)
-H(table(['No', '対象', '内容', '対応の提案'], meta.notes.map((n, i) => [i + 1, inline(n[0]), inline(n[1]), inline(n[2])])))
+H(`<h3>${icon('fa-caret-right')}7.2 決めてほしいこと</h3><p>${inline(meta.notesIntro)}</p>`)
+H(table(['No', '項目', '決めてほしいこと', 'おすすめ'], meta.notes.map((n, i) => [`<a href="#n${i + 1}">${i + 1}</a>`, inline(n.title), inline(n.decide), inline(n.options.find((o) => o.recommended)?.label ?? '-')])))
+meta.notes.forEach((n, i) => {
+  H(`<div class="decision" id="n${i + 1}"><h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>7.2.${i + 1} ${inline(n.title)}</h4>`)
+  H(`<dl class="dl-plain"><dt><i class="fa-solid fa-folder-open"></i>関係する文書・場所</dt><dd>${inline(n.target)}</dd><dt><i class="fa-solid fa-circle-info"></i>いまの状態</dt><dd>${inline(n.what)}</dd><dt><i class="fa-solid fa-circle-question"></i>決めてほしいこと</dt><dd><strong>${inline(n.decide)}</strong></dd></dl>`)
+  H('<div class="opts">' + n.options.map((o) => `<div class="opt${o.recommended ? ' rec' : ''}"><p class="opt-h">${o.recommended ? '<span class="res ok"><i class="fa-solid fa-star"></i>おすすめ</span>' : ''}${inline(o.label)}</p><p>${inline(o.impact)}</p></div>`).join('') + '</div></div>')
+})
 H('</section>')
 // 8
 H(`<section class="chapter" id="s8"><h2>${icon('fa-gavel')}8. 判定と次の作業</h2>`)
