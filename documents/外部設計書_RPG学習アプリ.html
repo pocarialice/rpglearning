@@ -511,9 +511,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.7版（ドラフト：第1〜10章、HTML版あり）</b></li>
-      <li>作成日<b>2026-10-19（第0.7版：2026-10-20）</b></li>
-      <li>入力文書<b>RPG学習アプリ 要件定義書 第1版（ドラフト）</b></li>
+      <li>版数<b>第0.9版（ドラフト：第1〜10章、HTML版あり。stg 環境をなくし dev・prod の2環境に変更）</b></li>
+      <li>作成日<b>2026-10-19（第0.9版：2026-10-21）</b></li>
+      <li>入力文書<b>RPG学習アプリ 要件定義書 第1.1版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
   </div>
@@ -560,7 +560,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>環境</td>
-<td>dev／stg／prod の3環境を1つのAWSアカウント内でリソース名の接頭辞（rpg-dev- など）とタグ Environment で分ける。東京リージョン（ap-northeast-1）</td>
+<td>dev／prod の2環境を1つのAWSアカウント内でリソース名の接頭辞（rpg-dev- など）とタグ Environment で分ける。東京リージョン（ap-northeast-1）</td>
 <td>6.1</td>
 </tr>
 <tr>
@@ -575,7 +575,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>リリース方式</td>
-<td>GitHub Actions で配置する（<code>main</code> への push で dev、タグで stg → 承認後に prod）。AWS へは OIDC で認証し、アクセスキーは使わない。AWSリソースの作成はマネジメントコンソール</td>
+<td>GitHub Actions で配置する（<code>main</code> への push で dev、タグを付けて承認後に prod）。AWS へは OIDC で認証し、アクセスキーは使わない。AWSリソースの作成はマネジメントコンソール</td>
 <td>6.1</td>
 </tr>
 <tr>
@@ -969,15 +969,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>dev</td>
-<td>開発・動作確認</td>
-<td>開発者</td>
+<td>開発・動作確認、システムテスト・受け入れ確認</td>
+<td>開発者・コース管理者（受け入れ確認）</td>
 <td>0〜1 ACU（自動停止）</td>
-</tr>
-<tr>
-<td>stg</td>
-<td>受け入れ確認・パイロット前の検証</td>
-<td>開発者・コース管理者</td>
-<td>0〜2 ACU（自動停止）</td>
 </tr>
 <tr>
 <td>prod</td>
@@ -988,13 +982,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 <p>1つのAWSアカウントの中で、リソース名の接頭辞とタグで環境を分ける。</p>
+<ul>
+<li>コストを抑えるため、検証用の stg 環境は作らない（2026-10-21 決定）。stg で行う予定だったシステムテストとコース管理者の受け入れ確認は dev で行う</li>
+<li>受け入れ確認の間は、dev への自動配置（<code>main</code> への push）を止めて dev を「凍結」する。確かめた版にタグを付けて prod に配置する（詳細設計書 11.1）</li>
+<li>dev は DB の容量（0〜1 ACU）とバックアップの設定が prod と違うため、本番と同じ条件での最終確認はできない。代わりに prod への配置の直前に必ず DB のスナップショット（控え）を取り、問題があれば戻せるようにする</li>
+<li>全社展開（Phase 3）の前に、stg を作り直すかを見直す（10 未決事項 No.11）</li>
+</ul>
 <figure class="diagram"><div class="mermaid">flowchart TB
   subgraph ACC["AWSアカウント（1つ）"]
     subgraph DEV["dev 環境"]
       D1["rpg-dev-* のリソース一式"]
-    end
-    subgraph STG["stg 環境"]
-      S1["rpg-stg-* のリソース一式"]
     end
     subgraph PRD["prod 環境"]
       P1["rpg-prod-* のリソース一式"]
@@ -1006,18 +1003,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     GA["GitHub Actions"]
   end
   IAM --- DEV
-  IAM --- STG
   IAM --- PRD
   REPO --&gt; GA
   GA --&gt;|"main への push"| DEV
-  GA --&gt;|"タグ release-*"| STG
-  GA --&gt;|"承認後"| PRD</div></figure>
+  GA --&gt;|"タグ release-*・承認後"| PRD</div></figure>
 <ul>
 <li>命名規則：<code>rpg-{env}-{用途}</code>（例：<code>rpg-prod-api-handler</code>）</li>
-<li>タグ：<code>Project=rpg-learning</code>、<code>Environment=dev|stg|prod</code>。請求はタグで環境ごとに集計する</li>
+<li>タグ：<code>Project=rpg-learning</code>、<code>Environment=dev|prod</code>。請求はタグで環境ごとに集計する</li>
 <li>IAMの権限は環境ごとに、リソース名の接頭辞で範囲を絞る</li>
-<li>AWSのリソースは構築手順書に沿ってマネジメントコンソールで dev → stg → prod の順に作る。アプリ（Lambda のコード・画面・DBのテーブル）は GitHub Actions が配置する</li>
-<li>配置のきっかけ：dev は <code>main</code> への push、stg はタグ <code>release-YYYYMMDD-NN</code> の push、prod は stg での確認のあと承認者が GitHub で承認したとき（詳細設計書 第11章）</li>
+<li>AWSのリソースは構築手順書に沿ってマネジメントコンソールで dev → prod の順に作る。アプリ（Lambda のコード・画面・DBのテーブル）は GitHub Actions が配置する</li>
+<li>配置のきっかけ：dev は <code>main</code> への push、prod は dev での受け入れ確認のあとタグ <code>release-YYYYMMDD-NN</code> を付け、承認者が GitHub で承認したとき（詳細設計書 第11章）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.8 AIモデルの使い分け</h3>
 <div class="table-wrap"><table>
@@ -1071,12 +1066,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>約5,200円（$35）</td>
 </tr>
 <tr>
-<td>dev＋stg</td>
-<td>約3,300円（$22）</td>
+<td>dev</td>
+<td>約1,700円（$11）</td>
 </tr>
 <tr>
 <td><strong>合計</strong></td>
-<td><strong>約8,500円（$57）</strong></td>
+<td><strong>約6,900円（$46）</strong></td>
 </tr>
 </tbody>
 </table></div>
@@ -1143,13 +1138,14 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </table></div>
 <p><strong>試算の前提</strong></p>
 <ul>
+<li>stg をなくしたことで、月 約1,600円（年 約1.9万円）を減らせる見込み（以前の試算は dev＋stg で 約3,300円。dev と stg をほぼ同じ規模とみて半分ずつに分けた目安）</li>
 <li>為替は1ドル＝150円</li>
 <li>Aurora は東京リージョンで 0.15ドル／ACU時間</li>
 <li>Sonnet 5.5 は入力2ドル・出力10ドル／100万トークン（以前の Sonnet 4.6 の入力3ドル・出力15ドルより3分の1安い）</li>
 <li>Claude の単価は Anthropic の公表単価で試算した。Bedrock の単価は AWS が別に決めるため、構築時に Bedrock の料金ページで確かめる。東京リージョン内での推論は、海外リージョンをまたぐ推論より1割ほど高い場合がある</li>
 <li>Haiku 5.5 は入力0.1ドル・出力0.5ドル／100万トークン（1回のプロンプトが10万トークン以下の場合。超えると入力0.5ドル・出力2.5ドル）。以前の Haiku 4.5（入力1ドル・出力5ドル）の約10分の1</li>
 <li>利用回数は仮置き。説明問題を多く解くほど Bedrock の費用は増える</li>
-<li>CloudFront の Free プランはアカウントあたり3つまで。dev・stg・prod で3つを使う。アクセスログ、独自のキャッシュポリシー・レスポンスヘッダーポリシーは使えない（必要になれば Pro プラン、月15ドル）</li>
+<li>CloudFront の Free プランはアカウントあたり3つまで。dev・prod で2つを使う（1つは空き）。アクセスログ、独自のキャッシュポリシー・レスポンスヘッダーポリシーは使えない（必要になれば Pro プラン、月15ドル）</li>
 </ul>
 <p><strong>自動停止による制約</strong></p>
 <ul>
@@ -3558,11 +3554,23 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><strong>決定（2026-10-20）</strong>：GitHub Actions で配置する（2.7）。AWSリソースの定義（IaC）は Phase 2 以降に検討</td>
 <td>決定済み</td>
 </tr>
+<tr>
+<td>10</td>
+<td>通知メールの文言（5.6）</td>
+<td>パートナーの定型のひとこと（persona ごとに1文。例：励まし型「今日もいっしょにがんばろうね！」）と、削除予定の通知の問い合わせ先（「所属部署の学習推進担当（社内ポータルの問い合わせ窓口）」）を仮置き</td>
+<td>パイロット開始前</td>
+</tr>
+<tr>
+<td>11</td>
+<td>stg 環境の要否</td>
+<td><strong>決定（2026-10-21）</strong>：コスト削減のため Phase 1 では作らない。受け入れ確認は dev で行う（2.7）。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める（CloudFront の Free プランの枠は1つ空けてある）</td>
+<td>Phase 3 の計画時</td>
+</tr>
 </tbody>
 </table></div></section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第0.6版（ドラフト：第1〜10章、HTML版あり）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第0.9版（ドラフト：第1〜10章、HTML版あり。stg 環境をなくし dev・prod の2環境に変更）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

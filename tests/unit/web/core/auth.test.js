@@ -1,0 +1,125 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { createAuth, createVerifier, challengeFor, TOKEN_KEY, PKCE_KEY } from '../../../../web/js/core/auth.js'
+import { NOW } from '../../../helpers/clock.js'
+const config = { cognitoDomain: 'https://rpg-test.auth.ap-northeast-1.amazoncognito.com', clientId: 'client123', redirectUri: 'https://app.example.co.jp/' }
+const jwt = (expSec) => `h.${btoa(JSON.stringify({ exp: expSec })).replace(/=+$/, '')}.s`
+const tokenRes = (expSec, extra = {}) => ({ ok: true, status: 200, json: async () => ({ id_token: jwt(expSec), access_token: 'a', refresh_token: 'r1', expires_in: 3600, ...extra }) })
+let navigate
+let fetchFn
+let onError
+const make = () => createAuth({ config, navigate, fetchFn, onError, storage: window.sessionStorage, win: window })
+const formOf = (call) => Object.fromEntries(new URLSearchParams(call[1].body))
+beforeEach(() => {
+  sessionStorage.clear()
+  localStorage.clear()
+  window.history.replaceState(null, '', '/')
+  navigate = vi.fn()
+  onError = vi.fn()
+  fetchFn = vi.fn(async () => tokenRes(Math.floor(Date.now() / 1000) + 3600))
+})
+describe('M-F01 core/auth', () => {
+  it('MT-F01-01 code_verifier', () => {
+    const seen = new Set()
+    for (let i = 0; i < 100; i++) {
+      const v = createVerifier()
+      expect(v).toHaveLength(64)
+      expect(v).toMatch(/^[A-Za-z0-9\-._~]+$/)
+      seen.add(v)
+    }
+    expect(seen.size).toBe(100)
+  })
+  it('MT-F01-02 チャレンジの計算', async () => {
+    expect(await challengeFor('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk')).toBe('E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM')
+  })
+  it('MT-F01-03 ログイン画面への移動', async () => {
+    expect(await make().ensureLogin()).toBe(false)
+    const url = new URL(navigate.mock.calls[0][0])
+    expect(url.origin + url.pathname).toBe(`${config.cognitoDomain}/oauth2/authorize`)
+    const p = url.searchParams
+    expect(p.get('response_type')).toBe('code')
+    expect(p.get('client_id')).toBe('client123')
+    expect(p.get('redirect_uri')).toBe('https://app.example.co.jp/')
+    expect(p.get('code_challenge_method')).toBe('S256')
+    expect(p.get('lang')).toBe('ja')
+    const saved = JSON.parse(sessionStorage.getItem(PKCE_KEY))
+    expect(p.get('state')).toBe(saved.state)
+    expect(p.get('code_challenge')).toBe(await challengeFor(saved.verifier))
+  })
+  it('MT-F01-04 戻り（正常）', async () => {
+    sessionStorage.setItem(PKCE_KEY, JSON.stringify({ verifier: 'v'.repeat(64), state: 'st1' }))
+    window.history.replaceState(null, '', '/?code=abc&state=st1#/home')
+    const auth = make()
+    expect(await auth.ensureLogin()).toBe(true)
+    const [url] = fetchFn.mock.calls[0]
+    expect(url).toBe(`${config.cognitoDomain}/oauth2/token`)
+    expect(formOf(fetchFn.mock.calls[0])).toEqual({ client_id: 'client123', grant_type: 'authorization_code', code: 'abc', redirect_uri: 'https://app.example.co.jp/', code_verifier: 'v'.repeat(64) })
+    expect(JSON.parse(sessionStorage.getItem(TOKEN_KEY))).toMatchObject({ refreshToken: 'r1' })
+    expect(window.location.search).toBe('')
+    expect(window.location.hash).toBe('#/home')
+    expect(await auth.getIdToken()).toMatch(/^h\./)
+    expect(sessionStorage.getItem(PKCE_KEY)).toBeNull()
+  })
+  it('MT-F01-05 戻り（state 不一致）', async () => {
+    sessionStorage.setItem(PKCE_KEY, JSON.stringify({ verifier: 'v'.repeat(64), state: 'st1' }))
+    window.history.replaceState(null, '', '/?code=abc&state=evil')
+    expect(await make().ensureLogin()).toBe(false)
+    expect(fetchFn).not.toHaveBeenCalled()
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('もう一度ログイン'))
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull()
+    window.history.replaceState(null, '', '/?code=abc&state=st1')
+    expect(await make().ensureLogin()).toBe(false)
+  })
+  it('MT-F01-06 保管場所', async () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+    sessionStorage.setItem(PKCE_KEY, JSON.stringify({ verifier: 'v'.repeat(64), state: 'st1' }))
+    window.history.replaceState(null, '', '/?code=abc&state=st1')
+    await make().ensureLogin()
+    expect(localStorage.length).toBe(0)
+    expect(setItem.mock.contexts.every((ctx) => ctx === sessionStorage)).toBe(true)
+  })
+  it('MT-F01-07 期限前の更新', async () => {
+    vi.useFakeTimers({ now: NOW })
+    sessionStorage.setItem(TOKEN_KEY, JSON.stringify({ idToken: jwt(NOW.getTime() / 1000 + 3600), refreshToken: 'r0', expiresAt: NOW.getTime() + 3600000 }))
+    const auth = make()
+    expect(await auth.ensureLogin()).toBe(true)
+    await vi.advanceTimersByTimeAsync(55 * 60 * 1000 - 1)
+    expect(fetchFn).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(formOf(fetchFn.mock.calls[0])).toEqual({ client_id: 'client123', grant_type: 'refresh_token', refresh_token: 'r0' })
+    expect(JSON.parse(sessionStorage.getItem(TOKEN_KEY)).refreshToken).toBe('r1')
+  })
+  it('MT-F01-08 更新の失敗', async () => {
+    sessionStorage.setItem(TOKEN_KEY, JSON.stringify({ idToken: 'x', refreshToken: 'r0', expiresAt: Date.now() + 3600000 }))
+    fetchFn.mockResolvedValue({ ok: false, status: 400, json: async () => ({ error: 'invalid_grant' }) })
+    const auth = make()
+    await auth.ensureLogin()
+    await expect(auth.refresh()).rejects.toThrow()
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull()
+    expect(navigate.mock.calls.at(-1)[0]).toContain('/oauth2/authorize?')
+    await expect(auth.refresh()).rejects.toThrow('no refresh token')
+  })
+  it('MT-F01-09 ログアウト', async () => {
+    sessionStorage.setItem(TOKEN_KEY, JSON.stringify({ idToken: 'x', refreshToken: 'r0', expiresAt: Date.now() + 3600000 }))
+    const auth = make()
+    await auth.ensureLogin()
+    auth.logout()
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull()
+    expect(await auth.getIdToken()).toBeNull()
+    expect(navigate).toHaveBeenLastCalledWith(`${config.cognitoDomain}/logout?client_id=client123&logout_uri=${encodeURIComponent('https://app.example.co.jp/')}`)
+  })
+  it('MT-F01-10 IDトークンが読めないとき・既定の引数', async () => {
+    vi.useFakeTimers({ now: NOW })
+    fetchFn.mockResolvedValue({ ok: true, json: async () => ({ id_token: 'broken', refresh_token: 'r9', expires_in: 600 }) })
+    sessionStorage.setItem(PKCE_KEY, JSON.stringify({ verifier: 'v'.repeat(64), state: 's' }))
+    window.history.replaceState(null, '', '/?code=c&state=s')
+    await make().ensureLogin()
+    expect(JSON.parse(sessionStorage.getItem(TOKEN_KEY)).expiresAt).toBe(NOW.getTime() + 600000)
+    fetchFn.mockResolvedValue({ ok: true, json: async () => ({ id_token: jwt('x') }) })
+    sessionStorage.setItem(PKCE_KEY, JSON.stringify({ verifier: 'v'.repeat(64), state: 's' }))
+    window.history.replaceState(null, '', '/?code=c&state=s')
+    await make().ensureLogin()
+    expect(JSON.parse(sessionStorage.getItem(TOKEN_KEY)).expiresAt).toBe(NOW.getTime() + 3600000)
+    const auth = createAuth({ config })
+    expect(typeof auth.ensureLogin).toBe('function')
+  })
+})

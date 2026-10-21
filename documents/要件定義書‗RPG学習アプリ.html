@@ -307,7 +307,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
     <h1>
 <i class="fa-solid fa-file-lines h-ico" aria-hidden="true"></i>RPG学習アプリ 要件定義書</h1>
     <ul class="meta">
-      <li>版数<b>第1版（ドラフト）</b>
+      <li>版数<b>第1.1版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更）</b>
 </li>
       <li>作成日<b>2026-10-17</b>
 </li>
@@ -1196,7 +1196,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 <ul>
 <li>AWS上にホストする</li>
 <li>生成AIはAmazon Bedrockを利用する</li>
-<li>AWSへのリリース（アプリの配置）は GitHub Actions で行う。テストに通ったものだけを、dev → stg → prod（承認つき）の順に配置する</li>
+<li>AWSへのリリース（アプリの配置）は GitHub Actions で行う。テストに通ったものだけを、dev → prod（承認つき）の順に配置する。コストを抑えるため検証用の stg 環境は置かず、受け入れ確認は dev で行う（2026-10-21 変更）</li>
 </ul>
 <h3>
 <i class="fa-solid fa-user-shield h-ico" aria-hidden="true"></i>6.2 AIの利用とデータ保護</h3>
@@ -1494,7 +1494,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 </table></div></section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 要件定義書 第1版（ドラフト）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 要件定義書 第1.1版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更）</div></footer>
 
 </body>
 </html>
