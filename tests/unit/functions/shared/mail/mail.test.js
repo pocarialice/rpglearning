@@ -24,7 +24,7 @@ describe('M-M01 mail', () => {
     expect(m.text.trimEnd().endsWith('https://app.example.co.jp/#/notify')).toBe(true)
     expect(notifyMail({ ...item, partnerPersona: 'unknown' }).text).toContain('いっしょにがんばろう')
   })
-  it.each([['dev', '[dev]'], ['stg', '[stg]']])('MT-M01-02 環境名の付与（%s）', (env, prefix) => {
+  it.each([['dev', '[dev]'], ['prod', '']])('MT-M01-02 環境名の付与（%s）', (env, prefix) => {
     process.env.APP_ENV = env
     expect(notifyMail(item).subject.startsWith(`${prefix}【RPG学習アプリ】`)).toBe(true)
     expect(deletionMail({ email: 'a@x.jp', fullName: '山田', deleteScheduledOn: '2026-11-19' }).subject.startsWith(prefix)).toBe(true)

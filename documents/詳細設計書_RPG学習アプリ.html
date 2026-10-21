@@ -392,9 +392,9 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.4版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第1.1版 7.2 の判断を反映）</b></li>
+      <li>版数<b>第0.5版（ドラフト：第1〜12章、HTML版あり。stg 環境をなくし dev・prod の2環境に変更）</b></li>
       <li>作成日<b>2026-10-20</b></li>
-      <li>入力文書<b>要件定義書 第1版（ドラフト）、外部設計書 第0.8版、AWS構築手順書 第0.4版</b></li>
+      <li>入力文書<b>要件定義書 第1.1版（ドラフト）、外部設計書 第0.9版、AWS構築手順書 第0.5版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
       <li>関連文書<b>モジュールテスト仕様書_RPG学習アプリ（本書のモジュール単位の試験を定める）</b></li>
     </ul>
@@ -451,7 +451,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <tr><td>ニックネームの重複</td><td>DBの一意制約は付けず、アプリで「同じコースの受講者に同じニックネームがいないか」を確認する（登録・変更・受講開始の3か所）</td><td>3.7 S-08</td></tr>
 <tr><td>DBアクセス</td><td>RDS Data API（<code>@aws-sdk/client-rds-data</code>）。DB起動中は <code>DB_RESUMING</code> を返す</td><td>2.3、5.1</td></tr>
 <tr><td>テスト</td><td>Vitest（モジュールテスト）。詳細はモジュールテスト仕様書</td><td>-</td></tr>
-<tr><td>リリース方式</td><td>GitHub Actions で配置（<code>main</code> への push で dev、タグ <code>release-YYYYMMDD-NN</code> で stg → 承認後に prod）。AWS へは OIDC で認証し、Lambda はコードの更新、画面は S3 への同期＋CloudFront のキャッシュ削除、DB は Data API でマイグレーション。AWSリソースの作成・設定変更はコンソール（構築手順書）</td><td>-</td></tr>
+<tr><td>リリース方式</td><td>GitHub Actions で配置（<code>main</code> への push で dev、dev での受け入れ確認のあとタグ <code>release-YYYYMMDD-NN</code> を付けて承認後に prod。stg 環境は置かない）。AWS へは OIDC で認証し、Lambda はコードの更新、画面は S3 への同期＋CloudFront のキャッシュ削除、DB は Data API でマイグレーション。AWSリソースの作成・設定変更はコンソール（構築手順書）</td><td>-</td></tr>
 <tr><td>ロールバック</td><td>リリースごとの成果物（zip・画面一式）を GitHub Release に保管し、ワークフロー <code>rollback.yml</code> で前回の成果物を配置し直して戻す</td><td>-</td></tr>
 </tbody></table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 用語</h3>
@@ -510,7 +510,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 ├─ .github/
 │  └─ workflows/
 │     ├─ ci.yml                     # プルリクエストで test・build（11.2）
-│     ├─ release.yml                # main → dev、タグ release-* → stg → prod
+│     ├─ release.yml                # main → dev、タグ release-* → prod（承認つき）
 │     ├─ deploy.yml                 # 1環境への配置（release.yml から呼ばれる）
 │     └─ rollback.yml               # 手動。前回のリリースに戻す
 ├─ db/
@@ -584,7 +584,6 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 │  │  └─ app.css                  # 画面固有の調整
 │  ├─ config/
 │  │  ├─ config.dev.js            # 環境ごとの設定（CloudFront・Cognitoの値）
-│  │  ├─ config.stg.js
 │  │  └─ config.prod.js
 │  └─ js/
 │     ├─ main.js                  # 起動処理
@@ -1840,9 +1839,9 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <tbody>
 <tr><td>ファイル名</td><td><code>V{3桁の連番}__{英小文字の説明}.sql</code>。一度リリースしたファイルは書き換えない（直すときは新しい番号で出す）</td></tr>
 <tr><td>中身</td><td><code>scripts/migrate.mjs</code> は**行末の <code>;</code> で文を区切り**、Data API で1文ずつ実行するため、トランザクションで囲まない。1つの文の途中で行末を <code>;</code> にしない（関数定義の <code>$$</code> は使わない）。<code>IF NOT EXISTS</code>・<code>ON CONFLICT DO NOTHING</code>・<code>ADD COLUMN IF NOT EXISTS</code> を使い、途中で失敗しても再実行できる形にする。最後の文で <code>schema_migrations</code> に1行入れる（<code>release_no</code> はスクリプトが入れる）</td></tr>
-<tr><td>適用のしかた</td><td>プルリクエストに含めて main にマージすると dev に、タグを付けると stg・prod に自動で適用される（11.6）。クエリエディタで手で流さない</td></tr>
+<tr><td>適用のしかた</td><td>プルリクエストに含めて main にマージすると dev に、タグを付けて承認すると prod に適用される（11.6）。クエリエディタで手で流さない</td></tr>
 <tr><td>互換性</td><td>列の追加は「NULL可または既定値つき」にし、<strong>古いLambdaのまま動ける形</strong>にする。列の削除・名前の変更は、新しいLambdaのリリース後に別のマイグレーションで行う（拡張→縮小の2段階）</td></tr>
-<tr><td>取り消し用</td><td>dev だけで使う <code>*.down.sql</code> を用意する。stg・prod では使わず、直すマイグレーションを新しく出す</td></tr>
+<tr><td>取り消し用</td><td>dev だけで使う <code>*.down.sql</code> を用意する。prod では使わず、直すマイグレーションを新しく出す</td></tr>
 <tr><td>適用の確認</td><td><code>SELECT version, release_no, applied_at FROM schema_migrations ORDER BY version;</code></td></tr>
 </tbody></table></div>
 </section><section class="chapter" id="ch9"><h2><i class="fa-solid fa-shield-halved h-ico" aria-hidden="true"></i>9. セキュリティとメールの実装</h2>
@@ -1882,7 +1881,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <tr><td><code>deletionMail(u)</code></td><td>【RPG学習アプリ】アカウント停止のお知らせ</td><td>30日後（<code>delete_scheduled_on</code>）に学習履歴を含めて完全に削除されること、問い合わせ先</td></tr>
 </tbody></table></div>
 <ul>
-<li>テキストメールのみ（HTMLメールにしない）。<code>APP_ENV</code> が <code>prod</code> 以外なら件名の先頭に <code>[dev]</code>・<code>[stg]</code> を付ける</li>
+<li>テキストメールのみ（HTMLメールにしない）。<code>APP_ENV</code> が <code>prod</code> 以外なら件名の先頭に <code>[{APP_ENV}]</code>（通常は <code>[dev]</code>）を付ける</li>
 <li>招待メールは Cognito が送る（構築手順書 3.6 (6)）ため、アプリでは作らない</li>
 </ul>
 </section><section class="chapter" id="ch10"><h2><i class="fa-solid fa-chart-line h-ico" aria-hidden="true"></i>10. ログ・監視・エラー処理</h2>
@@ -1939,21 +1938,21 @@ LIMIT :limit OFFSET :offset;</code></pre>
   <ol class="flow">
     <li><b><i class="fa-solid fa-code-pull-request fi"></i>プルリクエスト</b>ci.yml で test・build</li>
     <li><b><i class="fa-solid fa-flask fi"></i>dev</b>main にマージで自動配置</li>
-    <li><b><i class="fa-solid fa-tag fi"></i>タグ</b>release-YYYYMMDD-NN</li>
-    <li><b><i class="fa-solid fa-clipboard-check fi"></i>stg</b>自動配置・受け入れ確認</li>
+    <li><b><i class="fa-solid fa-clipboard-check fi"></i>受け入れ確認</b>dev を凍結して確かめる</li>
+    <li><b><i class="fa-solid fa-tag fi"></i>タグ</b>確かめた版に release-YYYYMMDD-NN</li>
     <li class="gate"><b><i class="fa-solid fa-gavel fi"></i>リリース判定</b>承認者が Approve</li>
     <li class="hl"><b><i class="fa-solid fa-rocket fi"></i>prod</b>配置・スモークテスト</li>
   </ol>
   <p class="vis-label" style="margin-top:8px !important">配置ジョブ（deploy.yml）の順番</p>
   <ol class="prio-list">
-    <li><b>1</b><span>DB（scripts/migrate.mjs）<small>未適用のマイグレーションを Data API で流す。prod は先にスナップショット</small></span></li>
+    <li><b>1</b><span>DB（scripts/migrate.mjs）<small>未適用のマイグレーションを Data API で流す。prod は毎回、先にスナップショット</small></span></li>
     <li><b>2</b><span>Lambda（grading → import → batch → api-handler）<small>update-function-code のあと、CodeSha256 を manifest と照合</small></span></li>
     <li><b>3</b><span>画面（S3）<small>s3 sync → CloudFront のキャッシュ削除 /* を待つ</small></span></li>
     <li><b>4</b><span>ヘルスチェック → スモークテスト<small>health が 200。人が7項目を確認し、問題があれば rollback.yml</small></span></li>
   </ol>
   <p class="vis-label" style="margin-top:8px !important">AWS への認証</p>
   <div class="maprows">
-    <div class="maprow"><div>GitHub Environment <code>{env}</code><small>dev は main だけ、stg・prod はタグ release-* だけ</small></div><span><i class="fa-solid fa-arrow-right"></i></span><div>IAM ロール <code>rpg-{env}-deploy-role</code><small>OIDC で引き受ける。アクセスキーは作らない</small></div></div>
+    <div class="maprow"><div>GitHub Environment <code>{env}</code><small>dev は main だけ、prod はタグ release-* だけ（承認つき）</small></div><span><i class="fa-solid fa-arrow-right"></i></span><div>IAM ロール <code>rpg-{env}-deploy-role</code><small>OIDC で引き受ける。アクセスキーは作らない</small></div></div>
   </div>
 </div>
 
@@ -1962,20 +1961,29 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <thead><tr><th>区分</th><th>内容</th></tr></thead>
 <tbody>
 <tr><td>方式</td><td>GitHub Actions（GitHub ホストのランナー <code>ubuntu-latest</code>）から AWS CLI で配置する。AWSへの認証は <strong>OIDC</strong>（一時的な認証情報）で行い、長期のアクセスキーは作らない。IaC は使わない</td></tr>
-<tr><td>きっかけ</td><td><code>main</code> への push で <strong>dev</strong>、タグ <code>release-YYYYMMDD-NN</code> の push で <strong>stg → prod</strong>（prod は承認者の承認が必要）</td></tr>
+<tr><td>きっかけ</td><td><code>main</code> への push で <strong>dev</strong>、タグ <code>release-YYYYMMDD-NN</code> の push で <strong>prod</strong>（承認者の承認が必要）。検証用の stg 環境は置かず、システムテスト・受け入れ確認は dev を凍結して行う（下の「受け入れ確認と dev の凍結」）</td></tr>
 <tr><td>作業者</td><td>開発者（プルリクエスト・タグ付け・スモークテスト）と承認者（prod の配置を承認する。タグを付けた人とは別の人）</td></tr>
-<tr><td>権限</td><td>環境ごとの配置用ロール <code>rpg-{env}-deploy-role</code>（構築手順書 3.13・4.13・5.13）。ワークフローは自分の環境のロールしか引き受けられない</td></tr>
+<tr><td>権限</td><td>環境ごとの配置用ロール <code>rpg-{env}-deploy-role</code>（構築手順書 3.13・4.13）。ワークフローは自分の環境のロールしか引き受けられない</td></tr>
 <tr><td>時間帯</td><td>prod の承認は平日の 13:00〜13:30 を基本とする。ワークフローは 0:00 の日次処理と30分ごとのメール送信（:00・:30）の前後5分を避け、該当する場合は待ってから batch-runner を入れ替える</td></tr>
-<tr><td>所要時間</td><td>1環境あたり約10分（DBの変更がある場合は約15分。prod でスナップショットを取る場合はさらに5〜10分）</td></tr>
+<tr><td>所要時間</td><td>1環境あたり約10分（DBの変更がある場合は約15分）。prod は配置のたびにスナップショットを取るため、さらに5〜10分</td></tr>
 <tr><td>順番</td><td><strong>DB → Lambda → 画面</strong> の順。DBの変更は古いLambdaでも動く形（8.7）にしているため、途中の状態でもサービスは止まらない</td></tr>
 </tbody></table></div>
+<p><strong>受け入れ確認と dev の凍結</strong></p>
+<p>検証用の stg 環境は置かない（外部設計書 2.7）。システムテストとコース管理者の受け入れ確認は dev で行い、その間は dev への自動配置を止めて、確かめている版が変わらないようにする。</p>
+<ol>
+<li>受け入れ確認を始めるとき、リポジトリの Variables <code>DEV_DEPLOY_PAUSED</code> を <code>true</code> にする（<code>release.yml</code> の <code>deploy-dev</code> が動かなくなる）。dev に入っている版（画面下部のリリース番号 <code>dev-YYYYMMDD-&lt;コミット&gt;</code>）を控え、コース管理者に確認の期間を知らせる</li>
+<li>凍結中もプルリクエストのマージはできるが、dev には自動で配置されない。受け入れ確認で見つかった不具合だけを直してマージし、「Run workflow」（ブランチ <code>main</code>）で手動で dev に配置して確かめ直す。ほかの変更は、確認が終わるまでマージを控える（確かめていない変更が prod に混ざるのを防ぐ）</li>
+<li>システムテスト・受け入れ確認がすべてOKになったら、dev に入っている版のコミットにタグ <code>release-YYYYMMDD-NN</code> を付ける（11.8 のリリース判定へ）</li>
+<li>prod への配置とスモークテストが終わったら、<code>DEV_DEPLOY_PAUSED</code> を <code>false</code> に戻す。凍結中にマージした変更は、戻したあとの次の push で dev に配置される</li>
+</ol>
+<ul><li>stg がないため、本番と同じ容量・設定での事前確認はできない。その分の備えとして、prod への配置の前には DB の変更の有無にかかわらず必ずスナップショットを取る（11.6 手順1）。全社展開の前に stg を作り直すかを見直す（12 未決事項 No.10）</li></ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>11.2 ワークフロー一覧</h3>
 <p>ワークフローはリポジトリの <code>.github/workflows/</code> に置く。</p>
 <div class="table-wrap"><table>
 <thead><tr><th>ファイル</th><th>きっかけ</th><th>処理</th></tr></thead>
 <tbody>
-<tr><td><code>ci.yml</code></td><td><code>main</code> へのプルリクエスト</td><td><code>npm ci</code> → <code>npm test -- --coverage</code> → <code>build:functions</code> → <code>build:web</code>（3環境）。AWS には接続しない</td></tr>
-<tr><td><code>release.yml</code></td><td><code>main</code> への push、タグ <code>release-*</code> の push、手動（<code>main</code> を選んで dev に配置し直すとき）</td><td>ジョブ <code>build</code> → <code>deploy-dev</code>（main のとき）／<code>publish</code> → <code>deploy-stg</code> → <code>deploy-prod</code>（タグのとき）</td></tr>
+<tr><td><code>ci.yml</code></td><td><code>main</code> へのプルリクエスト</td><td><code>npm ci</code> → <code>npm test -- --coverage</code> → <code>build:functions</code> → <code>build:web</code>（2環境）。AWS には接続しない</td></tr>
+<tr><td><code>release.yml</code></td><td><code>main</code> への push、タグ <code>release-*</code> の push、手動（<code>main</code> を選んで dev に配置し直すとき）</td><td>ジョブ <code>build</code> → <code>deploy-dev</code>（main のとき。Variables <code>DEV_DEPLOY_PAUSED</code> が <code>true</code> の間は動かさない）／<code>publish</code> → <code>deploy-prod</code>（タグのとき）</td></tr>
 <tr><td><code>deploy.yml</code></td><td><code>release.yml</code> から呼ばれる（<code>workflow_call</code>）</td><td>1つの環境への配置（DB → Lambda → 画面 → ヘルスチェック）。入力は環境名とリリース番号</td></tr>
 <tr><td><code>rollback.yml</code></td><td>手動（<code>workflow_dispatch</code>）。戻したいタグを選んで実行</td><td>GitHub Release に保管した前回の成果物で Lambda・画面を戻す。DB は戻さない</td></tr>
 </tbody></table></div>
@@ -1991,7 +1999,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <tr><td><code>dist/functions/grading-worker.zip</code></td><td>同上</td><td>Lambda <code>rpg-{env}-grading-worker</code></td></tr>
 <tr><td><code>dist/functions/import-worker.zip</code></td><td>同上</td><td>Lambda <code>rpg-{env}-import-worker</code></td></tr>
 <tr><td><code>dist/functions/batch-runner.zip</code></td><td>同上</td><td>Lambda <code>rpg-{env}-batch-runner</code></td></tr>
-<tr><td><code>dist/web-{env}/</code>（index.html・js・css など）</td><td><code>npm run build:web -- --env={env}</code>（3環境分）</td><td>S3 <code>rpg-{env}-web-&lt;アカウントID&gt;</code>の直下</td></tr>
+<tr><td><code>dist/web-{env}/</code>（index.html・js・css など）</td><td><code>npm run build:web -- --env={env}</code>（dev・prod の2環境分）</td><td>S3 <code>rpg-{env}-web-&lt;アカウントID&gt;</code>の直下</td></tr>
 <tr><td><code>db/migrations/V***__*.sql</code></td><td>手で書いてプルリクエストに含める</td><td>Aurora <code>rpg-{env}-db</code> のデータベース <code>rpg</code></td></tr>
 <tr><td><code>manifest.json</code></td><td><code>npm run pack -- --release={番号}</code></td><td>保管のみ（配置時の照合に使う）</td></tr>
 </tbody></table></div>
@@ -2000,7 +2008,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <thead><tr><th>きっかけ</th><th>保管場所</th><th>保管期間</th><th>使いみち</th></tr></thead>
 <tbody>
 <tr><td>main への push</td><td>Actions の成果物（artifact）<code>bundle-{リリース番号}</code></td><td>30日</td><td>dev への配置</td></tr>
-<tr><td>タグの push</td><td>Actions の成果物に加えて、<strong>GitHub Release</strong> <code>release-{リリース番号}</code> の添付ファイル <code>bundle-{リリース番号}.zip</code></td><td>無期限</td><td>stg・prod への配置、ロールバック</td></tr>
+<tr><td>タグの push</td><td>Actions の成果物に加えて、<strong>GitHub Release</strong> <code>release-{リリース番号}</code> の添付ファイル <code>bundle-{リリース番号}.zip</code></td><td>無期限</td><td>prod への配置、ロールバック</td></tr>
 </tbody></table></div>
 <p><strong>リリース番号</strong></p>
 <div class="table-wrap"><table>
@@ -2027,7 +2035,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <tr><td>4</td><td><code>npm ci</code></td><td>エラーがない</td></tr>
 <tr><td>5</td><td><code>npm test -- --coverage</code></td><td>全件成功、カバレッジがモジュールテスト仕様書の基準以上（下回るとジョブが失敗する）</td></tr>
 <tr><td>6</td><td><code>npm run build:functions</code></td><td><code>dist/functions/</code> に zip が4つ。各50MB未満（API で直接アップロードできる上限）</td></tr>
-<tr><td>7</td><td><code>npm run build:web -- --env=dev</code>（stg・prod も同様に作る）</td><td><code>dist/web-{env}/js/config.js</code> の値がその環境のもの、<code>sw.js</code> のキャッシュ名にリリース番号</td></tr>
+<tr><td>7</td><td><code>npm run build:web -- --env=dev</code>（prod も同様に作る）</td><td><code>dist/web-{env}/js/config.js</code> の値がその環境のもの、<code>sw.js</code> のキャッシュ名にリリース番号</td></tr>
 <tr><td>8</td><td><code>npm run pack -- --release={番号}</code></td><td><code>release/{番号}/</code> に zip・web一式・SQL・manifest.json</td></tr>
 <tr><td>9</td><td><code>actions/upload-artifact</code> で <code>release/{番号}/</code> を <code>bundle-{番号}</code> として保管</td><td>-</td></tr>
 </tbody></table></div>
@@ -2044,7 +2052,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
 // archiver で dist/build/{name}/ を dist/functions/{name}.zip にする（zipの直下に index.mjs）</code></pre>
 <ul>
 <li>Lambda のハンドラ設定は既定の <code>index.handler</code> のまま（構築手順書 3.8 の設定を変えない）</li>
-<li>zip は同じリリース番号なら dev・stg・prod で同じものを使う（環境の違いは Lambda の環境変数で吸収する）</li>
+<li>zip は同じリリース番号なら dev・prod で同じものを使う（環境の違いは Lambda の環境変数で吸収する）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>11.5 GitHub と AWS の設定</h3>
 <p><strong>AWS 側</strong>（構築手順書 2.6・3.13・4.13・5.13 で作る）</p>
@@ -2052,7 +2060,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <thead><tr><th>項目</th><th>内容</th></tr></thead>
 <tbody>
 <tr><td>OIDC IDプロバイダー</td><td><code>token.actions.githubusercontent.com</code>、対象者 <code>sts.amazonaws.com</code>（アカウントで1つ）</td></tr>
-<tr><td>配置用ロール</td><td><code>rpg-dev-deploy-role</code>・<code>rpg-stg-deploy-role</code>・<code>rpg-prod-deploy-role</code>。信頼ポリシーの条件 <code>sub</code> を <code>repo:&lt;オーナー&gt;/rpg-learning-app:environment:{env}</code> に絞る</td></tr>
+<tr><td>配置用ロール</td><td><code>rpg-dev-deploy-role</code>・<code>rpg-prod-deploy-role</code>。信頼ポリシーの条件 <code>sub</code> を <code>repo:&lt;オーナー&gt;/rpg-learning-app:environment:{env}</code> に絞る</td></tr>
 <tr><td>配置用ロールの権限</td><td>下の表。リソースはすべて自分の環境（<code>rpg-{env}-</code>）のものだけ</td></tr>
 </tbody></table></div>
 <div class="table-wrap"><table>
@@ -2069,10 +2077,9 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <thead><tr><th>場所</th><th>設定</th></tr></thead>
 <tbody>
 <tr><td>Environments <code>dev</code></td><td>配置できるブランチ：<code>main</code> のみ</td></tr>
-<tr><td>Environments <code>stg</code></td><td>配置できるタグ：<code>release-*</code> のみ</td></tr>
 <tr><td>Environments <code>prod</code></td><td>配置できるタグ：<code>release-*</code> のみ。<strong>Required reviewers</strong> に承認者（システム管理者・開発リーダー）を登録し、<strong>Prevent self-review</strong> をオン</td></tr>
 <tr><td>各 Environment の Variables</td><td><code>AWS_ROLE_ARN</code>（配置用ロールのARN）、<code>WEB_BUCKET</code>、<code>CF_DISTRIBUTION_ID</code>（V-08）、<code>DB_CLUSTER_ARN</code>（V-06）、<code>DB_SECRET_ARN</code>（V-07）、<code>DB_CLUSTER_ID</code>（<code>rpg-{env}-db</code>）</td></tr>
-<tr><td>リポジトリの Variables</td><td><code>AWS_REGION</code> = <code>ap-northeast-1</code></td></tr>
+<tr><td>リポジトリの Variables</td><td><code>AWS_REGION</code> = <code>ap-northeast-1</code>、<code>DEV_DEPLOY_PAUSED</code> = <code>false</code>（受け入れ確認の間だけ <code>true</code>。11.1）</td></tr>
 <tr><td>Rulesets（ブランチ <code>main</code>）</td><td>プルリクエスト必須、<code>ci.yml</code> の成功を必須、force push 禁止</td></tr>
 <tr><td>Rulesets（タグ <code>release-*</code>）</td><td>作成は管理者（Maintain 以上）だけ。更新・削除は禁止（一度出したリリース番号を付け替えない）</td></tr>
 </tbody></table></div>
@@ -2086,7 +2093,7 @@ LIMIT :limit OFFSET :offset;</code></pre>
 <pre><code class="language-yaml">on:
   workflow_call:
     inputs:
-      env:     { type: string, required: true }   # dev / stg / prod
+      env:     { type: string, required: true }   # dev / prod
       release: { type: string, required: true }   # 20261105-01 など
 jobs:
   deploy:
@@ -2120,8 +2127,8 @@ jobs:
 <p>**手順1：DBの変更（<code>scripts/migrate.mjs</code>）**</p>
 <ol>
 <li>Data API で <code>SELECT version FROM schema_migrations</code> を実行し、適用済みの番号を得る（<code>schema_migrations</code> がまだない初回は「すべて未適用」とみなす）。DBが止まっていて <code>DatabaseResumingException</code> が返ったら、15秒おきに最大8回やり直す</li>
-<li>未適用のファイルがなければ何もしないで終わる</li>
-<li>（prod のみ）未適用のファイルがある場合、<code>aws rds create-db-cluster-snapshot</code> で <code>rpg-prod-before-{リリース番号}</code> を取り、<code>available</code> になるまで待つ</li>
+<li>未適用のファイルがなければ、DBの変更はせずに終わる（prod は次の手順3のスナップショットだけ取る）</li>
+<li>（prod のみ）未適用のファイルの有無にかかわらず、<code>aws rds create-db-cluster-snapshot</code> で <code>rpg-prod-before-{リリース番号}</code> を取り、<code>available</code> になるまで待つ（stg がないための備え。古いスナップショットは直近5回分を残して手で消す）</li>
 <li>未適用のファイルを番号の小さい順に、**行末の <code>;</code> で文を区切って1文ずつ** <code>ExecuteStatement</code> で実行する（8.7）</li>
 <li>ファイルの最後の文で入った行に、<code>UPDATE schema_migrations SET release_no = :release WHERE version = :version</code> でリリース番号を入れる</li>
 <li>実行したファイルと件数をジョブの概要（<code>$GITHUB_STEP_SUMMARY</code>）に書く。1文でも失敗したらそこで止め、ジョブを失敗させる（Lambda・画面は入れ替えない）</li>
@@ -2167,17 +2174,17 @@ jobs:
 </tbody></table></div>
 <ul>
 <li>prod の確認用の学習者は、ランキングに出ないよう専用のテストコース（<code>[確認用]</code>）だけを受講させておく</li>
-<li>dev はプルリクエストのマージのたびに配置されるため、No.1〜3 と変えた機能だけでよい</li>
+<li>dev はプルリクエストのマージのたびに配置されるため、ふだんは No.1〜3 と変えた機能だけでよい。受け入れ確認の期間（dev の凍結中）は No.1〜7 をすべて行う</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>11.8 環境ごとの違い</h3>
 <div class="table-wrap"><table>
-<thead><tr><th>項目</th><th>dev</th><th>stg</th><th>prod</th></tr></thead>
+<thead><tr><th>項目</th><th>dev</th><th>prod</th></tr></thead>
 <tbody>
-<tr><td>配置のきっかけ</td><td><code>main</code> への push（自動）</td><td>タグ <code>release-*</code> の push（自動）</td><td>stg のあと、承認者が GitHub で承認</td></tr>
-<tr><td>事前のお知らせ</td><td>不要</td><td>コース管理者へ（受け入れ確認中の場合）</td><td>利用者全員（前日まで。「13:00〜13:30 にメンテナンス。操作中に画面が切り替わることがあります」）</td></tr>
-<tr><td>DBスナップショット</td><td>不要</td><td>不要</td><td>DBの変更があるとき、ワークフローが自動で取る</td></tr>
-<tr><td>確認</td><td>11.7（一部）</td><td>11.7＋受け入れ確認（変更した機能の画面確認）</td><td>11.7</td></tr>
-<tr><td>作業者</td><td>1人</td><td>1人（タグを付けた人）</td><td>2人（タグを付けた人と承認者）</td></tr>
+<tr><td>配置のきっかけ</td><td><code>main</code> への push（自動）。受け入れ確認の間は止める（<code>DEV_DEPLOY_PAUSED</code>）</td><td>dev で受け入れ確認した版にタグ <code>release-*</code> を付け、承認者が GitHub で承認</td></tr>
+<tr><td>事前のお知らせ</td><td>受け入れ確認の期間をコース管理者へ</td><td>利用者全員（前日まで。「13:00〜13:30 にメンテナンス。操作中に画面が切り替わることがあります」）</td></tr>
+<tr><td>DBスナップショット</td><td>不要</td><td>配置のたびにワークフローが自動で取る</td></tr>
+<tr><td>確認</td><td>ふだんは 11.7（一部）。受け入れ確認の期間は 11.7＋受け入れ確認（変更した機能の画面確認）</td><td>11.7</td></tr>
+<tr><td>作業者</td><td>1人（受け入れ確認はコース管理者）</td><td>2人（タグを付けた人と承認者）</td></tr>
 </tbody></table></div>
 <p><strong>リリース判定（prod の承認の前）</strong></p>
 <p>承認者は、次をすべて満たすことを確かめてから「Review deployments」→ <code>prod</code> →「Approve and deploy」を押す。満たさない場合は「Reject」し、直したものを新しいリリース番号のタグで出し直す。</p>
@@ -2185,9 +2192,9 @@ jobs:
 <thead><tr><th>判定項目</th><th>基準</th></tr></thead>
 <tbody>
 <tr><td>モジュールテスト</td><td>ジョブ <code>build</code> が成功（全件成功・カバレッジ基準以上。モジュールテスト仕様書 第6章）</td></tr>
-<tr><td>stg での確認</td><td><code>deploy-stg</code> が成功し、スモークテストと受け入れ確認がすべてOK</td></tr>
+<tr><td>dev での確認（受け入れ確認）</td><td>dev を凍結した状態で、システムテスト・スモークテスト（11.7 No.1〜7）・受け入れ確認がすべてOK。タグのコミットが、dev の画面下部に出ているリリース番号のコミットと同じ</td></tr>
 <tr><td>未解決の不具合</td><td>重大度「高」が0件</td></tr>
-<tr><td>DBの変更</td><td>古いLambdaで動く形になっている（8.7）。stg で適用済み</td></tr>
+<tr><td>DBの変更</td><td>古いLambdaで動く形になっている（8.7）。dev で適用済み</td></tr>
 <tr><td>ロールバックの準備</td><td>前回のリリースの GitHub Release に成果物が添付されている</td></tr>
 <tr><td>時間帯</td><td>平日 13:00〜13:30（お知らせした時間）</td></tr>
 </tbody></table></div>
@@ -2196,11 +2203,11 @@ jobs:
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>11.9 ロールバック手順</h3>
 <p><strong>判断の目安</strong>：スモークテストで失敗した、配置後に 5xx のアラームが出た、利用者から「操作できない」連絡が続いた。迷ったら戻してから調べる。</p>
-<p><strong>stg・prod</strong></p>
+<p><strong>prod</strong></p>
 <ol>
 <li>GitHub の「Actions」→「rollback」→「Run workflow」</li>
 <li>「Use workflow from」で <strong>戻したいリリースのタグ</strong>（例：<code>release-20261029-01</code>）を選ぶ</li>
-<li>入力：環境（<code>stg</code>／<code>prod</code>）、対象（<code>all</code>／<code>functions</code>／<code>web</code>）を選んで実行する（prod は承認が必要）</li>
+<li>入力：環境（<code>prod</code>）、対象（<code>all</code>／<code>functions</code>／<code>web</code>）を選んで実行する（承認が必要）</li>
 <li>ワークフローが GitHub Release <code>release-{前回の番号}</code> の <code>bundle-{前回の番号}.zip</code> を取り出し、11.6 の手順2〜4（Lambda・画面・ヘルスチェック）を行う。<strong>DB は戻さない</strong></li>
 </ol>
 <p><strong>dev</strong>：直前に成功した <code>release.yml</code> の実行を開いて「Re-run all jobs」を押す。または、原因のプルリクエストを revert して main にマージする。</p>
@@ -2225,7 +2232,7 @@ jobs:
 <tr><td>変更内容</td><td>週間ランキングの過去週の切り替えを追加（プルリクエストの一覧は GitHub が自動で作る）</td></tr>
 <tr><td>DBの変更</td><td>V003__add_weekly_index.sql</td></tr>
 <tr><td>環境変数の変更</td><td>なし</td></tr>
-<tr><td>配置の記録</td><td>stg 11/05 15:00、prod 11/06 13:05（Actions の実行URL）</td></tr>
+<tr><td>配置の記録</td><td>dev 11/04 10:20（受け入れ確認 11/04〜11/05）、prod 11/06 13:05（Actions の実行URL）</td></tr>
 <tr><td>作業者・承認者</td><td>○○・△△</td></tr>
 <tr><td>確認項目と結果</td><td>11.7 No.1〜7：OK。過去週の切り替え：OK</td></tr>
 <tr><td>特記事項</td><td>なし（ロールバックした場合は理由と時刻）</td></tr>
@@ -2251,10 +2258,11 @@ jobs:
 <tr><td>7</td><td><code>esbuild</code> が使う依存ライブラリのライセンス確認</td><td>pdf-lib（MIT）。追加のたびに確認</td><td>ライブラリ追加時</td></tr>
 <tr><td>8</td><td>GitHub のリポジトリ名・承認者</td><td><code>&lt;オーナー&gt;/rpg-learning-app</code>。prod の承認者はシステム管理者と開発リーダーの2名を仮置き</td><td>dev 構築前</td></tr>
 <tr><td>9</td><td>通知メールの文言</td><td>パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を <code>mail/templates.js</code> に仮置き。外部設計書 10 No.10 で確定する</td><td>パイロット開始前</td></tr>
+<tr><td>10</td><td>stg 環境を作り直すか</td><td><strong>決定（2026-10-21）</strong>：コスト削減のため Phase 1 では作らない（外部設計書 10 No.11）。受け入れ確認は dev を凍結して行い（11.1）、prod は配置のたびにスナップショットを取る。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める</td><td>Phase 3 の計画時</td></tr>
 </tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.4版（ドラフト：第1〜12章、HTML版あり。モジュールテスト結果報告書 第1.1版 7.2 の判断を反映）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.5版（ドラフト：第1〜12章、HTML版あり。stg 環境をなくし dev・prod の2環境に変更）</div></footer>
 </body>
 </html>
