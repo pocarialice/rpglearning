@@ -3,13 +3,11 @@
 const OK = Object.freeze({ ok: true })
 const ng = (code, field, params = {}) => ({ ok: false, code, field, params })
 const WHITESPACE_RE = /[\s　]/gu
-const HEADING_RE = /^[ \t　]*【[^】\n]+】/m
 const NICKNAME_RE = /^[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ーA-Za-z0-9_-]+$/u
 const PARTNER_NAME_RE = /^[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ーA-Za-z0-9]+$/u
 const TIME_RE = /^([01][0-9]|2[0-3]):(00|30)$/
 export const EXPLANATION_MIN = 50
 export const EXPLANATION_MAX = 400
-export const EXPLANATION_HEADING_OVER = 200
 export const IMPORT_MAX_BYTES = 20 * 1024 * 1024
 export const IMPORT_TEXT_MAX = 20000
 export const IMPORT_CONTENT_TYPES = { pdf: ['application/pdf'], image: ['image/png', 'image/jpeg'] }
@@ -21,7 +19,6 @@ export function validateExplanation(text) {
   const count = countChars(text)
   if (count < EXPLANATION_MIN) return ng('M-03', 'text', { count })
   if (count > EXPLANATION_MAX) return ng('M-04', 'text', { count })
-  if (count > EXPLANATION_HEADING_OVER && !HEADING_RE.test(text)) return ng('M-05', 'text', { count })
   return OK
 }
 export function validateNickname(s) {

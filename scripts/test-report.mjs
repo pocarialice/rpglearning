@@ -19,7 +19,8 @@ for (const line of readFileSync(SPEC_MD, 'utf8').split('\n')) {
   const h = /^####\s+(M-[A-Z]\d+(?:[・〜]M-[A-Z]\d+)?)\s+(.*)$/.exec(line)
   if (h) { mod = { id: h[1], title: h[2].replace(/`/g, '') }; continue }
   const r = /^\|\s*(MT-([A-Z])(\d+)-(\d+))\s*\|\s*([^|]*)\|/.exec(line)
-  if (r && mod) {
+  // 欠番（削除したケース）は数えない
+  if (r && mod && r[5].trim() !== '（欠番）') {
     const cells = line.split('|').map((s) => s.trim())
     spec.push({ id: r[1], group: r[2], mid: `M-${r[2]}${r[3]}`, module: mod, view: r[5].trim(), tech: cells[cells.length - 2] })
   }

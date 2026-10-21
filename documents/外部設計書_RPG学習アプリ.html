@@ -460,7 +460,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 .mk-fold { color: var(--teal); }
 .mk-tag { font-size: 11px; font-weight: 700; color: var(--gold-ink); background: var(--gold-soft); border-radius: 4px; padding: 1px 6px; }
 .mk-ta { background: var(--parchment-raised); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px; font-size: 13px; line-height: 21px; min-height: 150px; }
-.mk-count { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-muted); }
+.mk-count { display: flex; justify-content: flex-end; align-items: center; font-size: 12px; color: var(--ink-muted); }
 .mk-count b { color: var(--ink); }
 .mk-nav { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--parchment-raised); border-top: 1px solid var(--line); }
 .mk-nav span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 10px; color: var(--ink-muted); }
@@ -511,8 +511,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.9版（ドラフト：第1〜10章、HTML版あり。stg 環境をなくし dev・prod の2環境に変更）</b></li>
-      <li>作成日<b>2026-10-19（第0.9版：2026-10-21）</b></li>
+      <li>版数<b>第1.0版（ドラフト：第1〜10章、HTML版あり。説明文の小見出しのルールをなくし、模範説明のルールに移す）</b></li>
+      <li>作成日<b>2026-10-19（第1.0版：2026-10-21）</b></li>
       <li>入力文書<b>RPG学習アプリ 要件定義書 第1.1版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
@@ -610,7 +610,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>説明問題の入力</td>
-<td>50〜400文字。200文字を超える場合は【】の小見出しが必要</td>
+<td>50〜400文字（改行・空白を除く）。小見出しなどの書き方の決まりはない。200文字を超えたら【】の小見出しで区切るのは、AIが書く模範説明のほう</td>
 <td>3.4</td>
 </tr>
 <tr>
@@ -1676,7 +1676,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>入力欄</td>
-<td>説明文（50〜400文字）と文字数。200文字を超える場合は小見出しが必要（下記）</td>
+<td>説明文（50〜400文字）と文字数（下記）</td>
 <td>テキストエリア</td>
 </tr>
 <tr>
@@ -1705,24 +1705,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>50〜400文字（改行・空白を除いて数える）</td>
 </tr>
 <tr>
-<td>小見出し</td>
-<td>200文字を超える場合は、小見出しを1つ以上使う。小見出しは行の先頭に <code>【】</code> で書く（例：<code>【定義】【しくみ】【具体例】</code>）</td>
-</tr>
-<tr>
-<td>補助</td>
-<td>「見出しを入れる」ボタンで <code>【定義】【しくみ】【具体例】</code> のひな形を入力欄に挿入できる</td>
+<td>書き方</td>
+<td>決まりはない。小見出し（<code>【】</code>）は求めない。学習者が自分で見出しを使ってもよい</td>
 </tr>
 <tr>
 <td>入力中の表示</td>
-<td>文字数カウンターを常に表示。200文字を超えて小見出しがないと、カウンターの下に「200文字を超えたので、【】で小見出しを付けてください」と表示する</td>
+<td>文字数カウンターを常に表示。50文字未満なら M-03、400文字を超えたら M-04 をカウンターの下に表示する</td>
 </tr>
 <tr>
 <td>送信の可否</td>
-<td>50文字未満、400文字超、または200文字超で小見出しなしのときは「採点してもらう」を押せない</td>
+<td>50文字未満、または400文字超のときは「採点してもらう」を押せない</td>
 </tr>
 <tr>
 <td>採点への反映</td>
-<td>小見出しの有無は点数に含めない（構成を整えて読みやすくするためのルール）。小見出しは採点AIにそのまま渡す</td>
+<td>説明文はそのまま採点AIに渡す。書き方（見出しの有無など）で点数を変えない</td>
 </tr>
 </tbody>
 </table></div>
@@ -1731,8 +1727,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <div class="mk-body">
 <p class="mk-meta">4 / 10問　<span class="mk-tag">復習</span></p>
 <div class="gd-card"><p class="mk-meta" style="margin:0">次のキーワードを説明してください</p><p class="gd-serif mk-title">公開鍵暗号方式</p><p class="mk-meta mk-fold"><i class="fa-solid fa-chevron-down"></i> 出典の問題文を見る</p></div>
-<div class="mk-ta">【定義】暗号化と復号に別々の鍵を使う方式。<br>【しくみ】公開鍵で暗号化したデータは、対になる秘密鍵でしか復号できない…<br>【具体例】HTTPSの鍵交換、電子署名</div>
-<div class="mk-count"><button class="gd-btn gd-btn-sm" type="button">見出しを入れる</button><span><b>212</b> / 400文字</span></div>
+<div class="mk-ta">暗号化と復号に別々の鍵を使う方式。公開鍵で暗号化したデータは、対になる秘密鍵でしか復号できない。HTTPSの鍵交換や電子署名で使われている…</div>
+<div class="mk-count"><span><b>212</b> / 400文字</span></div>
 <button class="gd-btn gd-btn-primary gd-btn-block" type="button">採点してもらう</button>
 </div>
 </div><p class="mk-cap">入力中</p></div><div class="ph-frame"><div class="gd-scope ph-screen">
@@ -2534,7 +2530,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>出力</td>
-<td>点数（0〜100）、合否、模範説明（200文字程度）、不足していた観点（最大3つ）、パートナーのコメント（2〜3文）</td>
+<td>点数（0〜100）、合否、模範説明（50〜400文字。200文字を超えるときは行の先頭に【】の小見出しを付けて区切る）、不足していた観点（最大3つ）、パートナーのコメント（2〜3文）</td>
 </tr>
 <tr>
 <td>合格ライン</td>
@@ -3010,7 +3006,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>採点基準</td>
-<td>4.9 の観点と配点。小見出しの有無で点数を変えない</td>
+<td>4.9 の観点と配点。書き方（見出しの有無など）で点数を変えない</td>
 </tr>
 <tr>
 <td>入力</td>
@@ -3018,7 +3014,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>出力</td>
-<td>決められたJSONの形。形が崩れていたら1回だけやり直す</td>
+<td>決められたJSONの形。模範説明は50〜400文字、200文字を超えるときは【】の小見出しで区切る。形が崩れていたら1回だけやり直す</td>
 </tr>
 </tbody>
 </table></div>
@@ -3449,8 +3445,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>M-05</td>
-<td>小見出しなし</td>
-<td>200文字を超えたので、【】で小見出しを付けてください</td>
+<td>（欠番）</td>
+<td>説明文の小見出しのルールをなくしたため使わない（第1.0版）</td>
 </tr>
 <tr>
 <td>M-06</td>
@@ -3570,7 +3566,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </table></div></section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第0.9版（ドラフト：第1〜10章、HTML版あり。stg 環境をなくし dev・prod の2環境に変更）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.0版（ドラフト：第1〜10章、HTML版あり。説明文の小見出しのルールをなくし、模範説明のルールに移す）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

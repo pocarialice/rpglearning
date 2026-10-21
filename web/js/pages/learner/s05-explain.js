@@ -1,4 +1,4 @@
-// S-05 キーワード説明：入力のたびに文字数と M-03〜05 を表示し、送信後は採点待ち（詳細設計書 6.2）
+// S-05 キーワード説明：入力のたびに文字数と M-03・M-04 を表示し、送信後は採点待ち（詳細設計書 6.2）
 import { getContext } from '../../core/context.js'
 import { partnerBubble, partnerName } from '../../components/partner-bubble.js'
 import { button } from '../../components/button.js'
@@ -7,14 +7,12 @@ import { escapeHtml } from '../../logic/format.js'
 import { validateExplanation, countChars, EXPLANATION_MIN, EXPLANATION_MAX } from '../../logic/validators.js'
 import { pollGrading } from '../../logic/grading-poller.js'
 import { progressLine } from './adventure.js'
-export const HEADING_TEMPLATE = '【定義】\n\n【しくみ】\n\n【具体例】\n'
 export const M07 = '採点に時間がかかっています。もう一度お試しください'
 export const M_GRADING_FAILED = '採点できませんでした。もう一度お試しください'
 export function validationMessage(v) {
   if (v.ok) return ''
   if (v.code === 'M-03') return `説明は${EXPLANATION_MIN}文字以上で入力してください（いま${v.params.count}文字）`
-  if (v.code === 'M-04') return `説明は${EXPLANATION_MAX}文字以内で入力してください（いま${v.params.count}文字）`
-  return '200文字を超えたので、【】で小見出しを付けてください'
+  return `説明は${EXPLANATION_MAX}文字以内で入力してください（いま${v.params.count}文字）`
 }
 export async function render(root, _params, { pollOptions = {} } = {}) {
   const { api, getState, setState, go } = getContext()
@@ -27,7 +25,7 @@ export async function render(root, _params, { pollOptions = {} } = {}) {
 <div class="app-explain-form">
 <label class="label" for="explain-text">説明（${EXPLANATION_MIN}〜${EXPLANATION_MAX}文字）</label>
 <textarea id="explain-text" class="app-textarea body" rows="9" aria-describedby="explain-count explain-msg"></textarea>
-<div class="app-counter"><span id="explain-count" class="meta" aria-live="polite">0文字</span>${button({ label: '見出しを入れる', variant: 'quiet', size: 'sm', attrs: 'data-action="heading"' })}</div>
+<div class="app-counter"><span id="explain-count" class="meta" aria-live="polite">0文字</span></div>
 <p id="explain-msg" class="meta app-hint"></p>
 <div class="app-error-slot"></div>
 ${button({ label: '採点してもらう', variant: 'primary', block: true, disabled: true, attrs: 'data-action="submit"' })}</div>
@@ -46,11 +44,6 @@ ${button({ label: '採点してもらう', variant: 'primary', block: true, disa
     submit.disabled = !v.ok
   }
   ta.addEventListener('input', update)
-  root.querySelector('[data-action="heading"]').addEventListener('click', () => {
-    ta.value = ta.value.trim() === '' ? HEADING_TEMPLATE : `${ta.value.replace(/\n*$/, '')}\n${HEADING_TEMPLATE}`
-    update()
-    ta.focus()
-  })
   const showForm = (message) => {
     waiting.hidden = true
     waiting.innerHTML = ''

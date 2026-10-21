@@ -104,7 +104,7 @@ describe('S-05 キーワード説明', () => {
     ta.value = text
     ta.dispatchEvent(new Event('input'))
   }
-  it('文字数と M-03〜M-05 を入力のたびに表示し、送れるかを切り替える', async () => {
+  it('文字数と M-03・M-04 を入力のたびに表示し、送れるかを切り替える', async () => {
     setup({ quest: EXPLAIN_Q })
     await explain.render(root)
     const submit = root.querySelector('[data-action="submit"]')
@@ -113,22 +113,13 @@ describe('S-05 キーワード説明', () => {
     expect(root.querySelector('#explain-count').textContent).toBe('2文字')
     expect(msg.textContent).toBe('説明は50文字以上で入力してください（いま2文字）')
     expect(submit.disabled).toBe(true)
-    type('あ'.repeat(201))
-    expect(msg.textContent).toBe('200文字を超えたので、【】で小見出しを付けてください')
     type('あ'.repeat(401))
     expect(msg.textContent).toBe('説明は400文字以内で入力してください（いま401文字）')
-    type('あ'.repeat(60))
+    expect(submit.disabled).toBe(true)
+    type('あ'.repeat(201))
     expect(msg.textContent).toBe('')
     expect(submit.disabled).toBe(false)
-  })
-  it('「見出しを入れる」でひな形を足す', async () => {
-    setup({ quest: EXPLAIN_Q })
-    await explain.render(root)
-    click('[data-action="heading"]')
-    expect(root.querySelector('#explain-text').value).toBe(explain.HEADING_TEMPLATE)
-    type('前置き\n\n')
-    click('[data-action="heading"]')
-    expect(root.querySelector('#explain-text').value).toBe(`前置き\n${explain.HEADING_TEMPLATE}`)
+    expect(root.querySelector('[data-action="heading"]')).toBeNull()
   })
   it('送信後はパートナーの採点待ちを出し、結果が出たら S-06 へ', async () => {
     setup({ quest: EXPLAIN_Q, adventureId: 'adv_1' })

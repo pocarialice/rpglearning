@@ -70,4 +70,10 @@ describe('M-A04 prompts', () => {
     expect(ng.user).toContain('<result>不正解</result>')
     expect(ng.user).toContain('<explanation></explanation>')
   })
+  it('MT-A04-07 模範説明の長さと小見出し', () => {
+    const { system } = buildGradingPrompt(gradingInput)
+    expect(system).toContain('空白・改行を除いて50〜400文字')
+    expect(system).toContain('200文字を超えるときは、行の先頭に')
+    expect(system).toContain('"modelAnswer":"50〜400文字"')
+  })
 })

@@ -29,7 +29,7 @@ body { background: var(--parchment); color: var(--ink); }
 .app-explain-form { display: flex; flex-direction: column; gap: var(--space-2); }
 .app-explain-form[hidden], .app-waiting[hidden] { display: none; }
 .app-textarea { width: 100%; box-sizing: border-box; background: var(--parchment-sunk); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: var(--space-3); resize: vertical; min-height: 200px; }
-.app-counter { display: flex; justify-content: space-between; align-items: center; }
+.app-counter { display: flex; justify-content: flex-end; align-items: center; }
 .app-hint { margin: 0; color: var(--wrong); min-height: 20px; }
 .app-waiting { display: flex; flex-direction: column; gap: var(--space-3); }
 .app-verdict { font-family: var(--font-serif); font-weight: 800; font-size: 24px; line-height: 32px; }
