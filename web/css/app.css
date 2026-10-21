@@ -42,3 +42,21 @@ body { background: var(--parchment); color: var(--ink); }
 .app-model-label { margin: var(--space-3) 0 0; }
 .app-badges { display: flex; flex-wrap: wrap; gap: var(--space-4); justify-content: center; }
 .app-actions { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
+/* 初回の流れ */
+.app-onboarding-title { margin: var(--space-2) 0 0; }
+.app-steps { display: flex; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.app-steps li { flex: 1; text-align: center; font-size: 13px; line-height: 20px; font-weight: 700; color: var(--ink-muted); padding-top: var(--space-2); border-top: 3px solid var(--line); }
+.app-steps li.app-step-done { color: var(--ink); border-top-color: var(--gold); }
+.app-steps li[aria-current="step"] { color: var(--crimson); border-top-color: var(--crimson); }
+.app-step { display: flex; flex-direction: column; gap: var(--space-3); }
+.app-step > h2 { margin: var(--space-3) 0 0; }
+.app-input { width: 100%; box-sizing: border-box; min-height: 44px; background: var(--parchment-sunk); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: 0 var(--space-3); }
+.app-input:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app-input::placeholder { color: var(--ink-muted); }
+.app-course-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.app-course-head h3 { margin: 0; }
+.app-persona { display: flex; flex-direction: column; gap: var(--space-2); text-align: left; font: inherit; color: inherit; background: var(--parchment-raised); border: 1px solid var(--line); border-radius: var(--radius-md); padding: var(--space-3); cursor: pointer; }
+.app-persona[aria-checked="true"] { border: 3px solid var(--teal); padding: calc(var(--space-3) - 2px); }
+.app-persona:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app-persona .meta { color: var(--ink-muted); }
+.app-persona[aria-checked="true"]::after { content: "○ 選んだ仲間"; align-self: flex-end; font-size: 13px; line-height: 20px; font-weight: 700; color: var(--teal); }

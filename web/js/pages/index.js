@@ -6,7 +6,7 @@ export const PAGES = [
   ['/quest/choice', () => import('./learner/s04-choice.js'), LEARNER],
   ['/quest/explain', () => import('./learner/s05-explain.js'), LEARNER],
   ['/quest/result', () => import('./learner/s06-result.js'), LEARNER],
-  ['/onboarding', soon, null],
+  ['/onboarding', () => import('./learner/onboarding.js'), LEARNER],
   ['/courses', soon, LEARNER],
   ['/ranking', soon, LEARNER],
   ['/profile', soon, LEARNER],
