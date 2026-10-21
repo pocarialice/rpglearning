@@ -17,7 +17,9 @@ export function partnerNameMessage(v) {
   return `名前は10文字以内で入力してください（いま${v.params.count}文字）`
 }
 // onDone({ persona, name }) は決まったときに呼ぶ。名前が空なら初期名になる
-export function mountPartnerStep(el, { api, persona: initial = null, onDone }) {
+// name：今の名前。キャラクターを変えたら空にする（新しいキャラクターの初期名に戻る。外部設計書 3.6.2）
+// submitLabel・extra：S-09 では主ボタンの文言と「やめる」を差し替える
+export function mountPartnerStep(el, { api, persona: initial = null, name: initialName = '', onDone, submitLabel = 'この仲間と冒険する', extra = '' }) {
   let persona = initial
   el.innerHTML = `<h2 class="title">旅の仲間を選ぶ</h2>
 <div class="app-stack app-personas" role="radiogroup" aria-label="AIパートナー">${Object.keys(PERSONA_LABEL).map((p) => `
@@ -27,11 +29,12 @@ ${partnerBubble({ name: DEFAULT_NAME[p], persona: p, text: PERSONA_INTRO[p].samp
 <input id="partner-name" class="app-input body" type="text" maxlength="20" aria-describedby="partner-msg">
 <p id="partner-msg" class="meta app-hint"></p></section>
 <div class="app-error-slot"></div>
-${button({ label: 'この仲間と冒険する', variant: 'primary', block: true, disabled: true, attrs: 'data-action="partner"' })}`
+${button({ label: submitLabel, variant: 'primary', block: true, disabled: true, attrs: 'data-action="partner"' })}${extra}`
   const input = el.querySelector('#partner-name')
   const msg = el.querySelector('#partner-msg')
   const submit = el.querySelector('[data-action="partner"]')
   const slot = el.querySelector('.app-error-slot')
+  input.value = initialName
   const update = () => {
     for (const b of el.querySelectorAll('[data-persona]')) b.setAttribute('aria-checked', String(b.dataset.persona === persona))
     input.placeholder = persona ? `${DEFAULT_NAME[persona]}（初期名）` : ''
@@ -42,6 +45,7 @@ ${button({ label: 'この仲間と冒険する', variant: 'primary', block: true
   el.querySelector('.app-personas').addEventListener('click', (e) => {
     const b = e.target.closest('[data-persona]')
     if (!b) return
+    if (b.dataset.persona !== persona) input.value = ''
     persona = b.dataset.persona
     update()
   })

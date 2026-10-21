@@ -7,10 +7,10 @@ export const PAGES = [
   ['/quest/explain', () => import('./learner/s05-explain.js'), LEARNER],
   ['/quest/result', () => import('./learner/s06-result.js'), LEARNER],
   ['/onboarding', () => import('./learner/onboarding.js'), LEARNER],
-  ['/courses', soon, LEARNER],
+  ['/courses', () => import('./learner/s03-courses.js'), LEARNER],
   ['/ranking', soon, LEARNER],
-  ['/profile', soon, LEARNER],
-  ['/partner', soon, LEARNER],
+  ['/profile', () => import('./learner/s08-profile.js'), LEARNER],
+  ['/partner', () => import('./learner/s09-partner.js'), LEARNER],
   ['/settings/notify', soon, LEARNER]
 ]
 export function registerPages(router) {

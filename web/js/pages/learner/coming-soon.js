@@ -1,4 +1,4 @@
-// まだ作っていない画面の仮置き（S-03・S-07〜S-10・初回の流れ）。下部ナビから開いたときに迷わないようにする
+// まだ作っていない画面の仮置き（S-07 ランキング・S-10 通知設定）。下部ナビやメニューから開いたときに迷わないようにする
 import { getContext } from '../../core/context.js'
 import { button } from '../../components/button.js'
 export async function render(root) {

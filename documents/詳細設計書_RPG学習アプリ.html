@@ -392,7 +392,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.7版（ドラフト：第1〜12章、HTML版あり。説明文の小見出しのルールをなくし、模範説明の長さと小見出しを採点の指示文に追加。ci.yml に画面のビルドを追加）</b></li>
+      <li>版数<b>第0.8版（ドラフト：第1〜12章、HTML版あり。A-12 の学習記録にレベルと累計EXPを追加し、バッジの獲得日時を +09:00 付きにする）</b></li>
       <li>作成日<b>2026-10-20</b></li>
       <li>入力文書<b>要件定義書 第1.1版（ドラフト）、外部設計書 第1.0版、AWS構築手順書 第0.5版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
@@ -1145,8 +1145,8 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-12 <code>GET /api/me/stats</code>・<code>GET /api/me/badges</code></h4>
 <ul>
-<li>stats：網羅率＝択一で1回以上解いた公開済み問題数 ÷ 公開済み問題数（現在のコース）、正答率＝択一の正解数 ÷ 択一の解答数、連続学習日数、習得済み数</li>
-<li>badges：<code>badge_defs</code> のうち Phase 1 のもの全部に、獲得済みなら <code>earnedAt</code> を付けて返す（未獲得は条件文を表示）</li>
+<li>stats：網羅率＝択一で1回以上解いた公開済み問題数 ÷ 公開済み問題数（現在のコース）、正答率＝択一の正解数 ÷ 択一の解答数、連続学習日数、習得済み数、レベル（<code>levelInfo(totalExp)</code> の <code>level</code>・<code>expInLevel</code>・<code>next</code>）と累計EXP（<code>totalExp</code>）。S-08 の上部（ExpBar）に使う</li>
+<li>badges：<code>badge_defs</code> のうち Phase 1 のもの全部に、獲得済みなら <code>earnedAt</code>（<code>+09:00</code> 付き）を付けて返す（未獲得は条件文を表示）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 管理API</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-13 <code>POST /api/admin/imports</code></h4>
@@ -2264,6 +2264,6 @@ jobs:
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.7版（ドラフト：第1〜12章、HTML版あり。説明文の小見出しのルールをなくし、模範説明の長さと小見出しを採点の指示文に追加。ci.yml に画面のビルドを追加）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.8版（ドラフト：第1〜12章、HTML版あり。A-12 の学習記録にレベルと累計EXPを追加し、バッジの獲得日時を +09:00 付きにする）</div></footer>
 </body>
 </html>

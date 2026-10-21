@@ -392,9 +392,9 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第0.7版（ドラフト：第1〜6章、HTML版あり。説明文の小見出しのテストを削除し、模範説明の長さと小見出しのテストを追加）</b></li>
+      <li>版数<b>第0.8版（ドラフト：第1〜6章、HTML版あり。A-12 のレベル・累計EXPとバッジの獲得日時のテストを追加）</b></li>
       <li>作成日<b>2026-10-20</b></li>
-      <li>入力文書<b>詳細設計書 第0.7版、外部設計書 第1.0版</b></li>
+      <li>入力文書<b>詳細設計書 第0.8版、外部設計書 第1.0版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
   </div>
@@ -1045,6 +1045,8 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-H02-14</td><td>初回の流れが終わった利用者</td><td>ニックネーム・コース・パートナー・画像あり</td><td><code>currentCourseId:'c_3'</code>、<code>partner.imageUrl</code> は <code>APP_URL/画像キー</code>、onboarding はすべて false</td><td>同</td></tr>
 <tr><td>MT-H02-15</td><td>パートナー名を省いたとき</td><td>同じキャラクターで名前なし／DBに初期名がない／記号を含む名前</td><td>今の名前のまま／定数の初期名（レン）／400</td><td>DT</td></tr>
 <tr><td>MT-H02-16</td><td>通知設定の取得</td><td>行あり／行なし</td><td>保存値／初期値（オン・07:30）</td><td>境</td></tr>
+<tr><td>MT-H02-17</td><td>学習記録のレベルとEXP</td><td>累計EXP 330 の利用者で <code>GET /api/me/stats</code></td><td><code>levelInfo(330)</code> の <code>level</code>・<code>expInLevel</code>・<code>next</code> と <code>totalExp:330</code> を含む</td><td>同</td></tr>
+<tr><td>MT-H02-18</td><td>バッジの獲得日時の形式</td><td>DBの獲得日時 <code>'2026-10-19 15:00:00'</code>（UTC）</td><td><code>earnedAt:'2026-10-20T00:00:00+09:00'</code></td><td>境</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H03 <code>routes/home.js</code>（A-05）</h4>
 <div class="table-wrap"><table>
@@ -1398,6 +1400,6 @@ describe('M-D01 data-api', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.7版（ドラフト：第1〜6章、HTML版あり。説明文の小見出しのテストを削除し、模範説明の長さと小見出しのテストを追加）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.8版（ドラフト：第1〜6章、HTML版あり。A-12 のレベル・累計EXPとバッジの獲得日時のテストを追加）</div></footer>
 </body>
 </html>

@@ -2,7 +2,8 @@
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { encodeId, PREFIX } from '../../shared/util/ids.js'
-import { parseDbTimestamp } from '../../shared/util/date-jst.js'
+import { parseDbTimestamp, toIsoJst } from '../../shared/util/date-jst.js'
+import { levelInfo } from '../../shared/domain/exp.js'
 import { assertValid, validateNickname, validatePartnerName, validateNotifyTime } from '../../shared/util/validators.js'
 import { PERSONAS } from '../../shared/ai/persona.js'
 import * as users from '../../shared/db/repositories/users.js'
@@ -84,7 +85,9 @@ export async function stats(ctx) {
     answerCount: s.answerCount,
     correctPct: s.answerCount === 0 ? null : round1((100 * s.correctCount) / s.answerCount),
     mastered: s.mastered,
-    streakDays: ctx.user.streakDays ?? 0
+    streakDays: ctx.user.streakDays ?? 0,
+    ...levelInfo(ctx.user.totalExp ?? 0),
+    totalExp: ctx.user.totalExp ?? 0
   })
 }
 export async function badges_(ctx) {
@@ -93,7 +96,7 @@ export async function badges_(ctx) {
   return ok({
     badges: defs.filter((d) => d.phase === 1).map((d) => ({
       code: d.badgeCode, category: d.category, tier: d.tier, name: d.name, condition: d.conditionText,
-      earnedAt: earned.has(d.badgeCode) ? earned.get(d.badgeCode) : null
+      earnedAt: earned.has(d.badgeCode) ? toIsoJst(parseDbTimestamp(earned.get(d.badgeCode))) : null
     }))
   })
 }

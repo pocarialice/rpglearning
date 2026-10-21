@@ -64,3 +64,21 @@ body { background: var(--parchment); color: var(--ink); }
 .app-persona:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
 .app-persona .meta { color: var(--ink-muted); }
 .app-persona[aria-checked="true"]::after { content: "○ 選んだ仲間"; align-self: flex-end; font-size: 13px; line-height: 20px; font-weight: 700; color: var(--teal); }
+/* プロフィール（S-08） */
+.app-profile-name { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.app-stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.app-stat { display: flex; flex-direction: column; gap: var(--space-1); background: var(--parchment-sunk); border-radius: var(--radius-md); padding: var(--space-3); }
+.app-stat .numeral { color: var(--ink); }
+.app-badge-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4) var(--space-2); margin: 0; list-style: none; }
+.app-badge-item { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); text-align: center; }
+.app-badge-cond { margin: 0; color: var(--ink-muted); font-weight: 400; }
+.app-menu { gap: 0; padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.app-menu .gd-btn { justify-content: flex-start; color: var(--ink); }
+.app-menu .gd-btn + .gd-btn { border-top: 1px solid var(--line); border-radius: 0; }
+.app-error p { margin: 0; }
+/* ダイアログ */
+.app-dialog { width: min(388px, calc(100vw - 32px)); box-sizing: border-box; color: var(--ink); margin: auto; }
+.app-dialog::backdrop { background: rgba(46, 34, 25, 0.45); }
+.app-dialog h2 { margin: 0 0 var(--space-3); }
+.app-dialog .app-section { margin-top: 0; }
+.app-guide-slot:not(:empty) { display: flex; flex-direction: column; gap: var(--space-3); }

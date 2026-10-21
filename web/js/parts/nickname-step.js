@@ -11,15 +11,17 @@ export function nicknameMessage(v) {
   return `ニックネームは2〜12文字で入力してください（いま${v.params.count}文字）`
 }
 // notice：重複でこの段階に戻ってきたときの案内。onDone(nickname) は登録できたときに呼ぶ
-export function mountNicknameStep(el, { api, value = '', notice = '', onDone }) {
-  el.innerHTML = `<section class="gd-card app-section"><h2 class="title">ギルドでの呼び名</h2>
+// framed：false でカードと見出しを付けない（ダイアログの中で使う）。submitLabel：主ボタンの文言
+export function mountNicknameStep(el, { api, value = '', notice = '', onDone, framed = true, submitLabel = 'この名前で登録する', extra = '' }) {
+  const head = framed ? '<section class="gd-card app-section"><h2 class="title">ギルドでの呼び名</h2>' : '<div class="app-section">'
+  el.innerHTML = `${head}
 <p class="body">ランキングに出る名前。本名は学習者どうしには表示しない</p>
 ${notice ? `<div class="app-notice" role="status">${escapeHtml(notice)}</div>` : ''}
 <label class="label" for="nickname">ニックネーム（2〜12文字）</label>
 <input id="nickname" class="app-input body" type="text" autocomplete="nickname" maxlength="20" value="${escapeHtml(value)}" aria-describedby="nickname-msg">
 <p id="nickname-msg" class="meta app-hint"></p>
 <div class="app-error-slot"></div>
-${button({ label: 'この名前で登録する', variant: 'primary', block: true, disabled: true, attrs: 'data-action="nickname"' })}</section>`
+${button({ label: submitLabel, variant: 'primary', block: true, disabled: true, attrs: 'data-action="nickname"' })}${extra}${framed ? '</section>' : '</div>'}`
   const input = el.querySelector('#nickname')
   const msg = el.querySelector('#nickname-msg')
   const submit = el.querySelector('[data-action="nickname"]')

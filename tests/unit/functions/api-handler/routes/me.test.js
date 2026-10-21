@@ -16,6 +16,7 @@ import { httpEvent, parse } from '../../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../../helpers/logger.js'
 import { NOW } from '../../../../helpers/clock.js'
 import { learner } from '../../../../fixtures/users.js'
+import { levelInfo } from '../../../../../functions/shared/domain/exp.js'
 const call = (opts) => main(httpEvent(opts), { log: memoryLogger(), now: NOW })
 const minutesAgo = (m) => new Date(NOW.getTime() - m * 60000).toISOString().replace('T', ' ').replace('Z', '')
 const DEFS = [
@@ -126,6 +127,17 @@ describe('M-H02 me（A-01〜A-04、A-12）', () => {
     expect(body.correctPct).toBeNull()
     expect(body.coveragePct).toBe(0)
     expect(body.streakDays).toBe(0)
+  })
+  it('MT-H02-17 学習記録にレベルとEXPを含める', async () => {
+    answers.statsForUser.mockResolvedValue({ publishedCount: 20, answeredQuestions: 8, answerCount: 10, correctCount: 7, mastered: 2 })
+    const body = parse(await call({ path: '/api/me/stats' }))
+    expect(body).toMatchObject({ ...levelInfo(330), totalExp: 330 })
+  })
+  it('MT-H02-18 バッジの獲得日時は +09:00 付き', async () => {
+    badges.listDefs.mockResolvedValue(DEFS)
+    badges.listOwnedDetail.mockResolvedValue([{ badgeCode: 'streak_bronze', earnedAt: '2026-10-19 15:00:00' }])
+    const list = parse(await call({ path: '/api/me/badges' })).badges
+    expect(list.find((b) => b.code === 'streak_bronze').earnedAt).toBe('2026-10-20T00:00:00+09:00')
   })
   it('MT-H02-13 バッジ一覧', async () => {
     badges.listDefs.mockResolvedValue(DEFS)
