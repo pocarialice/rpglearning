@@ -44,10 +44,14 @@ body { background: var(--parchment); color: var(--ink); }
 .app-actions { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
 /* 初回の流れ */
 .app-onboarding-title { margin: var(--space-2) 0 0; }
-.app-steps { display: flex; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.app-steps li { flex: 1; text-align: center; font-size: 13px; line-height: 20px; font-weight: 700; color: var(--ink-muted); padding-top: var(--space-2); border-top: 3px solid var(--line); }
-.app-steps li.app-step-done { color: var(--ink); border-top-color: var(--gold); }
-.app-steps li[aria-current="step"] { color: var(--crimson); border-top-color: var(--crimson); }
+.app-steps { display: flex; margin: 0; padding: 0; list-style: none; filter: drop-shadow(0 1px 0 var(--line)); }
+.app-steps li { --tip: 14px; flex: 1; display: flex; align-items: center; justify-content: center; gap: var(--space-1); min-height: 44px; padding: 0 var(--space-1) 0 calc(var(--tip) + var(--space-1)); margin-left: calc(var(--tip) * -1 + 3px); font-size: 13px; line-height: 16px; font-weight: 700; background: var(--parchment-sunk); color: var(--ink-muted); clip-path: polygon(0 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, 0 100%, var(--tip) 50%); }
+.app-steps li:first-child { margin-left: 0; padding-left: var(--space-2); border-radius: var(--radius-md) 0 0 var(--radius-md); clip-path: polygon(0 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, 0 100%); }
+.app-steps li:last-child { padding-right: var(--space-2); }
+.app-step-no { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none; border-radius: var(--radius-pill); border: 1px solid currentColor; font-size: 12px; line-height: 1; }
+.app-steps li.app-step-done { background: var(--gold-soft); color: var(--gold-ink); }
+.app-steps li.app-step-now { background: var(--crimson); color: var(--on-crimson); }
+.app-steps li.app-step-now .app-step-no { background: var(--on-crimson); color: var(--crimson); border-color: var(--on-crimson); }
 .app-step { display: flex; flex-direction: column; gap: var(--space-3); }
 .app-step > h2 { margin: var(--space-3) 0 0; }
 .app-input { width: 100%; box-sizing: border-box; min-height: 44px; background: var(--parchment-sunk); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: 0 var(--space-3); }
