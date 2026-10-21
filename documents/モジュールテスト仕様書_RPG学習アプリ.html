@@ -392,9 +392,9 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第0.8版（ドラフト：第1〜6章、HTML版あり。A-12 のレベル・累計EXPとバッジの獲得日時のテストを追加）</b></li>
+      <li>版数<b>第0.9版（ドラフト：第1〜6章、HTML版あり。A-11 のコース名のテストを追加）</b></li>
       <li>作成日<b>2026-10-20</b></li>
-      <li>入力文書<b>詳細設計書 第0.8版、外部設計書 第1.0版</b></li>
+      <li>入力文書<b>詳細設計書 第0.9版、外部設計書 第1.0版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
   </div>
@@ -1122,6 +1122,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-H08-05</td><td>受講していないコース</td><td><code>course=c_9</code>（未受講）</td><td>403</td><td>異</td></tr>
 <tr><td>MT-H08-06</td><td>月曜以外の週の指定</td><td><code>week=2026-10-13</code>（火）</td><td>400</td><td>異</td></tr>
 <tr><td>MT-H08-07</td><td>コース省略・論理削除中・圏外</td><td><code>course</code> 省略、論理削除中の利用者が1位、自分は記録なし／コース未選択</td><td>現在のコースで集計、論理削除中を除く、<code>me:null</code>／409 <code>COURSE_REQUIRED</code></td><td>DT</td></tr>
+<tr><td>MT-H08-08</td><td>コース名</td><td>コースあり／コースが見つからない</td><td><code>courseName</code> にコース名／<code>null</code></td><td>同</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H09 <code>routes/admin-imports.js</code>（A-13・A-14）</h4>
 <div class="table-wrap"><table>
@@ -1339,7 +1340,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>4.3 出題ルール</td><td>3.5 M-G06、5.2 A-07</td><td>picker、quests</td><td>MT-G06-01〜09、MT-H05-01〜08</td></tr>
 <tr><td>4.4 忘却曲線</td><td>3.5 M-G01</td><td>review</td><td>MT-G01-01〜14</td></tr>
 <tr><td>4.5 経験値・レベル</td><td>3.5 M-G02・M-G07</td><td>exp、answer-flow</td><td>MT-G02-01〜13、MT-G07-01〜08</td></tr>
-<tr><td>4.6 週間ランキング</td><td>3.5 M-G05、4.5.1、5.2 A-11</td><td>ranking、close-ranking、rankings</td><td>MT-G05-01〜06、MT-W03-03、MT-H08-01〜07</td></tr>
+<tr><td>4.6 週間ランキング</td><td>3.5 M-G05、4.5.1、5.2 A-11</td><td>ranking、close-ranking、rankings</td><td>MT-G05-01〜06、MT-W03-03、MT-H08-01〜08</td></tr>
 <tr><td>4.7 デイリークエスト</td><td>3.5 M-G03、4.5.1</td><td>quest、assign-quests</td><td>MT-G03-01〜12、MT-W03-07〜08</td></tr>
 <tr><td>4.8 バッジ</td><td>3.5 M-G04</td><td>badge、update-streak</td><td>MT-G04-01〜07、MT-W03-04〜06</td></tr>
 <tr><td>4.9 説明の採点、2.5 非同期方式</td><td>4.3、5.2 A-09・A-10、7.3</td><td>grading-worker、gradings、prompts</td><td>MT-W01-01〜12、MT-H07-01〜10、MT-A02、MT-A04</td></tr>
@@ -1400,6 +1401,6 @@ describe('M-D01 data-api', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.8版（ドラフト：第1〜6章、HTML版あり。A-12 のレベル・累計EXPとバッジの獲得日時のテストを追加）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第0.9版（ドラフト：第1〜6章、HTML版あり。A-11 のコース名のテストを追加）</div></footer>
 </body>
 </html>

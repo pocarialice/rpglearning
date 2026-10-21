@@ -4,6 +4,7 @@ import { ok } from '../../shared/util/http.js'
 import { decodeId, PREFIX } from '../../shared/util/ids.js'
 import { addDays, diffDays } from '../../shared/util/date-jst.js'
 import { rankRows } from '../../shared/domain/ranking.js'
+import * as courses from '../../shared/db/repositories/courses.js'
 import * as enrollments from '../../shared/db/repositories/enrollments.js'
 import * as exp from '../../shared/db/repositories/exp.js'
 import * as rankings from '../../shared/db/repositories/rankings.js'
@@ -33,12 +34,14 @@ export async function get(ctx) {
   const rows = ranked.slice(0, TOP_N).map(view)
   const mine = ranked.find((r) => r.userId === user.userId)
   if (mine && !rows.some((r) => r.isMe)) rows.push(view(mine))
+  const [course, weeks] = await Promise.all([courses.findById(courseId), rankings.weeks(courseId)])
   return ok({
+    courseName: course?.name ?? null,
     weekStart: week,
     weekEnd: addDays(week, 6),
     daysToReset: diffDays(today, addDays(thisWeek, 7)),
     rows,
     me: mine ? view(mine) : null,
-    weeks: await rankings.weeks(courseId)
+    weeks
   })
 }

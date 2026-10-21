@@ -3,7 +3,7 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第0.8版（ドラフト：第1〜12章、HTML版あり。A-12 の学習記録にレベルと累計EXPを追加し、バッジの獲得日時を +09:00 付きにする）      |
+| 版数     | 第0.9版（ドラフト：第1〜12章、HTML版あり。A-11 の応答にコース名を追加）      |
 | 作成日    | 2026-10-20                                                 |
 | 入力文書   | 要件定義書 第1.1版（ドラフト）、外部設計書 第1.0版、AWS構築手順書 第0.5版                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
@@ -814,7 +814,7 @@ flowchart TD
 #### A-11 `GET /api/rankings?course=&week=`
 
 - `week` を省略すると今週（`weekStartJst(now)`）。指定するときは月曜日の日付でなければ `400`。今週は `exp_logs` から集計（`rankRows`）、過去週は `weekly_rankings` から取得
-- 受講していないコースは `403`。応答は上位10名と自分の行、`{ weekStart, weekEnd, daysToReset, rows: [{rank, nickname, weeklyExp, isMe}], me }`
+- 受講していないコースは `403`。応答は上位10名と自分の行、`{ courseName, weekStart, weekEnd, daysToReset, rows: [{rank, nickname, weeklyExp, isMe}], me }`（`courseName` は S-07 の見出しに使う）
 - 過去週の選択肢として、そのコースの `weekly_rankings` にある週の開始日（新しい順、最大12週）を `weeks` に入れる
 
 #### A-12 `GET /api/me/stats`・`GET /api/me/badges`

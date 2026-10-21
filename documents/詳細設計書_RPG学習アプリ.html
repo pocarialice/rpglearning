@@ -392,7 +392,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第0.8版（ドラフト：第1〜12章、HTML版あり。A-12 の学習記録にレベルと累計EXPを追加し、バッジの獲得日時を +09:00 付きにする）</b></li>
+      <li>版数<b>第0.9版（ドラフト：第1〜12章、HTML版あり。A-11 の応答にコース名を追加）</b></li>
       <li>作成日<b>2026-10-20</b></li>
       <li>入力文書<b>要件定義書 第1.1版（ドラフト）、外部設計書 第1.0版、AWS構築手順書 第0.5版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
@@ -1140,7 +1140,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-11 <code>GET /api/rankings?course=&amp;week=</code></h4>
 <ul>
 <li><code>week</code> を省略すると今週（<code>weekStartJst(now)</code>）。指定するときは月曜日の日付でなければ <code>400</code>。今週は <code>exp_logs</code> から集計（<code>rankRows</code>）、過去週は <code>weekly_rankings</code> から取得</li>
-<li>受講していないコースは <code>403</code>。応答は上位10名と自分の行、<code>{ weekStart, weekEnd, daysToReset, rows: [{rank, nickname, weeklyExp, isMe}], me }</code></li>
+<li>受講していないコースは <code>403</code>。応答は上位10名と自分の行、<code>{ courseName, weekStart, weekEnd, daysToReset, rows: [{rank, nickname, weeklyExp, isMe}], me }</code>（<code>courseName</code> は S-07 の見出しに使う）</li>
 <li>過去週の選択肢として、そのコースの <code>weekly_rankings</code> にある週の開始日（新しい順、最大12週）を <code>weeks</code> に入れる</li>
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-12 <code>GET /api/me/stats</code>・<code>GET /api/me/badges</code></h4>
@@ -2264,6 +2264,6 @@ jobs:
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.8版（ドラフト：第1〜12章、HTML版あり。A-12 の学習記録にレベルと累計EXPを追加し、バッジの獲得日時を +09:00 付きにする）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第0.9版（ドラフト：第1〜12章、HTML版あり。A-11 の応答にコース名を追加）</div></footer>
 </body>
 </html>

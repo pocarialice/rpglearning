@@ -82,3 +82,19 @@ body { background: var(--parchment); color: var(--ink); }
 .app-dialog h2 { margin: 0 0 var(--space-3); }
 .app-dialog .app-section { margin-top: 0; }
 .app-guide-slot:not(:empty) { display: flex; flex-direction: column; gap: var(--space-3); }
+/* 週間ランキング（S-07） */
+.app-rank-list { gap: var(--space-2); }
+.app-rank-gap { margin: 0; text-align: center; color: var(--ink-muted); line-height: 12px; }
+.app-weeks { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* 通知設定（S-10） */
+.app-toggle { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.app-toggle p { margin: 0; }
+.app-switch { appearance: none; flex: none; width: 52px; height: 30px; margin: 0; border-radius: var(--radius-pill); background: var(--parchment-sunk); border: 1px solid var(--line-strong); position: relative; cursor: pointer; }
+.app-switch::before { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: var(--radius-pill); background: var(--ink-muted); }
+.app-switch:checked { background: var(--teal); border-color: var(--teal); }
+.app-switch:checked::before { left: 25px; background: var(--on-teal); }
+.app-switch:disabled { opacity: .5; cursor: not-allowed; }
+.app-switch:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+select.app-input:disabled { opacity: .5; }
+.app-switch-wrap { display: flex; align-items: center; gap: var(--space-2); }
+.app-switch-state, .app-nowrap { white-space: nowrap; }
