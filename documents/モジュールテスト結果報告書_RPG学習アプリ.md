@@ -23,7 +23,7 @@
 ```mermaid
 flowchart LR
   A["共通モジュール<br>util・db・domain・ai・mail<br>228ケース"]:::done --> B["Lambda関数<br>api-handler・worker・batch<br>172ケース"]:::done
-  B --> C["画面<br>web/js/core・logic<br>126ケース"]:::done
+  B --> C["画面<br>web/js（core・logic・pages・部品）<br>126ケース"]:::done
   classDef done fill:#0017C1,color:#fff,stroke:#0017C1
   classDef todo fill:#fff,color:#414141,stroke:#B4B4B4,stroke-dasharray:4 3
 ```

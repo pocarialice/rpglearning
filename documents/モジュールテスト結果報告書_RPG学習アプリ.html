@@ -448,7 +448,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <div class="vis"><p class="vis-label">今回の範囲（全526ケースのうち526ケース）</p><ol class="flow">
 <li class="hl"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail　228ケース</li>
 <li class="hl"><b><i class="fa-solid fa-bolt fi"></i>Lambda関数</b>api-handler・worker・batch　172ケース</li>
-<li class="hl"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js/core・logic　126ケース</li></ol>
+<li class="hl"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js（core・logic・pages・部品）　126ケース</li></ol>
 <p class="vis-cap">塗りつぶし＝今回テストした範囲、点線＝次回</p></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3><p>モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。本版は段階リリースの第2弾（最終報告）で、第0.1版（中間報告：共通モジュール）に Lambda関数（MT-H・MT-W）と画面（MT-F）を加え、仕様書の全ケースで合否を判定する。第1.4版では、説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせて、仕様書 第0.7版で MT-U07-03〜07 を書き直し、MT-U07-08〜10・33 を欠番にし、MT-A02-11・MT-A04-07 を足して全件を流し直した。第1.5版では、S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにしたこと（詳細設計書 第0.8版）に合わせて、仕様書 第0.8版で MT-H02-17・18 を足して全件を流し直した。第1.6版では、S-07 の見出しに使うコース名を A-11 の応答に足したこと（詳細設計書 第0.9版）に合わせて、仕様書 第0.9版で MT-H08-08 を足して全件を流し直した。第1.7版では、管理局の画面に合わせて A-01 に担当コースを足し、A-14 の一覧の日時を +09:00 付きにし、管理局を初回の流れの対象外にしたこと（詳細設計書 第1.0版）に合わせて、仕様書 第1.0版で MT-H02-19・MT-F03-06 を足し、MT-H09-07 の期待結果を直して全件を流し直した。第1.8版では、A-19 の一覧の日時を +09:00 付きにし、A-22 の取得に性格名と初期名を足したこと（詳細設計書 第1.1版）に合わせて、仕様書 第1.1版で MT-H12-10・MT-H14-06 を足して全件を流し直した。第1.9版では、画面（S-02〜S-14）・部品・外枠のテスト92件を仕様書 第1.2版の M-F07〜M-F22 に載せてIDをふり、画面のコードもカバレッジの対象（命令90%・分岐80%）に入れて全件を流し直した。</p>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 今回の範囲</h3>
