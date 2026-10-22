@@ -72,7 +72,7 @@ export const GRADING_SCHEMA = {
   accuracy: { type: 'int', min: 0, max: 50 },
   coverage: { type: 'int', min: 0, max: 30 },
   concreteness: { type: 'int', min: 0, max: 20 },
-  modelAnswer: { type: 'string', min: 1, max: 400 },
+  modelAnswer: { type: 'string', min: 1, max: 500 }, // 指示は空白・改行を除いて400文字まで。小見出しの改行の分だけ余裕を持たせる
   missingPoints: { type: 'array', min: 0, max: 3, items: { type: 'string', min: 1, max: 200 } },
   comment: { type: 'string', min: 1, max: 300 }
 }

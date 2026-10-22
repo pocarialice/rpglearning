@@ -98,9 +98,9 @@ describe('M-H09 admin-imports（A-13・A-14）', () => {
     expect((await call({ path: '/api/admin/imports/imp_9' })).statusCode).toBe(404)
     imports.find.mockResolvedValue({ importId: 9, courseId: 4 })
     expect((await call({ path: '/api/admin/imports/imp_9' })).statusCode).toBe(403)
-    imports.listByCourse.mockResolvedValue([{ importId: 8, sourceType: 'pdf', fileName: 'a.pdf', status: 'failed', extractedCount: 0, errorMessage: '50ページ以内に分けて取り込んでください', createdAt: 'x' }])
+    imports.listByCourse.mockResolvedValue([{ importId: 8, sourceType: 'pdf', fileName: 'a.pdf', status: 'failed', extractedCount: 0, errorMessage: '50ページ以内に分けて取り込んでください', createdAt: '2026-10-19 15:00:00' }])
     const list = parse(await call({ path: '/api/admin/imports', query: { course: 'c_3' } })).imports
-    expect(list).toEqual([{ importId: 'imp_8', sourceType: 'pdf', fileName: 'a.pdf', status: 'failed', extractedCount: 0, errorMessage: '50ページ以内に分けて取り込んでください', createdAt: 'x' }])
+    expect(list).toEqual([{ importId: 'imp_8', sourceType: 'pdf', fileName: 'a.pdf', status: 'failed', extractedCount: 0, errorMessage: '50ページ以内に分けて取り込んでください', createdAt: '2026-10-20T00:00:00+09:00' }])
   })
 })
 describe('M-H10 admin-questions（A-15・A-16）', () => {

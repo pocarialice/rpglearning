@@ -7,6 +7,7 @@ vi.mock('../../../../../functions/shared/db/repositories/adventures.js')
 vi.mock('../../../../../functions/shared/db/repositories/enrollments.js')
 vi.mock('../../../../../functions/shared/db/repositories/exp.js')
 vi.mock('../../../../../functions/shared/db/repositories/rankings.js')
+vi.mock('../../../../../functions/shared/db/repositories/courses.js')
 import * as users from '../../../../../functions/shared/db/repositories/users.js'
 import * as questions from '../../../../../functions/shared/db/repositories/questions.js'
 import * as gradings from '../../../../../functions/shared/db/repositories/gradings.js'
@@ -14,6 +15,7 @@ import * as adventures from '../../../../../functions/shared/db/repositories/adv
 import * as enrollments from '../../../../../functions/shared/db/repositories/enrollments.js'
 import * as exp from '../../../../../functions/shared/db/repositories/exp.js'
 import * as rankings from '../../../../../functions/shared/db/repositories/rankings.js'
+import * as courses from '../../../../../functions/shared/db/repositories/courses.js'
 import { main } from '../../../../../functions/api-handler/index.mjs'
 import { httpEvent, parse } from '../../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../../helpers/logger.js'
@@ -117,6 +119,7 @@ describe('M-H08 rankings（A-11）', () => {
     exp.weeklyTotals.mockResolvedValue(people(15))
     rankings.weeks.mockResolvedValue(['2026-10-12', '2026-10-05'])
     rankings.history.mockResolvedValue([{ userId: 15, nickname: 'たろう', weeklyExp: 300, rank: 1 }])
+    courses.findById.mockImplementation(async (id) => (id === 3 ? { courseId: 3, name: '基本情報技術者 午前' } : null))
   })
   it('MT-H08-01 今週', async () => {
     const body = parse(await call({ path: '/api/rankings', query: { course: 'c_3' } }))
@@ -158,5 +161,11 @@ describe('M-H08 rankings（A-11）', () => {
     expect(body.me).toBeNull()
     users.findBySub.mockResolvedValue({ ...learner, currentCourseId: null })
     expect(parse(await call({ path: '/api/rankings' })).error.code).toBe('COURSE_REQUIRED')
+  })
+  it('MT-H08-08 コース名を返す', async () => {
+    expect(parse(await call({ path: '/api/rankings', query: { course: 'c_3' } })).courseName).toBe('基本情報技術者 午前')
+    courses.findById.mockResolvedValue(null)
+    expect(parse(await call({ path: '/api/rankings', query: { course: 'c_3' } })).courseName).toBeNull()
+    expect(courses.findById).toHaveBeenCalledWith(3)
   })
 })

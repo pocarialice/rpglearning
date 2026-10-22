@@ -9,18 +9,15 @@ const NG = (code) => expect.objectContaining({ ok: false, code })
 describe('M-U07 validators 説明文', () => {
   it('MT-U07-01 下限の1つ下', () => expect(validateExplanation(X(49))).toEqual(NG('M-03')))
   it('MT-U07-02 下限', () => expect(validateExplanation(X(50))).toEqual({ ok: true }))
-  it('MT-U07-03 小見出し不要の上限', () => expect(validateExplanation(X(200))).toEqual({ ok: true }))
-  it('MT-U07-04 小見出しが必要になる', () => expect(validateExplanation(X(201))).toEqual(NG('M-05')))
-  it('MT-U07-05 小見出しあり', () => expect(validateExplanation('【定義】' + X(197))).toEqual({ ok: true }))
-  it('MT-U07-06 上限', () => expect(validateExplanation('【定義】' + X(396))).toEqual({ ok: true }))
-  it('MT-U07-07 上限の1つ上', () => {
-    const r = validateExplanation('【定義】' + X(397))
+  it('MT-U07-03 200文字を超えても小見出しは要らない', () => expect(validateExplanation(X(201))).toEqual({ ok: true }))
+  it('MT-U07-04 上限', () => expect(validateExplanation(X(400))).toEqual({ ok: true }))
+  it('MT-U07-05 上限の1つ上', () => {
+    const r = validateExplanation(X(401))
     expect(r).toEqual(NG('M-04'))
     expect(r.params.count).toBe(401)
   })
-  it('MT-U07-08 小見出しが行の途中', () => expect(validateExplanation(X(100) + '【定義】' + X(101))).toEqual(NG('M-05')))
-  it('MT-U07-09 2行目の行頭の小見出し', () => expect(validateExplanation(X(100) + '\n【しくみ】' + X(101))).toEqual({ ok: true }))
-  it('MT-U07-10 中身のない小見出し', () => expect(validateExplanation('【】' + X(205))).toEqual(NG('M-05')))
+  it('MT-U07-06 【】も1文字として数える', () => expect(validateExplanation('【定義】' + X(396))).toEqual({ ok: true }))
+  it('MT-U07-07 【】を含めて上限の1つ上', () => expect(validateExplanation('【定義】' + X(397))).toEqual(NG('M-04')))
   it('MT-U07-11 空白・改行は数えない', () => {
     const s = 'あ あ あ あ あ あ　あ　あ　あ\nあ\nあ\tあ' + X(37)
     expect(countChars(s)).toBe(49)
@@ -130,8 +127,5 @@ describe('M-U07 validators', () => {
     expect(validateQuestionDraft({ ...good, keywords: 'DNS' })).toMatchObject({ field: 'keywords' })
     expect(validateQuestionDraft({ ...good, keywords: undefined })).toEqual({ ok: true })
     expect(validateQuestionDraft({ ...good, keywords: [''] })).toMatchObject({ field: 'keywords' })
-  })
-  it('MT-U07-33 前に空白がある行頭の小見出しも認める', () => {
-    expect(validateExplanation(X(100) + '\n　【しくみ】' + X(101))).toEqual({ ok: true })
   })
 })

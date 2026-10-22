@@ -2,7 +2,8 @@
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { encodeId, PREFIX } from '../../shared/util/ids.js'
-import { parseDbTimestamp } from '../../shared/util/date-jst.js'
+import { parseDbTimestamp, toIsoJst } from '../../shared/util/date-jst.js'
+import { levelInfo } from '../../shared/domain/exp.js'
 import { assertValid, validateNickname, validatePartnerName, validateNotifyTime } from '../../shared/util/validators.js'
 import { PERSONAS } from '../../shared/ai/persona.js'
 import * as users from '../../shared/db/repositories/users.js'
@@ -11,9 +12,18 @@ import * as partners from '../../shared/db/repositories/partners.js'
 import * as notify from '../../shared/db/repositories/notify.js'
 import * as answers from '../../shared/db/repositories/answers.js'
 import * as badges from '../../shared/db/repositories/badges.js'
+import * as courses from '../../shared/db/repositories/courses.js'
 export const LOGIN_LOG_INTERVAL_MS = 30 * 60 * 1000
 export const imageUrl = (key) => (key ? `${process.env.APP_URL}/${key}` : null)
 const round1 = (n) => Math.round(n * 10) / 10
+// 管理局で選べるコース：システム管理者は全コース、コース管理者は担当コースだけ（外部設計書 3.8 S-11・S-12）
+async function adminCourses(user) {
+  const roles = user.roles ?? []
+  let rows = []
+  if (roles.includes('system_admin')) rows = await courses.listAll()
+  else if (roles.includes('course_admin')) rows = await courses.listAdminCourses(user.userId)
+  return rows.map((c) => ({ id: encodeId(PREFIX.course, c.courseId), name: c.name }))
+}
 export async function get(ctx) {
   const { user, now } = ctx
   const last = await users.lastLoginLogAt(user.userId)
@@ -31,7 +41,8 @@ export async function get(ctx) {
     roles: user.roles,
     partner,
     currentCourseId: user.currentCourseId ? encodeId(PREFIX.course, user.currentCourseId) : null,
-    onboarding: { needNickname: !user.nickname, needCourse: !user.currentCourseId, needPartner: !user.partnerPersona }
+    onboarding: { needNickname: !user.nickname, needCourse: !user.currentCourseId, needPartner: !user.partnerPersona },
+    adminCourses: await adminCourses(user)
   })
 }
 export async function putProfile(ctx) {
@@ -84,7 +95,9 @@ export async function stats(ctx) {
     answerCount: s.answerCount,
     correctPct: s.answerCount === 0 ? null : round1((100 * s.correctCount) / s.answerCount),
     mastered: s.mastered,
-    streakDays: ctx.user.streakDays ?? 0
+    streakDays: ctx.user.streakDays ?? 0,
+    ...levelInfo(ctx.user.totalExp ?? 0),
+    totalExp: ctx.user.totalExp ?? 0
   })
 }
 export async function badges_(ctx) {
@@ -93,7 +106,7 @@ export async function badges_(ctx) {
   return ok({
     badges: defs.filter((d) => d.phase === 1).map((d) => ({
       code: d.badgeCode, category: d.category, tier: d.tier, name: d.name, condition: d.conditionText,
-      earnedAt: earned.has(d.badgeCode) ? earned.get(d.badgeCode) : null
+      earnedAt: earned.has(d.badgeCode) ? toIsoJst(parseDbTimestamp(earned.get(d.badgeCode))) : null
     }))
   })
 }

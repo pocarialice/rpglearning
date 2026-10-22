@@ -203,4 +203,9 @@ describe('M-H12 admin-users（A-19・A-20）', () => {
     await call({ path: '/api/admin/users' })
     expect(users.listForAdmin).toHaveBeenLastCalledWith({ q: '', status: null, sort: 'id', order: 'asc', limit: 50, offset: 0 })
   })
+  it('MT-H12-10 一覧の最終ログイン日時は +09:00 付き', async () => {
+    users.listForAdmin.mockResolvedValue([target({ lastLoginAt: '2026-10-19 15:00:00' }), target({ userId: 16, lastLoginAt: null })])
+    const list = parse(await call({ path: '/api/admin/users' })).users
+    expect(list.map((u) => u.lastLoginAt)).toEqual(['2026-10-20T00:00:00+09:00', null])
+  })
 })

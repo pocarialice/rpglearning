@@ -50,4 +50,9 @@ describe('M-A02 json-guard', () => {
     expect(validateShape([], GRADING_SCHEMA).ok).toBe(false)
     expect(validateShape({}, { x: { type: 'int', min: 0, max: 1, required: false } })).toEqual({ ok: true, errors: [] })
   })
+  it('MT-A02-11 模範説明は小見出しの改行を含めて500文字まで', () => {
+    const answer = (n) => '【定義】' + 'あ'.repeat(n - 4)
+    expect(validateShape({ ...good, modelAnswer: answer(500) }, GRADING_SCHEMA).ok).toBe(true)
+    expect(validateShape({ ...good, modelAnswer: answer(501) }, GRADING_SCHEMA).errors).toEqual([{ key: 'modelAnswer', reason: 'length' }])
+  })
 })

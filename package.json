@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "build:functions": "node scripts/build-functions.mjs"
+    "build:functions": "node scripts/build-functions.mjs",
+    "build:web": "node scripts/build-web.mjs"
   },
   "devDependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1153.0",
