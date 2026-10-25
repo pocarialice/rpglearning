@@ -1,0 +1,62 @@
+# dev 環境の GitHub と AWS のつながりの確認（構築手順書 2.6・3.13）。読み取りだけで、何も配置しない
+name: check-aws-dev
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: dev
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      WEB_BUCKET: ${{ vars.WEB_BUCKET }}
+      CF_DISTRIBUTION_ID: ${{ vars.CF_DISTRIBUTION_ID }}
+      DB_CLUSTER_ARN: ${{ vars.DB_CLUSTER_ARN }}
+      DB_SECRET_ARN: ${{ vars.DB_SECRET_ARN }}
+      DB_CLUSTER_ID: ${{ vars.DB_CLUSTER_ID }}
+    steps:
+      - name: 変数がそろっているか（リポジトリの AWS_REGION と Environment dev の6つ）
+        run: |
+          missing=0
+          for name in AWS_REGION AWS_ROLE_ARN WEB_BUCKET CF_DISTRIBUTION_ID DB_CLUSTER_ARN DB_SECRET_ARN DB_CLUSTER_ID; do
+            if [ -z "${!name}" ]; then echo "::error::変数 $name がない"; missing=1; else echo "OK $name = ${!name}"; fi
+          done
+          exit $missing
+      - name: 配置用ロールを OIDC で引き受ける
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: 引き受けたロールの確認
+        run: aws sts get-caller-identity --query Arn --output text
+      - name: 画面のバケットを読めるか（s3:ListBucket）
+        run: aws s3 ls "s3://$WEB_BUCKET" --summarize | tail -2
+      - name: Lambda の設定を読めるか（lambda:GetFunctionConfiguration）
+        run: |
+          for fn in api-handler grading-worker import-worker batch-runner; do
+            aws lambda get-function-configuration --function-name "rpg-dev-$fn" --query '[FunctionName,Runtime,State]' --output text
+          done
+      - name: Data API で DB に入れるか（止まっているときは起きるまで待つ）
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if aws rds-data execute-statement --resource-arn "$DB_CLUSTER_ARN" --secret-arn "$DB_SECRET_ARN" --database rpg --sql 'select version()' --query 'records[0][0].stringValue' --output text; then exit 0; fi
+            echo "DB の起動を待つ（$i 回目）"; sleep 15
+          done
+          exit 1
+      - name: 結果をジョブの概要に書く
+        run: |
+          {
+            echo '### dev 環境のつながりの確認'
+            echo ''
+            echo '| 確認 | 結果 |'
+            echo '| --- | --- |'
+            echo '| 変数（7つ） | OK |'
+            echo "| OIDC でロールを引き受ける | OK |"
+            echo "| 画面のバケット \`$WEB_BUCKET\` | OK |"
+            echo '| Lambda 4関数 | OK |'
+            echo "| Data API（\`$DB_CLUSTER_ID\`） | OK |"
+          } >> "$GITHUB_STEP_SUMMARY"
