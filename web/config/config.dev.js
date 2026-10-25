@@ -2,8 +2,8 @@
 export const CONFIG = {
   env: 'dev',
   apiBase: '/api',
-  cognitoDomain: 'https://rpg-dev-xxxx.auth.ap-northeast-1.amazoncognito.com',
-  clientId: 'xxxxxxxxxxxxxxxxxxxxxxxxxx',
-  redirectUri: 'https://dxxxxxxxxxxxx.cloudfront.net/',
+  cognitoDomain: 'https://rpg-dev-rpgstudy.auth.ap-northeast-1.amazoncognito.com',
+  clientId: '3cs1ket1i6u3mfhna1afnu97k0',
+  redirectUri: 'https://dpeitrg9c5wmy.cloudfront.net/',
   release: '__RELEASE__'
 }
