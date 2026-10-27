@@ -341,11 +341,11 @@ rpglearning/
 | M-G06 | `domain/picker.js`            | 出題                                     | `chooseKind(...)`、`pickNext(candidates, state)`               |
 | M-G07 | `domain/answer-flow.js`       | 解答後の更新内容の計算                            | `buildAnswerOutcome(input)`                                   |
 | M-A01 | `ai/bedrock.js`               | Bedrock呼び出し                            | `converse({modelId, system, messages, maxTokens, temperature, timeoutMs})` |
-| M-A03 | `ai/sakura.js` | さくらのAI Engine 呼び出し | `converse(...)`（M-A01 と同じ引数・戻り値）、`toChatMessages` |
-| M-A04 | `ai/client.js` | AI の差し替え口 | `converse(...)`、`provider()`、`supportsDocuments()` |
+| M-A05 | `ai/sakura.js` | さくらのAI Engine 呼び出し | `converse(...)`（M-A01 と同じ引数・戻り値）、`toChatMessages` |
+| M-A06 | `ai/client.js` | AI の差し替え口 | `converse(...)`、`provider()`、`supportsDocuments()` |
 | M-A02 | `ai/json-guard.js`            | 出力JSONの取り出しと検証                         | `extractJson(text)`、`validateShape(obj, schema)`              |
-| -     | `ai/persona.js`               | パートナーの性格                               | `PERSONAS`、`personaInstruction(persona, name)`               |
-| -     | `ai/prompts/*.js`             | 指示文の組み立て                               | `buildGradingPrompt`、`buildExtractionPrompt`、`buildCommentPrompt`、`buildDailyMessagePrompt` |
+| M-A03 | `ai/persona.js`               | パートナーの性格                               | `PERSONAS`、`personaInstruction(persona, name)`               |
+| M-A04 | `ai/prompts/*.js`             | 指示文の組み立て                               | `buildGradingPrompt`、`buildExtractionPrompt`、`buildCommentPrompt`、`buildDailyMessagePrompt` |
 | M-M01 | `mail/smtp.js`・`templates.js`  | メール                                    | `sendMail({to, subject, text})`、`setTransport`、`notifyMail(item)`、`deletionMail(user)`、`inviteMail(…)`、`resetMail(…)` |
 | M-O01 | `storage/object-storage.js` | オブジェクトストレージ | `putObject`、`getBytes`、`getText`、`getStream`、`deleteObject`、`presignPut` |
 | M-K01 | `auth/password.js` | パスワード | `hashPassword`、`verifyPassword`、`passwordProblems`、`generateTempPassword` |
@@ -517,7 +517,7 @@ buildAnswerOutcome({ kind, correct, score, reviewItem, today, user, quests, owne
 
 AI の呼び出しは、必ず差し替え口 `ai/client.js` を通す（`grading-worker/grader.js`・`import-worker/extractor.js`・`routes/answers.js`・`routes/home.js`）。
 
-#### M-A04 `ai/client.js`（差し替え口）
+#### M-A06 `ai/client.js`（差し替え口）
 
 | 項目 | 設計 |
 | --- | --- |
@@ -526,7 +526,7 @@ AI の呼び出しは、必ず差し替え口 `ai/client.js` を通す（`gradin
 | `supportsDocuments()` | PDF・画像をそのまま読めるか。`bedrock` のときだけ true（4.4 で PDF を文字にするかを決める） |
 | Bedrock に戻すとき | `.env` の `AI_PROVIDER=bedrock`、`MODEL_HIGH`・`MODEL_LIGHT`（Claude のモデルID）、`AWS_*` を書き換えて `docker compose up -d`。コードは変えない |
 
-#### M-A03 `ai/sakura.js`（さくらのAI Engine）
+#### M-A05 `ai/sakura.js`（さくらのAI Engine）
 
 | 項目 | 設計 |
 | --- | --- |
@@ -1073,11 +1073,11 @@ export const CONFIG = {
 
 ## 7. AI連携の詳細
 
-AI はすべて差し替え口 `ai/client.js`（M-A04）から呼ぶ。呼び出し先は環境変数 `AI_PROVIDER` で決まる。
+AI はすべて差し替え口 `ai/client.js`（M-A06）から呼ぶ。呼び出し先は環境変数 `AI_PROVIDER` で決まる。
 
 | `AI_PROVIDER` | 呼び出し先 | `MODEL_HIGH`・`MODEL_LIGHT` | PDF・画像 |
 | --- | --- | --- | --- |
-| `sakura`（当面の既定） | さくらのAI Engine（OpenAI 互換の Chat Completions、M-A03） | どちらも `gpt-oss-120b` | PDF は文字を取り出して（unpdf）テキストとして渡す。画像は取り込めない |
+| `sakura`（当面の既定） | さくらのAI Engine（OpenAI 互換の Chat Completions、M-A05） | どちらも `gpt-oss-120b` | PDF は文字を取り出して（unpdf）テキストとして渡す。画像は取り込めない |
 | `bedrock`（復旧後） | Amazon Bedrock の Converse API（M-A01） | Sonnet・Haiku のモデルID（AWS 版と同じ） | PDF・画像をそのまま渡す |
 
 - 指示文（7.2〜7.5）・出力の検証・正規化はどちらでも同じ。差し替えで変わるのは呼び出し部分だけ
@@ -1833,7 +1833,7 @@ LIMIT :limit OFFSET :offset;
 | ------------------- | ---------------------------- | ------------------------------------------------------------------------------------------ |
 | `notifyMail(item)`  | 【RPG学習アプリ】今日の依頼が届いています       | 「{nickname}さん」→ パートナーの定型のひとこと（persona ごと）→ 今日の復習数 → クエスト3つ → `APP_URL/#/home` → 末尾に通知設定 `APP_URL/#/notify` |
 | `deletionMail(u)`   | 【RPG学習アプリ】アカウント停止のお知らせ       | 30日後（`delete_scheduled_on`）に学習履歴を含めて完全に削除されること、問い合わせ先                                       |
-| `inviteMail(x)`     | 【RPG学習アプリ】冒険者ギルドへの招待       | ログインの URL `APP_URL/`、メールアドレス、仮パスワード、有効期限（7日）、初回ログインで新しいパスワードに変えること（AWS 版では Cognito が送っていた） |
+| `inviteMail(x)`     | 【RPG学習アプリ】ギルドへの招待       | ログインの URL `APP_URL/`、メールアドレス、仮パスワード、有効期限（7日）、初回ログインで新しいパスワードに変えること（AWS 版では Cognito が送っていた） |
 | `resetMail(x)`      | 【RPG学習アプリ】パスワードの再設定       | 再設定の URL `APP_URL/#/reset?token=…`、有効期限（60分・1回だけ）、心当たりがなければ何もしなくてよいこと |
 
 - テキストメールのみ（HTMLメールにしない）。`APP_ENV` が `prod` 以外なら件名の先頭に `[{APP_ENV}]`（通常は `[dev]`）を付ける
@@ -1854,7 +1854,7 @@ LIMIT :limit OFFSET :offset;
 | 採点の30秒超え         | WARN  | `code: GRADING_TIMEOUT`、gradingId            | -（件数はログで確認） |
 | 採点の失敗            | WARN  | gradingId、failureReason、inputTokens         | 失敗を例外にしないため、件数はこのログで確認 |
 | DBにつながらない          | WARN  | `code: DB_RESUMING`                    | 続くならシンプル監視（DB）も赤になる                    |
-| AIの呼び出し（`ai.call`）     | INFO  | provider、purpose、modelId、inputTokens、outputTokens、durationMs | コストの確認（10.2 で集計）       |
+| AIの呼び出し（さくら：`ai.converse`、Bedrock：`bedrock.converse`）     | INFO  | purpose、modelId、inputTokens、outputTokens、durationMs（さくらは provider も） | コストの確認（10.2 で集計）       |
 | ジョブの終わり（`job.end`）・失敗（`job.error`・`job.exhausted`） | INFO・ERROR | jobId、kind、outcome、attempts            | 取り込みが最後まで失敗したら監視メール                  |
 | 定期処理（`schedule.done`・`schedule.failed`）       | INFO・ERROR  | name、slot、attempt                   | 3回失敗したら監視メール    |
 | メール送信の失敗         | WARN  | slot、failedCount                             | -                               |
@@ -1870,7 +1870,7 @@ docker compose logs --since 1h api | grep '"status":5'
 # 定期処理・ジョブの失敗
 docker compose logs --since 24h worker | grep -E '"level":"ERROR"'
 # AI の呼び出し回数とトークン数（用途ごと）
-docker compose logs --since 24h api worker | grep '"msg":"ai.call"' | sed 's/^[^{]*//' | jq -s 'group_by(.purpose) | map({purpose: .[0].purpose, calls: length, inTok: (map(.inputTokens) | add), outTok: (map(.outputTokens) | add)})'
+docker compose logs --since 24h api worker | grep -E '"msg":"(ai|bedrock).converse"' | sed 's/^[^{]*//' | jq -s 'group_by(.purpose) | map({purpose: .[0].purpose, calls: length, inTok: (map(.inputTokens) | add), outTok: (map(.outputTokens) | add)})'
 ```
 
 ### 10.3 画面でのエラーの扱い
@@ -1943,7 +1943,7 @@ flowchart LR
 
 | ファイル | きっかけ | 内容 |
 | --- | --- | --- |
-| `ci.yml` | プルリクエスト・`main` への push | `npm ci` → `npm run lint` → `npm test`（カバレッジつき）→ `docker build`（押し出さない） |
+| `ci.yml` | `main` へのプルリクエスト・手動 | `npm ci` → `npm test -- --coverage`（基準を下回ったら失敗）→ `npm run build:web` → `docker build`（押し出さない） |
 | `release.yml` | `main` で手動実行（dev）、タグ `release-*`（prod） | テスト → リリース番号を決める → レジストリにログイン → `docker build`（`APP_ENV`・`RELEASE_NO`）→ `docker push`。イメージ名をジョブの概要に書く |
 
 - AWS 版の `deploy.yml`・`rollback.yml` はない（反映と切り戻しはサーバーで行う。11.5・11.6）

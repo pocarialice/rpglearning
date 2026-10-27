@@ -3,9 +3,9 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第1.2版（ドラフト：第1〜6章、HTML版あり。画面（S-02〜S-14）・部品・外枠のテスト M-F07〜M-F22 を追加し、カバレッジの対象に画面を入れる）       |
-| 作成日    | 2026-10-20                                      |
-| 入力文書   | 詳細設計書 第1.1版、外部設計書 第1.0版                          |
+| 版数     | 第1.3版（ドラフト：第1〜6章、HTML版あり。さくらのクラウドへの切り替えに合わせ、DB（pg）・ジョブキュー・ログイン・メール（SMTP）・オブジェクトストレージ・AI の差し替え口・コンテナの入口のテストを追加し、AWS 固有のケースを差し替える）       |
+| 作成日    | 2026-10-20（第1.3版：2026-10-27）                                      |
+| 入力文書   | 詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
 
 ---
@@ -14,31 +14,32 @@
 
 ### 1.1 目的
 
-詳細設計書で定めたモジュール（1つのJSファイル）ごとに、公開関数が設計どおりに動くことを確かめるテストの範囲・方法・テストケース・合否基準を定める。テストは Vitest で自動化し、GitHub Actions でプルリクエストごととリリースのビルドごとに全件を実行する（詳細設計書 11.2・11.4）。
+詳細設計書で定めたモジュール（1つのJSファイル）ごとに、公開関数が設計どおりに動くことを確かめるテストの範囲・方法・テストケース・合否基準を定める。テストは Vitest で自動化し、GitHub Actions でプルリクエストごととリリースのビルドごとに全件を実行する（詳細設計書 11.2）。
 
 ### 1.2 テストの位置づけ
 
 ```mermaid
 flowchart LR
-  MT["モジュールテスト<br>（本書）<br>1ファイル単位・AWSはモック"] --> IT["結合テスト<br>dev 環境<br>Lambda＋Aurora＋Bedrock"]
-  IT --> ST["システムテスト<br>dev 環境（凍結中）<br>画面からの業務シナリオ"]
-  ST --> UAT["受け入れ確認<br>dev 環境（凍結中）<br>コース管理者"]
+  MT["モジュールテスト<br>（本書）<br>1ファイル単位・外部サービスはモック"] --> IT["結合テスト<br>dev 環境<br>コンテナ＋DB＋AI Engine"]
+  IT --> ST["システムテスト<br>dev 環境<br>画面からの業務シナリオ"]
+  ST --> UAT["受け入れ確認<br>dev 環境<br>コース管理者"]
 ```
 
 | テスト      | 対象                               | 環境               | 本書での扱い |
 | -------- | -------------------------------- | ---------------- | ------ |
 | モジュールテスト | 関数の入出力・分岐・例外                     | 作業PC と GitHub Actions（Node.js 22） | 対象     |
-| 結合テスト    | Lambda と実際の Aurora・Bedrock・S3 の組み合わせ | dev              | 対象外（別紙） |
-| システムテスト  | 画面からの業務の流れ、性能（採点30秒以内など）          | dev（凍結中。詳細設計書 11.1）              | 対象外（別紙） |
+| 結合テスト    | コンテナと実際の DB・AI（さくらのAI Engine）・オブジェクトストレージ・SMTP の組み合わせ | dev              | 対象外（別紙） |
+| システムテスト  | 画面からの業務の流れ、性能（採点30秒以内など）          | dev（詳細設計書 11.1）              | 対象外（別紙） |
 
 ### 1.3 モジュールIDの付け方
 
-詳細設計書 3.1 の ID（M-U・M-D・M-G・M-A・M-M）に加え、本書で次の ID を使う。
+詳細設計書 3.1 の ID（M-U・M-D・M-G・M-A・M-M・M-O・M-K）に加え、本書で次の ID を使う。
 
 | 接頭辞   | 対象                                     |
 | ----- | -------------------------------------- |
 | M-H   | api-handler（router と routes/）          |
 | M-W   | grading-worker・import-worker・batch-runner |
+| M-S   | コンテナの入口（`server/http.mjs`・`server/worker.mjs`・`server/main.mjs`） |
 | M-F   | 画面（`web/js/core`・`logic`・`pages`・`parts`・`components`・`shell.js`） |
 
 テストケースIDは `MT-{モジュールIDの記号と番号}-{2桁の連番}`（例：`MT-G01-04`）とする。
@@ -51,9 +52,9 @@ flowchart LR
 
 | 区分     | 対象                                                                       | 対象外（理由）                                         |
 | ------ | ------------------------------------------------------------------------ | ----------------------------------------------- |
-| Lambda | `functions/shared/` の全モジュール、4関数の `index.mjs`（`main`）・ハンドラ・ステップ           | なし                                              |
+| サーバー | `functions/shared/` の全モジュール、`functions/*/` の `index.mjs`（`main`・ジョブの入口）・ハンドラ・ステップ、`server/` の3ファイル           | `Dockerfile`・`compose.yaml`・`Caddyfile`（イメージを作って動かす確認。結合テスト）                                              |
 | 画面     | `web/js/core/`、`web/js/logic/`、`web/js/pages/`、`web/js/parts/`、`web/js/components/`、`web/js/shell.js` | `web/js/main.js`（起動とログイン。結合テストで確認）、見た目そのもの（色・配置。システムテストで確認） |
-| DB     | リポジトリが組み立てるSQLとパラメータ（Data API はモック）                                      | SQL の実行結果そのもの（結合テスト）                            |
+| DB     | リポジトリが組み立てるSQLとパラメータ（pg の接続プールはモック）                                      | SQL の実行結果そのもの（結合テスト。作業PCの PostgreSQL 16 でも確かめる）                            |
 | 設定     | -                                                                        | `config.{env}.js` の値（リリース時のスモークテスト）            |
 
 ### 2.2 テスト技法
@@ -64,7 +65,7 @@ flowchart LR
 | 境界値分析   | 上限・下限・日付の切り替わり                               | 説明文 49／50／400／401文字、JSTの0:00              |
 | デシジョンテーブル | 条件の組み合わせで結果が変わるもの                            | 復習段階（予定日の前後 × 正誤 × 現在の段階）                |
 | 状態遷移    | 状態を持つもの                                      | 採点ジョブ（processing → done／failed）、取り込み、利用者の状態 |
-| エラー推測   | 外部サービスの失敗・時間切れ・形の崩れ                          | Bedrock がJSON以外を返す、DBの起動中                 |
+| エラー推測   | 外部サービスの失敗・時間切れ・形の崩れ                          | AI がJSON以外を返す、DBにつながらない、SMTP の失敗                 |
 
 ### 2.3 モックの方針
 
@@ -76,26 +77,32 @@ flowchart LR
   subgraph M["テスト対象のモジュール"]
     H["ハンドラ・ワーカー"] --> D["domain（純粋関数）"]
     H --> R["repositories"]
-    R --> DA["data-api"]
-    H --> AI["ai/bedrock"]
+    R --> DA["db/client（pg）"]
+    H --> AI["ai/client"]
+    H --> ST["storage・mail"]
   end
   TC --> H
   TC --> D
   R -.->|"vi.mock で差し替え"| RM["リポジトリのモック"]
-  DA -.->|"aws-sdk-client-mock"| RDS["RDS Data のモック"]
-  AI -.->|"aws-sdk-client-mock"| BRM["Bedrock のモック"]
+  DA -.->|"dbMock（setPool）"| PGM["接続プールのモック"]
+  AI -.->|"fetch の差し替え・aws-sdk-client-mock"| AIM["AI のモック"]
+  ST -.->|"aws-sdk-client-mock・setTransport"| STM["S3・SMTP のモック"]
   TC -.->|"vi.useFakeTimers"| CLK["偽の時計"]
 ```
 
 | 依存先                          | モックの方法                                                      |
 | ---------------------------- | ----------------------------------------------------------- |
-| AWS SDK（RDS Data・Bedrock Runtime・S3・SES・Cognito・Lambda） | `aws-sdk-client-mock` でクライアントごとに応答を差し替える。送ったコマンドの中身も検証する |
+| DB（pg の接続プール） | `tests/helpers/mocks.js` の `dbMock()` を `setPool` で差し込む。`$n` に置き換えたあとの SQL とパラメータを記録し、正規表現ごとに応答を決める。`BEGIN`・`COMMIT`・`ROLLBACK` も記録する |
+| オブジェクトストレージ・Bedrock（S3 互換 API・AWS SDK） | `aws-sdk-client-mock` でクライアントごとに応答を差し替える（`s3Mock()`・`bedrockMock()`）。送ったコマンドの中身も検証する |
+| さくらのAI Engine | `converse` に `fetchFn` を渡して差し替える。送った本文・ヘッダーを検証する |
+| メール（SMTP） | `setTransport` で `sendMail` を持つ偽物を差し込む（`mailMock()`）。送ったメールを記録し、失敗も作れる |
 | リポジトリ（ハンドラのテスト）             | `vi.mock('../../shared/db/repositories/xxx.js')` で関数ごとに差し替える    |
 | 時刻                           | `vi.useFakeTimers()` ＋ `vi.setSystemTime()`。日付を扱う関数には `now` を引数で渡す |
 | 乱数（クエストの割り当て）               | `pickDailyQuests(dueCount, rand)` に決まった値を返す関数を渡す              |
-| 画面の `fetch`・`sessionStorage`・`crypto` | Vitest の環境を `jsdom` にし、`fetch` は `vi.fn()`。`crypto.subtle` は Node 22 の標準実装を使う |
-| 画面の移動（`location.assign`）      | `vi.spyOn(window.location, 'assign')` の代わりに、auth.js が受け取る `navigate` 関数を差し替える |
+| 画面の `fetch`・`sessionStorage` | Vitest の環境を `jsdom` にし、`createAuth` に `fetchFn`・`storage`・`reload`・`showLogin` を渡して差し替える |
+| HTTP サーバー（M-S01） | `createHttpServer` を空いているポートで起動し、Node 22 の `fetch` で呼ぶ（外部には出ない） |
 
+- AI を使う処理（採点・抽出・解説コメント・ひとこと）のテストは、`vitest.setup.js` で `AI_PROVIDER=bedrock` にして Bedrock のモックで確かめる（指示文と結果の扱いは AI の種類によらず同じため）。さくらのAI Engine の呼び出しは M-A05、切り替えは M-A06、PDF の文字の取り出しは MT-W02-17〜20 で確かめる
 - **ドメインロジック（M-G）と入力チェック（M-U07）はモックを使わない**（純粋関数のため、入力と出力だけで確かめる）
 - 外部サービスへ実際に接続するテストは書かない（ネットワークに出たらテストを失敗させる：`vitest.setup.js` で `fetch` の既定をエラーにする）
 
@@ -105,9 +112,9 @@ flowchart LR
 | --------------- | ---------------------------- | --------------------------------------------------- |
 | 基準日時            | `tests/helpers/clock.js`     | `NOW = 2026-10-20T01:00:00Z`（JST 10/20 火 10:00）。特に書かない限りこの日時 |
 | 利用者・コース         | `tests/fixtures/users.js`    | 学習者 `u_15`（Lv3・total 330 EXP・励まし型「ミナ」）、コース管理者 `u_2`（担当 `c_3`）、システム管理者 `u_1` |
-| Bedrock の応答     | `tests/fixtures/bedrock/`    | 採点の正常JSON（72点）、前後に文章つき、コードブロックつき、形の崩れたもの、抽出の正常JSON |
-| Data API の応答    | `tests/fixtures/data-api/`   | `formattedRecords` の例、`DatabaseResumingException`  |
-| SQS・S3・API Gateway のイベント | `tests/fixtures/events/` | 取り込みの S3 通知、HTTP API 2.0 のイベント（JWTクレームつき）       |
+| AI の応答     | `tests/fixtures/bedrock/`    | 採点の正常JSON（72点）、前後に文章つき、コードブロックつき、形の崩れたもの、抽出の正常JSON（さくらのAI Engine のテストも同じ本文を使う） |
+| DB の応答    | `tests/helpers/mocks.js`（`dbMock`・`pgError`）   | 行の配列、更新件数、`57P03`（起動中）・`ECONNREFUSED`（つながらない）・`23505`（一意制約）のエラー  |
+| HTTP のイベント | `tests/fixtures/events/` | `server/http.mjs` が作るのと同じ形のイベント（クレームつき）       |
 | PDF             | `tests/fixtures/pdf/`        | 1・10・11・23・51ページの小さなPDF（pdf-lib で作った白紙）            |
 
 ---
@@ -118,11 +125,11 @@ flowchart LR
 
 | ツール                   | 版（2026-10 時点の想定） | 用途                    |
 | --------------------- | ---------------- | --------------------- |
-| Node.js               | 22.x             | 実行環境（Lambda と合わせる）     |
+| Node.js               | 22.x             | 実行環境（コンテナイメージと合わせる）     |
 | Vitest                | 3.x              | テストの実行・アサーション・モック     |
 | @vitest/coverage-v8   | Vitest と同じ版      | カバレッジの計測               |
 | jsdom                 | 最新               | 画面モジュールの実行環境           |
-| aws-sdk-client-mock   | 4.x              | AWS SDK v3 のモック        |
+| aws-sdk-client-mock   | 4.x              | AWS SDK v3（S3 互換・Bedrock）のモック        |
 
 ### 3.2 設定（`vitest.config.js`）
 
@@ -133,17 +140,18 @@ export default defineConfig({
     setupFiles: ['tests/helpers/vitest.setup.js'],
     restoreMocks: true,
     projects: [
-      { extends: true, test: { name: 'functions', include: ['tests/unit/functions/**/*.test.js'], environment: 'node' } },
+      { extends: true, test: { name: 'functions', include: ['tests/unit/functions/**/*.test.js', 'tests/unit/server/**/*.test.js'], environment: 'node' } },
       { extends: true, test: { name: 'web', include: ['tests/unit/web/**/*.test.js'], environment: 'jsdom' } }
     ],
     coverage: {
       provider: 'v8',
-      include: ['functions/**/*.{js,mjs}', 'web/js/core/**', 'web/js/logic/**', 'web/js/pages/**', 'web/js/parts/**', 'web/js/components/**', 'web/js/shell.js'],
+      include: ['functions/**/*.{js,mjs}', 'server/**/*.mjs', 'web/js/core/**', 'web/js/logic/**', 'web/js/pages/**', 'web/js/parts/**', 'web/js/components/**', 'web/js/shell.js'],
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
         'functions/shared/domain/**': { statements: 100, branches: 100 },
         'web/js/logic/validators.js': { statements: 100, branches: 100 },
         'functions/**': { statements: 90, branches: 80 },
+        'server/**': { statements: 90, branches: 80 },
         'web/js/**': { statements: 90, branches: 80 }
       }
     }
@@ -151,7 +159,7 @@ export default defineConfig({
 })
 ```
 
-- `functions/` のテストは Node、`web/` のテストは jsdom で動かすため、`test.projects` で2つに分ける（Vitest 3.2 で非推奨になった `environmentMatchGlobs` は使わない）
+- `functions/`・`server/` のテストは Node、`web/` のテストは jsdom で動かすため、`test.projects` で2つに分ける（Vitest 3.2 で非推奨になった `environmentMatchGlobs` は使わない）
 
 ### 3.3 テストファイルの置き方
 
@@ -163,14 +171,17 @@ tests/
 │  │  ├─ shared/domain/review.test.js
 │  │  ├─ api-handler/routes/answers.test.js
 │  │  └─ batch-runner/steps/close-ranking.test.js
+│  ├─ server/http.test.js                # server/http.mjs のテスト
 │  └─ web/
 │     ├─ core/auth.test.js
+│     ├─ pages/login.test.js
 │     └─ logic/validators.test.js
 ├─ fixtures/
 └─ helpers/
    ├─ vitest.setup.js
    ├─ clock.js
-   └─ aws-mocks.js                         # mockClient の組み立て
+   ├─ mocks.js                             # dbMock・mailMock・s3Mock・bedrockMock
+   └─ repos.js                             # リポジトリの vi.mock の組み立て
 ```
 
 - テストの説明文（`it('…')`）の先頭にテストケースIDを書く。例：`it('MT-G01-04 予定日当日に正解すると段階2・3日後になる', …)`
@@ -190,8 +201,8 @@ tests/
 
 | ワークフロー（ジョブ）         | きっかけ                    | 実行するもの                     | 失敗したとき                                   |
 | ------------------- | ----------------------- | -------------------------- | ---------------------------------------- |
-| `ci.yml`            | `main` へのプルリクエスト        | `npm test -- --coverage` → `npm run build:functions -- --verify`   | マージできない（ブランチのルールで `ci` の成功を必須にしている）            |
-| `release.yml`（`build`） | `main` への push、タグ `release-*` の push | `npm test -- --coverage`   | 配置のジョブが動かない（dev・prod のどちらにも配置されない）           |
+| `ci.yml`            | `main` へのプルリクエスト        | `npm test -- --coverage` → `npm run build:web` → `docker build`   | マージできない（ブランチのルールで `ci` の成功を必須にしている）            |
+| `release.yml`（`image`） | `main` で手動実行、タグ `release-*` の push | `npm test`   | イメージを作らない（レジストリに置かれず、サーバーへ反映できない）           |
 
 - カバレッジの結果（`coverage/`）は Actions の成果物 `coverage-{実行番号}` として14日保管し、要約をジョブの概要（Summary）に書く
 - Node.js は `actions/setup-node` で 22 を使い、作業PCと版をそろえる
@@ -201,18 +212,16 @@ tests/
 
 ```js
 import { describe, it, expect, beforeEach } from 'vitest'
-import { mockClient } from 'aws-sdk-client-mock'
-import { RDSDataClient, ExecuteStatementCommand } from '@aws-sdk/client-rds-data'
-import { query } from '../../../../functions/shared/db/data-api.js'
-const rds = mockClient(RDSDataClient)
-describe('M-D01 data-api', () => {
-  beforeEach(() => rds.reset())
-  it('MT-D01-08 DB起動中で再試行0回なら DB_RESUMING(503) を投げる', async () => {
-    const err = Object.assign(new Error('resuming'), { name: 'DatabaseResumingException' })
-    rds.on(ExecuteStatementCommand).rejects(err)
-    await expect(query('SELECT 1', {}, { resumeRetries: 0 }))
-      .rejects.toMatchObject({ code: 'DB_RESUMING', status: 503 })
-    expect(rds.commandCalls(ExecuteStatementCommand)).toHaveLength(1)
+import { query, NOT_READY } from '../../../../../functions/shared/db/client.js'
+import { dbMock, pgError } from '../../../../helpers/mocks.js'
+const db = dbMock()
+describe('M-D01 client', () => {
+  beforeEach(() => db.reset())
+  it('MT-D01-08 起動中・接続できないときは DB_RESUMING', async () => {
+    for (const code of NOT_READY) {
+      db.rejectsOnce(pgError(code))
+      await expect(query('SELECT 1')).rejects.toMatchObject({ code: 'DB_RESUMING', status: 503 })
+    }
   })
 })
 ```
@@ -264,7 +273,7 @@ describe('M-D01 data-api', () => {
 | MT-U03-11 | ISO文字列        | `toIsoJst(new Date('2026-10-20T15:30:00Z'))` | `'2026-10-21T00:30:00+09:00'`  | 同  |
 | MT-U03-12 | 日数の差          | `diffDays('2026-10-21', '2026-10-26')`     | `5`                            | 同  |
 | MT-U03-13 | 不正な日付         | `addDays('2026-13-01', 1)`                 | 例外（`VALIDATION_ERROR`）         | 異  |
-| MT-U03-14 | DBの日時の読み取り（`parseDbTimestamp`） | `'2026-10-20 01:00:00'`（Data API の形）／`+09:00` 付き／Date | どれも同じ時刻の Date（Data API の値はUTCとして読む） | 同 |
+| MT-U03-14 | DBの日時の読み取り（`parseDbTimestamp`） | `'2026-10-20 01:00:00'`（`db/client.js` がそろえた UTC の形）／`+09:00` 付き／Date | どれも同じ時刻の Date（タイムゾーンのない値はUTCとして読む） | 同 |
 
 #### M-U04 `util/authz.js`
 
@@ -302,7 +311,7 @@ describe('M-D01 data-api', () => {
 | MT-U06-05 | 通常の応答        | `ok({ x: 1 }, 201)`                                | `statusCode=201`、`Content-Type: application/json; charset=utf-8`、`Cache-Control: no-store` | 同  |
 | MT-U06-06 | CSVの応答       | `csv('a,b', 'dashboard_c_3_20261020.csv')`          | `Content-Type: text/csv; charset=utf-8`、`Content-Disposition: attachment; filename="dashboard_c_3_20261020.csv"` | 同  |
 
-#### M-U07 `web/js/logic/validators.js`（画面とLambdaで共用）
+#### M-U07 `web/js/logic/validators.js`（画面とサーバーで共用）
 
 **説明文 `validateExplanation`**（`X(n)` は「あ」をn文字並べた文字列）
 
@@ -346,46 +355,50 @@ describe('M-D01 data-api', () => {
 | MT-U07-26 | 公開できる問題     | 問題文・選択肢4つ・正解2・解説・キーワード2つ                                 | `ok:true`                | 同  |
 | MT-U07-27 | 公開できない問題    | 選択肢3つ ／ 選択肢の1つが空 ／ 正解0 ／ 正解5 ／ 解説が空                       | すべて `ok:false, code:'M-12'` | DT |
 | MT-U07-28 | キーワードの数と長さ  | 0個／3個／4個 ／ 50文字／51文字                                     | OK／OK／NG ／ OK／NG         | 境  |
-| MT-U07-29 | Lambda側の変換（`assertValid`） | `validateNickname('あ')` の結果 | `VALIDATION_ERROR`（400）、`details[0].field='nickname'`。ok のときは例外なし | 同 |
+| MT-U07-29 | サーバー側の変換（`assertValid`） | `validateNickname('あ')` の結果 | `VALIDATION_ERROR`（400）、`details[0].field='nickname'`。ok のときは例外なし | 同 |
 | MT-U07-30 | 文字列以外のニックネーム・パートナー名 | `null`、`undefined`、数値 | 例外を投げない。ニックネームは NG、パートナー名の null・undefined は OK（初期名）、数値は NG | 異 |
 | MT-U07-31 | 取り込みの要求の不正 | 要求なし、テキストが文字列でない、ファイル名が空白・数値・256文字、サイズ0・小数 | すべて `ok:false`（該当する `field`）。PNG の正常な要求は OK | 異 |
 | MT-U07-32 | 問題の下書きの不正 | 下書きなし、問題文が空白、選択肢が配列でない、正解が文字列、キーワードが配列でない・空文字 | すべて `ok:false, code:'M-12'`。キーワード省略は OK | 異 |
 | MT-U07-33 | （欠番） | 同上 | - | - |
 
-#### M-U08 `util/env.js`
+#### M-U08 `util/alert.js`（監視のお知らせメール）
 
 | ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
 | --------- | -- | ----- | ---- | -- |
-| MT-U08-01 | 環境変数の読み取り（`requireEnv`） | 設定済みの変数／ない変数を含む | 値のオブジェクトを返す／ない変数名を含む例外 | 異 |
+| MT-U08-01 | 送る | `ALERT_EMAIL` あり、`alert('api-5xx', '件名', ['1行目'])` | `ALERT_EMAIL` 宛てに1通。件名の先頭に `[{APP_ENV}]【RPG学習アプリ 監視】`、本文の最後に「ログで詳しい内容を確認してください。」 | 同 |
+| MT-U08-02 | 同じ key は1時間に1通 | 同じ key を1回目の直後（1時間未満）・1時間後に、別の key を直後に | 1時間未満は送らない（false）。別の key と1時間後は送る | 境 |
+| MT-U08-03 | 宛先がない・送れない・環境名がない | `ALERT_EMAIL` なし／送信が例外／`APP_ENV` なし | 送らずに false／WARN ログ `alert.send_failed` で false（例外を投げない）。次の key は送れる／件名は `[local]` | 異 |
 
 ### 4.2 db
 
-#### M-D01 `db/data-api.js`
+#### M-D01 `db/client.js`
 
-| ID        | 観点              | 入力・前提                                                        | 期待結果                                                            | 技法 |
-| --------- | --------------- | ------------------------------------------------------------ | --------------------------------------------------------------- | -- |
-| MT-D01-01 | 接続情報            | 環境変数 `DB_CLUSTER_ARN`・`DB_SECRET_ARN`・`DB_NAME`                | コマンドの `resourceArn`・`secretArn`・`database` に入る、`formatRecordsAs='JSON'` | 同  |
-| MT-D01-02 | パラメータの型（整数・小数）  | `{ a: 42, b: 1.5 }`                                          | `{name:'a', value:{longValue:42}}`、`{name:'b', value:{doubleValue:1.5}}` | 同  |
-| MT-D01-03 | パラメータの型（文字・真偽）  | `{ s: 'x', t: true }`                                        | `stringValue`、`booleanValue`                                    | 同  |
-| MT-D01-04 | パラメータの型（null）   | `{ n: null }`                                                | `{ isNull: true }`                                              | 同  |
-| MT-D01-05 | 日付・JSON         | `{ d: {date:'2026-10-20'}, j: {json:{a:1}} }`                | `typeHint:'DATE'` と `stringValue:'2026-10-20'`、`typeHint:'JSON'` と `'{"a":1}'` | 同  |
-| MT-D01-06 | 結果の変換           | `formattedRecords: '[{"user_id":15}]'`                       | `[{ user_id: 15 }]`                                             | 同  |
-| MT-D01-07 | 結果なし            | `formattedRecords` がない（UPDATE文）                              | `[]`、`numberOfRecordsUpdated` を返せる                             | 境  |
-| MT-D01-08 | DB起動中・再試行0回     | `DatabaseResumingException`、`resumeRetries: 0`               | `DB_RESUMING`（503）、呼び出し1回                                      | 異  |
-| MT-D01-09 | DB起動中から復帰       | 2回 `DatabaseResumingException` のあと成功、`resumeRetries: 6`      | 偽の時計で5秒ずつ進めると3回目で結果を返す                                          | 状  |
-| MT-D01-10 | 再試行が尽きる         | 7回とも `DatabaseResumingException`、`resumeRetries: 6`          | `DB_RESUMING`、呼び出し7回                                           | 境  |
-| MT-D01-11 | ほかのエラー          | `BadRequestException`                                        | 再試行せず、そのまま投げる                                                  | 異  |
-| MT-D01-12 | 変換できないパラメータ | `{ x: { foo: 1 } }` | `INTERNAL_ERROR`（SQLを送らない） | 異 |
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-D01-01 | `:name` の置き換え | `query('SELECT :a, :b, :a', {a:1, b:'x'})` | 送る SQL は `SELECT $1, $2, $1`、パラメータは `[1, 'x']`（同じ名前は同じ番号） | 同 |
+| MT-D01-02 | 型変換とキャスト | `:s::text`・`CAST(:c AS timestamptz)` | `::text` は名前と見なさず `$1::text`、`CAST($2 AS …)` | 異 |
+| MT-D01-03 | パラメータの型（真偽・null・undefined） | `{t:true, n:null, u:undefined}` | `[true, null, null]` | 同 |
+| MT-D01-04 | 接続プール | `DATABASE_URL` を設定して `getPool()` を2回 | `pg.Pool` を1つだけ作り、同じものを返す。接続先は `DATABASE_URL` | 同 |
+| MT-D01-05 | 日付・JSON | `{d:{date:'2026-10-20'}, j:{json:{a:1}}}` | `['2026-10-20', '{"a":1}']` | 同 |
+| MT-D01-06 | 結果の行 | 応答 `rows:[{user_id:15}]` | `[{ user_id: 15 }]` | 同 |
+| MT-D01-07 | 更新件数 | UPDATE 文で `rowCount: 3`／`rows`・`rowCount` なし | `{ rows: [], numberOfRecordsUpdated: 3 }`／`rows` は空配列 | 境 |
+| MT-D01-08 | DBにつながらない | `57P03`（起動中）・`ECONNREFUSED`・`ETIMEDOUT` など `NOT_READY` の各コード | `DB_RESUMING`（503） | 異 |
+| MT-D01-09 | ほかのエラー | `23505`（一意制約） | そのまま投げる | 異 |
+| MT-D01-10 | トランザクションの接続 | `execute(sql, params, { client })` | 渡した `client` で実行し、接続プールは使わない | 同 |
+| MT-D01-11 | 日時の列 | `timestamptz` の文字（`+09`・`+00`・`+05:30`）、`int8`、`date` | UTC の `YYYY-MM-DD HH:MM:SS.mmm` にそろえる、数値、文字のまま | 同 |
+| MT-D01-12 | 変換できない・足りないパラメータ | `{ x: { foo: 1 } }`／`:missing` に値なし | `INTERNAL_ERROR`（SQLを送らない） | 異 |
 
 #### M-D02 `db/tx.js`
 
 | ID        | 観点          | 入力・前提                           | 期待結果                                                          | 技法 |
 | --------- | ----------- | ------------------------------- | ------------------------------------------------------------- | -- |
-| MT-D02-01 | 正常          | `withTx` の中で `tx.query` を2回      | Begin → Execute×2（同じ `transactionId`）→ Commit の順。Rollback は呼ばない | 同  |
-| MT-D02-02 | 途中の例外       | 2回目の `tx.query` が例外             | Rollback が呼ばれ、元の例外がそのまま投げられる。Commit は呼ばない                    | 異  |
-| MT-D02-03 | Commit の失敗  | Commit が例外                      | 例外が投げられる                                                      | 異  |
+| MT-D02-01 | 正常          | `withTx` の中で `tx.query` を2回      | `BEGIN` → 2回（同じ接続）→ `COMMIT` の順。`ROLLBACK` は送らず、接続を返す | 同  |
+| MT-D02-02 | 途中の例外       | 2回目の `tx.query` が例外             | `ROLLBACK` を送り、元の例外がそのまま投げられる。`COMMIT` は送らない                    | 異  |
+| MT-D02-03 | Commit の失敗  | `COMMIT` が例外                      | 例外が投げられる                                                      | 異  |
 | MT-D02-04 | 戻り値         | 中の関数が `{ id: 1 }` を返す           | `withTx` の戻り値が `{ id: 1 }`                                    | 同  |
-| MT-D02-05 | Rollback の失敗 | 中の関数が例外、Rollback も例外 | 元の例外をそのまま投げる | 異 |
+| MT-D02-05 | Rollback の失敗 | 中の関数が例外、`ROLLBACK` も例外 | 元の例外をそのまま投げる | 異 |
+| MT-D02-06 | 並べて呼ぶ | `Promise.all` で `tx.query` を2つ同時に呼ぶ | 1つずつ順に流す（pg の「同じ接続で同時に問い合わせない」警告を出さない） | 状 |
+| MT-D02-07 | 並べた片方の失敗 | 同時に呼んだ1つ目が例外 | 2つ目はそのまま流れる（前の失敗で止まらない） | 異 |
 
 #### M-D03 リポジトリ（代表的なもの）
 
@@ -393,9 +406,9 @@ describe('M-D01 data-api', () => {
 | --------- | -------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------- | -- |
 | MT-D03-01 | ニックネームの重複確認                | `nicknameTaken([3, 5], 'たろう', 15)`、結果1件                     | `true`。SQLのパラメータにコースID・ニックネーム・除外する利用者15が入る                            | 同  |
 | MT-D03-02 | 重複なし                       | 同上、結果0件                                                     | `false`                                                               | 同  |
-| MT-D03-03 | 採点の完了（条件付き）                | `gradings.complete(456, result)`、`numberOfRecordsUpdated: 1`／`0` | `true`／`false`。SQLに `status = 'processing'` の条件を含む                     | 状  |
-| MT-D03-04 | 復習項目の登録・更新                 | `reviews.upsertItem({kind:'choice', ...})`                    | `ON CONFLICT (user_id, question_id) WHERE kind = 'choice'` を含み、日付は `typeHint:'DATE'` | 同  |
-| MT-D03-05 | 週の集計                       | `exp.weeklyTotals(3, '2026-10-19')`                           | `earned_week` に `typeHint:'DATE'` で `'2026-10-19'`                       | 同  |
+| MT-D03-03 | 採点の完了（条件付き）                | `gradings.complete(456, result)`、`numberOfRecordsUpdated: 1`／`0` | `true`／`false`（更新件数 1／0）。SQLに `status = 'processing'` の条件を含む                     | 状  |
+| MT-D03-04 | 復習項目の登録・更新                 | `reviews.upsertItem({kind:'choice', ...})`                    | `ON CONFLICT (user_id, question_id) WHERE kind = 'choice'` を含み、日付は `'YYYY-MM-DD'` の文字で渡す | 同  |
+| MT-D03-05 | 週の集計                       | `exp.weeklyTotals(3, '2026-10-19')`                           | `earned_week = $n` に `'2026-10-19'`                       | 同  |
 | MT-D03-06 | ランキングの締め                   | `rankings.closeWeek(rows)`                                   | `ON CONFLICT (course_id, week_start, user_id) DO NOTHING` を含む              | 同  |
 | MT-D03-07 | 列名の変換                      | 結果 `{ next_review_on: '2026-10-21' }`                         | `{ nextReviewOn: '2026-10-21' }`                                       | 同  |
 | MT-D03-08 | 一覧の上限                      | `courses.dashboardRows(3, {limit:1000, offset:0})`             | パラメータ `limit=1000`・`offset=0`。SQLに `LIMIT` を含む                         | 境  |
@@ -424,6 +437,30 @@ describe('M-D01 data-api', () => {
 | MT-D03-31 | adventures の各関数 | `start`・`find`（他人は null）・`incrementServed`・`finish` | `served` をJSONで追加、10問まで | 同 |
 | MT-D03-32 | audit.write | 対象IDあり／なし、detail 省略 | detail はJSON（省略時 `{}`）、対象IDなしは null | 境 |
 | MT-D03-33 | notify の各関数 | `get`・`put`・`listForSlotBuild` | 送信時刻は `HH24:MI`、今日は `{date}` | 同 |
+
+#### M-D04 リポジトリ（ジョブキュー・定期処理・ログイン）
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-D04-01 | キューに入れる | `jobs.enqueue('grading', {gradingId:1})`／`'import'` | ジョブIDを返す。`max_attempts` は採点1・取り込み3。payload はJSON | 同 |
+| MT-D04-02 | 1件取り出す | `claimNext(['grading','import'], 60)` | `FOR UPDATE SKIP LOCKED` で1件。期限切れの `running`（`locked_until < now()`）も取り戻す。`{jobId, kind, payload, attempts, maxAttempts}`、なければ null | 状 |
+| MT-D04-03 | 完了・やり直し・失敗・数える・掃除 | `complete`・`retry(id, 2000文字のエラー, 60)`・`fail(id, Error)`・`countFailedSince`・`deleteFinishedBefore` | `status='done'`、エラーは1,000文字に切る、`Error` は文字にする、件数を返す | 状 |
+| MT-D04-04 | 定期処理の枠 | `schedules.claim('daily', '2026-10-20')`（行が入る／入らない）、`finish`、`release` | true／false（`ON CONFLICT DO NOTHING`）、結果をJSONで保存、放すのは終わっていない行（`finished_at IS NULL`）だけ | 状 |
+| MT-D04-05 | メールアドレスで探す | `auth.findByEmail('A@x.jp')`、`findById` | `lower(u.email) = lower(:email)`。`{userId, authSub, passwordHash, locked, roles}`、なければ null | 同 |
+| MT-D04-06 | 失敗の回数とロック | `recordFailure`、`recordSuccess` | 失敗の回数が5回に達したら `locked_until` を15分後にする SQL。成功で回数0・ロックなし | 境 |
+| MT-D04-07 | パスワードの保存 | `setPassword(id, hash, {mustChange:true})`、期限の日数の指定、`tempPasswordExpired` | 仮パスワードの期限は既定7日（指定した日数も渡す）。期限切れなら true、行がなければ false | DT |
+| MT-D04-08 | リフレッシュトークン | `saveRefreshToken`・`consumeRefreshToken`（有効／使えない）・`revokeRefreshToken`・`revokeAllForUser` | ハッシュと期限7日を保存。使うと無効にして利用者IDを返す（`revoked_at IS NULL AND expires_at > now()` の行だけ）、使えなければ null | 状 |
+| MT-D04-09 | 再設定リンク | `recentResetExists(id, 60)`・`saveReset`・`consumeReset`（有効／使えない）・`deleteExpired` | 直近60秒の発行の有無、期限60分を保存、使うと利用者ID／null、掃除した件数 | 状 |
+
+#### M-D05 `db/migrate.js`
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-D05-01 | ファイルの並べ方 | テスト用のフォルダ（`V002`・`V001`・`.down.sql`・ほかのファイル）、リポジトリの `db/migrations` | `V001`・`V002` の順（`.down.sql` などは除く）、リポジトリは `V001`〜`V003` | 同 |
+| MT-D05-02 | 未適用だけを流す | `V001` が適用済み、`V002` が未適用、`release:'r1'` | `pg_advisory_lock` → 適用済みの確認 → `BEGIN` → `V002` → `release_no` の更新 → `COMMIT` → ロックを外す。戻り値 `['V002']` | 状 |
+| MT-D05-03 | 初めての DB | `schema_migrations` がない | すべて未適用として流す | 境 |
+| MT-D05-04 | 失敗 | `V002` の SQL が例外 | `ROLLBACK`、「V002 の適用に失敗しました: …」を投げる。ロックを外して接続を返す | 異 |
+| MT-D05-05 | 記録のないファイル | 最後に `schema_migrations` に1行入れないファイル | 失敗にして取り消す | 異 |
 
 ### 4.3 domain
 
@@ -577,25 +614,79 @@ describe('M-D01 data-api', () => {
 | MT-A04-06 | 解説コメントの指示文 | ライバル型・正解・問題文に閉じタグ／励まし型・不正解・解説なし | system に名前と性格、`<\/question>` に置換、`<result>` に正誤、解説なしは空タグ | 同 |
 | MT-A04-07 | 模範説明の長さと小見出し | `buildGradingPrompt(...)` | system に「空白・改行を除いて50〜400文字」「200文字を超えるときは行の先頭に【】の小見出し」、JSONの形に `"modelAnswer":"50〜400文字"` | 同 |
 
+#### M-A05 `ai/sakura.js`（さくらのAI Engine）
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-A05-01 | リクエストの中身 | `converse({modelId, system, messages, maxTokens:300, temperature:0.7})`、`AI_BASE_URL` あり／なし | `POST {AI_BASE_URL}/chat/completions`（なければ既定の `https://api.ai.sakura.ad.jp/v1`）、`Authorization: Bearer {AI_API_KEY}`、`messages` の先頭が system、`max_tokens`・`temperature` | 同 |
+| MT-A05-02 | 応答の取り出し | `finish_reason` が `stop`／`length`／ほか、本文なし | `{ text, usage:{inputTokens, outputTokens}, stopReason }`（M-A01 と同じ形）。`end_turn`／`max_tokens`／そのまま、空の応答は空文字・0 | 同 |
+| MT-A05-03 | ログに本文を出さない | 正常に応答 | ログ `ai.converse` に `provider:'sakura'`・purpose・modelId・トークン数。指示文・応答の本文・APIキーは出ない | 異 |
+| MT-A05-04 | HTTP・通信のエラー | 429、`fetch` が例外 | `AI_ERROR`（`cause` に `HTTP_429`・エラー名） | 異 |
+| MT-A05-05 | 時間切れ | 応答が返らない、`timeoutMs` 経過 | `AI_TIMEOUT`、WARN ログ `ai.timeout` | 境 |
+| MT-A05-06 | 文書・画像のブロック | `messages` に document、文字だけの content、content なし | `AI_ERROR`（「このAIは文書・画像を読めません」）で送信しない／文字のまま／空文字 | 異 |
+| MT-A05-07 | 既定の fetch | `fetchFn` を渡さない | `globalThis.fetch` を使う | 同 |
+
+#### M-A06 `ai/client.js`（差し替え口）
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-A06-01 | 既定 | `AI_PROVIDER` なし | `provider()` は `sakura`、`supportsDocuments()` は false、`converse` は M-A05 を呼ぶ | 同 |
+| MT-A06-02 | Bedrock に切り替える | `AI_PROVIDER=bedrock` | `supportsDocuments()` は true、`converse` は M-A01 を呼ぶ | DT |
+| MT-A06-03 | 知らない名前 | `AI_PROVIDER=openai` | `INTERNAL_ERROR`（「AI_PROVIDER が正しくありません」） | 異 |
+
 ### 4.5 mail
 
-#### M-M01 `mail/ses.js`・`mail/templates.js`
+#### M-M01 `mail/smtp.js`・`mail/templates.js`
 
 | ID        | 観点           | 入力・前提                                                  | 期待結果                                                               | 技法 |
 | --------- | ------------ | ------------------------------------------------------ | ------------------------------------------------------------------ | -- |
 | MT-M01-01 | 通知メールの本文     | 送信リストの1件（たろう・ミナ・復習5・クエスト3つ）、`APP_ENV=prod`            | 件名 `【RPG学習アプリ】今日の依頼が届いています`。本文に「たろうさん」・5・クエスト3つ・`/#/home`・`/#/notify` | 同  |
 | MT-M01-02 | 環境名の付与 | `APP_ENV=dev`／`prod` | 件名の先頭が `[dev]`／付けない（`【RPG学習アプリ】` から始まる） | DT |
 | MT-M01-03 | 削除予定の通知      | `delete_scheduled_on='2026-11-19'`                     | 本文に「2026年11月19日」と問い合わせ先                                          | 同  |
-| MT-M01-04 | SES への送信     | `sendMail({to, subject, text})`                        | `SendEmailCommand` の送信元が `MAIL_FROM`、宛先が `to`、本文がテキスト               | 同  |
-| MT-M01-05 | 送信の失敗        | SES が `MessageRejected`                                | 例外を投げる（やり直しは呼び出し側）                                               | 異  |
+| MT-M01-04 | SMTP での送信     | `sendMail({to, subject, text})`                        | 送信元が `MAIL_FROM`、宛先が `to`、本文がテキスト。messageId を返す               | 同  |
+| MT-M01-05 | 送信の失敗        | SMTP が拒否（`SMTPError`）                                | 例外を投げる（やり直しは呼び出し側）                                               | 異  |
+| MT-M01-06 | SMTP の接続設定 | `SMTP_HOST`・`SMTP_PORT=465`・`SMTP_SECURE=true`・`SMTP_USER`・`SMTP_PASS`／ポートほかなし | nodemailer に `{host, port:465, secure:true, auth:{user, pass}}`／既定は 587・`secure:false`・`auth` なし | 同 |
+| MT-M01-07 | 招待メール | `inviteMail({email, tempPassword, validDays:7})`、`APP_ENV=dev` | 件名 `[dev]【RPG学習アプリ】ギルドへの招待`。本文にログインURL・仮パスワード・期限7日 | 同 |
+| MT-M01-08 | 再設定メール | `resetMail({email, token:'a+b/c', validMinutes:60})` | 件名 `【RPG学習アプリ】パスワードの再設定`。URL は `#/reset?token=a%2Bb%2Fc`、60分以内、問い合わせ先 | 同 |
+
+#### M-O01 `storage/object-storage.js`（さくらのオブジェクトストレージ）
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-O01-01 | 接続先 | `S3_ENDPOINT`・`S3_REGION`・キー | 1つのクライアントを使い回す。エンドポイント・リージョン・キーを使い、パス形式（`forcePathStyle`） | 同 |
+| MT-O01-02 | 置く・読む・消す | `putObject`・`getBytes`・`getText`・`deleteObject` | 各コマンドに Bucket・Key・Body・ContentType が入る。読んだ中身を返す | 同 |
+| MT-O01-03 | ないとき | `NoSuchKey`／`AccessDenied`（`getText`・`getStream`） | null／そのまま投げる | 異 |
+| MT-O01-04 | 画像を流す | `getStream('b', 'partners/a.png')` | 本文のストリーム・`contentType`・`contentLength` を返す（`/partners/*` の配信で使う） | 同 |
+| MT-O01-05 | 署名付きURL | `presignPut(bucket, key, 'application/pdf')` | パス形式の URL、`X-Amz-Expires=900`、署名に `content-type` を含む | 同 |
+
+#### M-K01 `auth/password.js`
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-K01-01 | ハッシュと照合 | `hashPassword('Guild2026')` を2回 | `scrypt$16384$8$1$…` の形で毎回違う（ソルト）。正しいパスワードで true、違えば false | 同 |
+| MT-K01-02 | 形の崩れたハッシュ | 区切りが足りない・`bcrypt$…`・パスワードが文字列でない | false（例外にしない） | 異 |
+| MT-K01-03 | パスワードの決まり | `Guild2026`・`Gu1`・130文字・`guildguild`・`GUILD2026`・null | 問題なし・`TOO_SHORT`・`TOO_LONG`・`NO_DIGIT`＋`NO_UPPER`・`NO_LOWER`・`REQUIRED` | 境 |
+| MT-K01-04 | 仮パスワード | `generateTempPassword()` を200回、長さ16の指定 | 12文字で決まりを満たし、まぎらわしい文字（0・O・1・l・I）を使わない。200回すべて違う。指定すれば16文字 | 同 |
+
+#### M-K02 `auth/token.js`
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-K02-01 | 署名と確認 | `signToken({sub, groups})` → `verifyToken` | クレームと発行者を返す。`exp - iat` は1時間。時刻が1時間以上たてば null | 同 |
+| MT-K02-02 | 期限・用途・改ざん | 期限の1秒前・ちょうど、`purpose:'new_password'` を IDトークンとして、本文の書き換え、`alg:none`、署名の欠け、形の崩れ | 期限前だけ通す。用途を指定したときだけ通す。ほかはすべて null | 異 |
+| MT-K02-03 | 発行者・期限・用途 | 正しい署名で `iss` が違う／`exp` がない／`purpose:'reset'` | すべて null（正しいものは通す） | 異 |
+| MT-K02-04 | 鍵が短い・ない | `AUTH_SECRET` が5文字／なし | 例外「AUTH_SECRET は32文字以上」 | 境 |
+| MT-K02-05 | 使い捨ての値 | `newOpaqueToken()` を2回・`sha256('abc')` | 43文字の base64url で毎回違う。SHA-256 は16進64文字（既知の値） | 同 |
+
+
 
 ---
 
-## 5. テストケース（Lambda関数・画面）
+## 5. テストケース（API・ワーカー・コンテナの入口・画面）
 
 ### 5.1 api-handler
 
-ハンドラのテストは、リポジトリを `vi.mock` で差し替え、HTTP API 2.0 のイベント（`tests/fixtures/events/http.js` の `httpEvent({ method, path, body, groups, sub })`）を `main` に渡して、応答（statusCode・本文）と呼ばれた関数を確かめる。
+ハンドラのテストは、リポジトリを `vi.mock` で差し替え、`server/http.mjs` が作るのと同じ形のイベント（`tests/fixtures/events/http.js` の `httpEvent({ method, path, body, groups, sub })`）を `main` に渡して、応答（statusCode・本文）と呼ばれた関数を確かめる。
 
 #### M-H01 `router.js`・入口
 
@@ -612,7 +703,7 @@ describe('M-D01 data-api', () => {
 | MT-H01-09 | 初回の流れが終わっていない    | nickname が null の学習者で `GET /api/home`                 | 409 `ONBOARDING_REQUIRED`                         | 状  |
 | MT-H01-10 | コースが未選択 | `current_course_id = null` で `GET /api/home` | 409 `COURSE_REQUIRED` | 状 |
 | MT-H01-11 | トークンがない・壊れた本文 | authorizer なし／本文が `{x` | 401／400。`.` を含むパスは文字どおりに比べる | 異 |
-| MT-H01-12 | Lambda の入口（handler） | `handler(event, {awsRequestId})`、イベントが空 | ログに `fn`・`requestId`・`durationMs`。空のイベントは404 | 同 |
+| MT-H01-12 | event がないときの既定 | `main(undefined, {log})`、イベントが空 | 404。ログに route・status・durationMs | 境 |
 
 #### M-H02 `routes/me.js`（A-01〜A-04、A-12）
 
@@ -690,10 +781,10 @@ describe('M-D01 data-api', () => {
 
 | ID        | 観点              | 入力・前提                                          | 期待結果                                                                  | 技法 |
 | --------- | --------------- | ---------------------------------------------- | --------------------------------------------------------------------- | -- |
-| MT-H07-01 | 採点の受付           | 説明文120文字、キーワードは現在のコース                          | 202 `{gradingId:'gr_…', status:'processing'}`。`InvokeCommand` は `InvocationType:'Event'`・`FunctionName=GRADING_FUNCTION`・Payload `{gradingId}` | 同  |
-| MT-H07-02 | 説明文が短い          | 49文字                                          | 400（M-03）。ジョブを作らず、Lambda も起動しない                                       | 異  |
+| MT-H07-01 | 採点の受付           | 説明文120文字、キーワードは現在のコース                          | 202 `{gradingId:'gr_…', status:'processing'}`。ジョブキューに `grading`（`{gradingId}`）を入れる | 同  |
+| MT-H07-02 | 説明文が短い          | 49文字                                          | 400（M-03）。採点を作らず、キューにも入れない                                       | 異  |
 | MT-H07-03 | 他コースのキーワード      | 受講していないコースのキーワード                               | 404                                                                   | 異  |
-| MT-H07-04 | 起動の失敗           | `InvokeCommand` が例外                           | ジョブを `failed`（`ai_error`）にして 500                                     | 異  |
+| MT-H07-04 | キューに入れられない           | `jobs.enqueue` が例外                           | 採点を `failed`（`ai_error`）にして 500                                     | 異  |
 | MT-H07-05 | 結果（完了）          | `status='done'`、result あり                     | 200、result をそのまま返す                                                   | 状  |
 | MT-H07-06 | 結果（採点中・30秒以内）   | 作成から29秒                                       | 200 `{status:'processing'}`                                          | 境  |
 | MT-H07-07 | 結果（30秒超え）       | 作成から31秒、`status='processing'`                  | 条件付きで `failed`（timeout）に更新、ログに `"code":"GRADING_TIMEOUT"`、504         | 境  |
@@ -714,18 +805,19 @@ describe('M-D01 data-api', () => {
 | MT-H08-07 | コース省略・論理削除中・圏外 | `course` 省略、論理削除中の利用者が1位、自分は記録なし／コース未選択 | 現在のコースで集計、論理削除中を除く、`me:null`／409 `COURSE_REQUIRED` | DT |
 | MT-H08-08 | コース名 | コースあり／コースが見つからない | `courseName` にコース名／`null` | 同 |
 
-#### M-H09 `routes/admin-imports.js`（A-13・A-14）
+#### M-H09 `routes/admin-imports.js`（A-13・A-13b・A-14）
 
 | ID        | 観点           | 入力・前提                                                   | 期待結果                                                                      | 技法 |
 | --------- | ------------ | ------------------------------------------------------- | ------------------------------------------------------------------------- | -- |
-| MT-H09-01 | PDFの取り込み     | course_admin（c_3 担当）、`sourceType:'pdf'`、5MB             | 201、`uploadUrl` は PUT・15分（900秒）・`ContentType='application/pdf'`、キーは `uploads/{importId}/…` | 同  |
-| MT-H09-02 | テキストの取り込み    | `sourceType:'text'`、1,000文字                             | 201、`PutObjectCommand` で `uploads/{importId}/source.txt`、`uploadUrl` なし  | 同  |
+| MT-H09-01 | PDFの取り込み     | course_admin（c_3 担当）、`sourceType:'pdf'`、5MB             | 201、`uploadUrl` はパス形式（`/{IMPORT_BUCKET}/uploads/{importId}/sample.pdf`）・15分（900秒）・署名に `content-type`。登録は1つのトランザクション。この時点ではキューに入れない | 同  |
+| MT-H09-02 | テキストの取り込み    | `sourceType:'text'`、1,000文字                             | 201、オブジェクトストレージの `uploads/{importId}/source.txt` に置き、`import` をキューに入れる。`uploadUrl` なし  | 同  |
 | MT-H09-03 | 担当外のコース      | c_4（担当外）                                                | 403、import_jobs に書かない                                                    | 異  |
 | MT-H09-04 | ファイル名の無害化    | `'試験 問題(1).pdf'`                                        | キーの末尾が `'______1_.pdf'`                                                  | 異  |
 | MT-H09-05 | サイズ超え        | 21MB                                                    | 400                                                                       | 境  |
 | MT-H09-06 | 取り込み状況       | `GET /api/admin/imports/imp_8`、status done・下書き3件        | 状態と下書き3件（問題文の先頭・形式・キーワード数・状態）                                           | 同  |
 | MT-H09-07 | 取り込みがない・担当外・一覧 | `imp_9` なし／担当外の取り込み／`GET /api/admin/imports?course=c_3` | 404／403／取り込みの一覧（`createdAt` は `+09:00` 付き） | 異 |
-| MT-H09-08 | 登録の途中で失敗 | `setKey`（仮の値の書き換え）が例外 | 500。登録ごと取り消し（Rollback）、S3 に書かない・署名付きURLを返さない | 異 |
+| MT-H09-09 | アップロード完了（A-13b） | `POST /api/admin/imports/imp_9/uploaded`：`waiting` の PDF／`extracting`／テキストの取り込み／なし／担当外 | 202 `{importId, status:'waiting'}` でキューに入れる／409／404／404／403 | 状 |
+| MT-H09-08 | 登録の途中で失敗 | `setKey`（仮の値の書き換え）が例外 | 500。登録ごと取り消し（`ROLLBACK`）、ファイルを置かない・署名付きURLを返さない | 異 |
 
 #### M-H10 `routes/admin-questions.js`（A-15・A-16）
 
@@ -754,20 +846,38 @@ describe('M-D01 data-api', () => {
 | MT-H11-07 | 1,000件ずつの取得   | 受講者1,500名                                               | `dashboardRows` を offset 0・1000 の2回呼び、CSVは1,501行（見出しを含む）         | 境  |
 | MT-H11-08 | 担当外のコース | `course=c_4`（担当外）で集計・CSV | どちらも403、操作記録を書かない | 異 |
 
-#### M-H12 `routes/admin-users.js`（A-19・A-20）
+#### M-H12 `routes/admin-users.js`（A-19・A-20・A-21b）
 
 | ID        | 観点                | 入力・前提                                                      | 期待結果                                                                  | 技法 |
 | --------- | ----------------- | ---------------------------------------------------------- | --------------------------------------------------------------------- | -- |
-| MT-H12-01 | 登録                | `{email, fullName, roles:['learner']}`                     | `AdminCreateUser`（`email_verified=true`）→ `AdminAddUserToGroup(learner)` → users（invited）・user_roles・notify_settings の順。操作記録 `user.create` | 同  |
-| MT-H12-02 | Cognito の失敗      | `AdminCreateUser` が `UsernameExistsException`              | 409、DB には書かない                                                        | 異  |
-| MT-H12-03 | ロールの変更            | learner → learner＋course_admin                             | `AdminAddUserToGroup(course_admin)` だけ呼ぶ（learner の削除・追加はしない）           | 同  |
+| MT-H12-01 | 登録                | `{email, fullName, roles:['learner']}`                     | 1つのトランザクションで users（invited）・user_roles・notify_settings・仮パスワード（ハッシュ・期限7日）を保存し、招待メール（仮パスワード入り）を送る。操作記録 `user.create`。仮パスワードは応答・ログに出ない | 同  |
+| MT-H12-02 | 登録の失敗      | メールアドレスの重複（`23505`）／招待メールを送れない              | 409／500（「招待メールを送れませんでした…」）。どちらも DB は取り消す（`ROLLBACK`）                                                        | 異  |
+| MT-H12-03 | ロールの変更            | learner → learner＋course_admin                             | user_roles を置き換える。操作記録 `user.role`           | 同  |
 | MT-H12-04 | 自分の system_admin を外す | 操作者自身から system_admin を外す                                 | 409                                                                   | 異  |
-| MT-H12-05 | 論理削除              | 有効な学習者を削除（今日 10/20）                                       | `status='deleted'`・`delete_scheduled_on='2026-11-19'`、`AdminDisableUser`、削除予定のメール、操作記録 `user.delete` | 状  |
+| MT-H12-05 | 論理削除              | 有効な学習者を削除（今日 10/20）                                       | `status='deleted'`・`delete_scheduled_on='2026-11-19'`、リフレッシュトークンをすべて無効にする、削除予定のメール、操作記録 `user.delete` | 状  |
 | MT-H12-06 | 自分自身の削除           | 操作者自身                                                      | 409                                                                   | 異  |
-| MT-H12-07 | 復活                | 論理削除中の利用者                                                  | `status='active'`・削除予定日が空、`AdminEnableUser`、操作記録 `user.restore`       | 状  |
+| MT-H12-07 | 復活                | 論理削除中の利用者                                                  | `status='active'`・削除予定日が空、操作記録 `user.restore`       | 状  |
 | MT-H12-08 | 有効な利用者の復活         | `status='active'`                                          | 409（状態の食い違い）                                                         | 状  |
-| MT-H12-09 | 利用者管理の異常系 | 入力の不正4種、ない利用者、削除済みの削除、更新0件、メールの失敗、ロールを外す、一覧の範囲外の limit・offset | 400／404／409／409／200（WARN ログ）／`AdminRemoveUserFromGroup`／limit 200・offset 0 に丸める | 異 |
+| MT-H12-09 | 利用者管理の異常系 | 入力の不正、ない利用者、削除済みの削除、更新0件、削除予定メールの失敗、ロールを外す、一覧の範囲外の limit・offset | 400／404／409／409／200（WARN ログ）／外したロールの行を消す／limit 200・offset 0 に丸める | 異 |
+| MT-H12-11 | 再招待（A-21b） | 招待中の利用者／有効な利用者／メールを送れない | 200 `{id, status:'invited'}`、仮パスワードを作り直して期限7日、その仮パスワード入りの招待メール、操作記録 `user.reinvite`／409／500（取り消す） | 状 |
 | MT-H12-10 | 一覧の最終ログイン日時 | DBの最終ログイン `'2026-10-19 15:00:00'`（UTC）／なし | `'2026-10-20T00:00:00+09:00'`／`null` | 境 |
+
+#### M-H15 `routes/auth.js`（A-30〜A-35）
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-H15-01 | ログイン（A-30） | 正しいメールアドレスとパスワード | 200 `{idToken, refreshToken, expiresIn:3600}`。IDトークンに sub・groups、リフレッシュトークンは43文字でハッシュと7日を保存、失敗の回数を0に。ログにパスワードを出さない | 同 |
+| MT-H15-02 | 失敗 | いないメールアドレス／違うパスワード | どちらも 401 `LOGIN_FAILED`（同じ文言）。回数を数えるのは違うパスワードのときだけ | 異 |
+| MT-H15-03 | ログインできない利用者 | 削除予定／パスワード未設定／ロック中 | 401 `LOGIN_FAILED`／401 `LOGIN_FAILED`／423 `ACCOUNT_LOCKED` | DT |
+| MT-H15-04 | 仮パスワード | 仮パスワードでログイン／期限切れ | 200 `{challenge:'NEW_PASSWORD_REQUIRED', session}`（用途 `new_password`、IDトークンとしては使えない）／401 `PASSWORD_EXPIRED` | 状 |
+| MT-H15-05 | 新しいパスワード（A-31） | 決まりを満たさない／満たす | 400（`details` に `TOO_SHORT`・`NO_DIGIT`・`NO_UPPER`）／200 でトークン、`mustChange:false` で保存 | 境 |
+| MT-H15-06 | 新しいパスワードを受け付けない | session が壊れている／用途が違う／仮パスワードでない・削除予定 | 401、保存しない | 異 |
+| MT-H15-07 | トークンの更新（A-32） | 有効なトークン／使用済み／なし／利用者がいない・削除予定・仮パスワードのまま | 200 で新しい組（古いものは使えない）／401／401／401 | 状 |
+| MT-H15-08 | ログアウト（A-33） | トークンあり／なし | 204、無効にする／204（何もしない） | 同 |
+| MT-H15-09 | パスワードを忘れたとき（A-34） | 登録あり／登録なし・60秒以内の2回目・削除予定・パスワード未設定など | すべて 202 `{status:'accepted'}`。メールは登録ありの1通だけ（リンクのハッシュと60分を保存） | 異 |
+| MT-H15-10 | 再設定メールを送れない | SMTP が失敗 | 202（WARN ログ `auth.reset_mail_failed`） | 異 |
+| MT-H15-11 | 再設定（A-35） | 有効なリンク・決まりを満たすパスワード | 204、リンクを使用済みに、`mustChange:false` で保存、ロックを解く、リフレッシュトークンをすべて無効に | 状 |
+| MT-H15-12 | 再設定を受け付けない | 弱いパスワード／使用済みのリンク／token なし／利用者が削除予定 | 400（リンクは `details:[{field:'token', code:'INVALID'}]`）。保存しない | 異 |
 
 #### M-H13 `routes/admin-courses.js`（A-21）・M-H14 `routes/admin-partners.js`（A-22）
 
@@ -790,27 +900,29 @@ describe('M-D01 data-api', () => {
 
 | ID        | 観点              | 入力・前提                                                      | 期待結果                                                                  | 技法 |
 | --------- | --------------- | ---------------------------------------------------------- | --------------------------------------------------------------------- | -- |
-| MT-W01-01 | 合格              | Bedrock が 40・20・12（計72）                                    | `complete` が true、answer_logs（score 72・is_correct true）、EXP加算、result の `passed:true` | 同  |
+| MT-W01-01 | 合格              | AI が 40・20・12（計72）                                    | `complete` が true、answer_logs（score 72・is_correct true）、EXP加算、result の `passed:true` | 同  |
 | MT-W01-02 | 合格ライン           | 計60 ／ 計59                                                  | `passed:true` ／ `passed:false`（EXP 0、段階1）                             | 境  |
 | MT-W01-03 | 合計で計算し直す        | 40・20・12 と `score:90`                                       | 保存される点数は72                                                            | 異  |
-| MT-W01-04 | JSONのやり直し（成功）   | 1回目が形の崩れた文、2回目が正常（経過3秒）                                    | Bedrock を2回呼び、2回目の結果で完了                                               | 異  |
+| MT-W01-04 | JSONのやり直し（成功）   | 1回目が形の崩れた文、2回目が正常（経過3秒）                                    | AI を2回呼び、2回目の結果で完了                                               | 異  |
 | MT-W01-05 | JSONのやり直し（失敗）   | 2回とも崩れる                                                     | `fail(456, 'ai_error')`、EXP・段階は変えない、例外を投げない                          | 異  |
 | MT-W01-06 | 残り時間が少ないとき      | 1回目が崩れて経過16秒                                               | やり直さず `fail(456, 'ai_error')`                                         | 境  |
-| MT-W01-07 | Bedrock の時間切れ   | `AI_TIMEOUT`                                               | `fail(456, 'ai_timeout')`                                             | 異  |
-| MT-W01-08 | 処理済みのジョブ        | `status='done'` または `'failed'`                            | Bedrock を呼ばずに終了                                                       | 状  |
+| MT-W01-07 | AI の時間切れ   | `AI_TIMEOUT`                                               | `fail(456, 'ai_timeout')`                                             | 異  |
+| MT-W01-08 | 処理済みのジョブ        | `status='done'` または `'failed'`                            | AI を呼ばずに終了                                                       | 状  |
 | MT-W01-09 | A-10 が先に時間切れにした | `complete` が false（更新0件）                                   | Rollback、EXP・段階・クエストは更新しない                                          | 状  |
 | MT-W01-10 | パートナーの口調        | 利用者のパートナーがライバル型「レン」                                       | 採点の指示文に「レン」とライバル型の口調が入る                                              | 同  |
-| MT-W01-11 | DBの起動待ち         | 最初の取得で `DatabaseResumingException` が2回                     | `resumeRetries: 6` で待って続行し、完了する                                       | 状  |
-| MT-W01-12 | パートナー未設定・書き込み中の例外・入口 | persona なし、`answers.insert` が例外、`handler` | 励まし型で採点、例外は投げ直す（ERROR ログ）、文字列の gradingId も受け付ける | 異 |
+| MT-W01-11 | リポジトリと DB の接続を通した採点 | リポジトリを差し替えず、`dbMock` で DB の応答を決める | 1つのトランザクション（`BEGIN`〜`COMMIT`）で採点結果・解答・EXP を保存する | 状 |
+| MT-W01-12 | パートナー未設定・書き込み中の例外・ジョブの入口 | persona なし、`answers.insert` が例外、`runGradingJob` | 励まし型で採点、例外は投げ直す（ERROR ログ）、ジョブの payload の gradingId を使う | 異 |
 
 ### 5.3 import-worker
 
-#### M-W02 `import-worker/index.mjs`・`extractor.js`・`pdf-splitter.js`
+#### M-W02 `import-worker/index.mjs`・`extractor.js`・`pdf-splitter.js`・`pdf-text.js`
+
+`AI_PROVIDER=bedrock`（PDF・画像を読める AI）で MT-W02-01〜16 を、`AI_PROVIDER=sakura` で MT-W02-17〜20 を確かめる。
 
 | ID        | 観点                | 入力・前提                                                       | 期待結果                                                               | 技法 |
 | --------- | ----------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ | -- |
-| MT-W02-01 | キーから取り込みID        | `uploads/8/sample.pdf`（URLエンコードされたキーを含む）                    | `importId=8`                                                       | 同  |
-| MT-W02-02 | 処理済みの通知           | `status='done'`                                             | 何もせず成功扱い（`batchItemFailures` 空）                                    | 状  |
+| MT-W02-01 | 原本を読む        | ジョブ `{importId:8}`、取り込みのキー `uploads/8/sample.pdf`                    | そのキーでオブジェクトストレージから読む                                                       | 同  |
+| MT-W02-02 | 処理済み・取り込みがない           | `status='done'`／取り込みがない                                             | 何もせず `{outcome:'done'}`                                    | 状  |
 | MT-W02-03 | PDFの分割            | 1／10／11／23ページ                                               | かたまり 1／1／2（10・1）／3（10・10・3）                                       | 境  |
 | MT-W02-04 | ページ数の上限           | 50ページ ／ 51ページ                                               | 抽出する ／ Bedrock を呼ばず `failed`（「50ページ以内に分けて…」）                       | 境  |
 | MT-W02-05 | 画像                | `image/png` の原本                                            | Bedrock を1回、image ブロック（format png）で呼ぶ                              | 同  |
@@ -820,13 +932,17 @@ describe('M-D01 data-api', () => {
 | MT-W02-09 | 正規化（キーワード）        | `['DNS','dns ','DNS','A','B']`                              | `['DNS','A','B']`（前後の空白と重複を除いて3つ）※重複は大文字・小文字を区別せずに判定し、最初に出た表記を残す                     | 境  |
 | MT-W02-10 | 正規化（問題文が空）        | `body:''` を含む5問                                             | 4問だけ保存、`extracted_count=4`                                         | 異  |
 | MT-W02-11 | 一部のかたまりで失敗        | 3つ中2つ目で Bedrock が例外                                         | 何も保存しない（insertDrafts を呼ばない）                                        | 異  |
-| MT-W02-12 | 再試行（1・2回目）        | `ApproximateReceiveCount='1'`、抽出が例外                         | `batchItemFailures` に messageId、状態は `failed` にしない                   | 状  |
-| MT-W02-13 | 再試行（3回目）          | `ApproximateReceiveCount='3'`、抽出が例外                         | `status='failed'`・`error_message`、`batchItemFailures` は空             | 状  |
-| MT-W02-14 | 壊れたPDF            | PDFとして読めないファイル                                              | 再試行しても同じため、1回目でも `failed` にする（`batchItemFailures` 空）                | 異  |
-| MT-W02-15 | テキスト・JPEG・対応外の画像・知らないキー | テキスト、`a.jpg`、`a.gif`、`other/x.pdf`、取り込みなし、本文が空、failed への更新が例外、`handler` | `<source>` で渡す、`jpeg`、failed（PNG・JPEGのみ）、何もしない、例外を記録して消す | 異 |
+| MT-W02-12 | やり直し（1・2回目）        | 1・2回目のジョブ、抽出が例外                         | `{outcome:'retry', delaySeconds}`、状態を `waiting` に戻す（`failed` にしない）                   | 状  |
+| MT-W02-13 | やり直し（3回目）          | 3回目のジョブ、抽出の結果が JSON でない                         | `{outcome:'failed'}`、`status='failed'`・`error_message`             | 状  |
+| MT-W02-14 | 壊れたPDF            | PDFとして読めないファイル                                              | やり直しても同じため、1回目でも `failed` にする                | 異  |
+| MT-W02-15 | テキスト・JPEG・対応外の画像・失敗の記録が書けない | テキスト、`a.jpg`、`a.gif`、本文が空、failed への更新が例外 | `<source>` で渡す、`jpeg`、failed（PNG・JPEGのみ）、失敗にする、例外を記録 | 異 |
 | MT-W02-16 | 正規化の細部 | null、問題文が空白、選択肢12個・前後の空白、51文字のキーワード、正解が選択肢の数を超える、9,000文字の1段落 | 保存しない、選択肢10個・空白を除く、51文字は除く、正解 null、8,000＋1,000 に分ける | 境 |
+| MT-W02-17 | PDFは文字を取り出してから渡す（sakura） | 文字のある3ページの PDF | unpdf で取り出した文字をテキストのかたまりとして AI に渡す（document ブロックを使わない） | 同 |
+| MT-W02-18 | 取り込めないもの（sakura） | 文字のない PDF（白紙）／画像 | `{outcome:'failed'}`（「PDFから文字を読み取れませんでした…」／「画像の取り込みは、いまのAIでは使えません…」）。AI を呼ばない | 異 |
+| MT-W02-19 | 文字のかたまり | 23ページ／51ページ／読めない PDF、Bedrock のとき | 10ページずつ3つ（最後は p21〜p23）／「50ページ以内」の例外／「PDFとして読めませんでした」、Bedrock では PDF のかたまりのまま | 境 |
+| MT-W02-20 | `processImport` を直接呼ぶ | 取り込みID 8 | ジョブを通さずに同じ処理をして `{status:'done', extracted}` を返す | 同 |
 
-### 5.4 batch-runner
+### 5.4 batch-runner（worker の定期処理から呼ぶ）
 
 #### M-W03 `jobs/daily.js` と `steps/`
 
@@ -840,25 +956,68 @@ describe('M-D01 data-api', () => {
 | MT-W03-06 | 継続日数（二重実行）          | `streak_checked_on = 今日`                                   | 更新しない                                                               | 状  |
 | MT-W03-07 | クエストの割り当て           | 学習者2名（復習対象 4件・0件）                                         | 1人目は Q-04（target 4）を含む3つ、2人目は Q-04 なしの3つ                            | DT |
 | MT-W03-08 | クエストの二重実行           | 今日の行がすでにある学習者                                              | その学習者は飛ばす                                                           | 状  |
-| MT-W03-09 | 物理削除                | 削除予定日が今日の利用者                                               | `AdminDeleteUser` → `users.purge` の順。操作記録 `user.purge`（操作者は null）    | 状  |
-| MT-W03-10 | Cognito に利用者がいない    | `AdminDeleteUser` が `UserNotFoundException`                | DB の削除は続ける                                                          | 異  |
-| MT-W03-11 | 採点ジョブの掃除            | 今日 10/20                                                   | `deleteOlderThan` に 30日前（2026-09-20 0:00 JST）                       | 境  |
-| MT-W03-12 | 送信リスト               | 通知オン3名（07:30×2・21:00×1）、通知オフ1名、論理削除中1名                    | `notify/2026-10-20/0730.json`（2件）と `2100.json`（1件）の2ファイルだけ `PutObject` | 同  |
+| MT-W03-09 | 物理削除                | 削除予定日が今日の利用者                                               | `users.purge`。操作記録 `user.purge`（操作者は null）    | 状  |
+| MT-W03-10 | 期限切れのトークンの掃除    | 日次処理の cleanup-gradings                | `auth.deleteExpired` を1回呼ぶ                                                          | 同  |
+| MT-W03-11 | 採点とジョブの掃除            | 今日 10/20                                                   | 採点の `deleteOlderThan` とジョブの `deleteFinishedBefore` に 30日前（`2026-09-20T00:00:00+09:00`）、ログに消した件数                       | 境  |
+| MT-W03-12 | 送信リスト               | 通知オン3名（07:30×2・21:00×1）、通知オフ1名、論理削除中1名                    | オブジェクトストレージに `notify/2026-10-20/0730.json`（2件）と `2100.json`（1件）の2ファイルだけ置く | 同  |
 | MT-W03-13 | ステップの失敗             | assign-quests が例外                                          | 例外を投げ、purge-users 以降は実行しない                                          | 異  |
 | MT-W03-14 | 知らないジョブ             | `{"job":"weekly"}`                                         | 例外（`VALIDATION_ERROR`）                                              | 異  |
-| MT-W03-15 | Cognito のほかのエラー・削除できない・入口 | `purge` が false、`TooManyRequestsException`、`handler` | 操作記録を書かない、例外を投げる、ERROR ログ | 異 |
+| MT-W03-15 | 削除できなかった利用者・削除の失敗 | `purge` が false、`purge` が例外 | 操作記録を書かない、例外を投げる（ERROR ログ） | 異 |
 
 #### M-W04 `jobs/mail.js`
 
 | ID        | 観点            | 入力・前提                                          | 期待結果                                                 | 技法 |
 | --------- | ------------- | ---------------------------------------------- | ---------------------------------------------------- | -- |
-| MT-W04-01 | 送信            | 07:30 JST、`0730.json` に3件                       | `SendEmailCommand` を3回、送信3・失敗0 をログ                    | 同  |
+| MT-W04-01 | 送信            | 07:30 JST、`0730.json` に3件                       | SMTP で3通、送信3・失敗0 をログ                    | 同  |
 | MT-W04-02 | ファイルがない       | 22:30 JST（`2230.json` なし → `NoSuchKey`）          | 送信0、例外なし                                             | 境  |
-| MT-W04-03 | 1回失敗して成功      | 2件目が1回 `Throttling` のあと成功                       | 2件目を2回呼び、送信3・失敗0                                     | 異  |
+| MT-W04-03 | 1回失敗して成功      | 2件目が1回失敗したあと成功                       | 2件目を2回送り、送信3・失敗0                                     | 異  |
 | MT-W04-04 | 2回とも失敗        | 2件目が2回とも失敗                                     | 3件目も送る。送信2・失敗1、`WARN` ログ、例外なし                         | 異  |
-| MT-W04-05 | DBを使わない       | 正常に送信                                          | `RDSDataClient` へのコマンドが0回                            | 異  |
+| MT-W04-05 | DBを使わない       | 正常に送信                                          | DB への問い合わせ・トランザクションが0回                            | 異  |
 | MT-W04-06 | 枠の丸め          | 07:44 JST に起動（遅延）                              | `0730.json` を読む                                      | 境  |
-| MT-W04-07 | S3 のほかのエラー | `AccessDenied` | 送信0、ERROR ログ、例外なし | 異 |
+| MT-W04-07 | オブジェクトストレージのほかのエラー | `AccessDenied` | 送信0、ERROR ログ `mail.read_failed`、例外なし | 異 |
+
+### 5.4b コンテナの入口（server/）
+
+#### M-S01 `server/http.mjs`
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-S01-01 | `/api` を API に渡す | `GET /api/home?x=1`（正しいトークン） | `rawPath`・`queryStringParameters`・`requestContext.http`・クレームを入れたイベントで `main` を呼び、その応答を返す。`nosniff`・`DENY` のヘッダー | 同 |
+| MT-S01-02 | トークンがない・正しくない | `Authorization` なし／壊れたトークン／期限切れ | クレームなし（`authorizer` を入れない）で呼ぶ（401 はルートが返す） | 異 |
+| MT-S01-03 | 本文 | JSON の本文／1MB を超える本文 | 本文を渡す／413 `VALIDATION_ERROR`（API を呼ばない） | 境 |
+| MT-S01-04 | API の例外 | `main` が例外 | 500 `INTERNAL_ERROR`、ログ `http.error` | 異 |
+| MT-S01-05 | 画面のファイル | `/`・`/sw.js`・`/js/*.js`・ない・ディレクトリ | `index.html`・`sw.js` は `no-cache`、ほかは1日キャッシュ、種類に合う `content-type`、ないものは404 | 同 |
+| MT-S01-06 | 画面の外のファイル | `/..%2f..%2fetc%2fpasswd`、`/%2e%2e/…`、`POST /` | 404、404、405 | 異 |
+| MT-S01-07 | キャラクター画像 | `/partners/encourage-….png`、`..` を含むパス、ないもの | `ASSETS_BUCKET` から流す（1日キャッシュ）／404／404 | 異 |
+| MT-S01-08 | 5xx が続いたら知らせる | 窓1秒・基準3回で、0・500・900ミリ秒に1回ずつ、そのあと5秒後 | 3回目で `alert('api-5xx', 'API のエラーが続いています', …)` を1回。窓の外の1回では知らせない（本番の値は5分・5回） | 境 |
+| MT-S01-09 | API の 5xx を数える | API が 503 を返す | 応答はそのまま、5xx として数える | 同 |
+| MT-S01-10 | イベントの既定 | クエリなし | `queryStringParameters` なし、`requestId` は UUID | 同 |
+
+#### M-S02 `server/worker.mjs`
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-S02-01 | 取り出して処理 | `import` のジョブが1件 | `claimNext(['import'], 900)` → 処理 → `complete`、ログ `job.end` | 同 |
+| MT-S02-02 | 待ちがない | ジョブなし | false（何もしない） | 境 |
+| MT-S02-03 | やり直し・失敗 | 処理の結果が `retry`（待ち30秒／指定なし）・`failed` | `retry(id, err, 30)`／60秒、`fail`。取り込みの失敗は `alert('import-failed')` | 状 |
+| MT-S02-04 | 処理の例外 | 回数が残っている／使い切った | `retry`／`fail`、ERROR ログ `job.error` | 状 |
+| MT-S02-05 | 取り戻したジョブ | 落ちたワーカーから取り戻し、`attempts > maxAttempts` | 処理せずに `fail`、ログ `job.exhausted` | 異 |
+| MT-S02-06 | ループ | 止める合図／取り出しが例外／待ちなし | 止まる／ERROR ログを出して続ける／待ってから次へ | 状 |
+| MT-S02-07 | 動かす枠 | 0:00・7:44・22:30・23:00・5:59（メール有効）、7:44（メール無効） | daily は毎回。mail は 6:00〜22:30 の30分の枠（7:44 は `T0730`）だけ、無効なら動かさない | 境 |
+| MT-S02-08 | 枠ごとに1回 | 同じ枠で2回見回る | 1回目だけ `runBatch`、`schedule_runs` に結果を保存 | 状 |
+| MT-S02-09 | 失敗のやり直し | `runBatch` が失敗し続け、5回見回る | 3回まで試し、1・2回目は枠を放す。3回目で `alert('schedule-daily')`、ERROR ログ `schedule.failed` が3回 | 状 |
+| MT-S02-10 | メール送信の有効・無効 | `MAIL_SCHEDULE_ENABLED` が `true`／なし | mail の枠を動かす／動かさない | DT |
+| MT-S02-11 | 起動と停止 | `startWorker()` → `stop()`、見回りが例外 | 採点2つ・取り込み1つのループと見回りを始め、止まる。見回りの例外は ERROR ログ `schedule.tick_error` | 状 |
+
+#### M-S03 `server/main.mjs`
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-S03-01 | 役割ごとの環境変数 | `ROLE` が api・worker・all・batch、足りない変数 | 起動するもの／「ROLE は api・worker・all のどれか」／「環境変数がありません: …」。api は `AUTH_SECRET` が32文字以上 | DT |
+| MT-S03-02 | AI の切り替えに要る設定 | `AI_PROVIDER` が sakura（キーなし）・bedrock・なし・openai | 例外／通る／通る（既定 sakura）／例外 | DT |
+| MT-S03-03 | api と worker（all） | `MIGRATE_ON_START=true`、`RELEASE_NO=r1` | マイグレーション（ログ `migrate.done`）→ HTTP（ログ `http.listen`）→ worker（採点2・取り込み1）。止めると両方止まる | 同 |
+| MT-S03-04 | worker だけ | `ROLE=worker`、並列数の指定 | マイグレーションも HTTP もなし、指定の並列数 | 同 |
+| MT-S03-05 | 設定が足りない | `node server/main.mjs` を設定なしで実行 | 終了コード1、ログ `server.start_failed`（「環境変数がありません」） | 異 |
 
 ### 5.5 画面（web/js）
 
@@ -866,18 +1025,18 @@ describe('M-D01 data-api', () => {
 
 #### M-F01 `core/auth.js`
 
-| ID        | 観点                 | 入力・前提                                                       | 期待結果                                                                   | 技法 |
-| --------- | ------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------------- | -- |
-| MT-F01-01 | code_verifier      | `createVerifier()` を100回                                     | 毎回64文字、`[A-Za-z0-9-._~]` のみ、重複なし                                       | 同  |
-| MT-F01-02 | チャレンジの計算           | verifier `dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk`（RFC 7636 の例） | `E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM`                          | 同  |
-| MT-F01-03 | ログイン画面への移動         | トークンなしで `ensureLogin()`                                     | `navigate` のURLに `response_type=code`・`client_id`・`redirect_uri`・`code_challenge_method=S256`・`state`・`lang=ja` | 同  |
-| MT-F01-04 | 戻り（正常）             | `?code=abc&state=保存した値`                                     | `/oauth2/token` に `grant_type=authorization_code`・`code_verifier` を POST、トークンを `sessionStorage` に保存、URLから `code` を消す | 状  |
-| MT-F01-05 | 戻り（state 不一致）      | `state` が違う                                                 | トークンを取りに行かず、エラー表示とログイン画面への案内                                         | 異  |
-| MT-F01-06 | 保管場所               | ログイン後                                                       | `localStorage` に何も書かない                                                | 異  |
-| MT-F01-07 | 期限前の更新             | IDトークンの期限が60分後、偽の時計で55分進める                                 | `grant_type=refresh_token` で更新                                         | 境  |
-| MT-F01-08 | 更新の失敗              | 更新で 400                                                     | `sessionStorage` を消してログイン画面へ                                         | 異  |
-| MT-F01-09 | ログアウト              | `logout()`                                                  | `sessionStorage` を消し、`/logout?client_id=…&logout_uri=…` へ移動            | 状  |
-| MT-F01-10 | IDトークンが読めないとき | IDトークンが壊れている（expires_in 600）／exp が数値でない | 期限は `expires_in`／既定の3600秒で計算 | 異 |
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-F01-01 | ログインしていない | トークンなしで `ensureLogin()` | false、`showLogin` を呼ぶ | 状 |
+| MT-F01-02 | ログイン（A-30） | `signIn('a@x.jp', 'Pass1234')` | `POST /api/auth/login`（JSON）、トークンを `sessionStorage`（`rpg.auth`）に保存。`localStorage` に何も書かない | 同 |
+| MT-F01-03 | 仮パスワード（A-31） | A-30 が `challenge` を返す → `completeNewPassword('s1', …)` | `{challenge, session}` を返し、トークンはまだない → `POST /api/auth/new-password` で保存 | 状 |
+| MT-F01-04 | 失敗の応答 | 401（`LOGIN_FAILED`）／502（JSON でない）／通信できない | `AuthError`（code・status・message）／`HTTP_502`／`NETWORK`（status 0） | 異 |
+| MT-F01-05 | 保存済みのトークン | `sessionStorage` にトークンあり | true、`showLogin` を呼ばない。`getIdToken()` はそのトークン | 状 |
+| MT-F01-06 | 期限の5分前に更新（A-32） | 期限60分、偽の時計で55分進める | `POST /api/auth/refresh` で新しい組に替える（リフレッシュトークンも替わる） | 境 |
+| MT-F01-07 | 更新の失敗 | A-32 が 401／リフレッシュトークンなし | `sessionStorage` を消して読み込み直す（ログイン画面へ）、例外を投げる | 異 |
+| MT-F01-08 | ログアウト（A-33） | ログイン中／トークンなし／A-33 が失敗 | 先に消してから `POST /api/auth/logout`、読み込み直す／API を呼ばない／それでも読み込み直す | 状 |
+| MT-F01-09 | やり直し・再設定 | `login()`、`forgot`、`resetPassword` | 消して読み込み直す、`POST /api/auth/forgot`・`/api/auth/reset` | 同 |
+| MT-F01-10 | 既定 | `apiBase` なし、`expiresIn` なし | `/api` を使い、期限は3600秒 | 境 |
 
 #### M-F02 `core/api.js`
 
@@ -1069,7 +1228,7 @@ describe('M-D01 data-api', () => {
 | --- | --- | --- | --- | --- |
 | MT-F21-01 | 利用者の一覧 | 自分・コース管理者・削除予定・招待中 | 自分の行は「（あなた）」で削除なし、ロール名、最終ログイン、削除予定日と「復活する」、「招待中」 | 同 |
 | MT-F21-02 | 探す・絞る・ページ | 「花子」・削除予定で探す → 次の50件 | A-19 に `q`・`status`・`offset=0` → `offset=50`、「前の50件」を出す | 境 |
-| MT-F21-03 | 登録 | メールの形が不正（400）→ 直してコース管理者も付ける | 欄ごとの文言 → A-19 の POST、ダイアログを閉じて「招待メールを送った」 | 異 |
+| MT-F21-03 | 登録 | メールの形が不正（400）→ 直してコース管理者も付ける | 欄ごとの文言 → A-19 の POST、ダイアログを閉じて「招待メールを送った」（仮パスワードは画面に出さない） | 異 |
 | MT-F21-04 | ロールの変更 | コース管理者を外す | 今のロールに印、A-19 の PUT に残りのロール | 同 |
 | MT-F21-05 | 削除と復活 | M-10 で「やめる」／「削除する」、削除予定の人を「復活する」 | 消さない／A-20 の削除／確認なしで A-20 の復活、案内 | 状 |
 | MT-F21-06 | 復活の失敗 | A-20 が 409 | API の文言 | 異 |
@@ -1077,6 +1236,7 @@ describe('M-D01 data-api', () => {
 | MT-F21-08 | タブ | 「コース」を押す | `#/admin/users?tab=courses` へ | 状 |
 | MT-F21-09 | コースの一覧 | 担当者ありとなし、利用者にコース管理者1人 | 担当者の氏名／「未割り当て」、編集の候補は有効なコース管理者だけ | 同 |
 | MT-F21-10 | コースの登録と編集 | 担当者を付けて登録／外して保存 | A-21 の POST に `adminUserIds`／PUT に空の `adminUserIds` | 同 |
+| MT-F21-11 | 招待の送り直し（A-21b） | 招待中の利用者の「招待メールを送り直す」／API の失敗 | 招待中の人にだけボタン。A-21b の POST、「…さんに新しい仮パスワードで招待メールを送り直した」／エラーを出してボタンを戻す | 状 |
 
 #### M-F22 `pages/admin/s14-partners.js`（S-14 AIパートナー設定）
 
@@ -1088,6 +1248,19 @@ describe('M-D01 data-api', () => {
 | MT-F22-04 | アップロードの失敗 | 署名付きURLが 403 | commit を呼ばず「差し替えられませんでした」 | 異 |
 | MT-F22-05 | 画像を外す | 確認で「外す」 | A-22 の DELETE、頭文字の表示に戻して「画像を外した」 | 状 |
 | MT-F22-06 | 読み込み失敗 | A-22 が通信エラー → 再読み込み | 3枚を表示 | 異 |
+
+#### M-F23 `pages/login.js`（S-01 ログイン）
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-F23-01 | ログイン | メールアドレスとパスワードを入れて「ログイン」 | 見出し「RPG学習アプリ」、入力欄に `autocomplete`・`type=password`。`signIn` を呼び、読み込み直す | 同 |
+| MT-F23-02 | 入力がない・失敗 | 空のまま／`LOGIN_FAILED`／通信エラー・そのほか | M_LOGIN_FAILED（API を呼ばない）／同じ文言でボタンを戻す／M_NETWORK | 異 |
+| MT-F23-03 | 新しいパスワード | 仮パスワードでログイン → 決まりを満たさない・確認が違う・満たす | 見出し「新しいパスワード」、満たすまで押せない → `completeNewPassword`、読み込み直す | 境 |
+| MT-F23-04 | 新しいパスワードの失敗 | A-31 が 401 | 「時間が経ちすぎました。もう一度ログインしてください」、ボタンを戻す | 異 |
+| MT-F23-05 | パスワードを忘れたとき（A-34） | 空のまま／入れて送る／通信エラー／戻る | 送らない／ログインの表示に戻り M_FORGOT_SENT／M_NETWORK／ログインの表示 | 状 |
+| MT-F23-06 | 再設定（A-35） | `#/reset?token=t%2B1` で開き、新しいパスワード | 見出し「パスワードの再設定」、`resetPassword('t+1', …)`、URL を `/` に戻し M_RESET_DONE | 状 |
+| MT-F23-07 | 使えない再設定リンク | A-35 が 400／通信エラー | M_RESET_INVALID／M_NETWORK | 異 |
+| MT-F23-08 | パスワードの決まり | `Guild2026`・`Guild26`・`guild2026`・`GUILD2026`・`Guildguild` | true・false・false・false・false | 境 |
 
 ## 6. トレーサビリティと合否基準
 
@@ -1102,19 +1275,20 @@ describe('M-D01 data-api', () => {
 | 4.6 週間ランキング            | 3.5 M-G05、4.5.1、5.2 A-11 | ranking、close-ranking、rankings | MT-G05-01〜06、MT-W03-03、MT-H08-01〜08       |
 | 4.7 デイリークエスト           | 3.5 M-G03、4.5.1     | quest、assign-quests             | MT-G03-01〜12、MT-W03-07〜08                 |
 | 4.8 バッジ                | 3.5 M-G04           | badge、update-streak             | MT-G04-01〜07、MT-W03-04〜06                 |
-| 4.9 説明の採点、2.5 非同期方式    | 4.3、5.2 A-09・A-10、7.3 | grading-worker、gradings、prompts | MT-W01-01〜12、MT-H07-01〜10、MT-A02、MT-A04   |
-| 4.10 問題取り込み            | 4.4、5.3 A-13〜A-16、7.4 | import-worker、admin-imports、admin-questions | MT-W02-01〜16、MT-H09-01〜08、MT-H10              |
-| 4.11 アカウント管理、6.3 物理削除  | 5.3 A-19・A-20、4.5.1 | admin-users、purge-users         | MT-H12-01〜10、MT-W03-09〜10                 |
-| 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01、6.1 | errors、data-api、api.js          | MT-U01、MT-D01-08〜10、MT-F02-02〜03          |
+| 4.9 説明の採点、2.5 非同期方式    | 3.7、4.3、4.7、5.2 A-09・A-10、7.3 | grading-worker、gradings、prompts、jobs、server/worker | MT-W01-01〜12、MT-H07-01〜10、MT-A02、MT-A04、MT-D04-01〜03、MT-S02-01〜06   |
+| 4.10 問題取り込み            | 4.4、5.3 A-13〜A-16、7.4 | import-worker、admin-imports、admin-questions | MT-W02-01〜20、MT-H09-01〜09、MT-H10              |
+| 4.11 アカウント管理、6.3 物理削除  | 5.3 A-19・A-20・A-21b、4.5.1 | admin-users、purge-users、s13-users         | MT-H12-01〜11、MT-W03-09・15、MT-F21-11                 |
+| 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01・M-D02、4.6、6.1 | errors、db/client、tx、server/http、api.js          | MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜10、MT-F02-02〜03          |
 | 5.4 CSV出力              | 5.3 A-17・A-18       | admin-dashboard                 | MT-H11-01〜08                              |
-| 5.5 Bedrock連携          | 3.6、7章              | bedrock、json-guard、persona、prompts | MT-A01〜MT-A04                            |
-| 5.6 メール、6.2 送信方式       | 4.5、9.2             | build-notify、mail、templates      | MT-W03-12、MT-W04-01〜07、MT-M01-01〜05      |
-| 8.1 認証・権限              | 3.2 M-U04、6.1       | authz、router、auth.js            | MT-U04-01〜10、MT-H01-06〜07、MT-F01-01〜10   |
+| 5.5 AI連携          | 3.6、7章              | ai/client、sakura、bedrock、json-guard、persona、prompts | MT-A01〜MT-A06                            |
+| 5.6 メール、6.2 送信方式       | 3.8、4.5、4.7、9.2             | build-notify、mail/smtp、templates、server/worker      | MT-W03-12、MT-W04-01〜07、MT-M01-01〜08、MT-S02-07〜11      |
+| 8.1 認証・権限、3.7 S-01 ログイン              | 3.2 M-U04、3.10、5.4 A-30〜A-35、6.1       | authz、router、auth/password・token、routes/auth、repositories/auth、core/auth.js、pages/login.js            | MT-U04-01〜10、MT-H01-06〜07、MT-K01・MT-K02、MT-H15-01〜12、MT-D04-05〜09、MT-F01-01〜10、MT-F23-01〜08   |
 | 8.2 データ保護              | 2.4.5、9.1           | logger、format、prompts           | MT-U05-04、MT-F05-01、MT-A04-02             |
 | 3.3 画面遷移、3.4 画面レイアウトの基本 | 6.1、6.2 | shell、router | MT-F08-01〜06、MT-F03-06 |
 | 3.5 共通の表示ルール、9章 メッセージ | 6.1 | components、status | MT-F07-01〜10 |
 | 3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-10） | 6.2 | pages/learner、parts | MT-F09〜MT-F18 |
 | 3.8 管理画面（S-11〜S-14） | 6.2 | pages/admin | MT-F19〜MT-F22 |
+| 2章 システム構成（ファイル・監視・リリース） | 3.9、4.1、8.7、10.4 | storage、db/migrate、server/main、util/alert | MT-O01-01〜05、MT-D05-01〜05、MT-S03-01〜05、MT-U08-01〜03 |
 
 ### 6.2 合否基準
 
@@ -1136,7 +1310,7 @@ flowchart TD
 | --------- | ------------------------------------------------------------------------------------------ |
 | テストケース    | 本書のテストケースがすべて実装され、すべて成功する（`it.skip`・`it.todo` が0件）                                          |
 | カバレッジ     | `functions/shared/domain/**` と `web/js/logic/validators.js`：命令網羅（C0）100%・分岐網羅（C1）100%      |
-|           | そのほかの `functions/**`、`web/js/core/**`・`logic/**`・`pages/**`・`parts/**`・`components/**`・`shell.js`：命令網羅90%以上・分岐網羅80%以上                |
+|           | そのほかの `functions/**`、`server/**`、`web/js/core/**`・`logic/**`・`pages/**`・`parts/**`・`components/**`・`shell.js`：命令網羅90%以上・分岐網羅80%以上                |
 | 実行時間      | 全件で60秒以内（遅いテストは偽の時計を使っているか見直す）                                                             |
 | 安定性       | 同じコミットで3回続けて実行し、結果が変わらない（時刻・乱数・実行順に依存しない）                                                  |
 
@@ -1155,7 +1329,7 @@ flowchart TD
 
 ### 6.4 結果の報告
 
-リリースごとに、詳細設計書 11.10 のリリース記録（GitHub Release の本文）に次を書く。値はジョブ `build` の概要（Summary）から写す。
+リリースごとに、詳細設計書 11.9 のリリース記録（GitHub Release の本文）に次を書く。値は `ci.yml` の概要（Summary）から写す。
 
 | 項目        | 内容                                     |
 | --------- | -------------------------------------- |
@@ -1166,11 +1340,12 @@ flowchart TD
 
 ### 6.5 結合テストへの申し送り
 
-モジュールテストでは AWS をモックで差し替えるため、次の前提は本物の AWS でしか確かめられない。dev 環境の結合テスト（別紙）の確認項目に入れる。
+モジュールテストでは DB・AI・オブジェクトストレージ・SMTP をモックで差し替えるため、次の前提は dev 環境（さくらのクラウド）でしか確かめられない。dev 環境の結合テスト（別紙）の確認項目に入れる。
 
 | No | 前提（モジュールテストでの扱い） | 結合テストでの確かめ方 | 外れていたときに起きること |
 | -- | ------------------------- | ------------ | ------------- |
-| 1 | Data API は timestamptz を UTC の `YYYY-MM-DD HH:MM:SS` で返す（`parseDbTimestamp` で読む） | 採点を依頼し、A-10 が30秒以内は `processing` を返すこと、A-01 のログイン記録が30分おきになることを確かめる | 日時が9時間ずれて読まれ、採点がすぐ「時間切れ」になる、またはログイン回数を数えすぎる |
-| 2 | Cognito の Username に利用者の `sub` を渡せる（メールを別名にしたユーザープールでは Username＝sub） | 管理画面から利用者のロール変更・論理削除・復活、日次処理の物理削除を1回ずつ行う | 「利用者が見つからない」で、ロール変更・削除・停止・物理削除が失敗する |
-| 3 | 署名付きURLは `content-type` を署名に含む（画面は同じ `Content-Type` を付けて PUT する） | S-11・S-14 から PDF・画像をアップロードする | アップロードが403で拒否され、問題やキャラクター画像を登録できない |
-| 4 | Lambda の束ね（esbuild）で `@aws-sdk/*` を外部扱いにしているため、使っている AWS SDK のパッケージ（`client-*` と `s3-request-presigner`）がすべて Lambda の Node.js 22 ランタイムに同梱されている | dev に配置し、取り込みの登録（署名付きURLの発行）・採点・日次処理を1回ずつ動かして、`Cannot find package` が出ないことを確かめる | その機能を初めて使ったときに Lambda が起動に失敗する（例：取り込みの登録で500）。同梱されていないパッケージは、外部扱いから外して zip に束ねる |
+| 1 | `db/client.js` は timestamptz を UTC の `YYYY-MM-DD HH:MM:SS.mmm` にそろえる（`parseDbTimestamp` で読む）。DB のタイムゾーンの設定に関係なく動く | 採点を依頼し、A-10 が30秒以内は `processing` を返すこと、A-01 のログイン記録が30分おきになることを確かめる | 日時が9時間ずれて読まれ、採点がすぐ「時間切れ」になる、またはログイン回数を数えすぎる |
+| 2 | オブジェクトストレージの署名付きURL（パス形式・`content-type` を署名に含む）にブラウザから PUT できる（バケットの CORS で画面のドメインを許す） | S-11・S-14 から PDF・画像をアップロードし、A-13b で取り込みが始まることを確かめる | アップロードが403や CORS エラーで拒否され、問題やキャラクター画像を登録できない |
+| 3 | さくらのAI Engine（gpt-oss-120b）が、採点・抽出の指示文に対して JSON を返す | dev で説明を10件採点し、抽出を3つの資料で行って、`ai_error` の割合と点数のばらつきを見る | 採点の失敗が多い・抽出が0件になる。指示文の調整か Bedrock への切り替えを検討する（詳細設計書 12 No.11） |
+| 4 | SMTP で招待・再設定・通知のメールが届く（SPF・DKIM が通り、迷惑メールにならない） | 自分あてに利用者を登録し、招待・再設定・通知のメールが受信箱に届くことを確かめる | 新しい利用者がログインできない（仮パスワードが届かない） |
+| 5 | コンテナの起動時のマイグレーションと、worker の定期処理が1日を通して動く | 初回の起動で V001〜V003 が入ること、翌日 0:00 の daily と、メールを有効にしたときの送信の枠が `schedule_runs` に記録されることを確かめる | テーブルがない・日次処理が動かない（ランキング・クエストが更新されない） |

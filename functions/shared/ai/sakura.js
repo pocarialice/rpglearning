@@ -1,4 +1,4 @@
-// さくらのAI Engine（OpenAI 互換の Chat Completions API）の呼び出し（詳細設計書 3.6 M-A03）
+// さくらのAI Engine（OpenAI 互換の Chat Completions API）の呼び出し（詳細設計書 3.6 M-A05）
 import { AppError } from '../util/errors.js'
 import { createLogger } from '../util/logger.js'
 export const DEFAULT_BASE_URL = 'https://api.ai.sakura.ad.jp/v1'

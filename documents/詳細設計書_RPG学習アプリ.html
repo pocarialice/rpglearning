@@ -1381,13 +1381,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>converse({modelId, system, messages, maxTokens, temperature, timeoutMs})</code></td>
 </tr>
 <tr>
-<td>M-A03</td>
+<td>M-A05</td>
 <td><code>ai/sakura.js</code></td>
 <td>さくらのAI Engine 呼び出し</td>
 <td><code>converse(...)</code>（M-A01 と同じ引数・戻り値）、<code>toChatMessages</code></td>
 </tr>
 <tr>
-<td>M-A04</td>
+<td>M-A06</td>
 <td><code>ai/client.js</code></td>
 <td>AI の差し替え口</td>
 <td><code>converse(...)</code>、<code>provider()</code>、<code>supportsDocuments()</code></td>
@@ -1399,13 +1399,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>extractJson(text)</code>、<code>validateShape(obj, schema)</code></td>
 </tr>
 <tr>
-<td>-</td>
+<td>M-A03</td>
 <td><code>ai/persona.js</code></td>
 <td>パートナーの性格</td>
 <td><code>PERSONAS</code>、<code>personaInstruction(persona, name)</code></td>
 </tr>
 <tr>
-<td>-</td>
+<td>M-A04</td>
 <td><code>ai/prompts/*.js</code></td>
 <td>指示文の組み立て</td>
 <td><code>buildGradingPrompt</code>、<code>buildExtractionPrompt</code>、<code>buildCommentPrompt</code>、<code>buildDailyMessagePrompt</code></td>
@@ -1842,7 +1842,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </code></pre>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 ai</h3>
 <p>AI の呼び出しは、必ず差し替え口 <code>ai/client.js</code> を通す（<code>grading-worker/grader.js</code>・<code>import-worker/extractor.js</code>・<code>routes/answers.js</code>・<code>routes/home.js</code>）。</p>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A04 <code>ai/client.js</code>（差し替え口）</h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A06 <code>ai/client.js</code>（差し替え口）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1869,7 +1869,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A03 <code>ai/sakura.js</code>（さくらのAI Engine）</h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A05 <code>ai/sakura.js</code>（さくらのAI Engine）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3121,7 +3121,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <div class="bar-row"><span class="bl">具体性 concreteness</span><div class="bt"><span style="width:20%"></span></div><b>20点</b></div>
   </div>
 </div>
-<p>AI はすべて差し替え口 <code>ai/client.js</code>（M-A04）から呼ぶ。呼び出し先は環境変数 <code>AI_PROVIDER</code> で決まる。</p>
+<p>AI はすべて差し替え口 <code>ai/client.js</code>（M-A06）から呼ぶ。呼び出し先は環境変数 <code>AI_PROVIDER</code> で決まる。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3134,7 +3134,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td><code>sakura</code>（当面の既定）</td>
-<td>さくらのAI Engine（OpenAI 互換の Chat Completions、M-A03）</td>
+<td>さくらのAI Engine（OpenAI 互換の Chat Completions、M-A05）</td>
 <td>どちらも <code>gpt-oss-120b</code></td>
 <td>PDF は文字を取り出して（unpdf）テキストとして渡す。画像は取り込めない</td>
 </tr>
@@ -4322,7 +4322,7 @@ LIMIT :limit OFFSET :offset;
 </tr>
 <tr>
 <td><code>inviteMail(x)</code></td>
-<td>【RPG学習アプリ】冒険者ギルドへの招待</td>
+<td>【RPG学習アプリ】ギルドへの招待</td>
 <td>ログインの URL <code>APP_URL/</code>、メールアドレス、仮パスワード、有効期限（7日）、初回ログインで新しいパスワードに変えること（AWS 版では Cognito が送っていた）</td>
 </tr>
 <tr>
@@ -4388,9 +4388,9 @@ LIMIT :limit OFFSET :offset;
 <td>続くならシンプル監視（DB）も赤になる</td>
 </tr>
 <tr>
-<td>AIの呼び出し（<code>ai.call</code>）</td>
+<td>AIの呼び出し（さくら：<code>ai.converse</code>、Bedrock：<code>bedrock.converse</code>）</td>
 <td>INFO</td>
-<td>provider、purpose、modelId、inputTokens、outputTokens、durationMs</td>
+<td>purpose、modelId、inputTokens、outputTokens、durationMs（さくらは provider も）</td>
 <td>コストの確認（10.2 で集計）</td>
 </tr>
 <tr>
@@ -4426,7 +4426,7 @@ docker compose logs --since 1h api | grep '&quot;status&quot;:5'
 # 定期処理・ジョブの失敗
 docker compose logs --since 24h worker | grep -E '&quot;level&quot;:&quot;ERROR&quot;'
 # AI の呼び出し回数とトークン数（用途ごと）
-docker compose logs --since 24h api worker | grep '&quot;msg&quot;:&quot;ai.call&quot;' | sed 's/^[^{]*//' | jq -s 'group_by(.purpose) | map({purpose: .[0].purpose, calls: length, inTok: (map(.inputTokens) | add), outTok: (map(.outputTokens) | add)})'
+docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|bedrock).converse&quot;' | sed 's/^[^{]*//' | jq -s 'group_by(.purpose) | map({purpose: .[0].purpose, calls: length, inTok: (map(.inputTokens) | add), outTok: (map(.outputTokens) | add)})'
 </code></pre>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>10.3 画面でのエラーの扱い</h3>
 <div class="table-wrap"><table>
@@ -4614,8 +4614,8 @@ docker compose logs --since 24h api worker | grep '&quot;msg&quot;:&quot;ai.call
 <tbody>
 <tr>
 <td><code>ci.yml</code></td>
-<td>プルリクエスト・<code>main</code> への push</td>
-<td><code>npm ci</code> → <code>npm run lint</code> → <code>npm test</code>（カバレッジつき）→ <code>docker build</code>（押し出さない）</td>
+<td><code>main</code> へのプルリクエスト・手動</td>
+<td><code>npm ci</code> → <code>npm test -- --coverage</code>（基準を下回ったら失敗）→ <code>npm run build:web</code> → <code>docker build</code>（押し出さない）</td>
 </tr>
 <tr>
 <td><code>release.yml</code></td>
