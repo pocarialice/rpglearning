@@ -1645,8 +1645,8 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <tr>
 <td>5</td>
 <td>AWS に残っている dev のリソース</td>
-<td>AWS 版で作った dev 環境（Aurora・Lambda・S3・CloudFront など）は、Bedrock の切り替えに使う IAM ユーザーを除いて片付ける。片付けるまでは費用がかかる</td>
-<td>早めに</td>
+<td><strong>2026-10-27 に費用がかかるものを止めた</strong>：Aurora Serverless v2 を削除（最終スナップショットなし。DB のシークレットも削除）、EventBridge のスケジュール2つを無効化。CloudFront は Free プラン（月0円）のため API で無効にできず、そのまま残した。S3・Cognito・API Gateway・SQS・SNS・CloudWatch のアラームとロググループ・IAM ロールは、ほぼ0円のため残した（Lambda は一覧を見る権限がなく、さわっていない）。アカウント共通のもの（CloudTrail・予算・GitHub OIDC）も残した。残りをすべて消すかは、Bedrock の切り替え（5.5）のときに決める</td>
+<td>Bedrock の切り替え時</td>
 </tr>
 <tr>
 <td>6</td>
