@@ -1,0 +1,45 @@
+#!/bin/bash
+# @sacloud-once
+# @sacloud-desc RPG学習アプリのサーバーの初期設定（infra/sakura/dev で作る）
+set -euxo pipefail
+export DEBIAN_FRONTEND=noninteractive
+exec > >(tee -a /var/log/rpg-setup.log) 2>&1
+timedatectl set-timezone Asia/Tokyo
+apt-get update && apt-get -y upgrade
+ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable
+# NIC 2（スイッチ側）にローカルIPアドレスを付ける。インターネット側（既定の経路があるほう）以外の NIC を選ぶ
+pub=$(ip -o -4 route show default | awk '{print $5; exit}')
+sw=$(ls /sys/class/net | grep -v -e '^lo$' -e "^$pub$" -e '^docker' | head -n1)
+cat > /etc/netplan/60-switch.yaml <<NETPLAN
+network:
+  version: 2
+  ethernets:
+    $sw:
+      addresses: [${server_cidr}]
+NETPLAN
+chmod 600 /etc/netplan/60-switch.yaml
+netplan apply
+# Docker
+curl -fsSL https://get.docker.com | sh
+usermod -aG docker ubuntu
+# /opt/rpg に compose・Caddyfile・.env を置く
+mkdir -p /opt/rpg
+echo '${compose_b64}' | base64 -d > /opt/rpg/compose.yaml
+echo '${caddyfile_b64}' | base64 -d > /opt/rpg/Caddyfile
+echo '${dotenv_b64}' | base64 -d > /opt/rpg/.env
+chmod 600 /opt/rpg/.env
+chown -R ubuntu: /opt/rpg
+# レジストリへのログイン（root と ubuntu の両方）
+echo '${registry_pass}' | docker login '${registry}' -u '${registry_user}' --password-stdin
+mkdir -p /home/ubuntu/.docker && cp /root/.docker/config.json /home/ubuntu/.docker/ && chown -R ubuntu: /home/ubuntu/.docker
+# DB が起動するまで待って、データベース rpg を作る（3.9）
+for i in $(seq 1 60); do
+  docker run --rm postgres:16 pg_isready -h '${db_ip}' -p 5432 && break
+  sleep 10
+done
+docker run --rm -e PGPASSWORD='${db_password}' postgres:16 psql -h '${db_ip}' -U rpgadmin -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'rpg'" | grep -q 1 \
+  || docker run --rm -e PGPASSWORD='${db_password}' postgres:16 psql -h '${db_ip}' -U rpgadmin -d postgres -c 'CREATE DATABASE rpg;'
+%{ if start ~}
+cd /opt/rpg && docker compose pull && docker compose up -d
+%{ endif ~}
+echo 'rpg-setup done'

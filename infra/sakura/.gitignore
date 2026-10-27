@@ -1,0 +1,6 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+secret.auto.tfvars
+*_override.tf
