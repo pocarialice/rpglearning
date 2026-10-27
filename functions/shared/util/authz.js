@@ -5,7 +5,7 @@ export const ROLES = ['learner', 'course_admin', 'system_admin']
 export function getAuth(event) {
   const claims = event?.requestContext?.authorizer?.jwt?.claims
   if (!claims || !claims.sub) throw new AppError('UNAUTHORIZED')
-  return { sub: claims.sub, groups: parseGroups(claims['cognito:groups']) }
+  return { sub: claims.sub, groups: parseGroups(claims.groups) }
 }
 function parseGroups(raw) {
   if (Array.isArray(raw)) return raw.map(String)

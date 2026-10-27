@@ -1,4 +1,4 @@
-// Bedrock の Converse API 呼び出し（詳細設計書 3.6 M-A01）
+// Amazon Bedrock の Converse API 呼び出し（詳細設計書 3.6 M-A01）。AI_PROVIDER=bedrock のときに使う
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime'
 import { AppError } from '../util/errors.js'
 import { createLogger } from '../util/logger.js'

@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPG学習アプリ さくらのクラウド構築手順書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;family=Noto+Sans+Mono&amp;family=BIZ+UDPGothic:wght@400;700&amp;family=Shippori+Mincho:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+
+:root {
+  /* DADS color tokens */
+  --blue-1000: #00118F;
+  --blue-900: #0017C1;
+  --blue-700: #264AF4;
+  --blue-200: #C5D7FB;
+  --blue-100: #D9E6FF;
+  --blue-50: #E8F1FE;
+  --gray-900: #1A1A1C;
+  --gray-700: #414141;
+  --gray-600: #626264;
+  --gray-536: #767676;
+  --gray-300: #B4B4B4;
+  --gray-100: #E6E6E6;
+  --gray-50: #F2F2F2;
+  --white: #FFFFFF;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --focus: #FFD43D;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--gray-900);
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+a { color: var(--blue-900); text-underline-offset: 3px; }
+a:hover { color: var(--blue-1000); }
+a:focus-visible { outline: 4px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.site-header {
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--white);
+}
+.site-header .inner {
+  max-width: 1120px; margin: 0 auto; padding: 40px 16px 32px;
+}
+.eyebrow {
+  display: inline-block; font-size: 14px; font-weight: 700; color: var(--blue-900);
+  background: var(--blue-50); border-radius: 999px; padding: 2px 12px; margin-bottom: 12px;
+}
+.site-header h1 {
+  font-size: 32px; line-height: 1.4; margin: 0 0 16px; font-weight: 700;
+}
+.meta {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding: 0; list-style: none;
+  font-size: 14px; color: var(--gray-600);
+}
+.meta b { color: var(--gray-900); font-weight: 700; margin-left: 4px; }
+
+.layout {
+  max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px;
+}
+nav.toc { position: sticky; top: 24px; align-self: start; }
+nav.toc p { font-size: 14px; font-weight: 700; color: var(--gray-600); margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--gray-100); }
+nav.toc a {
+  display: block; padding: 6px 12px; margin-left: -2px; border-left: 2px solid transparent;
+  color: var(--gray-700); text-decoration: none; font-size: 15px;
+}
+nav.toc a:hover { color: var(--blue-900); border-left-color: var(--blue-900); background: var(--blue-50); }
+
+main { min-width: 0; }
+.chapter { padding-bottom: 48px; margin-bottom: 48px; border-bottom: 1px solid var(--gray-100); scroll-margin-top: 24px; }
+.chapter:last-child { border-bottom: none; }
+h2 {
+  font-size: 28px; line-height: 1.4; margin: 0 0 24px; padding-left: 16px;
+  border-left: 6px solid var(--blue-900);
+}
+h3 {
+  font-size: 20px; line-height: 1.5; margin: 32px 0 12px; color: var(--blue-1000);
+}
+p { margin: 0 0 16px; }
+.h-ico { color: var(--blue-900); display: inline-block; width: 1.2em; text-align: center; margin-right: 0.45em; font-size: 0.9em; vertical-align: 0.02em; }
+h3 .h-ico { font-size: 0.85em; margin-right: 0.4em; }
+ul, ol { margin: 0 0 16px; padding-left: 1.5em; }
+li { margin: 4px 0; }
+li::marker { color: var(--blue-900); }
+
+.table-wrap { overflow-x: auto; margin: 0 0 24px; border: 1px solid var(--gray-300); border-radius: var(--radius-8); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--gray-100); }
+th { background: var(--blue-50); color: var(--gray-900); font-weight: 700; border-bottom: 2px solid var(--blue-900); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+.mermaid .node rect, .mermaid rect.actor, .mermaid .statediagram-state rect { rx: 8px; ry: 8px; }
+.mermaid .edgeLabel, .mermaid .edgeLabel p { font-size: 13px; color: var(--gray-700); }
+
+figure.diagram {
+  margin: 8px 0 32px; padding: 24px 16px; background: var(--white);
+  border: 1px solid var(--gray-300); border-radius: var(--radius-12); overflow-x: auto;
+  text-align: center;
+}
+.mermaid { font-family: "Noto Sans JP", sans-serif; }
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* ===== chapter visuals (DADS components) ===== */
+.vis {
+  background: var(--blue-50); border-radius: var(--radius-12); padding: 24px;
+  margin: 0 0 32px; display: grid; gap: 16px;
+}
+.vis p { margin: 0; }
+.vis-grid { display: grid; gap: 16px; }
+.vis-grid.c1 { grid-template-columns: minmax(220px, 1fr) 2fr; }
+.vis-grid.c2 { grid-template-columns: 1fr 1fr; }
+.vis-grid.c5 { grid-template-columns: 280px 1fr; align-items: center; }
+.vis-grid.cards4 { grid-template-columns: repeat(4, 1fr); }
+.vis-grid.cards4.c6 { grid-template-columns: repeat(2, 1fr); }
+.vis-grid.tiles4 { grid-template-columns: repeat(4, 1fr); }
+.vis-stack { display: grid; gap: 16px; }
+.card, .role, .tile, .kpi-hero {
+  background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px;
+}
+.vis-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin-bottom: 8px !important; }
+.vis-label.inline { margin: 0 8px 0 0 !important; }
+.vis-title { font-size: 17px; font-weight: 700; }
+.count { font-size: 13px; color: var(--white); background: var(--blue-900); border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
+.lead { font-size: 17px; font-weight: 400; line-height: 1.6; }
+.lead strong { color: var(--blue-900); }
+.note { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-top: 6px !important; }
+.tag-row, .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-row { margin-top: 12px; }
+.tag { display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; line-height: 1.4; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.tag.solid { background: var(--blue-900); color: var(--white); }
+.tag.line { background: var(--white); color: var(--blue-900); border: 1px solid var(--blue-900); }
+.tag.mute { background: var(--gray-50); color: var(--gray-600); border: 1px solid var(--gray-300); }
+.pill { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--blue-100); color: var(--blue-1000); }
+.scope { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+/* KPI hero */
+.kpi-hero { background: var(--blue-900); border-color: var(--blue-900); color: var(--white); display: flex; flex-direction: column; justify-content: center; }
+.kpi-hero .vis-label { color: var(--blue-100); }
+.kpi-num { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: 0; }
+.kpi-num span { font-size: 32px; margin-left: 2px; }
+.kpi-num small { font-size: 16px; margin-left: 6px; font-weight: 400; }
+.kpi-name { font-size: 17px; font-weight: 700; margin-top: 12px !important; }
+.kpi-def { font-size: 14px; color: var(--blue-100); margin-top: 4px !important; }
+/* scale */
+.scale { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.scale-pt { display: flex; align-items: center; gap: 10px; }
+.scale-num { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1; }
+.scale-num small { font-size: 15px; margin-left: 2px; }
+.scale-cap { font-size: 13px; color: var(--gray-600); line-height: 1.4; }
+.scale-bar { height: 8px; background: var(--blue-100); border-radius: 999px; position: relative; }
+.scale-bar span { position: absolute; inset: 0; background: linear-gradient(90deg, var(--blue-200), var(--blue-900)); border-radius: 999px; }
+.scale-bar::after { content: ""; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); border-left: 12px solid var(--blue-900); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+/* role */
+.ico { width: 44px; height: 44px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; margin-bottom: 10px; }
+.ico.sm { width: 32px; height: 32px; margin: 0; }
+.ico.sm svg { width: 18px; height: 18px; }
+.role.ai { border-style: dashed; border-color: var(--blue-700); }
+.role-name { font-size: 17px; font-weight: 700; margin-bottom: 6px !important; }
+ul.mini, ul.checks { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--gray-700); }
+ul.mini li { padding-left: 14px; position: relative; margin: 2px 0; }
+ul.mini li::before { content: ""; position: absolute; left: 0; top: 0.7em; width: 6px; height: 6px; border-radius: 50%; background: var(--blue-900); }
+.info-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* feature map */
+.vis-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--gray-700); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.lg.l1, .feat.l1 { background: var(--white); border: 1px solid var(--blue-900); }
+.lg.l2, .feat.l2 { background: var(--blue-900); border: 1px solid var(--blue-900); color: var(--white); }
+.lg.l3, .feat.l3 { background: var(--gray-900); border: 1px solid var(--gray-900); color: var(--white); }
+.fmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fcol { display: flex; flex-direction: column; gap: 8px; }
+.fcol-h { font-size: 14px; font-weight: 700; color: var(--blue-1000); border-bottom: 2px solid var(--blue-900); padding-bottom: 4px; }
+.feat { display: flex; align-items: baseline; gap: 8px; font-size: 14px; padding: 8px 12px; border-radius: 6px; }
+.feat b { font-family: "Noto Sans Mono", monospace; font-size: 12px; opacity: 0.8; }
+.interval { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+ol.steps-mini { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+ol.steps-mini li { position: relative; font-size: 13px; color: var(--gray-700); background: var(--blue-50); border: 1px solid var(--blue-200); border-radius: 6px; padding: 6px 12px 6px 12px; margin: 0; }
+ol.steps-mini li b { font-size: 18px; color: var(--blue-900); margin-right: 2px; }
+ol.steps-mini li:not(:last-child)::after { content: "›"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--blue-900); font-weight: 700; }
+ol.steps-mini li.done { background: var(--blue-900); color: var(--white); border-color: var(--blue-900); font-weight: 700; display: flex; align-items: center; }
+/* tiles */
+.tile { text-align: center; }
+.tile.strong { border: 2px solid var(--blue-900); }
+.tile-num { font-size: 36px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.tile-num small { font-size: 14px; margin-left: 4px; }
+.tile-num.sm { font-size: 26px; }
+.tile-cap { font-size: 13px; color: var(--gray-700); margin-top: 6px !important; }
+ul.checks li { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--gray-100); }
+ul.checks li::before { content: ""; width: 16px; height: 16px; flex: none; border: 2px solid var(--blue-900); border-radius: 4px; }
+.badges { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 20px; }
+.badge { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--gray-700); }
+.medal { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--blue-900); background: var(--blue-50); border: 2px solid var(--blue-900); box-shadow: 0 0 0 3px var(--blue-100); }
+/* phone */
+.phone { background: var(--gray-900); border-radius: 32px; padding: 10px; width: 260px; justify-self: center; }
+.phone-in { background: var(--white); border-radius: 24px; padding: 18px 14px; display: grid; gap: 10px; font-size: 12px; }
+.ph-lv { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 8px; }
+.ph-badge { grid-row: span 2; background: var(--blue-900); color: var(--white); font-weight: 700; border-radius: 8px; padding: 6px 8px; font-size: 14px; }
+.ph-bar { height: 8px; background: var(--blue-100); border-radius: 999px; overflow: hidden; }
+.ph-bar span { display: block; height: 100%; background: var(--blue-900); }
+.ph-exp { font-size: 11px; color: var(--gray-600); }
+.ph-say { display: flex; gap: 8px; align-items: flex-start; }
+.ph-ava { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; }
+.ph-ava svg { width: 16px; height: 16px; }
+.ph-say p { background: var(--blue-50); border-radius: 0 10px 10px 10px; padding: 8px 10px; line-height: 1.5; }
+.ph-quest { border: 1px solid var(--gray-100); border-radius: 10px; padding: 8px 10px; }
+.ph-quest p { font-weight: 700; margin-bottom: 4px !important; }
+.ph-quest ul { list-style: none; margin: 0; padding: 0; }
+.ph-quest li { display: flex; gap: 6px; align-items: center; margin: 3px 0; color: var(--gray-700); }
+.ph-quest li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--blue-900); border-radius: 3px; flex: none; }
+.ph-quest li.ok { color: var(--gray-536); text-decoration: line-through; }
+.ph-quest li.ok::before { background: var(--blue-900); }
+.ph-btn { background: var(--blue-900); color: var(--white); text-align: center; font-weight: 700; border-radius: 8px; padding: 10px; font-size: 13px; }
+ol.prio-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+ol.prio-list li { display: flex; gap: 12px; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px 14px; margin: 0; }
+ol.prio-list li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--blue-900); color: var(--white); display: grid; place-items: center; font-size: 14px; }
+ol.prio-list span { font-weight: 700; display: flex; flex-direction: column; }
+ol.prio-list small { font-weight: 400; font-size: 13px; color: var(--gray-600); }
+.mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-stats > div { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px; text-align: center; }
+/* non-functional */
+.nf-h { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 10px; }
+ul.model { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 14px; }
+ul.model li { display: flex; align-items: center; gap: 8px; margin: 0; }
+ul.model .tag { min-width: 72px; justify-content: center; }
+.auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.arrow { color: var(--blue-900); font-weight: 700; }
+ol.tl { list-style: none; padding: 0 0 0 14px; margin: 0; border-left: 2px solid var(--blue-200); display: grid; gap: 8px; font-size: 14px; }
+ol.tl li { position: relative; margin: 0; color: var(--gray-700); }
+ol.tl li::before { content: ""; position: absolute; left: -21px; top: 0.45em; width: 12px; height: 12px; border-radius: 50%; background: var(--white); border: 2px solid var(--blue-900); }
+ol.tl li:last-child::before { background: var(--blue-900); }
+ol.tl b { display: block; color: var(--gray-900); font-size: 13px; }
+/* step navigation */
+ol.stepnav { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1.5fr auto 1fr 1fr; gap: 12px; align-items: stretch; }
+ol.stepnav > li { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px; display: flex; gap: 12px; margin: 0; }
+ol.stepnav > li.current { border: 2px solid var(--blue-900); }
+.sn-num { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue-900); color: var(--blue-900); display: grid; place-items: center; font-weight: 700; }
+li.current .sn-num { background: var(--blue-900); color: var(--white); }
+.sn-h { font-weight: 700; font-size: 17px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sn-sub { font-size: 13px; color: var(--blue-900); font-weight: 700; }
+ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-items: center; }
+.gate-in { font-size: 12px; text-align: center; color: var(--gray-700); border: 2px dashed var(--blue-900); border-radius: var(--radius-8); padding: 8px 10px; background: var(--white); line-height: 1.5; }
+.gate-in b { color: var(--blue-900); }
+/* banner */
+.banner { display: flex; gap: 14px; align-items: flex-start; background: var(--white); border: 1px solid var(--blue-900); border-left: 6px solid var(--blue-900); border-radius: var(--radius-8); padding: 16px 20px; }
+.banner-ico { color: var(--blue-900); flex: none; }
+.banner-h { font-size: 17px; font-weight: 700; }
+.banner-h b { color: var(--blue-900); font-size: 22px; }
+.cat-n { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.cat-n small { font-size: 14px; margin-left: 2px; }
+.cat-h { font-weight: 700; margin-top: 4px !important; }
+
+@media (max-width: 860px) {
+  .vis { padding: 16px; }
+  .card, .role, .tile, .kpi-hero { padding: 14px; }
+  .role-name, .cat-h { font-size: 15px; }
+  .vis-grid.c1, .vis-grid.c2, .vis-grid.c5, .scope, .fmap { grid-template-columns: 1fr; }
+  .vis-grid.tiles4, .mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .mini-stats { grid-template-columns: repeat(3, 1fr); }
+  ol.stepnav { grid-template-columns: 1fr; }
+  .vis-grid.cards4 { grid-template-columns: repeat(2, 1fr); }
+  .vis-grid.cards4.c6 { grid-template-columns: 1fr; }
+  ol.stepnav > li.gate { justify-content: center; }
+  .scale { grid-template-columns: 1fr; text-align: left; }
+  .scale-bar { height: 6px; margin-right: 12px; }
+  .kpi-num { font-size: 52px; }
+}
+@media print { .vis { break-inside: avoid; } }
+
+.site-footer { border-top: 1px solid var(--gray-100); color: var(--gray-600); font-size: 14px; }
+.site-footer .inner { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }
+  nav.toc { position: static; background: var(--gray-50); border-radius: var(--radius-8); padding: 16px; }
+  nav.toc ol { border-left: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  nav.toc a { padding: 6px 4px; border-left: none; font-size: 14px; }
+  .site-header h1 { font-size: 26px; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 18px; }
+  th, td { padding: 10px 12px; font-size: 14px; }
+}
+@media print {
+  nav.toc { display: none; }
+  .layout { display: block; }
+  .chapter { break-inside: auto; }
+  figure.diagram { break-inside: avoid; }
+}
+
+/* ===== アプリ用デザインシステム（冒険者ギルド）: 画面構成イメージ専用。.gd-scope の中だけに適用 ===== */
+/* 冒険者ギルド — generated from tokens.json */
+.gd-scope{--parchment:#f5ecd9;--parchment-raised:#fbf6ea;--parchment-sunk:#ebdfc6;--line:#d6c6a5;--line-strong:#8f7a58;--ink:#2e2219;--ink-muted:#6b5843;--crimson:#9e2b25;--on-crimson:#fff8ef;--crimson-soft:#f3dcd3;--teal:#1d6763;--on-teal:#fbf6ea;--teal-soft:#d6e8e2;--gold:#a0701a;--gold-ink:#7a5406;--gold-soft:#f1e0b5;--correct:#1d5a8c;--correct-soft:#dbe6f0;--wrong:#a3441a;--wrong-soft:#f5ddcf;--bronze:#8c5a2e;--silver:#6c7075;--shadow-card:0 1px 0 #d6c6a5, 0 2px 8px rgba(46,34,25,0.08);--shadow-press:inset 0 2px 0 rgba(46,34,25,0.18);}.gd-scope{--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;--radius-sm:4px;--radius-md:8px;--radius-pill:999px;--font-serif:"Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;--font-sans:"BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;}.gd-scope .display{font-family:var(--font-serif);font-size:30px;line-height:40px;font-weight:700}.gd-scope .title{font-family:var(--font-serif);font-size:21px;line-height:30px;font-weight:700}.gd-scope .numeral{font-family:var(--font-serif);font-size:28px;line-height:32px;font-weight:800}.gd-scope .question{font-family:var(--font-sans);font-size:17px;line-height:30px;font-weight:400}.gd-scope .body{font-family:var(--font-sans);font-size:15px;line-height:26px;font-weight:400}.gd-scope .label{font-family:var(--font-sans);font-size:15px;line-height:20px;font-weight:700}.gd-scope .meta{font-family:var(--font-sans);font-size:13px;line-height:20px;font-weight:400}.gd-scope .caption{font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:700}
+
+.gd-stack { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); max-width: 420px; }
+.gd-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-4); }
+.gd-serif { font-family: var(--font-serif); }
+/* focus: solid teal ring, 3:1+ on every parchment surface */
+.gd-focus:focus-visible, .gd-btn:focus-visible, .gd-choice:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+/* Button */
+.gd-btn { font-family: var(--font-sans); font-size: 15px; line-height: 20px; font-weight: 700; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--parchment-raised); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); letter-spacing: .04em; }
+.gd-btn:active { box-shadow: var(--shadow-press); }
+.gd-btn[disabled] { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.gd-btn-primary { background: var(--crimson); border-color: var(--crimson); color: var(--on-crimson); }
+.gd-btn-quiet { background: transparent; border-color: transparent; color: var(--teal); text-decoration: underline; text-underline-offset: 3px; }
+.gd-btn-sm { min-height: 36px; font-size: 13px; padding: 0 var(--space-3); }
+.gd-btn-block { display: flex; width: 100%; }
+/* Card frame: the notice-board double rule */
+.gd-card { background: var(--parchment-raised); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: inset 0 0 0 3px var(--parchment-raised), inset 0 0 0 4px var(--line), var(--shadow-card); padding: var(--space-4); }
+/* ExpBar */
+.gd-exp { display: flex; align-items: center; gap: var(--space-3); }
+.gd-crest { flex: none; width: 56px; height: 56px; border-radius: var(--radius-pill); background: var(--gold-soft); border: 3px solid var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold-ink); font-family: var(--font-serif); }
+.gd-crest small { font-size: 11px; line-height: 12px; font-weight: 700; letter-spacing: .06em; }
+.gd-crest b { font-size: 22px; line-height: 24px; font-weight: 800; }
+.gd-exp-main { flex: 1; min-width: 0; }
+.gd-exp-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; line-height: 20px; color: var(--ink-muted); }
+.gd-exp-gain { color: var(--gold-ink); font-weight: 700; }
+.gd-track { height: 10px; border-radius: var(--radius-pill); background: var(--parchment-sunk); overflow: hidden; margin-top: var(--space-1); }
+.gd-fill { height: 100%; border-radius: var(--radius-pill); background: var(--gold); }
+/* QuestCard */
+.gd-quest { position: relative; display: flex; gap: var(--space-3); align-items: flex-start; }
+.gd-quest-body { flex: 1; min-width: 0; }
+.gd-quest-title { margin: 0; font-family: var(--font-serif); font-size: 17px; line-height: 24px; font-weight: 700; }
+.gd-quest-meta { margin-top: var(--space-1); font-size: 13px; line-height: 20px; color: var(--ink-muted); display: flex; gap: var(--space-3); }
+.gd-quest-reward { color: var(--gold-ink); font-weight: 700; }
+.gd-quest .gd-track { height: 6px; margin-top: var(--space-2); }
+.gd-quest-done { background: var(--crimson-soft); box-shadow: inset 0 0 0 3px var(--crimson-soft), inset 0 0 0 4px var(--line), var(--shadow-card); }
+.gd-stamp { flex: none; align-self: center; font-family: var(--font-serif); font-weight: 800; font-size: 15px; line-height: 20px; color: var(--crimson); border: 2px solid var(--crimson); border-radius: var(--radius-sm); padding: 2px var(--space-2); transform: rotate(-8deg); letter-spacing: .1em; }
+/* ChoiceOption */
+.gd-choice { width: 100%; text-align: left; font: inherit; font-size: 15px; line-height: 26px; color: var(--ink); background: var(--parchment-raised); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: var(--space-3); display: flex; gap: var(--space-3); align-items: flex-start; cursor: pointer; }
+.gd-choice-key { flex: none; width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); font-family: var(--font-serif); font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.gd-choice-text { flex: 1; }
+.gd-choice-mark { flex: none; font-size: 13px; line-height: 26px; font-weight: 700; white-space: nowrap; }
+.gd-choice-selected { border: 2px solid var(--teal); padding: 11px; }
+.gd-choice-selected .gd-choice-key { background: var(--teal); border-color: var(--teal); color: var(--on-teal); }
+.gd-choice-correct { background: var(--correct-soft); border: 2px solid var(--correct); padding: 11px; }
+.gd-choice-correct .gd-choice-key { background: var(--correct); border-color: var(--correct); color: var(--parchment-raised); }
+.gd-choice-correct .gd-choice-mark { color: var(--correct); }
+.gd-choice-wrong { background: var(--wrong-soft); border: 2px solid var(--wrong); padding: 11px; }
+.gd-choice-wrong .gd-choice-key { background: var(--wrong); border-color: var(--wrong); color: var(--parchment-raised); }
+.gd-choice-wrong .gd-choice-mark { color: var(--wrong); }
+.gd-choice-dim { color: var(--ink-muted); border-color: var(--line); cursor: default; }
+/* PartnerBubble */
+.gd-partner { display: flex; gap: var(--space-3); align-items: flex-start; }
+.gd-sigil { flex: none; width: 44px; height: 44px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 20px; border: 2px solid currentColor; background: var(--parchment-raised); }
+.gd-sigil-encourage { color: var(--gold-ink); }
+.gd-sigil-logic { color: var(--teal); }
+.gd-sigil-rival { color: var(--crimson); }
+.gd-bubble { position: relative; flex: 1; min-width: 0; background: var(--teal-soft); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-card); }
+.gd-bubble::before { content: ""; position: absolute; left: -6px; top: 16px; width: 12px; height: 12px; background: var(--teal-soft); transform: rotate(45deg); }
+.gd-bubble-name { font-size: 13px; line-height: 20px; font-weight: 700; color: var(--teal); }
+.gd-bubble-name span { color: var(--ink-muted); font-weight: 400; margin-left: var(--space-2); }
+.gd-dots { display: inline-flex; gap: 6px; padding: var(--space-2) 0; }
+.gd-dots i { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--teal); animation: gd-bob 1.2s ease-in-out infinite; }
+.gd-dots i:nth-child(2) { animation-delay: .15s; } .gd-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes gd-bob { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .gd-dots i { animation: none; opacity: 1; } }
+/* ScoreMeter */
+.gd-score-head { display: flex; align-items: baseline; gap: var(--space-3); }
+.gd-score-num { font-family: var(--font-serif); font-size: 28px; line-height: 32px; font-weight: 800; }
+.gd-score-num small { font-size: 15px; font-weight: 700; margin-left: 2px; }
+.gd-verdict { font-size: 15px; line-height: 20px; font-weight: 700; }
+.gd-verdict-pass { color: var(--correct); }
+.gd-verdict-near { color: var(--gold-ink); }
+.gd-score .gd-track { position: relative; height: 12px; overflow: visible; margin-top: var(--space-2); }
+.gd-score-fill-pass { background: var(--correct); }
+.gd-score-fill-near { background: var(--gold); }
+.gd-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+.gd-tick-label { position: absolute; top: 16px; transform: translateX(-50%); font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); white-space: nowrap; }
+.gd-score-foot { margin-top: var(--space-6); font-size: 13px; line-height: 20px; color: var(--ink-muted); }
+/* ReviewStage */
+.gd-review { display: flex; align-items: center; gap: var(--space-3); }
+.gd-review-kind { flex: none; font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); width: 2.5em; }
+.gd-pips { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-1); flex: 1; }
+.gd-pip { text-align: center; font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); }
+.gd-pip::before { content: ""; display: block; height: 8px; border-radius: var(--radius-pill); background: var(--parchment-sunk); border: 1px solid var(--line-strong); margin-bottom: 2px; }
+.gd-pip-on { color: var(--gold-ink); }
+.gd-pip-on::before { background: var(--gold); border-color: var(--gold); }
+.gd-pip-now { color: var(--ink); }
+.gd-pip-now::before { background: var(--parchment-raised); border: 2px solid var(--gold); }
+.gd-mastered { flex: none; font-family: var(--font-serif); font-weight: 800; font-size: 13px; line-height: 20px; color: var(--crimson); border: 2px solid var(--crimson); border-radius: var(--radius-sm); padding: 0 var(--space-2); }
+.gd-review-state { flex: none; width: 5em; font-size: 12px; line-height: 16px; color: var(--ink-muted); text-align: right; }
+/* RankingRow */
+.gd-rank { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--parchment-raised); border-bottom: 1px solid var(--line); }
+.gd-rank-me { background: var(--gold-soft); }
+.gd-rank-pos { flex: none; width: 36px; height: 36px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 17px; color: var(--ink-muted); }
+.gd-rank-1 { color: var(--gold-ink); border: 2px solid var(--gold); background: var(--gold-soft); }
+.gd-rank-2 { color: var(--silver); border: 2px solid var(--silver); }
+.gd-rank-3 { color: var(--bronze); border: 2px solid var(--bronze); }
+.gd-rank-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gd-rank-name small { font-weight: 400; font-size: 13px; color: var(--ink-muted); margin-left: var(--space-2); }
+.gd-rank-exp { flex: none; font-family: var(--font-serif); font-weight: 800; font-size: 17px; color: var(--gold-ink); }
+.gd-rank-exp small { font-family: var(--font-sans); font-size: 12px; font-weight: 700; margin-left: 2px; }
+/* GuildBadge */
+.gd-badge { display: inline-flex; flex-direction: column; align-items: center; gap: var(--space-1); width: 88px; text-align: center; }
+.gd-emblem { width: 64px; height: 64px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 26px; background: var(--parchment-raised); border: 3px double currentColor; box-shadow: inset 0 0 0 3px var(--parchment-raised), inset 0 0 0 4px currentColor; }
+.gd-emblem-bronze { color: var(--bronze); } .gd-emblem-silver { color: var(--silver); } .gd-emblem-gold { color: var(--gold-ink); background: var(--gold-soft); box-shadow: inset 0 0 0 3px var(--gold-soft), inset 0 0 0 4px currentColor; }
+.gd-emblem-locked { color: var(--line-strong); border-style: dashed; box-shadow: none; }
+.gd-badge-name { font-size: 13px; line-height: 18px; font-weight: 700; }
+.gd-badge-date { font-size: 12px; line-height: 16px; color: var(--ink-muted); }
+
+/* ===== 外部設計書 追加スタイル ===== */
+h4 { font-size: 17px; margin: 28px 0 10px; color: var(--gray-900); padding-bottom: 4px; border-bottom: 1px dashed var(--blue-200); }
+code { font-family: "Noto Sans Mono", monospace; font-size: 0.88em; background: var(--blue-50); color: var(--blue-1000); padding: 1px 6px; border-radius: 4px; }
+pre { background: var(--gray-50); border: 1px solid var(--gray-100); border-radius: var(--radius-8); padding: 16px; overflow-x: auto; font-size: 14px; }
+pre code { background: none; padding: 0; color: var(--gray-900); }
+strong { color: var(--blue-1000); }
+blockquote { margin: 0 0 16px; padding: 12px 16px; border-left: 4px solid var(--blue-900); background: var(--blue-50); border-radius: 0 var(--radius-8) var(--radius-8) 0; }
+td code, th code { white-space: nowrap; }
+figure.diagram.wide .mermaid svg { min-width: 760px; }
+/* mermaid DADS adjust */
+.mermaid .cluster rect { rx: 12px; ry: 12px; stroke-dasharray: 4 3; }
+.mermaid .cluster-label, .mermaid .cluster-label span { font-weight: 700; color: var(--blue-1000) !important; }
+.mermaid .label foreignObject div { line-height: 1.45; }
+.mermaid .flowchart-link, .mermaid .relation { stroke-width: 1.5px; }
+.mermaid .node polygon { fill: var(--white) !important; stroke: var(--blue-900) !important; stroke-width: 2px; }
+/* ===== 画面構成イメージ（アプリ用デザインシステム） ===== */
+.mock { background: var(--gray-50); border: 1px solid var(--gray-300); border-radius: var(--radius-12); padding: 20px 20px 16px; margin: 8px 0 32px; }
+.mock-label { font-size: 13px; font-weight: 700; color: var(--blue-900); margin: 0 0 14px !important; }
+.mock-label i { margin-right: 6px; }
+.mock-note { font-size: 13px; color: var(--gray-600); margin: 12px 0 0 !important; }
+.mock-row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: flex-start; }
+.gd-scope { font-family: var(--font-sans); color: var(--ink); font-size: 13px; line-height: 20px; letter-spacing: 0; }
+.gd-scope p { margin: 0; }
+.gd-scope ul { list-style: none; margin: 0; padding: 0; }
+.gd-scope li { margin: 0; }
+.gd-scope li::marker { content: ""; }
+.gd-scope strong, .gd-scope b { color: inherit; }
+.ph-frame { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ph-screen { width: 300px; min-height: 600px; background: var(--parchment); border: 10px solid #2a2622; border-radius: 34px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.mk-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--parchment-raised); border-bottom: 1px solid var(--line); }
+.mk-app { font-weight: 800; font-size: 15px; }
+.mk-course { font-size: 11px; color: var(--ink-muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 0 8px; }
+.mk-body { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.mk-body .gd-card { padding: 12px; }
+.mk-body .gd-quest-title { font-size: 14px; line-height: 20px; }
+.mk-body .gd-crest { width: 46px; height: 46px; }
+.mk-body .gd-crest b { font-size: 18px; }
+.mk-body .gd-btn { font-size: 14px; min-height: 40px; }
+.mk-body .gd-btn-sm { min-height: 30px; font-size: 12px; }
+.mk-body .gd-bubble { font-size: 13px; line-height: 20px; padding: 8px 12px; }
+.mk-body .gd-sigil { width: 38px; height: 38px; font-size: 17px; }
+.mk-body .gd-score-num { font-size: 26px; }
+.mk-body .gd-review-state { width: 4.5em; }
+.mk-h { font-family: var(--font-serif); font-weight: 700; font-size: 15px; margin-top: 2px !important; }
+.mk-num { font-family: var(--font-serif); font-size: 22px; color: var(--crimson) !important; }
+.mk-meta { font-size: 12px; color: var(--ink-muted); }
+.mk-title { font-size: 19px; line-height: 28px; font-weight: 700; margin: 4px 0 !important; }
+.mk-fold { color: var(--teal); }
+.mk-tag { font-size: 11px; font-weight: 700; color: var(--gold-ink); background: var(--gold-soft); border-radius: 4px; padding: 1px 6px; }
+.mk-ta { background: var(--parchment-raised); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px; font-size: 13px; line-height: 21px; min-height: 150px; }
+.mk-count { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-muted); }
+.mk-count b { color: var(--ink); }
+.mk-nav { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--parchment-raised); border-top: 1px solid var(--line); }
+.mk-nav span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 10px; color: var(--ink-muted); }
+.mk-nav span i { font-size: 15px; }
+.mk-nav span.on { color: var(--crimson); font-weight: 700; }
+.mk-cap { font-size: 12px; color: var(--gray-600); margin: 0 !important; text-align: center; }
+/* 管理画面（ギルド管理局） */
+.ad-wrap { width: 100%; overflow-x: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ad-frame { width: 860px; background: var(--parchment); border: 1px solid #9a9a9a; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.ad-head { display: flex; align-items: center; gap: 12px; background: var(--ink); color: var(--parchment); padding: 10px 16px; }
+.ad-head .gd-serif { font-weight: 800; font-size: 15px; }
+.ad-label { font-size: 11px; font-weight: 700; color: var(--ink); background: var(--gold-soft); border-radius: 4px; padding: 1px 8px; letter-spacing: .1em; }
+.ad-role { margin-left: auto; font-size: 11px; color: var(--line); }
+.ad-main { display: grid; grid-template-columns: 180px 1fr; min-height: 380px; }
+.ad-side { background: var(--parchment-sunk); border-right: 1px solid var(--line); padding: 10px 0 !important; }
+.ad-side li { padding: 9px 14px; font-size: 12px; color: var(--ink-muted); display: flex; gap: 8px; align-items: center; }
+.ad-side li i { width: 14px; text-align: center; }
+.ad-side li.on { background: var(--parchment-raised); color: var(--ink); font-weight: 700; border-left: 3px solid var(--crimson); }
+.ad-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.ad-top { display: flex; justify-content: space-between; align-items: center; }
+.ad-h { font-size: 18px; font-weight: 700; }
+.ad-sel { font-size: 12px; border: 1px solid var(--line-strong); background: var(--parchment-raised); border-radius: 6px; padding: 4px 10px; }
+.ad-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.ad-kpis > div { background: var(--parchment-raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
+.ad-kpis small { display: block; font-size: 11px; color: var(--ink-muted); }
+.ad-kpis b { font-family: var(--font-serif); font-size: 22px; line-height: 28px; margin-right: 2px; }
+.gd-scope table.ad-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--parchment-raised); border: 1px solid var(--line); }
+.gd-scope .ad-table th { background: var(--parchment-sunk); color: var(--ink); border-bottom: 1px solid var(--line-strong); padding: 7px 10px; font-weight: 700; }
+.gd-scope .ad-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); font-weight: 400; color: var(--ink); }
+.ad-act { display: flex; justify-content: flex-end; gap: 8px; }
+.ad-act .gd-btn { font-size: 13px; min-height: 36px; }
+.ad-chars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ad-char { display: flex; gap: 10px; align-items: center; background: var(--parchment-raised); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 12px; }
+.ad-char.on { border: 2px solid var(--teal); padding: 9px; }
+.ad-char small { color: var(--ink-muted); font-size: 11px; }
+.ad-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ad-drop { border: 2px dashed var(--line-strong); border-radius: 8px; text-align: center; padding: 18px 10px; color: var(--ink-muted); font-size: 12px; }
+.ad-drop i { font-size: 22px; color: var(--teal); }
+.ad-prev { background: var(--parchment-sunk); border-radius: 8px; padding: 10px; }
+.ad-prev .gd-bubble { font-size: 12px; padding: 6px 10px; }
+@media print { .mock { break-inside: avoid; } }
+
+</style>
+<style>
+.env-badge{display:inline-block;font-size:14px;font-weight:700;border-radius:999px;padding:2px 12px;margin-left:12px;vertical-align:4px}
+.env-dev{background:var(--blue-50);color:var(--blue-900);border:1px solid var(--blue-200)}
+.env-stg{background:#F2F2F2;color:#414141;border:1px solid #B4B4B4}
+.env-prod{background:#00118F;color:#fff;border:1px solid #00118F}
+.toc ol ol{margin:4px 0 8px;padding-left:16px;font-size:13px}
+.toc ol ol li{margin:2px 0}
+.chapter ol li, .chapter ul li{margin:4px 0}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <span class="eyebrow">さくらのクラウド構築手順書</span>
+    <h1><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>RPG学習アプリ さくらのクラウド構築手順書</h1>
+    <ul class="meta">
+      <li>版数<b>第0.1版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）</b></li>
+      <li>作成日<b>2026-10-27</b></li>
+      <li>入力文書<b>外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章）</b></li>
+      <li>対象<b>Phase 1（MVP）のパイロット環境。dev・prod の2環境</b></li>
+      <li>作業方法<b>さくらのクラウドのリソースはコントロールパネル（Web画面）で作る。アプリはコンテナイメージにして GitHub Actions がコンテナレジストリに置き、サーバーで <code>docker compose</code> を使って動かす（詳細設計書 第11章）</b></li>
+    </ul>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p>目次</p>
+    <ol>
+<li><a href="#ch1">1. はじめに</a></li>
+<li><a href="#ch2">2. アカウントで1回だけ行う作業</a></li>
+<li><a href="#ch3">3. dev 環境の構築</a></li>
+<li><a href="#ch4">4. prod 環境の構築</a></li>
+<li><a href="#ch5">5. 運用</a></li>
+<li><a href="#ch6">6. 確認したいこと（未決事項）</a></li>
+    </ol>
+  </nav>
+  <main>
+<section class="chapter" id="ch1"><h2><i aria-hidden="true" class="fa-solid fa-book-open h-ico"></i>1. はじめに</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 この手順書の使い方</h3>
+<ul>
+<li>第2章（アカウントで1回だけ行う作業）を最初に行い、そのあと <strong>dev → prod の順</strong> に第3〜4章を進める</li>
+<li>第4章（prod）は第3章と同じ手順のため、値の違いだけを書いている</li>
+<li>手順の中の <code>&lt;DBのパスワード&gt;</code> などの山かっこは、自分の環境の値に置き換える</li>
+<li>作業中に控える値は「控える値」表（1.6）の番号（V-xx）で呼ぶ。パスワード・キーはパスワード管理ツールに入れ、文書やチャットに書かない</li>
+<li>コントロールパネルの項目名は2026年10月時点の想定。画面の文言が少し違う場合は、意味の近い項目を選ぶ</li>
+<li>AI は当面 <strong>さくらのAI Engine</strong> を使い、Amazon Bedrock が使えるようになったら AI だけを Bedrock に切り替える（5.5）</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 前提</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>さくらのクラウドのアカウント</td>
+<td>1つ（dev・prod を同じアカウントに作り、プロジェクトで分ける）。作業者は二要素認証を設定する</td>
+</tr>
+<tr>
+<td>ゾーン</td>
+<td>石狩第1ゾーン（<code>is1b</code>）。サーバー・スイッチ・データベースアプライアンスは同じゾーンに作る。オブジェクトストレージも石狩のサイト（<code>isk01</code>）を使う</td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>HTTPS の証明書（Let's Encrypt）を Caddy が自動で取るため、環境ごとに名前（例：<code>rpg-dev.&lt;ドメイン&gt;</code>・<code>rpg.&lt;ドメイン&gt;</code>）が要る。DNS の A レコードを作れるドメインを用意する（2.2）</td>
+</tr>
+<tr>
+<td>メール</td>
+<td>SMTP で送れるメールサービス（例：さくらのメールボックス）。送信元のドメインに SPF・DKIM を設定できること（3.6）</td>
+</tr>
+<tr>
+<td>GitHub</td>
+<td>リポジトリ <code>pocarialice/rpglearning</code> の管理者権限（Settings を変更できる）。Environments を使う</td>
+</tr>
+<tr>
+<td>作業PC</td>
+<td>SSH の鍵（ed25519）、<code>aws</code> CLI（オブジェクトストレージの CORS の設定に使う。S3 互換のため AWS の契約は不要）</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 名前の決まり</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>リソース名</td>
+<td><code>rpg-{環境}-{用途}</code></td>
+<td><code>rpg-dev-app</code>（サーバー）、<code>rpg-dev-db</code></td>
+</tr>
+<tr>
+<td>バケット名</td>
+<td>オブジェクトストレージ全体で重複できないため、<code>rpg-{環境}-{用途}</code> が使われていたら末尾に任意の英数字を付ける</td>
+<td><code>rpg-dev-import</code></td>
+</tr>
+<tr>
+<td>タグ</td>
+<td><code>rpg</code>・<code>dev</code>／<code>prod</code></td>
+<td>すべてのリソースに付ける（請求とコントロールパネルの絞り込みに使う）</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.4 全体の構成</h3>
+<figure class="diagram wide"><div class="mermaid">flowchart LR
+  U["利用者のブラウザ"] --&gt;|"HTTPS 443"| PF["パケットフィルタ"]
+  PF --&gt; SV
+  subgraph SV["サーバー rpg-{env}-app（Ubuntu・Docker）"]
+    CA["caddy&lt;br&gt;HTTPS"] --&gt; API["api&lt;br&gt;画面と /api/*"]
+    WK["worker&lt;br&gt;採点・取り込み・定期処理"]
+  end
+  SV --&gt;|"スイッチ（ローカル）"| DB[("データベース&lt;br&gt;PostgreSQL")]
+  API --&gt; OS["オブジェクトストレージ&lt;br&gt;import・assets・notify"]
+  WK --&gt; OS
+  API --&gt; AI["さくらのAI Engine&lt;br&gt;（あとで Bedrock）"]
+  WK --&gt; AI
+  API --&gt; SM["SMTP&lt;br&gt;メール"]
+  WK --&gt; SM
+  GH["GitHub Actions"] --&gt;|"push"| CR["コンテナレジストリ"]
+  CR --&gt;|"pull"| SV
+  MON["シンプル監視"] --&gt;|"/api/health"| SV
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.5 構築の順番</h3>
+<figure class="diagram"><div class="mermaid">flowchart TD
+  C0["第2章 アカウントで1回&lt;br&gt;プロジェクト・ドメイン・GitHub"] --&gt; E1
+  subgraph ENV["第3〜4章 環境ごと dev → prod"]
+    E1["3.1 準備"] --&gt; E2["3.2 スイッチ・パケットフィルタ"]
+    E2 --&gt; E3["3.3 データベース"]
+    E3 --&gt; E4["3.4 オブジェクトストレージ"]
+    E4 --&gt; E5["3.5 さくらのAI Engine"]
+    E5 --&gt; E6["3.6 メール（SMTP）"]
+    E6 --&gt; E7["3.7 コンテナレジストリと GitHub"]
+    E7 --&gt; E8["3.8 サーバーと Docker・.env"]
+    E8 --&gt; E9["3.9 初回の起動と確認"]
+    E9 --&gt; E10["3.10 最初のシステム管理者"]
+    E10 --&gt; E11["3.11 リリースの反映"]
+    E11 --&gt; E12["3.12 シンプル監視・バックアップ"]
+  end
+  E12 --&gt; OP["第5章 運用&lt;br&gt;OS更新・バックアップ・Bedrock への切り替え"]
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.6 環境ごとの設定値と控える値</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>番号</th>
+<th>項目</th>
+<th>dev</th>
+<th>prod</th>
+<th>どこで決まるか</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V-01</td>
+<td>サイトのドメイン名（<code>SITE_ADDRESS</code>）</td>
+<td><code>rpg-dev.&lt;ドメイン&gt;</code></td>
+<td><code>rpg.&lt;ドメイン&gt;</code></td>
+<td>2.2</td>
+</tr>
+<tr>
+<td>V-02</td>
+<td>サーバーのグローバルIPアドレス</td>
+<td></td>
+<td></td>
+<td>3.8</td>
+</tr>
+<tr>
+<td>V-03</td>
+<td>スイッチのネットワーク</td>
+<td><code>192.168.10.0/24</code></td>
+<td><code>192.168.20.0/24</code></td>
+<td>3.2</td>
+</tr>
+<tr>
+<td>V-04</td>
+<td>サーバーのローカルIPアドレス</td>
+<td><code>192.168.10.11</code></td>
+<td><code>192.168.20.11</code></td>
+<td>3.8</td>
+</tr>
+<tr>
+<td>V-05</td>
+<td>DB のIPアドレス</td>
+<td><code>192.168.10.21</code></td>
+<td><code>192.168.20.21</code></td>
+<td>3.3</td>
+</tr>
+<tr>
+<td>V-06</td>
+<td>DB のユーザー名</td>
+<td><code>rpgadmin</code></td>
+<td><code>rpgadmin</code></td>
+<td>3.3</td>
+</tr>
+<tr>
+<td>V-07</td>
+<td>DB のパスワード</td>
+<td>（管理ツールへ）</td>
+<td>（管理ツールへ）</td>
+<td>3.3</td>
+</tr>
+<tr>
+<td>V-08</td>
+<td>オブジェクトストレージのエンドポイント・リージョン</td>
+<td><code>https://s3.isk01.sakurastorage.jp</code>・<code>jp-north-1</code></td>
+<td>同じ</td>
+<td>3.4</td>
+</tr>
+<tr>
+<td>V-09</td>
+<td>バケット名（取り込み・画像・通知）</td>
+<td><code>rpg-dev-import</code>・<code>rpg-dev-assets</code>・<code>rpg-dev-notify</code></td>
+<td><code>rpg-prod-*</code></td>
+<td>3.4</td>
+</tr>
+<tr>
+<td>V-10</td>
+<td>オブジェクトストレージのアクセスキー・シークレットキー</td>
+<td>（管理ツールへ）</td>
+<td>（管理ツールへ）</td>
+<td>3.4</td>
+</tr>
+<tr>
+<td>V-11</td>
+<td>さくらのAI Engine のアカウントトークン</td>
+<td>（管理ツールへ）</td>
+<td>（管理ツールへ。dev と分ける）</td>
+<td>3.5</td>
+</tr>
+<tr>
+<td>V-12</td>
+<td>SMTP のホスト・ポート・ユーザー・パスワード</td>
+<td></td>
+<td></td>
+<td>3.6</td>
+</tr>
+<tr>
+<td>V-13</td>
+<td>送信元のメールアドレス（<code>MAIL_FROM</code>）</td>
+<td><code>no-reply@&lt;ドメイン&gt;</code></td>
+<td>同じ</td>
+<td>3.6</td>
+</tr>
+<tr>
+<td>V-14</td>
+<td>監視のお知らせの宛先（<code>ALERT_EMAIL</code>）</td>
+<td>開発者</td>
+<td>システム管理者・開発者</td>
+<td>3.6</td>
+</tr>
+<tr>
+<td>V-15</td>
+<td><code>AUTH_SECRET</code>（ログインの署名の鍵）</td>
+<td>（管理ツールへ）</td>
+<td>（管理ツールへ。dev と別の値）</td>
+<td>3.8</td>
+</tr>
+<tr>
+<td>V-20</td>
+<td>コンテナレジストリのドメイン</td>
+<td><code>&lt;レジストリ名&gt;.sakuracr.jp</code></td>
+<td>dev と同じ</td>
+<td>3.7</td>
+</tr>
+<tr>
+<td>V-21</td>
+<td>レジストリの push 用ユーザー・パスワード</td>
+<td>（管理ツールへ）</td>
+<td>同じ</td>
+<td>3.7</td>
+</tr>
+<tr>
+<td>V-22</td>
+<td>レジストリの pull 用ユーザー・パスワード</td>
+<td>（管理ツールへ）</td>
+<td>同じ</td>
+<td>3.7</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.7 費用の目安</h3>
+<p>月額の料金は構築時にさくらのクラウドの料金表で確かめ、外部設計書のコストの表に書く（詳細設計書 12 No.14）。AI は、さくらのAI Engine の従量課金で prod が月に約400円の見込み（1か月の採点・抽出の回数から計算）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>リソース</th>
+<th>dev</th>
+<th>prod</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>サーバー</td>
+<td>2コア・4GB・ディスク40GB</td>
+<td>2コア・4GB・ディスク40GB（利用者が増えたら4コア・8GB）</td>
+</tr>
+<tr>
+<td>スイッチ</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>データベースアプライアンス</td>
+<td>10GB プラン（1コア・2GB）</td>
+<td>30GB プラン（2コア・4GB）</td>
+</tr>
+<tr>
+<td>オブジェクトストレージ</td>
+<td>バケット3つ</td>
+<td>バケット3つ</td>
+</tr>
+<tr>
+<td>コンテナレジストリ</td>
+<td>1つを dev・prod で共用</td>
+<td>（共用）</td>
+</tr>
+<tr>
+<td>シンプル監視</td>
+<td>2つ（HTTPS・ping）</td>
+<td>2つ（HTTPS・ping）</td>
+</tr>
+</tbody>
+</table></div>
+</section><section class="chapter" id="ch2"><h2><i aria-hidden="true" class="fa-solid fa-user-shield h-ico"></i>2. アカウントで1回だけ行う作業</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 プロジェクト</h3>
+<ol>
+<li>コントロールパネルにログインし、右上の「プロジェクト」で <code>rpg-dev</code> と <code>rpg-prod</code> の2つを作る</li>
+<li>作業者のユーザーに二要素認証を設定する（「会員メニュー」→「セキュリティ」）</li>
+<li>以降の作業は、環境ごとのプロジェクトを選んでから行う（リソースが混ざらないようにする）</li>
+</ol>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 ドメインと DNS</h3>
+<ol>
+<li>使うドメインを決める（さくらのドメインで取る場合は「ドメイン取得」）。DNS は、さくらのクラウドの「DNS」アプライアンス、またはドメインの管理会社の DNS を使う</li>
+<li>名前を決めて V-01 に書く（<code>rpg-dev.&lt;ドメイン&gt;</code>・<code>rpg.&lt;ドメイン&gt;</code>）。A レコードはサーバーを作ったあと（3.8）に登録する</li>
+<li>送信元のドメインの SPF・DKIM は 3.6 で登録する</li>
+</ol>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 GitHub の設定</h3>
+<ol>
+<li>リポジトリの「Settings」→「Branches」で <code>main</code> のルールを作り、「Require status checks to pass」で <code>ci</code> を必須にする（詳細設計書 11.4）</li>
+<li>「Settings」→「Environments」で <code>dev</code> と <code>prod</code> を作る。<code>prod</code> は「Required reviewers」にシステム管理者と開発リーダーを入れ、「Prevent self-review」を有効にする。<code>prod</code> の「Deployment branches and tags」はタグ <code>release-*</code> だけにする</li>
+<li>Variables・Secrets は 3.7 で入れる</li>
+</ol>
+</section><section class="chapter" id="ch3"><h2><i aria-hidden="true" class="fa-solid fa-flask h-ico"></i>3. dev 環境の構築<span class="env-badge env-dev">dev・開発</span></h2>
+<p>右上のプロジェクトで <code>rpg-dev</code> を選び、ゾーンを「石狩第1」にしてから始める。</p>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 準備</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>確認すること</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>プロジェクト・ゾーン</td>
+<td><code>rpg-dev</code>・石狩第1</td>
+</tr>
+<tr>
+<td>控える値の表</td>
+<td>1.6 の dev の列を空けておく</td>
+</tr>
+<tr>
+<td>SSH の鍵</td>
+<td>作業PCの公開鍵（<code>~/.ssh/id_ed25519.pub</code>）をコントロールパネルの「公開鍵」に登録しておく（名前 <code>rpg-admin</code>）</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 スイッチとパケットフィルタ</h3>
+<p><strong>スイッチ</strong></p>
+<ol>
+<li>「ネットワーク」→「スイッチ」→「追加」</li>
+<li>名前 <code>rpg-dev-sw</code>、タグ <code>rpg</code>・<code>dev</code>。ルータは付けない（サーバーと DB を内側でつなぐだけ）</li>
+<li>このスイッチのネットワークを V-03（<code>192.168.10.0/24</code>）とする</li>
+</ol>
+<p><strong>パケットフィルタ</strong>（サーバーのインターネット側に付ける。さくらのクラウドのパケットフィルタは戻りの通信も明示して許可する必要がある）</p>
+<ol>
+<li>「ネットワーク」→「パケットフィルタ」→「追加」、名前 <code>rpg-dev-pf</code></li>
+<li>次のルールを上から順に入れる</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>プロトコル</th>
+<th>送信元ネットワーク</th>
+<th>送信元ポート</th>
+<th>宛先ポート</th>
+<th>動作</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>tcp</td>
+<td>（すべて）</td>
+<td></td>
+<td>80</td>
+<td>許可</td>
+<td>Let's Encrypt の確認と HTTPS への転送</td>
+</tr>
+<tr>
+<td>2</td>
+<td>tcp</td>
+<td>（すべて）</td>
+<td></td>
+<td>443</td>
+<td>許可</td>
+<td>画面と API</td>
+</tr>
+<tr>
+<td>3</td>
+<td>tcp</td>
+<td><code>&lt;作業場所のIPアドレス&gt;/32</code></td>
+<td></td>
+<td>22</td>
+<td>許可</td>
+<td>SSH（作業者だけ）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>tcp</td>
+<td>（すべて）</td>
+<td></td>
+<td>32768-61000</td>
+<td>許可</td>
+<td>サーバーから外への通信の戻り（レジストリ・AI・SMTP・オブジェクトストレージ・apt）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>udp</td>
+<td>（すべて）</td>
+<td>53</td>
+<td></td>
+<td>許可</td>
+<td>DNS の戻り</td>
+</tr>
+<tr>
+<td>6</td>
+<td>udp</td>
+<td>（すべて）</td>
+<td>123</td>
+<td></td>
+<td>許可</td>
+<td>時刻合わせ（NTP）の戻り</td>
+</tr>
+<tr>
+<td>7</td>
+<td>icmp</td>
+<td>（すべて）</td>
+<td></td>
+<td></td>
+<td>許可</td>
+<td>ping（シンプル監視）</td>
+</tr>
+<tr>
+<td>8</td>
+<td>fragment</td>
+<td>（すべて）</td>
+<td></td>
+<td></td>
+<td>許可</td>
+<td>分割されたパケット</td>
+</tr>
+<tr>
+<td>9</td>
+<td>ip</td>
+<td>（すべて）</td>
+<td></td>
+<td></td>
+<td>拒否</td>
+<td>ほかはすべて拒否</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>SSH は作業場所のIPアドレスだけに開ける。IPアドレスが変わる環境なら、作業のときだけルール3を足す</li>
+<li>サーバーの中でも ufw で 22・80・443 だけを開ける（3.8）。二重に守る</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 データベースアプライアンス</h3>
+<ol>
+<li>「アプライアンス」→「データベース」→「追加」</li>
+<li>次のとおり入れる</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>データベースの種類</td>
+<td>PostgreSQL（画面で選べる最新の版。16以上）</td>
+</tr>
+<tr>
+<td>プラン</td>
+<td>10GB（1コア・2GB）。prod は 30GB（第4章）</td>
+</tr>
+<tr>
+<td>冗長化</td>
+<td>なし（Phase 1）。prod も Phase 3 で見直す</td>
+</tr>
+<tr>
+<td>接続先</td>
+<td>スイッチ <code>rpg-dev-sw</code></td>
+</tr>
+<tr>
+<td>IPアドレス・ネットマスク</td>
+<td>V-05（<code>192.168.10.21</code>）・<code>24</code></td>
+</tr>
+<tr>
+<td>ポート</td>
+<td>5432（既定）</td>
+</tr>
+<tr>
+<td>ユーザー名・パスワード</td>
+<td>V-06（<code>rpgadmin</code>）・V-07（20文字以上のランダムな文字列。<code>openssl rand -base64 24</code>）</td>
+</tr>
+<tr>
+<td>送信元ネットワーク</td>
+<td><code>192.168.10.0/24</code>（スイッチの中だけから受け付ける）</td>
+</tr>
+<tr>
+<td>自動バックアップ</td>
+<td>毎日 3:00、保持8世代（日次処理 0:00 と重ならない時刻にする）</td>
+</tr>
+<tr>
+<td>名前・タグ</td>
+<td><code>rpg-dev-db</code>・<code>rpg</code>・<code>dev</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>作成後、状態が「起動中」になるまで待つ（数分）</li>
+<li>データベース <code>rpg</code> は、サーバーができたあと（3.9）に作る</li>
+</ol>
+<ul>
+<li>作成後はプランと接続先スイッチを変えられない。プランを上げるときはバックアップから作り直す（5.3）</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 オブジェクトストレージ</h3>
+<p><strong>バケット</strong></p>
+<ol>
+<li>「オブジェクトストレージ」を開き、サイト「石狩第1（isk01）」でバケットを3つ作る</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>バケット（V-09）</th>
+<th>中身</th>
+<th>公開</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-dev-import</code></td>
+<td>問題の取り込みの原本（PDF・画像・テキスト）</td>
+<td>非公開</td>
+</tr>
+<tr>
+<td><code>rpg-dev-assets</code></td>
+<td>パートナーの画像（api コンテナの <code>/partners/*</code> が配信する）</td>
+<td>非公開</td>
+</tr>
+<tr>
+<td><code>rpg-dev-notify</code></td>
+<td>通知メールの送信リスト（日次処理が作る）</td>
+<td>非公開</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>アクセスキー</strong></p>
+<ol start="2">
+<li>「パーミッション」（アクセスキー）を作り、上の3つのバケットに「読み取り・書き込み」を付ける。名前 <code>rpg-dev-app</code></li>
+<li>表示されたアクセスキーとシークレットキーを V-10 に控える（シークレットキーはあとで表示できない）</li>
+<li>エンドポイントとリージョンを V-08 に控える（画面に出る値を優先する）</li>
+</ol>
+<p><strong>CORS</strong>（画面からブラウザで署名付きURLに直接 PUT するため。<code>rpg-dev-import</code> と <code>rpg-dev-assets</code> の2つ）</p>
+<ol start="5">
+<li>作業PCで次のファイル <code>cors.json</code> を作る（<code>&lt;V-01&gt;</code> を自分の値に）</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;CORSRules&quot;: [
+    {
+      &quot;AllowedOrigins&quot;: [&quot;https://&lt;V-01&gt;&quot;],
+      &quot;AllowedMethods&quot;: [&quot;PUT&quot;],
+      &quot;AllowedHeaders&quot;: [&quot;content-type&quot;],
+      &quot;MaxAgeSeconds&quot;: 3600
+    }
+  ]
+}
+</code></pre>
+<ol start="6">
+<li>S3 互換 API で設定する</li>
+</ol>
+<pre><code class="language-bash">export AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; AWS_SECRET_ACCESS_KEY=&lt;V-10 のシークレットキー&gt;
+for b in rpg-dev-import rpg-dev-assets; do
+  aws s3api put-bucket-cors --endpoint-url https://s3.isk01.sakurastorage.jp --region jp-north-1 --bucket &quot;$b&quot; --cors-configuration file://cors.json
+  aws s3api get-bucket-cors --endpoint-url https://s3.isk01.sakurastorage.jp --region jp-north-1 --bucket &quot;$b&quot;
+done
+</code></pre>
+<ul>
+<li><code>put-bucket-cors</code> が受け付けられない場合は、コントロールパネルのバケットの設定に CORS の項目がないかを見る。どちらでも設定できなければ、6章 No.1 として相談する（画面からのアップロードができないため）</li>
+</ul>
+<p><strong>古いファイルの削除</strong>（任意）</p>
+<ol start="7">
+<li><code>rpg-dev-import</code> の <code>uploads/</code> は取り込みが終われば使わないため、ライフサイクルで30日後に消す。<code>rpg-dev-notify</code> の <code>notify/</code> は7日後に消す（S3 互換 API の <code>put-bucket-lifecycle-configuration</code>。使えなければ手で年に数回消す）</li>
+</ol>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 さくらのAI Engine</h3>
+<ol>
+<li>コントロールパネルの「AI Engine」を開き、利用規約を確認して利用を始める</li>
+<li>「アカウントトークン」→「発行」。名前 <code>rpg-dev</code>。表示された値（<code>&lt;UUID&gt;:&lt;シークレット&gt;</code>）を V-11 に控える（あとで表示できない）</li>
+<li>使うモデルが <code>gpt-oss-120b</code> であること、料金（無料枠・従量課金）を画面で確かめる</li>
+<li>入力のデータの扱い（学習に使わないこと）を利用規約で確かめ、外部設計書の個人情報の扱いと食い違わないことを確認する。AI に渡すのは問題文・解説・学習者の説明文だけで、氏名・メールアドレスは渡さない（詳細設計書 9.1）</li>
+<li>作業PCで呼べることを確かめる</li>
+</ol>
+<pre><code class="language-bash">curl -s https://api.ai.sakura.ad.jp/v1/chat/completions \
+  -H &quot;Authorization: Bearer &lt;V-11&gt;&quot; -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;model&quot;:&quot;gpt-oss-120b&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;こんにちは&quot;}],&quot;max_tokens&quot;:50}'
+</code></pre>
+<ul>
+<li>応答の <code>choices[0].message.content</code> に文章が入っていれば OK</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 メール（SMTP）</h3>
+<p>ここでは、さくらのメールボックスで送る例を書く。ほかの SMTP サービスでも、ホスト・ポート・ユーザー・パスワードがあれば同じように使える。</p>
+<ol>
+<li>送信用のメールアドレス <code>no-reply@&lt;ドメイン&gt;</code> を作る（V-13）。パスワードを V-12 に控える</li>
+<li>SMTP の設定を V-12 に控える</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値の例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ホスト（<code>SMTP_HOST</code>）</td>
+<td><code>&lt;初期ドメイン&gt;.sakura.ne.jp</code> など、サービスの案内のとおり</td>
+</tr>
+<tr>
+<td>ポート・暗号化（<code>SMTP_PORT</code>・<code>SMTP_SECURE</code>）</td>
+<td>587・<code>false</code>（STARTTLS）。465 を使うなら <code>true</code></td>
+</tr>
+<tr>
+<td>ユーザー（<code>SMTP_USER</code>）</td>
+<td><code>no-reply@&lt;ドメイン&gt;</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>送信元のドメインの DNS に、サービスの案内どおりの SPF（TXT レコード、例 <code>v=spf1 include:&lt;サービスの指定&gt; ~all</code>）と DKIM を登録する</li>
+<li>監視のお知らせの宛先を決めて V-14 に書く</li>
+<li>作業PCから自分あてに1通送り、迷惑メールにならずに届くことを確かめる（3.9 でアプリからも確かめる）</li>
+</ol>
+<ul>
+<li>サーバーから外への 25番ポートは使わない（587・465 で送る）</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.7 コンテナレジストリと GitHub</h3>
+<p>レジストリは dev・prod で1つを共用する（dev のときだけ作る。prod では作らない）。</p>
+<ol>
+<li>「アプライアンス」→「コンテナレジストリ」→「追加」。名前（サブドメイン）を決め、公開設定は「非公開」にする。ドメイン <code>&lt;名前&gt;.sakuracr.jp</code> を V-20 に控える</li>
+<li>「ユーザー」を2つ作る</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ユーザー</th>
+<th>権限</th>
+<th>使う場所</th>
+<th>控える値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-push</code></td>
+<td>読み書き（push）</td>
+<td>GitHub Actions（<code>release.yml</code>）</td>
+<td>V-21</td>
+</tr>
+<tr>
+<td><code>rpg-pull</code></td>
+<td>読み取りだけ（pull）</td>
+<td>サーバー（dev・prod）</td>
+<td>V-22</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>GitHub の「Settings」→「Environments」で、<code>dev</code> と <code>prod</code> のそれぞれに入れる</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>種類</th>
+<th>名前</th>
+<th>dev</th>
+<th>prod</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Variables</td>
+<td><code>REGISTRY</code></td>
+<td>V-20</td>
+<td>V-20</td>
+</tr>
+<tr>
+<td>Variables</td>
+<td><code>APP_ENV</code></td>
+<td><code>dev</code></td>
+<td><code>prod</code></td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td><code>REGISTRY_USER</code></td>
+<td><code>rpg-push</code></td>
+<td><code>rpg-push</code></td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td><code>REGISTRY_PASSWORD</code></td>
+<td>V-21</td>
+<td>V-21</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="4">
+<li>「Actions」→「release」→「Run workflow」（ブランチ <code>main</code>）で、最初の dev 用のイメージを作る。成功したら、ジョブの概要に出たイメージ名（<code>&lt;V-20&gt;/rpg-app:dev-YYYYMMDD-NN</code>）を控える</li>
+</ol>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.8 サーバーと Docker・compose・.env</h3>
+<p><strong>サーバーを作る</strong></p>
+<ol>
+<li>「サーバ」→「追加」</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>プラン</td>
+<td>2コア・4GB</td>
+</tr>
+<tr>
+<td>ディスク</td>
+<td>40GB（SSD）、アーカイブ「Ubuntu Server 24.04 LTS」</td>
+</tr>
+<tr>
+<td>NIC 1</td>
+<td>インターネット（共有セグメント）、パケットフィルタ <code>rpg-dev-pf</code></td>
+</tr>
+<tr>
+<td>NIC 2</td>
+<td>スイッチ <code>rpg-dev-sw</code>（追加の NIC。作成後に「NIC」タブで足してもよい）</td>
+</tr>
+<tr>
+<td>公開鍵</td>
+<td><code>rpg-admin</code>（パスワードでのログインは無効にする）</td>
+</tr>
+<tr>
+<td>ホスト名・名前・タグ</td>
+<td><code>rpg-dev-app</code>・<code>rpg</code>・<code>dev</code></td>
+</tr>
+</tbody>
+</table></div>
+<ol start="2">
+<li>作成後、グローバルIPアドレスを V-02 に控え、DNS に A レコード <code>&lt;V-01&gt;</code> → V-02 を登録する</li>
+<li>SSH でログインする：<code>ssh ubuntu@&lt;V-02&gt;</code></li>
+</ol>
+<p><strong>OS の設定</strong></p>
+<ol start="4">
+<li>更新・時刻・ファイアウォール</li>
+</ol>
+<pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt -y upgrade
+sudo timedatectl set-timezone Asia/Tokyo
+sudo ufw allow 22/tcp &amp;&amp; sudo ufw allow 80/tcp &amp;&amp; sudo ufw allow 443/tcp &amp;&amp; sudo ufw --force enable
+</code></pre>
+<ol start="5">
+<li>NIC 2（スイッチ側）にローカルIPアドレス V-04 を付ける。<code>/etc/netplan/60-switch.yaml</code> を作る（インターフェース名は <code>ip link</code> で確かめる。例 <code>ens4</code>）</li>
+</ol>
+<pre><code class="language-yaml">network:
+  version: 2
+  ethernets:
+    ens4:
+      addresses: [192.168.10.11/24]
+</code></pre>
+<pre><code class="language-bash">sudo netplan apply
+ping -c 3 192.168.10.21   # DB に届けば OK
+</code></pre>
+<p><strong>Docker</strong></p>
+<ol start="6">
+<li>Docker の公式手順（Ubuntu）で Docker Engine と compose プラグインを入れる</li>
+</ol>
+<pre><code class="language-bash">curl -fsSL https://get.docker.com -o get-docker.sh &amp;&amp; sudo sh get-docker.sh
+sudo usermod -aG docker ubuntu   # ログインし直す
+docker compose version
+</code></pre>
+<ol start="7">
+<li>コンテナレジストリにログインする（pull 用のユーザー）</li>
+</ol>
+<pre><code class="language-bash">docker login &lt;V-20&gt; -u rpg-pull   # パスワードは V-22
+</code></pre>
+<p><strong>compose と .env</strong></p>
+<ol start="8">
+<li>置き場所を作り、リポジトリの <code>compose.yaml</code> と <code>Caddyfile</code> を置く</li>
+</ol>
+<pre><code class="language-bash">sudo mkdir -p /opt/rpg &amp;&amp; sudo chown ubuntu: /opt/rpg &amp;&amp; cd /opt/rpg
+curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/compose.yaml
+curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/Caddyfile
+</code></pre>
+<p>（リポジトリが非公開なら、作業PCから <code>scp compose.yaml Caddyfile ubuntu@&lt;V-02&gt;:/opt/rpg/</code> で置く）</p>
+<ol start="9">
+<li><code>.env</code> を作る（見本はリポジトリの <code>.env.example</code>）。<code>AUTH_SECRET</code> は <code>openssl rand -base64 48</code> で作り V-15 に控える</li>
+</ol>
+<pre><code class="language-bash">IMAGE=&lt;V-20&gt;/rpg-app:&lt;3.7 で控えたリリース番号&gt;
+SITE_ADDRESS=&lt;V-01&gt;
+APP_ENV=dev
+APP_URL=https://&lt;V-01&gt;
+DATABASE_URL=postgres://rpgadmin:&lt;V-07&gt;@192.168.10.21:5432/rpg
+DATABASE_SSL=
+AUTH_SECRET=&lt;V-15&gt;
+S3_ENDPOINT=https://s3.isk01.sakurastorage.jp
+S3_REGION=jp-north-1
+S3_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt;
+S3_SECRET_ACCESS_KEY=&lt;V-10 のシークレットキー&gt;
+IMPORT_BUCKET=rpg-dev-import
+ASSETS_BUCKET=rpg-dev-assets
+NOTIFY_BUCKET=rpg-dev-notify
+SMTP_HOST=&lt;V-12&gt;
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=&lt;V-12&gt;
+SMTP_PASS=&lt;V-12&gt;
+MAIL_FROM=&lt;V-13&gt;
+ALERT_EMAIL=&lt;V-14&gt;
+AI_PROVIDER=sakura
+AI_BASE_URL=https://api.ai.sakura.ad.jp/v1
+AI_API_KEY=&lt;V-11&gt;
+MODEL_HIGH=gpt-oss-120b
+MODEL_LIGHT=gpt-oss-120b
+MAIL_SCHEDULE_ENABLED=false
+</code></pre>
+<pre><code class="language-bash">chmod 600 /opt/rpg/.env
+</code></pre>
+<ul>
+<li>DB のパスワードに <code>@</code>・<code>/</code>・<code>:</code> が入っているときは URL エンコードする（例：<code>@</code> → <code>%40</code>）</li>
+<li><code>.env</code> は Git に入れない。変えたら <code>docker compose up -d</code> で反映する</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.9 初回の起動と確認</h3>
+<ol>
+<li>データベース <code>rpg</code> を作る（一度だけ）</li>
+</ol>
+<pre><code class="language-bash">docker run --rm -it postgres:16 psql &quot;postgres://rpgadmin:&lt;V-07&gt;@192.168.10.21:5432/postgres&quot; -c &quot;CREATE DATABASE rpg;&quot;
+</code></pre>
+<ol start="2">
+<li>起動する（api の起動時にテーブルが作られる：V001〜V003）</li>
+</ol>
+<pre><code class="language-bash">cd /opt/rpg
+docker compose pull
+docker compose up -d
+docker compose ps                       # api が healthy、worker・caddy が running
+docker compose logs --since 5m api | grep -E 'migrate|ERROR'
+</code></pre>
+<ol start="3">
+<li>確認する</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ブラウザで <code>https://&lt;V-01&gt;/api/health</code></td>
+<td><code>{&quot;status&quot;:&quot;ok&quot;}</code>（証明書のエラーが出ない）</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>https://&lt;V-01&gt;/</code></td>
+<td>ログイン画面（S-01）が出る</td>
+</tr>
+<tr>
+<td>3</td>
+<td>`docker compose logs api</td>
+<td>grep migrate.done`</td>
+</tr>
+<tr>
+<td>4</td>
+<td>`docker compose logs worker</td>
+<td>grep schedule`</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.10 最初のシステム管理者</h3>
+<p>画面から利用者を登録できる人がまだいないため、1人目だけをコマンドで作る（詳細設計書 8.5）。</p>
+<pre><code class="language-bash">cd /opt/rpg
+docker compose exec api node scripts/create-admin.mjs &lt;メールアドレス&gt; &lt;氏名&gt;
+</code></pre>
+<ol>
+<li>表示された仮パスワードで <code>https://&lt;V-01&gt;/</code> にログインし、新しいパスワードを決める（仮パスワードは7日で切れる）</li>
+<li>管理画面（S-13）で自分あてにもう1人登録し、<strong>招待メールが届くこと</strong>を確かめる（3.6 の確認）</li>
+<li>「パスワードを忘れたとき」で再設定のメールが届くことを確かめる</li>
+<li>表示された仮パスワードはどこにも残さない（端末の履歴も <code>history -c</code> で消す）</li>
+</ol>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.11 リリースの反映</h3>
+<p>新しい版を反映するときは、詳細設計書 11.5 のとおりにサーバーで行う。</p>
+<pre><code class="language-bash">cd /opt/rpg
+sed -i 's/^IMAGE=/# 前回 IMAGE=/' .env &amp;&amp; echo &quot;IMAGE=&lt;V-20&gt;/rpg-app:&lt;新しいリリース番号&gt;&quot; &gt;&gt; .env
+docker compose pull
+docker compose up -d
+docker compose ps
+docker compose logs --since 10m api | grep -E 'migrate|ERROR'
+</code></pre>
+<ul>
+<li>切り戻しは、<code>.env</code> の <code>IMAGE=</code> を前回の値に戻して <code>docker compose up -d</code>（詳細設計書 11.6）</li>
+<li><code>compose.yaml</code>・<code>Caddyfile</code> を変えたリリースのときだけ、8. のファイルも置き直す</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.12 シンプル監視とバックアップ</h3>
+<p><strong>シンプル監視</strong></p>
+<ol>
+<li>「シンプル監視」→「追加」を2つ</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>監視</th>
+<th>対象</th>
+<th>方法</th>
+<th>間隔</th>
+<th>通知</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>サイト</td>
+<td><code>&lt;V-01&gt;</code></td>
+<td>HTTPS、パス <code>/api/health</code>、ステータス 200</td>
+<td>5分</td>
+<td>メールで V-14</td>
+</tr>
+<tr>
+<td>サーバー</td>
+<td>V-02</td>
+<td>ping</td>
+<td>5分</td>
+<td>メールで V-14</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="2">
+<li><code>docker compose stop api</code> で止め、通知が届くことを確かめてから <code>docker compose start api</code> で戻す</li>
+</ol>
+<p><strong>バックアップ</strong></p>
+<ol start="3">
+<li>データベースの「バックアップ」タブで自動バックアップ（毎日 3:00・8世代）が動いていることを翌日に確かめる</li>
+<li>サーバーは、<code>/opt/rpg</code>（<code>.env</code>・<code>compose.yaml</code>・<code>Caddyfile</code>）だけが手で作ったもの。<code>.env</code> の中身はパスワード管理ツールに控えてあるため、サーバーのバックアップは取らない（壊れたら 3.8 で作り直す）</li>
+</ol>
+</section><section class="chapter" id="ch4"><h2><i aria-hidden="true" class="fa-solid fa-rocket h-ico"></i>4. prod 環境の構築<span class="env-badge env-prod">prod・本番</span></h2>
+<p>右上のプロジェクトで <code>rpg-prod</code> を選び、第3章を上から同じ順で行う。違うところだけを書く。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>手順</th>
+<th>prod での違い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3.2</td>
+<td>スイッチ <code>rpg-prod-sw</code>（<code>192.168.20.0/24</code>）、パケットフィルタ <code>rpg-prod-pf</code></td>
+</tr>
+<tr>
+<td>3.3</td>
+<td>プラン 30GB（2コア・4GB）、IPアドレス <code>192.168.20.21</code>、送信元 <code>192.168.20.0/24</code>、パスワードは dev と別</td>
+</tr>
+<tr>
+<td>3.4</td>
+<td>バケット <code>rpg-prod-import</code>・<code>rpg-prod-assets</code>・<code>rpg-prod-notify</code>、アクセスキー <code>rpg-prod-app</code>（dev のバケットには権限を付けない）、CORS の <code>AllowedOrigins</code> は <code>https://rpg.&lt;ドメイン&gt;</code></td>
+</tr>
+<tr>
+<td>3.5</td>
+<td>アカウントトークン <code>rpg-prod</code>（dev と分け、使った量を分けて見られるようにする）</td>
+</tr>
+<tr>
+<td>3.6</td>
+<td><code>ALERT_EMAIL</code> はシステム管理者と開発者</td>
+</tr>
+<tr>
+<td>3.7</td>
+<td>レジストリは作らない（dev と共用）。GitHub の Environment <code>prod</code> に Variables・Secrets を入れる。イメージはタグ <code>release-YYYYMMDD-NN</code> を付けて承認すると作られる</td>
+</tr>
+<tr>
+<td>3.8</td>
+<td>サーバー <code>rpg-prod-app</code>、ローカルIPアドレス <code>192.168.20.11</code>、<code>.env</code> は <code>APP_ENV=prod</code>・<code>SITE_ADDRESS=rpg.&lt;ドメイン&gt;</code>・<code>MAIL_SCHEDULE_ENABLED=true</code>・prod のバケット・キー・<code>AUTH_SECRET</code>（dev と別）</td>
+</tr>
+<tr>
+<td>3.10</td>
+<td>本番のシステム管理者を作る。確認用の利用者は <code>[確認用]</code> を名前に付ける</td>
+</tr>
+<tr>
+<td>3.12</td>
+<td>監視の通知先にシステム管理者を入れる</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>prod の <code>.env</code> を dev からコピーして直すときは、<strong>キー・パスワード・<code>AUTH_SECRET</code> をすべて prod の値に替えた</strong>ことを2人で確かめる</li>
+</ul>
+</section><section class="chapter" id="ch5"><h2><i aria-hidden="true" class="fa-solid fa-screwdriver-wrench h-ico"></i>5. 運用</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.1 OS の更新（月に1回）</h3>
+<p>平日の 13:00〜13:30（詳細設計書 11.1 の時間帯）に行う。dev で先に行い、問題がなければ prod。</p>
+<pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt -y upgrade
+docker compose -f /opt/rpg/compose.yaml pull caddy   # Caddy の更新（同じ 2.x の範囲）
+sudo reboot                                            # カーネルの更新があったとき
+# 再起動後
+cd /opt/rpg &amp;&amp; docker compose ps                       # restart: unless-stopped で自動で戻る
+</code></pre>
+<ul>
+<li>再起動のあいだ（1〜2分）サイトは止まる。シンプル監視の通知が来ることがある</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 リソースの確認（月に1回）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>見るもの</th>
+<th>場所</th>
+<th>目安</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>サーバーの CPU・メモリ</td>
+<td>コントロールパネルの「リソースモニタ」、<code>docker stats</code></td>
+<td>CPU が常に70%を超える、メモリが足りない → プランを上げる</td>
+</tr>
+<tr>
+<td>ディスク</td>
+<td><code>df -h</code>、<code>docker system df</code></td>
+<td>70%を超えたら <code>docker image prune -a</code>（使っていない古いイメージを消す）</td>
+</tr>
+<tr>
+<td>DB の容量</td>
+<td>データベースの「リソースモニタ」</td>
+<td>70%を超えたらプランを上げる（5.3 の復元で作り直す）</td>
+</tr>
+<tr>
+<td>AI の使った量</td>
+<td>AI Engine の利用状況</td>
+<td>予算を超えそうなら相談する</td>
+</tr>
+<tr>
+<td>監視メール</td>
+<td><code>ALERT_EMAIL</code> の受信箱</td>
+<td>届いたものの原因を確かめたか</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 バックアップと復元</h3>
+<ul>
+<li>リリースで DB の変更があるときは、prod へ反映する前にデータベースの「バックアップ」→「追加」で手動のバックアップを取る（詳細設計書 11.6）</li>
+<li>復元は、データベースの「バックアップ」タブで世代を選んで「復元」。<strong>今のデータが巻き戻る</strong>ため、システム管理者の判断で行う</li>
+<li>プランを上げるときは、手動のバックアップを取ってから新しいプランで作り直し、そのバックアップから復元する（IPアドレスは同じにする）</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 ログを見る</h3>
+<p>詳細設計書 10.2 のとおり、サーバーで <code>docker compose logs</code> を使う。ログはコンテナごとに 20MB×10ファイルまで残る。</p>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 Bedrock への切り替え（AI だけ）</h3>
+<p>Amazon Bedrock が使えるようになったら、AI だけを Bedrock に替える。DB・ファイル・メール・ログインはさくらのクラウドのまま。</p>
+<ol>
+<li>AWS で、Bedrock の呼び出しだけを許した IAM ユーザーを作り、アクセスキーを発行する（ポリシーは <code>bedrock:InvokeModel</code> を使うモデルだけに限る）</li>
+<li>Bedrock で使うモデル（採点・抽出用の Sonnet、軽い用途の Haiku）が東京リージョンで呼べることを確かめる</li>
+<li><strong>dev から</strong> <code>.env</code> を書き換える</li>
+</ol>
+<pre><code class="language-bash">AI_PROVIDER=bedrock
+AWS_REGION=ap-northeast-1
+AWS_ACCESS_KEY_ID=&lt;アクセスキー&gt;
+AWS_SECRET_ACCESS_KEY=&lt;シークレットキー&gt;
+MODEL_HIGH=&lt;Sonnet のモデルID&gt;
+MODEL_LIGHT=&lt;Haiku のモデルID&gt;
+</code></pre>
+<ol start="4">
+<li><code>docker compose up -d</code> で反映し、採点・取り込み（PDF・画像）・ひとことを試す</li>
+<li>さくらのAI Engine と採点の質・速さ・費用を比べ、よければ prod も同じように替える</li>
+<li>戻すときは <code>AI_PROVIDER=sakura</code> と <code>MODEL_*</code> を戻して <code>docker compose up -d</code></li>
+</ol>
+<ul>
+<li>切り替えでコードは変えない（詳細設計書 7章）。画像の取り込みは Bedrock のときだけ使える</li>
+</ul>
+</section><section class="chapter" id="ch6"><h2><i aria-hidden="true" class="fa-solid fa-circle-question h-ico"></i>6. 確認したいこと（未決事項）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>項目</th>
+<th>いまの仮置き</th>
+<th>決める時期</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>オブジェクトストレージの CORS</td>
+<td>S3 互換 API の <code>put-bucket-cors</code> で設定する想定。使えなければ、画面のアップロードを api 経由にするかを相談する</td>
+<td>dev 構築時</td>
+</tr>
+<tr>
+<td>2</td>
+<td>使うドメインと SMTP のサービス</td>
+<td>さくらのドメイン・さくらのメールボックスを例にした。会社のドメイン・メールを使うかを決める</td>
+<td>dev 構築前</td>
+</tr>
+<tr>
+<td>3</td>
+<td>月額の料金</td>
+<td>1.7 の大きさで料金表から計算し、外部設計書に書く</td>
+<td>dev 構築時</td>
+</tr>
+<tr>
+<td>4</td>
+<td>サーバーの冗長化</td>
+<td>Phase 1 は1台（止まると数分〜数十分使えない）。全社展開の前に2台とロードバランサにするかを決める</td>
+<td>Phase 3 の計画時</td>
+</tr>
+<tr>
+<td>5</td>
+<td>AWS に残っている dev のリソース</td>
+<td><strong>2026-10-27 に費用がかかるものを止めた</strong>：Aurora Serverless v2 を削除（最終スナップショットなし。DB のシークレットも削除）、EventBridge のスケジュール2つを無効化。CloudFront は Free プラン（月0円）のため API で無効にできず、そのまま残した。S3・Cognito・API Gateway・SQS・SNS・CloudWatch のアラームとロググループ・IAM ロールは、ほぼ0円のため残した（Lambda は一覧を見る権限がなく、さわっていない）。アカウント共通のもの（CloudTrail・予算・GitHub OIDC）も残した。残りをすべて消すかは、Bedrock の切り替え（5.5）のときに決める</td>
+<td>Bedrock の切り替え時</td>
+</tr>
+<tr>
+<td>6</td>
+<td>サーバーの SSH を開ける範囲</td>
+<td>作業場所のIPアドレスだけ。テレワークで IPアドレスが変わる場合の運用を決める</td>
+<td>dev 構築時</td>
+</tr>
+</tbody>
+</table></div>
+</section>
+  </main>
+</div>
+<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.1版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+  startOnLoad: true, securityLevel: "loose", theme: "base",
+  fontFamily: '"Noto Sans JP", sans-serif',
+  themeVariables: {
+    fontFamily: '"Noto Sans JP", sans-serif', fontSize: "14px",
+    primaryColor: "#E8F1FE", primaryBorderColor: "#0017C1", primaryTextColor: "#1A1A1C",
+    secondaryColor: "#F2F2F2", tertiaryColor: "#FFFFFF",
+    lineColor: "#414141", textColor: "#1A1A1C",
+    clusterBkg: "#FFFFFF", clusterBorder: "#B4B4B4",
+    edgeLabelBackground: "#FFFFFF",
+    actorBkg: "#E8F1FE", actorBorder: "#0017C1", actorTextColor: "#1A1A1C",
+    signalColor: "#414141", signalTextColor: "#1A1A1C",
+    noteBkgColor: "#FFF5C2", noteBorderColor: "#B4B4B4", noteTextColor: "#1A1A1C",
+    labelBoxBkgColor: "#E8F1FE", labelBoxBorderColor: "#0017C1", loopTextColor: "#00118F",
+    pie1: "#0017C1", pie2: "#264AF4", pie3: "#7096F8", pie4: "#00118F", pie5: "#9DB7F9", pie6: "#626264", pie7: "#C5D7FB",
+    pieStrokeColor: "#FFFFFF", pieOuterStrokeColor: "#B4B4B4", pieTitleTextSize: "16px", pieSectionTextColor: "#FFFFFF",
+    sectionBkgColor: "#E8F1FE", altSectionBkgColor: "#FFFFFF", taskBkgColor: "#0017C1", taskBorderColor: "#00118F", taskTextColor: "#FFFFFF", taskTextOutsideColor: "#1A1A1C", gridColor: "#E6E6E6", todayLineColor: "#00118F"
+  },
+  flowchart: { htmlLabels: true, curve: "basis", padding: 12 },
+  er: { useMaxWidth: true }, sequence: { useMaxWidth: true, mirrorActors: false }
+});
+</script>
+</body>
+</html>

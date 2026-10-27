@@ -1,0 +1,3595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPG学習アプリ 外部設計書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;family=Noto+Sans+Mono&amp;family=BIZ+UDPGothic:wght@400;700&amp;family=Shippori+Mincho:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+
+:root {
+  /* DADS color tokens */
+  --blue-1000: #00118F;
+  --blue-900: #0017C1;
+  --blue-700: #264AF4;
+  --blue-200: #C5D7FB;
+  --blue-100: #D9E6FF;
+  --blue-50: #E8F1FE;
+  --gray-900: #1A1A1C;
+  --gray-700: #414141;
+  --gray-600: #626264;
+  --gray-536: #767676;
+  --gray-300: #B4B4B4;
+  --gray-100: #E6E6E6;
+  --gray-50: #F2F2F2;
+  --white: #FFFFFF;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --focus: #FFD43D;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--gray-900);
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+a { color: var(--blue-900); text-underline-offset: 3px; }
+a:hover { color: var(--blue-1000); }
+a:focus-visible { outline: 4px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.site-header {
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--white);
+}
+.site-header .inner {
+  max-width: 1120px; margin: 0 auto; padding: 40px 16px 32px;
+}
+.eyebrow {
+  display: inline-block; font-size: 14px; font-weight: 700; color: var(--blue-900);
+  background: var(--blue-50); border-radius: 999px; padding: 2px 12px; margin-bottom: 12px;
+}
+.site-header h1 {
+  font-size: 32px; line-height: 1.4; margin: 0 0 16px; font-weight: 700;
+}
+.meta {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding: 0; list-style: none;
+  font-size: 14px; color: var(--gray-600);
+}
+.meta b { color: var(--gray-900); font-weight: 700; margin-left: 4px; }
+
+.layout {
+  max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px;
+}
+nav.toc { position: sticky; top: 24px; align-self: start; }
+nav.toc p { font-size: 14px; font-weight: 700; color: var(--gray-600); margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--gray-100); }
+nav.toc a {
+  display: block; padding: 6px 12px; margin-left: -2px; border-left: 2px solid transparent;
+  color: var(--gray-700); text-decoration: none; font-size: 15px;
+}
+nav.toc a:hover { color: var(--blue-900); border-left-color: var(--blue-900); background: var(--blue-50); }
+
+main { min-width: 0; }
+.chapter { padding-bottom: 48px; margin-bottom: 48px; border-bottom: 1px solid var(--gray-100); scroll-margin-top: 24px; }
+.chapter:last-child { border-bottom: none; }
+h2 {
+  font-size: 28px; line-height: 1.4; margin: 0 0 24px; padding-left: 16px;
+  border-left: 6px solid var(--blue-900);
+}
+h3 {
+  font-size: 20px; line-height: 1.5; margin: 32px 0 12px; color: var(--blue-1000);
+}
+p { margin: 0 0 16px; }
+.h-ico { color: var(--blue-900); display: inline-block; width: 1.2em; text-align: center; margin-right: 0.45em; font-size: 0.9em; vertical-align: 0.02em; }
+h3 .h-ico { font-size: 0.85em; margin-right: 0.4em; }
+ul, ol { margin: 0 0 16px; padding-left: 1.5em; }
+li { margin: 4px 0; }
+li::marker { color: var(--blue-900); }
+
+.table-wrap { overflow-x: auto; margin: 0 0 24px; border: 1px solid var(--gray-300); border-radius: var(--radius-8); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--gray-100); }
+th { background: var(--blue-50); color: var(--gray-900); font-weight: 700; border-bottom: 2px solid var(--blue-900); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+.mermaid .node rect, .mermaid rect.actor, .mermaid .statediagram-state rect { rx: 8px; ry: 8px; }
+.mermaid .edgeLabel, .mermaid .edgeLabel p { font-size: 13px; color: var(--gray-700); }
+
+figure.diagram {
+  margin: 8px 0 32px; padding: 24px 16px; background: var(--white);
+  border: 1px solid var(--gray-300); border-radius: var(--radius-12); overflow-x: auto;
+  text-align: center;
+}
+.mermaid { font-family: "Noto Sans JP", sans-serif; }
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* ===== chapter visuals (DADS components) ===== */
+.vis {
+  background: var(--blue-50); border-radius: var(--radius-12); padding: 24px;
+  margin: 0 0 32px; display: grid; gap: 16px;
+}
+.vis p { margin: 0; }
+.vis-grid { display: grid; gap: 16px; }
+.vis-grid.c1 { grid-template-columns: minmax(220px, 1fr) 2fr; }
+.vis-grid.c2 { grid-template-columns: 1fr 1fr; }
+.vis-grid.c5 { grid-template-columns: 280px 1fr; align-items: center; }
+.vis-grid.cards4 { grid-template-columns: repeat(4, 1fr); }
+.vis-grid.cards4.c6 { grid-template-columns: repeat(2, 1fr); }
+.vis-grid.tiles4 { grid-template-columns: repeat(4, 1fr); }
+.vis-stack { display: grid; gap: 16px; }
+.card, .role, .tile, .kpi-hero {
+  background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px;
+}
+.vis-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin-bottom: 8px !important; }
+.vis-label.inline { margin: 0 8px 0 0 !important; }
+.vis-title { font-size: 17px; font-weight: 700; }
+.count { font-size: 13px; color: var(--white); background: var(--blue-900); border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
+.lead { font-size: 17px; font-weight: 400; line-height: 1.6; }
+.lead strong { color: var(--blue-900); }
+.note { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-top: 6px !important; }
+.tag-row, .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-row { margin-top: 12px; }
+.tag { display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; line-height: 1.4; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.tag.solid { background: var(--blue-900); color: var(--white); }
+.tag.line { background: var(--white); color: var(--blue-900); border: 1px solid var(--blue-900); }
+.tag.mute { background: var(--gray-50); color: var(--gray-600); border: 1px solid var(--gray-300); }
+.pill { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--blue-100); color: var(--blue-1000); }
+.scope { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+/* KPI hero */
+.kpi-hero { background: var(--blue-900); border-color: var(--blue-900); color: var(--white); display: flex; flex-direction: column; justify-content: center; }
+.kpi-hero .vis-label { color: var(--blue-100); }
+.kpi-num { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: 0; }
+.kpi-num span { font-size: 32px; margin-left: 2px; }
+.kpi-num small { font-size: 16px; margin-left: 6px; font-weight: 400; }
+.kpi-name { font-size: 17px; font-weight: 700; margin-top: 12px !important; }
+.kpi-def { font-size: 14px; color: var(--blue-100); margin-top: 4px !important; }
+/* scale */
+.scale { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.scale-pt { display: flex; align-items: center; gap: 10px; }
+.scale-num { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1; }
+.scale-num small { font-size: 15px; margin-left: 2px; }
+.scale-cap { font-size: 13px; color: var(--gray-600); line-height: 1.4; }
+.scale-bar { height: 8px; background: var(--blue-100); border-radius: 999px; position: relative; }
+.scale-bar span { position: absolute; inset: 0; background: linear-gradient(90deg, var(--blue-200), var(--blue-900)); border-radius: 999px; }
+.scale-bar::after { content: ""; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); border-left: 12px solid var(--blue-900); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+/* role */
+.ico { width: 44px; height: 44px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; margin-bottom: 10px; }
+.ico.sm { width: 32px; height: 32px; margin: 0; }
+.ico.sm svg { width: 18px; height: 18px; }
+.role.ai { border-style: dashed; border-color: var(--blue-700); }
+.role-name { font-size: 17px; font-weight: 700; margin-bottom: 6px !important; }
+ul.mini, ul.checks { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--gray-700); }
+ul.mini li { padding-left: 14px; position: relative; margin: 2px 0; }
+ul.mini li::before { content: ""; position: absolute; left: 0; top: 0.7em; width: 6px; height: 6px; border-radius: 50%; background: var(--blue-900); }
+.info-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* feature map */
+.vis-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--gray-700); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.lg.l1, .feat.l1 { background: var(--white); border: 1px solid var(--blue-900); }
+.lg.l2, .feat.l2 { background: var(--blue-900); border: 1px solid var(--blue-900); color: var(--white); }
+.lg.l3, .feat.l3 { background: var(--gray-900); border: 1px solid var(--gray-900); color: var(--white); }
+.fmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fcol { display: flex; flex-direction: column; gap: 8px; }
+.fcol-h { font-size: 14px; font-weight: 700; color: var(--blue-1000); border-bottom: 2px solid var(--blue-900); padding-bottom: 4px; }
+.feat { display: flex; align-items: baseline; gap: 8px; font-size: 14px; padding: 8px 12px; border-radius: 6px; }
+.feat b { font-family: "Noto Sans Mono", monospace; font-size: 12px; opacity: 0.8; }
+.interval { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+ol.steps-mini { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+ol.steps-mini li { position: relative; font-size: 13px; color: var(--gray-700); background: var(--blue-50); border: 1px solid var(--blue-200); border-radius: 6px; padding: 6px 12px 6px 12px; margin: 0; }
+ol.steps-mini li b { font-size: 18px; color: var(--blue-900); margin-right: 2px; }
+ol.steps-mini li:not(:last-child)::after { content: "›"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--blue-900); font-weight: 700; }
+ol.steps-mini li.done { background: var(--blue-900); color: var(--white); border-color: var(--blue-900); font-weight: 700; display: flex; align-items: center; }
+/* tiles */
+.tile { text-align: center; }
+.tile.strong { border: 2px solid var(--blue-900); }
+.tile-num { font-size: 36px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.tile-num small { font-size: 14px; margin-left: 4px; }
+.tile-num.sm { font-size: 26px; }
+.tile-cap { font-size: 13px; color: var(--gray-700); margin-top: 6px !important; }
+ul.checks li { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--gray-100); }
+ul.checks li::before { content: ""; width: 16px; height: 16px; flex: none; border: 2px solid var(--blue-900); border-radius: 4px; }
+.badges { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 20px; }
+.badge { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--gray-700); }
+.medal { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--blue-900); background: var(--blue-50); border: 2px solid var(--blue-900); box-shadow: 0 0 0 3px var(--blue-100); }
+/* phone */
+.phone { background: var(--gray-900); border-radius: 32px; padding: 10px; width: 260px; justify-self: center; }
+.phone-in { background: var(--white); border-radius: 24px; padding: 18px 14px; display: grid; gap: 10px; font-size: 12px; }
+.ph-lv { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 8px; }
+.ph-badge { grid-row: span 2; background: var(--blue-900); color: var(--white); font-weight: 700; border-radius: 8px; padding: 6px 8px; font-size: 14px; }
+.ph-bar { height: 8px; background: var(--blue-100); border-radius: 999px; overflow: hidden; }
+.ph-bar span { display: block; height: 100%; background: var(--blue-900); }
+.ph-exp { font-size: 11px; color: var(--gray-600); }
+.ph-say { display: flex; gap: 8px; align-items: flex-start; }
+.ph-ava { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; }
+.ph-ava svg { width: 16px; height: 16px; }
+.ph-say p { background: var(--blue-50); border-radius: 0 10px 10px 10px; padding: 8px 10px; line-height: 1.5; }
+.ph-quest { border: 1px solid var(--gray-100); border-radius: 10px; padding: 8px 10px; }
+.ph-quest p { font-weight: 700; margin-bottom: 4px !important; }
+.ph-quest ul { list-style: none; margin: 0; padding: 0; }
+.ph-quest li { display: flex; gap: 6px; align-items: center; margin: 3px 0; color: var(--gray-700); }
+.ph-quest li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--blue-900); border-radius: 3px; flex: none; }
+.ph-quest li.ok { color: var(--gray-536); text-decoration: line-through; }
+.ph-quest li.ok::before { background: var(--blue-900); }
+.ph-btn { background: var(--blue-900); color: var(--white); text-align: center; font-weight: 700; border-radius: 8px; padding: 10px; font-size: 13px; }
+ol.prio-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+ol.prio-list li { display: flex; gap: 12px; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px 14px; margin: 0; }
+ol.prio-list li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--blue-900); color: var(--white); display: grid; place-items: center; font-size: 14px; }
+ol.prio-list span { font-weight: 700; display: flex; flex-direction: column; }
+ol.prio-list small { font-weight: 400; font-size: 13px; color: var(--gray-600); }
+.mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-stats > div { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px; text-align: center; }
+/* non-functional */
+.nf-h { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 10px; }
+ul.model { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 14px; }
+ul.model li { display: flex; align-items: center; gap: 8px; margin: 0; }
+ul.model .tag { min-width: 72px; justify-content: center; }
+.auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.arrow { color: var(--blue-900); font-weight: 700; }
+ol.tl { list-style: none; padding: 0 0 0 14px; margin: 0; border-left: 2px solid var(--blue-200); display: grid; gap: 8px; font-size: 14px; }
+ol.tl li { position: relative; margin: 0; color: var(--gray-700); }
+ol.tl li::before { content: ""; position: absolute; left: -21px; top: 0.45em; width: 12px; height: 12px; border-radius: 50%; background: var(--white); border: 2px solid var(--blue-900); }
+ol.tl li:last-child::before { background: var(--blue-900); }
+ol.tl b { display: block; color: var(--gray-900); font-size: 13px; }
+/* step navigation */
+ol.stepnav { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1.5fr auto 1fr 1fr; gap: 12px; align-items: stretch; }
+ol.stepnav > li { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px; display: flex; gap: 12px; margin: 0; }
+ol.stepnav > li.current { border: 2px solid var(--blue-900); }
+.sn-num { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue-900); color: var(--blue-900); display: grid; place-items: center; font-weight: 700; }
+li.current .sn-num { background: var(--blue-900); color: var(--white); }
+.sn-h { font-weight: 700; font-size: 17px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sn-sub { font-size: 13px; color: var(--blue-900); font-weight: 700; }
+ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-items: center; }
+.gate-in { font-size: 12px; text-align: center; color: var(--gray-700); border: 2px dashed var(--blue-900); border-radius: var(--radius-8); padding: 8px 10px; background: var(--white); line-height: 1.5; }
+.gate-in b { color: var(--blue-900); }
+/* banner */
+.banner { display: flex; gap: 14px; align-items: flex-start; background: var(--white); border: 1px solid var(--blue-900); border-left: 6px solid var(--blue-900); border-radius: var(--radius-8); padding: 16px 20px; }
+.banner-ico { color: var(--blue-900); flex: none; }
+.banner-h { font-size: 17px; font-weight: 700; }
+.banner-h b { color: var(--blue-900); font-size: 22px; }
+.cat-n { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.cat-n small { font-size: 14px; margin-left: 2px; }
+.cat-h { font-weight: 700; margin-top: 4px !important; }
+
+@media (max-width: 860px) {
+  .vis { padding: 16px; }
+  .card, .role, .tile, .kpi-hero { padding: 14px; }
+  .role-name, .cat-h { font-size: 15px; }
+  .vis-grid.c1, .vis-grid.c2, .vis-grid.c5, .scope, .fmap { grid-template-columns: 1fr; }
+  .vis-grid.tiles4, .mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .mini-stats { grid-template-columns: repeat(3, 1fr); }
+  ol.stepnav { grid-template-columns: 1fr; }
+  .vis-grid.cards4 { grid-template-columns: repeat(2, 1fr); }
+  .vis-grid.cards4.c6 { grid-template-columns: 1fr; }
+  ol.stepnav > li.gate { justify-content: center; }
+  .scale { grid-template-columns: 1fr; text-align: left; }
+  .scale-bar { height: 6px; margin-right: 12px; }
+  .kpi-num { font-size: 52px; }
+}
+@media print { .vis { break-inside: avoid; } }
+
+.site-footer { border-top: 1px solid var(--gray-100); color: var(--gray-600); font-size: 14px; }
+.site-footer .inner { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }
+  nav.toc { position: static; background: var(--gray-50); border-radius: var(--radius-8); padding: 16px; }
+  nav.toc ol { border-left: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  nav.toc a { padding: 6px 4px; border-left: none; font-size: 14px; }
+  .site-header h1 { font-size: 26px; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 18px; }
+  th, td { padding: 10px 12px; font-size: 14px; }
+}
+@media print {
+  nav.toc { display: none; }
+  .layout { display: block; }
+  .chapter { break-inside: auto; }
+  figure.diagram { break-inside: avoid; }
+}
+
+/* ===== アプリ用デザインシステム（冒険者ギルド）: 画面構成イメージ専用。.gd-scope の中だけに適用 ===== */
+/* 冒険者ギルド — generated from tokens.json */
+.gd-scope{--parchment:#f5ecd9;--parchment-raised:#fbf6ea;--parchment-sunk:#ebdfc6;--line:#d6c6a5;--line-strong:#8f7a58;--ink:#2e2219;--ink-muted:#6b5843;--crimson:#9e2b25;--on-crimson:#fff8ef;--crimson-soft:#f3dcd3;--teal:#1d6763;--on-teal:#fbf6ea;--teal-soft:#d6e8e2;--gold:#a0701a;--gold-ink:#7a5406;--gold-soft:#f1e0b5;--correct:#1d5a8c;--correct-soft:#dbe6f0;--wrong:#a3441a;--wrong-soft:#f5ddcf;--bronze:#8c5a2e;--silver:#6c7075;--shadow-card:0 1px 0 #d6c6a5, 0 2px 8px rgba(46,34,25,0.08);--shadow-press:inset 0 2px 0 rgba(46,34,25,0.18);}.gd-scope{--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;--radius-sm:4px;--radius-md:8px;--radius-pill:999px;--font-serif:"Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;--font-sans:"BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;}.gd-scope .display{font-family:var(--font-serif);font-size:30px;line-height:40px;font-weight:700}.gd-scope .title{font-family:var(--font-serif);font-size:21px;line-height:30px;font-weight:700}.gd-scope .numeral{font-family:var(--font-serif);font-size:28px;line-height:32px;font-weight:800}.gd-scope .question{font-family:var(--font-sans);font-size:17px;line-height:30px;font-weight:400}.gd-scope .body{font-family:var(--font-sans);font-size:15px;line-height:26px;font-weight:400}.gd-scope .label{font-family:var(--font-sans);font-size:15px;line-height:20px;font-weight:700}.gd-scope .meta{font-family:var(--font-sans);font-size:13px;line-height:20px;font-weight:400}.gd-scope .caption{font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:700}
+
+.gd-stack { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); max-width: 420px; }
+.gd-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-4); }
+.gd-serif { font-family: var(--font-serif); }
+/* focus: solid teal ring, 3:1+ on every parchment surface */
+.gd-focus:focus-visible, .gd-btn:focus-visible, .gd-choice:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+/* Button */
+.gd-btn { font-family: var(--font-sans); font-size: 15px; line-height: 20px; font-weight: 700; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--parchment-raised); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); letter-spacing: .04em; }
+.gd-btn:active { box-shadow: var(--shadow-press); }
+.gd-btn[disabled] { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.gd-btn-primary { background: var(--crimson); border-color: var(--crimson); color: var(--on-crimson); }
+.gd-btn-quiet { background: transparent; border-color: transparent; color: var(--teal); text-decoration: underline; text-underline-offset: 3px; }
+.gd-btn-sm { min-height: 36px; font-size: 13px; padding: 0 var(--space-3); }
+.gd-btn-block { display: flex; width: 100%; }
+/* Card frame: the notice-board double rule */
+.gd-card { background: var(--parchment-raised); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: inset 0 0 0 3px var(--parchment-raised), inset 0 0 0 4px var(--line), var(--shadow-card); padding: var(--space-4); }
+/* ExpBar */
+.gd-exp { display: flex; align-items: center; gap: var(--space-3); }
+.gd-crest { flex: none; width: 56px; height: 56px; border-radius: var(--radius-pill); background: var(--gold-soft); border: 3px solid var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold-ink); font-family: var(--font-serif); }
+.gd-crest small { font-size: 11px; line-height: 12px; font-weight: 700; letter-spacing: .06em; }
+.gd-crest b { font-size: 22px; line-height: 24px; font-weight: 800; }
+.gd-exp-main { flex: 1; min-width: 0; }
+.gd-exp-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; line-height: 20px; color: var(--ink-muted); }
+.gd-exp-gain { color: var(--gold-ink); font-weight: 700; }
+.gd-track { height: 10px; border-radius: var(--radius-pill); background: var(--parchment-sunk); overflow: hidden; margin-top: var(--space-1); }
+.gd-fill { height: 100%; border-radius: var(--radius-pill); background: var(--gold); }
+/* QuestCard */
+.gd-quest { position: relative; display: flex; gap: var(--space-3); align-items: flex-start; }
+.gd-quest-body { flex: 1; min-width: 0; }
+.gd-quest-title { margin: 0; font-family: var(--font-serif); font-size: 17px; line-height: 24px; font-weight: 700; }
+.gd-quest-meta { margin-top: var(--space-1); font-size: 13px; line-height: 20px; color: var(--ink-muted); display: flex; gap: var(--space-3); }
+.gd-quest-reward { color: var(--gold-ink); font-weight: 700; }
+.gd-quest .gd-track { height: 6px; margin-top: var(--space-2); }
+.gd-quest-done { background: var(--crimson-soft); box-shadow: inset 0 0 0 3px var(--crimson-soft), inset 0 0 0 4px var(--line), var(--shadow-card); }
+.gd-stamp { flex: none; align-self: center; font-family: var(--font-serif); font-weight: 800; font-size: 15px; line-height: 20px; color: var(--crimson); border: 2px solid var(--crimson); border-radius: var(--radius-sm); padding: 2px var(--space-2); transform: rotate(-8deg); letter-spacing: .1em; }
+/* ChoiceOption */
+.gd-choice { width: 100%; text-align: left; font: inherit; font-size: 15px; line-height: 26px; color: var(--ink); background: var(--parchment-raised); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: var(--space-3); display: flex; gap: var(--space-3); align-items: flex-start; cursor: pointer; }
+.gd-choice-key { flex: none; width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); font-family: var(--font-serif); font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.gd-choice-text { flex: 1; }
+.gd-choice-mark { flex: none; font-size: 13px; line-height: 26px; font-weight: 700; white-space: nowrap; }
+.gd-choice-selected { border: 2px solid var(--teal); padding: 11px; }
+.gd-choice-selected .gd-choice-key { background: var(--teal); border-color: var(--teal); color: var(--on-teal); }
+.gd-choice-correct { background: var(--correct-soft); border: 2px solid var(--correct); padding: 11px; }
+.gd-choice-correct .gd-choice-key { background: var(--correct); border-color: var(--correct); color: var(--parchment-raised); }
+.gd-choice-correct .gd-choice-mark { color: var(--correct); }
+.gd-choice-wrong { background: var(--wrong-soft); border: 2px solid var(--wrong); padding: 11px; }
+.gd-choice-wrong .gd-choice-key { background: var(--wrong); border-color: var(--wrong); color: var(--parchment-raised); }
+.gd-choice-wrong .gd-choice-mark { color: var(--wrong); }
+.gd-choice-dim { color: var(--ink-muted); border-color: var(--line); cursor: default; }
+/* PartnerBubble */
+.gd-partner { display: flex; gap: var(--space-3); align-items: flex-start; }
+.gd-sigil { flex: none; width: 44px; height: 44px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 20px; border: 2px solid currentColor; background: var(--parchment-raised); }
+.gd-sigil-encourage { color: var(--gold-ink); }
+.gd-sigil-logic { color: var(--teal); }
+.gd-sigil-rival { color: var(--crimson); }
+.gd-bubble { position: relative; flex: 1; min-width: 0; background: var(--teal-soft); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-card); }
+.gd-bubble::before { content: ""; position: absolute; left: -6px; top: 16px; width: 12px; height: 12px; background: var(--teal-soft); transform: rotate(45deg); }
+.gd-bubble-name { font-size: 13px; line-height: 20px; font-weight: 700; color: var(--teal); }
+.gd-bubble-name span { color: var(--ink-muted); font-weight: 400; margin-left: var(--space-2); }
+.gd-dots { display: inline-flex; gap: 6px; padding: var(--space-2) 0; }
+.gd-dots i { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--teal); animation: gd-bob 1.2s ease-in-out infinite; }
+.gd-dots i:nth-child(2) { animation-delay: .15s; } .gd-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes gd-bob { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .gd-dots i { animation: none; opacity: 1; } }
+/* ScoreMeter */
+.gd-score-head { display: flex; align-items: baseline; gap: var(--space-3); }
+.gd-score-num { font-family: var(--font-serif); font-size: 28px; line-height: 32px; font-weight: 800; }
+.gd-score-num small { font-size: 15px; font-weight: 700; margin-left: 2px; }
+.gd-verdict { font-size: 15px; line-height: 20px; font-weight: 700; }
+.gd-verdict-pass { color: var(--correct); }
+.gd-verdict-near { color: var(--gold-ink); }
+.gd-score .gd-track { position: relative; height: 12px; overflow: visible; margin-top: var(--space-2); }
+.gd-score-fill-pass { background: var(--correct); }
+.gd-score-fill-near { background: var(--gold); }
+.gd-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+.gd-tick-label { position: absolute; top: 16px; transform: translateX(-50%); font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); white-space: nowrap; }
+.gd-score-foot { margin-top: var(--space-6); font-size: 13px; line-height: 20px; color: var(--ink-muted); }
+/* ReviewStage */
+.gd-review { display: flex; align-items: center; gap: var(--space-3); }
+.gd-review-kind { flex: none; font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); width: 2.5em; }
+.gd-pips { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-1); flex: 1; }
+.gd-pip { text-align: center; font-size: 12px; line-height: 16px; font-weight: 700; color: var(--ink-muted); }
+.gd-pip::before { content: ""; display: block; height: 8px; border-radius: var(--radius-pill); background: var(--parchment-sunk); border: 1px solid var(--line-strong); margin-bottom: 2px; }
+.gd-pip-on { color: var(--gold-ink); }
+.gd-pip-on::before { background: var(--gold); border-color: var(--gold); }
+.gd-pip-now { color: var(--ink); }
+.gd-pip-now::before { background: var(--parchment-raised); border: 2px solid var(--gold); }
+.gd-mastered { flex: none; font-family: var(--font-serif); font-weight: 800; font-size: 13px; line-height: 20px; color: var(--crimson); border: 2px solid var(--crimson); border-radius: var(--radius-sm); padding: 0 var(--space-2); }
+.gd-review-state { flex: none; width: 5em; font-size: 12px; line-height: 16px; color: var(--ink-muted); text-align: right; }
+/* RankingRow */
+.gd-rank { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--parchment-raised); border-bottom: 1px solid var(--line); }
+.gd-rank-me { background: var(--gold-soft); }
+.gd-rank-pos { flex: none; width: 36px; height: 36px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 17px; color: var(--ink-muted); }
+.gd-rank-1 { color: var(--gold-ink); border: 2px solid var(--gold); background: var(--gold-soft); }
+.gd-rank-2 { color: var(--silver); border: 2px solid var(--silver); }
+.gd-rank-3 { color: var(--bronze); border: 2px solid var(--bronze); }
+.gd-rank-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gd-rank-name small { font-weight: 400; font-size: 13px; color: var(--ink-muted); margin-left: var(--space-2); }
+.gd-rank-exp { flex: none; font-family: var(--font-serif); font-weight: 800; font-size: 17px; color: var(--gold-ink); }
+.gd-rank-exp small { font-family: var(--font-sans); font-size: 12px; font-weight: 700; margin-left: 2px; }
+/* GuildBadge */
+.gd-badge { display: inline-flex; flex-direction: column; align-items: center; gap: var(--space-1); width: 88px; text-align: center; }
+.gd-emblem { width: 64px; height: 64px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 800; font-size: 26px; background: var(--parchment-raised); border: 3px double currentColor; box-shadow: inset 0 0 0 3px var(--parchment-raised), inset 0 0 0 4px currentColor; }
+.gd-emblem-bronze { color: var(--bronze); } .gd-emblem-silver { color: var(--silver); } .gd-emblem-gold { color: var(--gold-ink); background: var(--gold-soft); box-shadow: inset 0 0 0 3px var(--gold-soft), inset 0 0 0 4px currentColor; }
+.gd-emblem-locked { color: var(--line-strong); border-style: dashed; box-shadow: none; }
+.gd-badge-name { font-size: 13px; line-height: 18px; font-weight: 700; }
+.gd-badge-date { font-size: 12px; line-height: 16px; color: var(--ink-muted); }
+
+/* ===== 外部設計書 追加スタイル ===== */
+h4 { font-size: 17px; margin: 28px 0 10px; color: var(--gray-900); padding-bottom: 4px; border-bottom: 1px dashed var(--blue-200); }
+code { font-family: "Noto Sans Mono", monospace; font-size: 0.88em; background: var(--blue-50); color: var(--blue-1000); padding: 1px 6px; border-radius: 4px; }
+pre { background: var(--gray-50); border: 1px solid var(--gray-100); border-radius: var(--radius-8); padding: 16px; overflow-x: auto; font-size: 14px; }
+pre code { background: none; padding: 0; color: var(--gray-900); }
+strong { color: var(--blue-1000); }
+blockquote { margin: 0 0 16px; padding: 12px 16px; border-left: 4px solid var(--blue-900); background: var(--blue-50); border-radius: 0 var(--radius-8) var(--radius-8) 0; }
+td code, th code { white-space: nowrap; }
+figure.diagram.wide .mermaid svg { min-width: 760px; }
+/* mermaid DADS adjust */
+.mermaid .cluster rect { rx: 12px; ry: 12px; stroke-dasharray: 4 3; }
+.mermaid .cluster-label, .mermaid .cluster-label span { font-weight: 700; color: var(--blue-1000) !important; }
+.mermaid .label foreignObject div { line-height: 1.45; }
+.mermaid .flowchart-link, .mermaid .relation { stroke-width: 1.5px; }
+.mermaid .node polygon { fill: var(--white) !important; stroke: var(--blue-900) !important; stroke-width: 2px; }
+/* ===== 画面構成イメージ（アプリ用デザインシステム） ===== */
+.mock { background: var(--gray-50); border: 1px solid var(--gray-300); border-radius: var(--radius-12); padding: 20px 20px 16px; margin: 8px 0 32px; }
+.mock-label { font-size: 13px; font-weight: 700; color: var(--blue-900); margin: 0 0 14px !important; }
+.mock-label i { margin-right: 6px; }
+.mock-note { font-size: 13px; color: var(--gray-600); margin: 12px 0 0 !important; }
+.mock-row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: flex-start; }
+.gd-scope { font-family: var(--font-sans); color: var(--ink); font-size: 13px; line-height: 20px; letter-spacing: 0; }
+.gd-scope p { margin: 0; }
+.gd-scope ul { list-style: none; margin: 0; padding: 0; }
+.gd-scope li { margin: 0; }
+.gd-scope li::marker { content: ""; }
+.gd-scope strong, .gd-scope b { color: inherit; }
+.ph-frame { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ph-screen { width: 300px; min-height: 600px; background: var(--parchment); border: 10px solid #2a2622; border-radius: 34px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.mk-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--parchment-raised); border-bottom: 1px solid var(--line); }
+.mk-app { font-weight: 800; font-size: 15px; }
+.mk-course { font-size: 11px; color: var(--ink-muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 0 8px; }
+.mk-body { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.mk-body .gd-card { padding: 12px; }
+.mk-body .gd-quest-title { font-size: 14px; line-height: 20px; }
+.mk-body .gd-crest { width: 46px; height: 46px; }
+.mk-body .gd-crest b { font-size: 18px; }
+.mk-body .gd-btn { font-size: 14px; min-height: 40px; }
+.mk-body .gd-btn-sm { min-height: 30px; font-size: 12px; }
+.mk-body .gd-bubble { font-size: 13px; line-height: 20px; padding: 8px 12px; }
+.mk-body .gd-sigil { width: 38px; height: 38px; font-size: 17px; }
+.mk-body .gd-score-num { font-size: 26px; }
+.mk-body .gd-review-state { width: 4.5em; }
+.mk-h { font-family: var(--font-serif); font-weight: 700; font-size: 15px; margin-top: 2px !important; }
+.mk-num { font-family: var(--font-serif); font-size: 22px; color: var(--crimson) !important; }
+.mk-meta { font-size: 12px; color: var(--ink-muted); }
+.mk-title { font-size: 19px; line-height: 28px; font-weight: 700; margin: 4px 0 !important; }
+.mk-fold { color: var(--teal); }
+.mk-tag { font-size: 11px; font-weight: 700; color: var(--gold-ink); background: var(--gold-soft); border-radius: 4px; padding: 1px 6px; }
+.mk-ta { background: var(--parchment-raised); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px; font-size: 13px; line-height: 21px; min-height: 150px; }
+.mk-count { display: flex; justify-content: flex-end; align-items: center; font-size: 12px; color: var(--ink-muted); }
+.mk-count b { color: var(--ink); }
+.mk-nav { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--parchment-raised); border-top: 1px solid var(--line); }
+.mk-nav span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 10px; color: var(--ink-muted); }
+.mk-nav span i { font-size: 15px; }
+.mk-nav span.on { color: var(--crimson); font-weight: 700; }
+.mk-cap { font-size: 12px; color: var(--gray-600); margin: 0 !important; text-align: center; }
+/* 管理画面（ギルド管理局） */
+.ad-wrap { width: 100%; overflow-x: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ad-frame { width: 860px; background: var(--parchment); border: 1px solid #9a9a9a; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.ad-head { display: flex; align-items: center; gap: 12px; background: var(--ink); color: var(--parchment); padding: 10px 16px; }
+.ad-head .gd-serif { font-weight: 800; font-size: 15px; }
+.ad-label { font-size: 11px; font-weight: 700; color: var(--ink); background: var(--gold-soft); border-radius: 4px; padding: 1px 8px; letter-spacing: .1em; }
+.ad-role { margin-left: auto; font-size: 11px; color: var(--line); }
+.ad-main { display: grid; grid-template-columns: 180px 1fr; min-height: 380px; }
+.ad-side { background: var(--parchment-sunk); border-right: 1px solid var(--line); padding: 10px 0 !important; }
+.ad-side li { padding: 9px 14px; font-size: 12px; color: var(--ink-muted); display: flex; gap: 8px; align-items: center; }
+.ad-side li i { width: 14px; text-align: center; }
+.ad-side li.on { background: var(--parchment-raised); color: var(--ink); font-weight: 700; border-left: 3px solid var(--crimson); }
+.ad-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.ad-top { display: flex; justify-content: space-between; align-items: center; }
+.ad-h { font-size: 18px; font-weight: 700; }
+.ad-sel { font-size: 12px; border: 1px solid var(--line-strong); background: var(--parchment-raised); border-radius: 6px; padding: 4px 10px; }
+.ad-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.ad-kpis > div { background: var(--parchment-raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
+.ad-kpis small { display: block; font-size: 11px; color: var(--ink-muted); }
+.ad-kpis b { font-family: var(--font-serif); font-size: 22px; line-height: 28px; margin-right: 2px; }
+.gd-scope table.ad-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--parchment-raised); border: 1px solid var(--line); }
+.gd-scope .ad-table th { background: var(--parchment-sunk); color: var(--ink); border-bottom: 1px solid var(--line-strong); padding: 7px 10px; font-weight: 700; }
+.gd-scope .ad-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); font-weight: 400; color: var(--ink); }
+.ad-act { display: flex; justify-content: flex-end; gap: 8px; }
+.ad-act .gd-btn { font-size: 13px; min-height: 36px; }
+.ad-chars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ad-char { display: flex; gap: 10px; align-items: center; background: var(--parchment-raised); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 12px; }
+.ad-char.on { border: 2px solid var(--teal); padding: 9px; }
+.ad-char small { color: var(--ink-muted); font-size: 11px; }
+.ad-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ad-drop { border: 2px dashed var(--line-strong); border-radius: 8px; text-align: center; padding: 18px 10px; color: var(--ink-muted); font-size: 12px; }
+.ad-drop i { font-size: 22px; color: var(--teal); }
+.ad-prev { background: var(--parchment-sunk); border-radius: 8px; padding: 10px; }
+.ad-prev .gd-bubble { font-size: 12px; padding: 6px 10px; }
+@media print { .mock { break-inside: avoid; } }
+
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <span class="eyebrow">外部設計書</span>
+    <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
+    <ul class="meta">
+      <li>版数<b>第1.0版（ドラフト：第1〜10章、HTML版あり。説明文の小見出しのルールをなくし、模範説明のルールに移す）</b></li>
+      <li>作成日<b>2026-10-19（第1.0版：2026-10-21）</b></li>
+      <li>入力文書<b>RPG学習アプリ 要件定義書 第1.1版（ドラフト）</b></li>
+      <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
+    </ul>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p>目次</p>
+    <ol>
+<li><a href="#ch1">1. 文書概要</a></li>
+<li><a href="#ch2">2. システム方式設計</a></li>
+<li><a href="#ch3">3. 画面設計</a></li>
+<li><a href="#ch4">4. 機能設計</a></li>
+<li><a href="#ch5">5. 外部インターフェース設計</a></li>
+<li><a href="#ch6">6. 定期処理設計</a></li>
+<li><a href="#ch7">7. データ設計</a></li>
+<li><a href="#ch8">8. 非機能・セキュリティ設計</a></li>
+<li><a href="#ch9">9. メッセージ設計</a></li>
+<li><a href="#ch10">10. 未決事項</a></li>
+    </ol>
+  </nav>
+  <main>
+<section class="chapter" id="ch1"><h2><i class="fa-solid fa-file-lines h-ico" aria-hidden="true"></i>1. 文書概要</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3>
+<p>要件定義書で決めた「何を作るか」を、利用者から見える形（画面・操作・外部とのやり取り・システム構成）に落とし込む。内部設計（プログラム構造・テーブル定義の詳細）の入力とする。</p>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 本書で確定する事項</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>区分</th>
+<th>確定内容</th>
+<th>要件定義書の対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>方式</td>
+<td>サーバーレス構成（CloudFront＋S3／API Gateway＋Lambda／Aurora Serverless v2）</td>
+<td>6.1</td>
+</tr>
+<tr>
+<td>認証</td>
+<td>Amazon Cognito（将来のSAML/OIDCに対応）</td>
+<td>6.5</td>
+</tr>
+<tr>
+<td>環境</td>
+<td>dev／prod の2環境を1つのAWSアカウント内でリソース名の接頭辞（rpg-dev- など）とタグ Environment で分ける。東京リージョン（ap-northeast-1）</td>
+<td>6.1</td>
+</tr>
+<tr>
+<td>AIモデル</td>
+<td>高精度＝Claude Sonnet 5.5、軽量＝Claude Haiku 5.5。東京リージョンで使えない場合は、東京リージョンで使える別バージョンを使う（クロスリージョン推論は使わない）</td>
+<td>6.3</td>
+</tr>
+<tr>
+<td>フロントエンド</td>
+<td>Vanilla JS（フレームワークなし）のSPA＋PWA</td>
+<td>6.7</td>
+</tr>
+<tr>
+<td>リリース方式</td>
+<td>GitHub Actions で配置する（<code>main</code> への push で dev、タグを付けて承認後に prod）。AWS へは OIDC で認証し、アクセスキーは使わない。AWSリソースの作成はマネジメントコンソール</td>
+<td>6.1</td>
+</tr>
+<tr>
+<td>レベル計算式</td>
+<td>次のレベルまでの必要EXP＝100 × Lv^1.2（端数切り上げ）</td>
+<td>仮置き No.8</td>
+</tr>
+<tr>
+<td>AIパートナー</td>
+<td>励まし型・論理型・ライバル型の3人。名前は学習者が入力。紋章はキャラクター画像（まずは表情1種、管理画面で差し替え可）。画像が未設定なら名前の頭文字を表示</td>
+<td>仮置き No.9</td>
+</tr>
+<tr>
+<td>管理画面</td>
+<td>羊皮紙の世界観のまま「ギルド管理局」型で学習者画面と区別</td>
+<td>5.1</td>
+</tr>
+<tr>
+<td>コスト方針</td>
+<td>パイロット期間はコスト最小構成：Aurora は全環境で自動停止。CloudFront は定額の Free プラン（月0ドル、AWS WAF 付き）を全環境で使う</td>
+<td>6.1</td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>未定。本書では <code>app.example.co.jp</code> を仮置き</td>
+<td>-</td>
+</tr>
+<tr>
+<td>表示名</td>
+<td>ランキングなど学習者どうしの表示はニックネーム（2〜12文字、コース内で重複不可）</td>
+<td>4.3</td>
+</tr>
+<tr>
+<td>説明問題の入力</td>
+<td>50〜400文字（改行・空白を除く）。小見出しなどの書き方の決まりはない。200文字を超えたら【】の小見出しで区切るのは、AIが書く模範説明のほう</td>
+<td>3.4</td>
+</tr>
+<tr>
+<td>通知時刻</td>
+<td>学習者が6:00〜22:00の30分刻みで選ぶ（初期値7:30）</td>
+<td>5.3</td>
+</tr>
+<tr>
+<td>ゲームルール</td>
+<td>1回の冒険は10問。デイリークエストは5種類から1日3つ（復習対象がある日はQ-04を必ず含む、報酬20〜30 EXP）。バッジは習得10／50／100問・継続7／30／100日</td>
+<td>仮置き No.6、4.4</td>
+</tr>
+<tr>
+<td>説明の採点</td>
+<td>正確さ50点・観点の網羅30点・具体性20点、合格60点</td>
+<td>仮置き No.1、3.4</td>
+</tr>
+<tr>
+<td>ログイン</td>
+<td>パスワード8文字以上（英大文字・英小文字・数字を含む）。ログイン状態は7日間保持</td>
+<td>6.5</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 関連文書</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>文書</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>要件定義書_RPG学習アプリ</td>
+<td>要件の根拠</td>
+</tr>
+<tr>
+<td>アプリ用_デザインシステム（冒険者ギルド）</td>
+<td>画面イメージ・部品</td>
+</tr>
+<tr>
+<td>デジタル庁_デザインシステム</td>
+<td>本書HTML版の体裁</td>
+</tr>
+<tr>
+<td>AWS構築手順書_RPG学習アプリ</td>
+<td>AWSマネジメントコンソールでの構築手順と、GitHub Actions との連携（OIDC・配置用ロール）の設定</td>
+</tr>
+<tr>
+<td>詳細設計書_RPG学習アプリ</td>
+<td>GitHub Actions によるビルド・リリース手順（第11章）</td>
+</tr>
+</tbody>
+</table></div>
+</section><section class="chapter" id="ch2"><h2><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>2. システム方式設計</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 方式の選定理由</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>観点</th>
+<th>判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>規模の変動</td>
+<td>パイロット約10名から全社約1,000名まで、構成を変えずに自動で拡張できる</td>
+</tr>
+<tr>
+<td>コスト</td>
+<td>利用がない時間はほぼ課金されない（Aurora Serverless v2は最小容量まで縮小）</td>
+</tr>
+<tr>
+<td>運用</td>
+<td>サーバーのOS管理が不要。少人数での運用に向く</td>
+</tr>
+<tr>
+<td>AI連携</td>
+<td>Lambdaから同じリージョンのBedrockを直接呼べる</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 AWS構成図</h3>
+<figure class="diagram wide"><div class="mermaid">flowchart LR
+  subgraph Client["利用者端末"]
+    U["学習者&lt;br&gt;スマホ・PC"]
+    M["コース管理者&lt;br&gt;システム管理者"]
+  end
+  subgraph Edge["エッジ（グローバル）"]
+    R53["Route 53&lt;br&gt;DNS"]
+    WAF["AWS WAF&lt;br&gt;Freeプランに付属"]
+    CF["CloudFront"]
+    ACM["ACM&lt;br&gt;証明書"]
+  end
+  subgraph Tokyo["ap-northeast-1 東京リージョン"]
+    S3W["S3&lt;br&gt;Webアプリ配信"]
+    S3A["S3&lt;br&gt;キャラクター画像"]
+    COG["Cognito&lt;br&gt;ユーザープール"]
+    APIGW["API Gateway&lt;br&gt;HTTP API"]
+    subgraph Compute["Lambda"]
+      LAPI["APIハンドラ"]
+      LGRD["説明採点"]
+      LIMP["問題取り込み"]
+      LBAT["定期処理"]
+    end
+    S3U["S3&lt;br&gt;取り込み原本"]
+    SQS["SQS&lt;br&gt;取り込みキュー"]
+    DB["Aurora PostgreSQL&lt;br&gt;Serverless v2&lt;br&gt;自動停止・Data API"]
+    SM["Secrets Manager"]
+    BR["Amazon Bedrock&lt;br&gt;Sonnet 5.5 / Haiku 5.5"]
+    EB["EventBridge&lt;br&gt;Scheduler"]
+    SES["Amazon SES&lt;br&gt;メール"]
+    CW["CloudWatch&lt;br&gt;CloudTrail"]
+  end
+  U --&gt; R53
+  M --&gt; R53
+  R53 --&gt; CF
+  WAF --- CF
+  ACM --- CF
+  CF --&gt; S3W
+  CF --&gt; S3A
+  CF --&gt;|"/api/*"| APIGW
+  U -.-&gt;|"ログイン"| COG
+  M -.-&gt;|"ログイン"| COG
+  APIGW --&gt;|"JWT検証"| COG
+  APIGW --&gt; LAPI
+  LAPI --&gt;|"非同期起動"| LGRD
+  LAPI --&gt;|"署名付きURL発行"| S3U
+  S3U --&gt;|"アップロード通知"| SQS
+  SQS --&gt; LIMP
+  LAPI --&gt; DB
+  LGRD --&gt; DB
+  LIMP --&gt; DB
+  LBAT --&gt; DB
+  DB --- SM
+  LAPI --&gt; BR
+  LGRD --&gt; BR
+  LIMP --&gt; BR
+  EB --&gt; LBAT
+  LBAT --&gt; SES
+  LAPI --&gt; SES
+  Compute -.-&gt; CW
+</div></figure>
+<p>※ CloudFront は定額の Free プランを使う。AWS WAF はプランに含まれ、Phase 1 から有効になる（ルールは5個まで。Phase 3 で見直す）。</p>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 AWSサービス一覧</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>サービス</th>
+<th>役割</th>
+<th>主な設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route 53</td>
+<td>独自ドメインのDNS</td>
+<td>CloudFrontへのエイリアスレコード（ドメイン未定。決まるまではCloudFrontの既定ドメインで運用可）</td>
+</tr>
+<tr>
+<td>ACM</td>
+<td>TLS証明書</td>
+<td>CloudFront用は us-east-1 で発行</td>
+</tr>
+<tr>
+<td>CloudFront</td>
+<td>配信の入口。画面・画像・APIを1つのドメインにまとめる</td>
+<td><code>/api/*</code> をAPI Gatewayへ、それ以外をS3へ</td>
+</tr>
+<tr>
+<td>AWS WAF</td>
+<td>不正アクセスの遮断</td>
+<td>CloudFront の Free プランに含まれる（追加料金なし、外せない）。Phase 1 はプランの既定ルールで運用し、Phase 3 でAWSマネージドルール（共通・既知の不正入力・IP評価）とレート制限に見直す。ルールは5個まで</td>
+</tr>
+<tr>
+<td>S3（Webアプリ配信）</td>
+<td>HTML／CSS／JSの配置</td>
+<td>非公開。CloudFrontのOACからのみ読み取り</td>
+</tr>
+<tr>
+<td>S3（キャラクター画像）</td>
+<td>AIパートナーの紋章画像（管理画面からアップロード・差し替え）</td>
+<td>非公開。CloudFront経由で配信</td>
+</tr>
+<tr>
+<td>S3（取り込み原本）</td>
+<td>問題取り込みのPDF・画像</td>
+<td>非公開。署名付きURLでアップロード。90日で自動削除</td>
+</tr>
+<tr>
+<td>Cognito ユーザープール</td>
+<td>ログイン・パスワード管理・ロール</td>
+<td>マネージドログイン、グループ <code>learner</code>・<code>course_admin</code>・<code>system_admin</code></td>
+</tr>
+<tr>
+<td>API Gateway（HTTP API）</td>
+<td>APIの受付</td>
+<td>Cognitoで発行したJWTで認証</td>
+</tr>
+<tr>
+<td>Lambda（Node.js 22）</td>
+<td>業務処理</td>
+<td>4つの関数（2.4参照）</td>
+</tr>
+<tr>
+<td>SQS</td>
+<td>問題取り込みの順番待ち</td>
+<td>失敗時はデッドレターキューへ</td>
+</tr>
+<tr>
+<td>Aurora PostgreSQL Serverless v2</td>
+<td>業務データ</td>
+<td>0〜4 ACU（prod）、自動停止を有効化（無操作5分で停止）、Data APIを有効化</td>
+</tr>
+<tr>
+<td>Secrets Manager</td>
+<td>DBの認証情報</td>
+<td>Data APIから参照</td>
+</tr>
+<tr>
+<td>Amazon Bedrock</td>
+<td>抽出・採点・コメント生成</td>
+<td>Claude Sonnet 5.5、Claude Haiku 5.5。モデルは既定で使える状態。Anthropic のモデルは初回だけ利用目的を申請する。モデル呼び出しログは記録しない</td>
+</tr>
+<tr>
+<td>EventBridge Scheduler</td>
+<td>定期処理の起動</td>
+<td>タイムゾーン Asia/Tokyo</td>
+</tr>
+<tr>
+<td>Amazon SES</td>
+<td>通知メール・招待メール</td>
+<td>送信ドメインの認証（DKIM）</td>
+</tr>
+<tr>
+<td>CloudWatch／CloudTrail</td>
+<td>ログ・監視・操作記録</td>
+<td>エラー率と採点時間のアラーム</td>
+</tr>
+<tr>
+<td>IAM（OIDC IDプロバイダー）</td>
+<td>GitHub Actions からの配置の認証</td>
+<td>GitHub が発行するトークンで環境ごとの配置用ロール <code>rpg-{env}-deploy-role</code> を引き受ける。長期のアクセスキーは作らない</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.4 Lambda関数の分担</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>関数</th>
+<th>起動のきっかけ</th>
+<th>処理</th>
+<th>タイムアウト</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api-handler</code></td>
+<td>API Gateway</td>
+<td>画面からのAPI全般。四肢択一の正誤判定、軽量モデルでのひとこと生成</td>
+<td>29秒</td>
+</tr>
+<tr>
+<td><code>grading-worker</code></td>
+<td><code>api-handler</code> からの非同期起動</td>
+<td>キーワード説明の採点（高精度モデル）</td>
+<td>60秒</td>
+</tr>
+<tr>
+<td><code>import-worker</code></td>
+<td>SQS</td>
+<td>PDF・画像・テキストから問題とキーワードを抽出（高精度モデル）</td>
+<td>15分</td>
+</tr>
+<tr>
+<td><code>batch-runner</code></td>
+<td>EventBridge Scheduler</td>
+<td>日次処理（クエスト更新・ランキング締め・物理削除・通知リスト作成）と30分ごとのメール送信（DBを使わない）</td>
+<td>15分</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.5 説明採点の非同期方式</h3>
+<p>API Gatewayは約30秒で応答を打ち切るため、採点は受付と処理を分ける。画面は2秒ごとに結果を確認し、その間AIパートナーの待機演出を表示する。</p>
+<figure class="diagram"><div class="mermaid">sequenceDiagram
+  participant U as 学習者（ブラウザ）
+  participant API as API Gateway＋Lambda
+  participant G as 採点Lambda
+  participant BR as Bedrock（Sonnet 5.5）
+  participant DB as Aurora
+  U-&gt;&gt;API: POST /api/gradings（説明文）
+  API-&gt;&gt;DB: 採点ジョブを登録（状態：採点中）
+  API-&gt;&gt;G: 非同期で起動
+  API--&gt;&gt;U: 202 受付（ジョブID）
+  Note over U: パートナーの待機演出を表示
+  G-&gt;&gt;BR: 採点を依頼（パートナーの性格を含む）
+  BR--&gt;&gt;G: 点数・模範説明・不足観点・コメント
+  G-&gt;&gt;DB: 結果保存・復習段階更新・EXP加算
+  loop 2秒ごと（最大30秒）
+    U-&gt;&gt;API: GET /api/gradings/{id}
+    API--&gt;&gt;U: 状態（採点中 または 完了）
+  end
+  Note over U: 30秒を超えたら再試行を案内
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.6 フロントエンド方式</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>実装</td>
+<td>Vanilla JS（ES Modules）。ビルドツールなしで動く構成</td>
+</tr>
+<tr>
+<td>画面切り替え</td>
+<td>URLのハッシュ（<code>#/home</code> など）で切り替えるSPA</td>
+</tr>
+<tr>
+<td>部品</td>
+<td>アプリ用デザインシステムの <code>bundle.css</code> のクラス（<code>gd-btn</code>・<code>gd-card</code> など）をそのまま使う。React版の部品は使わず、同じHTML構造をJSの関数で組み立てる</td>
+</tr>
+<tr>
+<td>ログイン</td>
+<td>Cognitoのマネージドログイン画面へ移動し、認可コード＋PKCEでトークンを取得</td>
+</tr>
+<tr>
+<td>トークン保管</td>
+<td>メモリとsessionStorage。画面を閉じたら破棄</td>
+</tr>
+<tr>
+<td>PWA</td>
+<td><code>manifest.webmanifest</code> と Service Worker を配置。ホーム画面に追加できる。Phase 2のプッシュ通知の土台</td>
+</tr>
+<tr>
+<td>対応ブラウザ</td>
+<td>スマホ・PCの主要ブラウザの最新版</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.7 環境構成</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>環境</th>
+<th>用途</th>
+<th>利用者</th>
+<th>DB容量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dev</td>
+<td>開発・動作確認、システムテスト・受け入れ確認</td>
+<td>開発者・コース管理者（受け入れ確認）</td>
+<td>0〜1 ACU（自動停止）</td>
+</tr>
+<tr>
+<td>prod</td>
+<td>本番（パイロット→全社）</td>
+<td>全利用者</td>
+<td>0〜4 ACU（自動停止。Phase 3で見直し）</td>
+</tr>
+</tbody>
+</table></div>
+<p>1つのAWSアカウントの中で、リソース名の接頭辞とタグで環境を分ける。</p>
+<ul>
+<li>コストを抑えるため、検証用の stg 環境は作らない（2026-10-21 決定）。stg で行う予定だったシステムテストとコース管理者の受け入れ確認は dev で行う</li>
+<li>受け入れ確認の間は、dev への自動配置（<code>main</code> への push）を止めて dev を「凍結」する。確かめた版にタグを付けて prod に配置する（詳細設計書 11.1）</li>
+<li>dev は DB の容量（0〜1 ACU）とバックアップの設定が prod と違うため、本番と同じ条件での最終確認はできない。代わりに prod への配置の直前に必ず DB のスナップショット（控え）を取り、問題があれば戻せるようにする</li>
+<li>全社展開（Phase 3）の前に、stg を作り直すかを見直す（10 未決事項 No.11）</li>
+</ul>
+<figure class="diagram"><div class="mermaid">flowchart TB
+  subgraph ACC["AWSアカウント（1つ）"]
+    subgraph DEV["dev 環境"]
+      D1["rpg-dev-* のリソース一式"]
+    end
+    subgraph PRD["prod 環境"]
+      P1["rpg-prod-* のリソース一式"]
+    end
+    IAM["IAM・CloudTrail・請求&lt;br&gt;OIDC IDプロバイダー（共通）"]
+  end
+  subgraph GH["GitHub"]
+    REPO["リポジトリ&lt;br&gt;rpg-learning-app"]
+    GA["GitHub Actions"]
+  end
+  IAM --- DEV
+  IAM --- PRD
+  REPO --&gt; GA
+  GA --&gt;|"main への push"| DEV
+  GA --&gt;|"タグ release-*・承認後"| PRD</div></figure>
+<ul>
+<li>命名規則：<code>rpg-{env}-{用途}</code>（例：<code>rpg-prod-api-handler</code>）</li>
+<li>タグ：<code>Project=rpg-learning</code>、<code>Environment=dev|prod</code>。請求はタグで環境ごとに集計する</li>
+<li>IAMの権限は環境ごとに、リソース名の接頭辞で範囲を絞る</li>
+<li>AWSのリソースは構築手順書に沿ってマネジメントコンソールで dev → prod の順に作る。アプリ（Lambda のコード・画面・DBのテーブル）は GitHub Actions が配置する</li>
+<li>配置のきっかけ：dev は <code>main</code> への push、prod は dev での受け入れ確認のあとタグ <code>release-YYYYMMDD-NN</code> を付け、承認者が GitHub で承認したとき（詳細設計書 第11章）</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.8 AIモデルの使い分け</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>用途</th>
+<th>モデル</th>
+<th>呼び出し元</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>問題・キーワードの抽出</td>
+<td>Claude Sonnet 5.5</td>
+<td><code>import-worker</code></td>
+</tr>
+<tr>
+<td>キーワード説明の採点</td>
+<td>Claude Sonnet 5.5</td>
+<td><code>grading-worker</code></td>
+</tr>
+<tr>
+<td>四肢択一の解説コメント・パートナーのひとこと</td>
+<td>Claude Haiku 5.5</td>
+<td><code>api-handler</code></td>
+</tr>
+<tr>
+<td>四肢択一の正誤判定</td>
+<td>AI不使用</td>
+<td><code>api-handler</code></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Bedrockに送ったデータはモデルの学習に使われない（Bedrockの標準の扱い）。構築時に利用規約を確認し、記録を残す</li>
+<li>具体的なモデルIDは構築時にBedrockコンソールで確認する。Sonnet 5.5が東京リージョンで使えない場合は、東京リージョンで使える別バージョンのSonnetを使う。Haiku 5.5も同じく、使えない場合は東京リージョンで使える別バージョンのHaikuを使う（データを東京リージョンの外に出さない）</li>
+<li>Haiku 5.5 は既定で思考（adaptive thinking）が動き、effort の既定は medium。5秒で打ち切る呼び出しのため effort は low を基本にし、dev で応答時間を確かめる。思考トークンを固定で指定する設定（budget_tokens）はエラーになるため使わない</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.9 月額コスト試算（パイロット10名）</h3>
+<p>パイロット期間はコストを最小にする構成とする（Aurora は全環境で自動停止。CloudFront は定額の Free プランで、配信と AWS WAF の料金はかからない）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>環境</th>
+<th>月額（目安）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>prod</td>
+<td>約5,200円（$35）</td>
+</tr>
+<tr>
+<td>dev</td>
+<td>約1,700円（$11）</td>
+</tr>
+<tr>
+<td><strong>合計</strong></td>
+<td><strong>約6,900円（$46）</strong></td>
+</tr>
+</tbody>
+</table></div>
+<figure class="diagram"><div class="mermaid">pie showData
+  title prod の月額内訳（円）
+  "Bedrock 説明採点 Sonnet 5.5" : 2310
+  "Bedrock 解説・ひとこと Haiku 5.5" : 198
+  "Bedrock 問題取り込み Sonnet 5.5" : 247
+  "Aurora 自動停止" : 1822
+  "Aurora ストレージ・I/O" : 108
+  "CloudWatch・Secrets Manager" : 360
+  "その他サービス" : 150
+</div></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>月額</th>
+<th>前提</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bedrock 説明採点（Sonnet 5.5）</td>
+<td>約2,300円</td>
+<td>1人1日5回 × 22日。1回あたり入力3,000・出力800トークン</td>
+</tr>
+<tr>
+<td>Bedrock 解説・ひとこと（Haiku 5.5）</td>
+<td>約200円</td>
+<td>1人1日20回 × 22日。1回あたり入力1,500・出力300トークン</td>
+</tr>
+<tr>
+<td>Bedrock 問題取り込み（Sonnet 5.5）</td>
+<td>約200円</td>
+<td>月150ページ、300問</td>
+</tr>
+<tr>
+<td>Aurora（自動停止）</td>
+<td>約1,800円</td>
+<td>0.5 ACUで月約160時間動作</td>
+</tr>
+<tr>
+<td>Aurora ストレージ・I/O</td>
+<td>約100円</td>
+<td>2GB</td>
+</tr>
+<tr>
+<td>CloudWatch・Secrets Manager</td>
+<td>約400円</td>
+<td></td>
+</tr>
+<tr>
+<td>その他（S3・API Gateway・Lambda・SQS・SES・Cognito・EventBridge）</td>
+<td>約150円</td>
+<td>10名ならほぼ無料枠に収まる</td>
+</tr>
+<tr>
+<td>CloudFront・AWS WAF</td>
+<td>0円</td>
+<td>定額の Free プラン。月100万リクエスト・100GBまで追加料金なし（超えても課金されず、速度が落とされることがある）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>試算の前提</strong></p>
+<ul>
+<li>stg をなくしたことで、月 約1,600円（年 約1.9万円）を減らせる見込み（以前の試算は dev＋stg で 約3,300円。dev と stg をほぼ同じ規模とみて半分ずつに分けた目安）</li>
+<li>為替は1ドル＝150円</li>
+<li>Aurora は東京リージョンで 0.15ドル／ACU時間</li>
+<li>Sonnet 5.5 は入力2ドル・出力10ドル／100万トークン（以前の Sonnet 4.6 の入力3ドル・出力15ドルより3分の1安い）</li>
+<li>Claude の単価は Anthropic の公表単価で試算した。Bedrock の単価は AWS が別に決めるため、構築時に Bedrock の料金ページで確かめる。東京リージョン内での推論は、海外リージョンをまたぐ推論より1割ほど高い場合がある</li>
+<li>Haiku 5.5 は入力0.1ドル・出力0.5ドル／100万トークン（1回のプロンプトが10万トークン以下の場合。超えると入力0.5ドル・出力2.5ドル）。以前の Haiku 4.5（入力1ドル・出力5ドル）の約10分の1</li>
+<li>利用回数は仮置き。説明問題を多く解くほど Bedrock の費用は増える</li>
+<li>CloudFront の Free プランはアカウントあたり3つまで。dev・prod で2つを使う（1つは空き）。アクセスログ、独自のキャッシュポリシー・レスポンスヘッダーポリシーは使えない（必要になれば Pro プラン、月15ドル）</li>
+</ul>
+<p><strong>自動停止による制約</strong></p>
+<ul>
+<li>止まっているDBを起こすのに約15秒かかる。24時間以上止まっていた場合は30秒以上かかることがある</li>
+<li>そのため、その日最初の操作では画面の表示が遅れる。読み込み中の表示を出し、APIはDBの起動中を示すエラーを受けたら再試行する（詳細は第3章以降で定める）</li>
+<li>体験に問題があれば、prod だけ平日の日中は最小0.5 ACUにする（月額は約16,000円前後に増える）</li>
+</ul>
+</section><section class="chapter" id="ch3"><h2><i class="fa-solid fa-display h-ico" aria-hidden="true"></i>3. 画面設計</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 画面一覧</h3>
+<p>要件定義書の画面一覧（S-01〜S-13）に、キャラクター画像の差し替え用として <strong>S-14 AIパートナー設定</strong> を追加する。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>画面</th>
+<th>利用者</th>
+<th>URL</th>
+<th>区分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S-01</td>
+<td>ログイン</td>
+<td>全員</td>
+<td>Cognito マネージドログイン</td>
+<td>共通</td>
+</tr>
+<tr>
+<td>S-02</td>
+<td>ホーム</td>
+<td>学習者</td>
+<td><code>#/home</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-03</td>
+<td>コース選択</td>
+<td>学習者</td>
+<td><code>#/courses</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-04</td>
+<td>演習（四肢択一）</td>
+<td>学習者</td>
+<td><code>#/quest/choice</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-05</td>
+<td>キーワード説明</td>
+<td>学習者</td>
+<td><code>#/quest/explain</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-06</td>
+<td>結果・フィードバック</td>
+<td>学習者</td>
+<td><code>#/quest/result</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-07</td>
+<td>週間ランキング</td>
+<td>学習者</td>
+<td><code>#/ranking</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-08</td>
+<td>プロフィール（レベル・バッジ）</td>
+<td>学習者</td>
+<td><code>#/profile</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-09</td>
+<td>AIパートナー選択</td>
+<td>学習者</td>
+<td><code>#/partner</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-10</td>
+<td>通知設定</td>
+<td>学習者</td>
+<td><code>#/settings/notify</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-11</td>
+<td>問題取り込み・レビュー</td>
+<td>コース管理者</td>
+<td><code>#/admin/import</code></td>
+<td>管理局</td>
+</tr>
+<tr>
+<td>S-12</td>
+<td>学習状況ダッシュボード</td>
+<td>コース管理者</td>
+<td><code>#/admin/dashboard</code></td>
+<td>管理局</td>
+</tr>
+<tr>
+<td>S-13</td>
+<td>利用者・コース・権限管理</td>
+<td>システム管理者</td>
+<td><code>#/admin/users</code></td>
+<td>管理局</td>
+</tr>
+<tr>
+<td>S-14</td>
+<td>AIパートナー設定（追加）</td>
+<td>システム管理者</td>
+<td><code>#/admin/partners</code></td>
+<td>管理局</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 画面構成図</h3>
+<figure class="diagram"><div class="mermaid">flowchart TB
+  ROOT["RPG学習アプリ&lt;br&gt;app.example.co.jp"]
+  ROOT --&gt; AUTH["S-01 ログイン&lt;br&gt;Cognito マネージドログイン"]
+  ROOT --&gt; L["学習者エリア #/&lt;br&gt;下部ナビ：ホーム・ランキング・プロフィール"]
+  ROOT --&gt; A["ギルド管理局エリア #/admin&lt;br&gt;左サイドメニュー"]
+  subgraph LEARN["学習者エリア"]
+    S02["S-02 ホーム"]
+    S03["S-03 コース選択"]
+    S04["S-04 演習 四肢択一"]
+    S05["S-05 キーワード説明"]
+    S06["S-06 結果・フィードバック"]
+    S07["S-07 週間ランキング"]
+    S08["S-08 プロフィール"]
+    S09["S-09 AIパートナー選択"]
+    S10["S-10 通知設定"]
+  end
+  subgraph ADMIN["ギルド管理局エリア"]
+    S11["S-11 問題取り込み・レビュー&lt;br&gt;コース管理者"]
+    S12["S-12 学習状況ダッシュボード&lt;br&gt;コース管理者"]
+    S13["S-13 利用者・コース・権限管理&lt;br&gt;システム管理者"]
+    S14["S-14 AIパートナー設定&lt;br&gt;システム管理者"]
+  end
+  L --&gt; LEARN
+  A --&gt; ADMIN
+  COMMON["共通：DB起動待ち表示・エラー表示・確認ダイアログ"]
+  LEARN -.- COMMON
+  ADMIN -.- COMMON
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 画面遷移</h3>
+<h4>3.3.1 学習者</h4>
+<p>初回ログイン時は「はじめての冒険」として、ニックネーム登録 → コース選択 → AIパートナー選択の3段階を済ませてからホームに進む。</p>
+<figure class="diagram"><div class="mermaid">flowchart TD
+  S01["S-01 ログイン"] --&gt; J{初回ログイン}
+  J --&gt;|"はい"| NN["ニックネーム登録&lt;br&gt;S-08の編集ダイアログ"]
+  NN --&gt; S03a["S-03 コース選択"]
+  S03a --&gt; S09a["S-09 AIパートナー選択&lt;br&gt;名前入力"]
+  S09a --&gt; S02["S-02 ホーム"]
+  J --&gt;|"いいえ"| S02
+  S02 --&gt;|"冒険に出る"| Q{出題形式}
+  Q --&gt;|"四肢択一"| S04["S-04 演習 四肢択一"]
+  Q --&gt;|"キーワード説明"| S05["S-05 キーワード説明"]
+  S04 --&gt; S06["S-06 結果・フィードバック"]
+  S05 --&gt;|"採点待ち 最大30秒"| S06
+  S06 --&gt;|"次の問題"| Q
+  S06 --&gt;|"ホームへ"| S02
+  S02 --&gt; S07["S-07 週間ランキング"]
+  S02 --&gt; S08["S-08 プロフィール"]
+  S08 --&gt; S03["S-03 コース選択"]
+  S08 --&gt; S09["S-09 AIパートナー選択"]
+  S08 --&gt; S10["S-10 通知設定"]
+</div></figure>
+<h4>3.3.2 管理者</h4>
+<p>ログイン後はロールで初期画面を決める。管理者も学習者として学習できるため、ヘッダーで両エリアを切り替えられる。</p>
+<figure class="diagram"><div class="mermaid">flowchart LR
+  S01["S-01 ログイン"] --&gt; R{ロール}
+  R --&gt;|"learner のみ"| S02["S-02 ホーム"]
+  R --&gt;|"course_admin"| S12["S-12 学習状況ダッシュボード"]
+  R --&gt;|"system_admin"| S13["S-13 利用者・コース・権限管理"]
+  S12 &lt;--&gt; S11["S-11 問題取り込み・レビュー"]
+  S13 &lt;--&gt; S14["S-14 AIパートナー設定"]
+  S12 -.-&gt;|"ヘッダーの切替"| S02
+  S13 -.-&gt;|"ヘッダーの切替"| S02
+  S02 -.-&gt;|"管理局へ 管理者のみ表示"| S12
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 画面レイアウトの基本</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>学習者画面</th>
+<th>管理画面（ギルド管理局型）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>想定端末</td>
+<td>スマホ縦（最大幅420px）。PCでも中央に420px幅で表示</td>
+<td>PC横（1280px基準）。タブレット横まで対応</td>
+</tr>
+<tr>
+<td>背景</td>
+<td><code>parchment</code></td>
+<td><code>parchment</code></td>
+</tr>
+<tr>
+<td>ヘッダー</td>
+<td><code>parchment-raised</code> の地に <code>ink</code> の文字。アプリ名とコース名</td>
+<td><strong><code>ink</code>（濃い茶）の地に <code>parchment</code> の文字</strong>。「ギルド管理局」ラベルとロール名</td>
+</tr>
+<tr>
+<td>ナビゲーション</td>
+<td>下部固定ナビ（ホーム・ランキング・プロフィール）</td>
+<td>左サイドメニュー（幅240px、<code>parchment-sunk</code>）</td>
+</tr>
+<tr>
+<td>本文</td>
+<td><code>gd-card</code> を縦に積む</td>
+<td>表・フォーム中心。罫線は <code>line</code></td>
+</tr>
+<tr>
+<td>ゲーム部品</td>
+<td>EXPバー・クエスト・パートナーなどを使う</td>
+<td><strong>使わない</strong>（S-14の見本表示を除く）</td>
+</tr>
+<tr>
+<td>主要ボタン</td>
+<td><code>gd-btn-primary</code>（crimson）を1画面1つ、<code>block</code> で横幅いっぱい</td>
+<td><code>gd-btn-primary</code> を1画面1つ、右寄せ</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="diagram"><div class="mermaid">flowchart LR
+  subgraph LP["学習者画面 スマホ縦 max 420px"]
+    direction TB
+    LH["ヘッダー parchment&lt;br&gt;アプリ名・コース名"]
+    LM["本文 gd-card を縦に積む"]
+    LN["下部ナビ&lt;br&gt;ホーム・ランキング・プロフィール"]
+    LH --- LM --- LN
+  end
+  subgraph AP["管理画面 PC横 1280px"]
+    direction TB
+    AH["ヘッダー ink 濃い茶&lt;br&gt;ギルド管理局ラベル・ロール名"]
+    subgraph AB["本体"]
+      direction LR
+      AS["左サイドメニュー&lt;br&gt;240px"]
+      AM["本文 表・フォーム中心"]
+    end
+    AH --- AB
+  end
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 共通の表示ルール</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>場面</th>
+<th>表示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DBの起動待ち（自動停止からの復帰）</td>
+<td>「ギルドの扉を開けています…」と <code>gd-dots</code> の待機演出。APIは最大3回まで再試行（2秒・4秒・8秒の間隔）。それでも失敗したらエラー表示</td>
+</tr>
+<tr>
+<td>読み込み中（通常）</td>
+<td>該当カードの中に <code>gd-dots</code> を表示</td>
+</tr>
+<tr>
+<td>エラー</td>
+<td>画面上部に <code>wrong-soft</code> の帯。文言は「〜できませんでした。もう一度お試しください」の形で、責める表現を使わない</td>
+</tr>
+<tr>
+<td>確認ダイアログ</td>
+<td>削除・公開など取り消しにくい操作の前に表示。ボタンは「〜する」と「やめる」</td>
+</tr>
+<tr>
+<td>フォーカス</td>
+<td><code>teal</code> の3pxリング（デザインシステムの既定）</td>
+</tr>
+<tr>
+<td>正誤の表示</td>
+<td>色だけでなく ○×と文字を必ず付ける</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 AIパートナー設計</h3>
+<h4>3.6.1 キャラクター定義</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>励まし型 <code>encourage</code></th>
+<th>論理型 <code>logic</code></th>
+<th>ライバル型 <code>rival</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>初期名</td>
+<td>ミナ</td>
+<td>セージ</td>
+<td>レン</td>
+</tr>
+<tr>
+<td>性格</td>
+<td>明るく寄り添う。小さな前進を見つけて褒める</td>
+<td>冷静で分析的。根拠と効率を重視する</td>
+<td>負けず嫌いで競争心をあおる。ただし相手を責めない</td>
+</tr>
+<tr>
+<td>口調</td>
+<td>くだけた話し方「〜だね」「〜しよう」</td>
+<td>です・ます調「〜です」「〜が効率的です」</td>
+<td>少し強気「〜だな」「次は負けないぞ」</td>
+</tr>
+<tr>
+<td>採点コメントの組み立て</td>
+<td>良い点 → 足りない観点を1つ → 応援</td>
+<td>点数の根拠 → 足りない観点 → 次にやること</td>
+<td>点数への反応 → 足りない観点 → 挑戦の呼びかけ</td>
+</tr>
+<tr>
+<td>ホームのひとこと例</td>
+<td>「昨日より3問多く解けてるよ。今日もいこう」</td>
+<td>「今日の復習は5問です。説明問題から始めるのが効率的です」</td>
+<td>「今週はまだ俺の方が上だな。追いつけるか？」</td>
+</tr>
+<tr>
+<td>紋章の枠の色</td>
+<td><code>gold-ink</code></td>
+<td><code>teal</code></td>
+<td><code>crimson</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>AIへの共通指示（全キャラクター）</strong></p>
+<ul>
+<li>発言は2〜3文まで</li>
+<li>説教・減点の言い方・人格を否定する表現はしない</li>
+<li>不合格のときも、次にやることを1つ示して終える</li>
+</ul>
+<h4>3.6.2 名前の入力ルール</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入力する画面</td>
+<td>S-09（初回は必須の流れの中で表示）</td>
+</tr>
+<tr>
+<td>文字数</td>
+<td>1〜10文字</td>
+</tr>
+<tr>
+<td>使える文字</td>
+<td>ひらがな・カタカナ・漢字・英数字。記号と絵文字は不可</td>
+</tr>
+<tr>
+<td>未入力のとき</td>
+<td>初期名（ミナ・セージ・レン）を使う</td>
+</tr>
+<tr>
+<td>変更</td>
+<td>いつでも変更できる。キャラクターを変えると名前は新しいキャラクターの初期名に戻る（以前の名前は保持しない）</td>
+</tr>
+<tr>
+<td>表示範囲</td>
+<td>本人の画面だけ。ランキングなど他の人には出さない</td>
+</tr>
+</tbody>
+</table></div>
+<h4>3.6.3 紋章（キャラクター画像）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>画像</td>
+<td>1キャラクターにつき1枚（表情1種）。将来は「通常・喜び・考え中」などの表情を追加できる作りにする</td>
+</tr>
+<tr>
+<td>形式</td>
+<td>PNG または WebP、正方形、512×512px 以上、透過背景を推奨、2MBまで</td>
+</tr>
+<tr>
+<td>表示</td>
+<td><code>gd-sigil</code> の円の中に画像を表示し、枠の色で性格を示す</td>
+</tr>
+<tr>
+<td>画像がないとき</td>
+<td>名前の頭文字を明朝で表示する（デザインシステムの既定の表示）</td>
+</tr>
+<tr>
+<td>差し替え</td>
+<td>S-14 でシステム管理者が行う。差し替えると全学習者の表示が変わる</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.7 学習者画面</h3>
+<h4>S-02 ホーム</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>順</th>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>レベル</td>
+<td>レベル紋章、EXP（現在／次のレベルまで）</td>
+<td><code>ExpBar</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>ひとこと</td>
+<td>パートナーの紋章・名前・ひとこと（ログイン時に生成）</td>
+<td><code>PartnerBubble</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>デイリークエスト</td>
+<td>今日のクエスト3件と進み具合</td>
+<td><code>QuestCard</code> × 3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>今日の復習</td>
+<td>復習対象数（択一・説明の内訳）と「冒険に出る」ボタン</td>
+<td><code>gd-card</code> ＋ <code>Button primary block</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-02 ホーム</p><div class="mock-row"><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
+<div class="mk-body">
+<div class="gd-card"><div class="gd-exp"><div class="gd-crest"><small>Lv</small><b>9</b></div><div class="gd-exp-main"><div class="gd-exp-head"><span>次のレベルまで</span><span>820 / 1,397 EXP</span></div><div class="gd-track"><div class="gd-fill" style="width:59%"></div></div></div></div></div>
+<div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ<span>励まし型</span></div>昨日より3問多く解けてるよ。今日もいこう！</div></div>
+<p class="mk-h">今日のクエスト</p>
+<div class="gd-card gd-quest gd-quest-done"><div class="gd-quest-body"><p class="gd-quest-title">ログインする</p><div class="gd-quest-meta"><span class="gd-quest-reward">+20 EXP</span><span>1 / 1</span></div></div><span class="gd-stamp">達成</span></div>
+<div class="gd-card gd-quest"><div class="gd-quest-body"><p class="gd-quest-title">復習を5問こなす</p><div class="gd-quest-meta"><span class="gd-quest-reward">+30 EXP</span><span>2 / 5</span></div><div class="gd-track"><div class="gd-fill" style="width:40%"></div></div></div></div>
+<div class="gd-card gd-quest"><div class="gd-quest-body"><p class="gd-quest-title">説明問題で合格する</p><div class="gd-quest-meta"><span class="gd-quest-reward">+25 EXP</span><span>0 / 1</span></div><div class="gd-track"><div class="gd-fill" style="width:0%"></div></div></div></div>
+<div class="gd-card"><p class="mk-h" style="margin-top:0">今日の復習 <b class="mk-num">8</b>問</p><p class="mk-meta">択一 5問・説明 3問</p><button class="gd-btn gd-btn-primary gd-btn-block" type="button">冒険に出る</button></div>
+</div>
+<div class="mk-nav"><span class="on"><i class="fa-solid fa-house"></i>ホーム</span><span class=""><i class="fa-solid fa-ranking-star"></i>ランキング</span><span class=""><i class="fa-solid fa-user"></i>プロフィール</span></div></div><p class="mk-cap">学習者：スマホ縦（最大幅420px）</p></div></div><p class=mock-note>EXPバー → パートナーのひとこと → デイリークエスト3件 → 今日の復習の順に縦に並べる。</p></div>
+<h4>S-03 コース選択</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>コース一覧</td>
+<td>コース名、資格名、問題数、自分の網羅率</td>
+<td><code>gd-card</code></td>
+</tr>
+<tr>
+<td>操作</td>
+<td>「このコースで冒険する」。受講中のコースには「受講中」の印</td>
+<td><code>Button</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4>S-04 演習（四肢択一）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>進み具合</td>
+<td>「3 / 10問」、復習なら「復習」の印</td>
+<td><code>meta</code> 書体</td>
+</tr>
+<tr>
+<td>問題文</td>
+<td>問題文</td>
+<td><code>question</code> 書体</td>
+</tr>
+<tr>
+<td>選択肢</td>
+<td>ア〜エの4つ</td>
+<td><code>ChoiceOption</code> × 4</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>「答える」（選ぶまで押せない）</td>
+<td><code>Button primary block</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4>S-05 キーワード説明</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>お題</td>
+<td>キーワードと、出典の問題文（折りたたみ）</td>
+<td><code>title</code> 書体</td>
+</tr>
+<tr>
+<td>入力欄</td>
+<td>説明文（50〜400文字）と文字数（下記）</td>
+<td>テキストエリア</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>「採点してもらう」</td>
+<td><code>Button primary block</code></td>
+</tr>
+<tr>
+<td>採点待ち</td>
+<td>「〇〇が採点しています」と待機演出（最大30秒）</td>
+<td><code>PartnerBubble thinking</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>説明文の入力ルール</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文字数</td>
+<td>50〜400文字（改行・空白を除いて数える）</td>
+</tr>
+<tr>
+<td>書き方</td>
+<td>決まりはない。小見出し（<code>【】</code>）は求めない。学習者が自分で見出しを使ってもよい</td>
+</tr>
+<tr>
+<td>入力中の表示</td>
+<td>文字数カウンターを常に表示。50文字未満なら M-03、400文字を超えたら M-04 をカウンターの下に表示する</td>
+</tr>
+<tr>
+<td>送信の可否</td>
+<td>50文字未満、または400文字超のときは「採点してもらう」を押せない</td>
+</tr>
+<tr>
+<td>採点への反映</td>
+<td>説明文はそのまま採点AIに渡す。書き方（見出しの有無など）で点数を変えない</td>
+</tr>
+</tbody>
+</table></div>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-05 キーワード説明</p><div class="mock-row"><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
+<div class="mk-body">
+<p class="mk-meta">4 / 10問　<span class="mk-tag">復習</span></p>
+<div class="gd-card"><p class="mk-meta" style="margin:0">次のキーワードを説明してください</p><p class="gd-serif mk-title">公開鍵暗号方式</p><p class="mk-meta mk-fold"><i class="fa-solid fa-chevron-down"></i> 出典の問題文を見る</p></div>
+<div class="mk-ta">暗号化と復号に別々の鍵を使う方式。公開鍵で暗号化したデータは、対になる秘密鍵でしか復号できない。HTTPSの鍵交換や電子署名で使われている…</div>
+<div class="mk-count"><span><b>212</b> / 400文字</span></div>
+<button class="gd-btn gd-btn-primary gd-btn-block" type="button">採点してもらう</button>
+</div>
+</div><p class="mk-cap">入力中</p></div><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
+<div class="mk-body">
+<p class="mk-meta">4 / 10問　<span class="mk-tag">復習</span></p>
+<div class="gd-card"><p class="gd-serif mk-title" style="margin:0">公開鍵暗号方式</p></div>
+<div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ<span>採点しています</span></div><span class="gd-dots"><i></i><i></i><i></i></span></div></div>
+<p class="mk-meta" style="text-align:center">最大30秒ほどかかります</p>
+</div>
+</div><p class="mk-cap">採点待ち（2秒ごとに結果を確認）</p></div></div><p class=mock-note>演習中は下部ナビを隠し、操作を「採点してもらう」1つに絞る。</p></div>
+<h4>S-06 結果・フィードバック</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>結果</td>
+<td>択一：○×と正解。説明：点数と合格ライン</td>
+<td><code>ChoiceOption</code> の判定状態 / <code>ScoreMeter</code></td>
+</tr>
+<tr>
+<td>獲得EXP</td>
+<td>「+15 EXP」（復習ボーナスは内訳を表示）</td>
+<td><code>ExpBar gain</code></td>
+</tr>
+<tr>
+<td>復習段階</td>
+<td>択一・説明それぞれの段階</td>
+<td><code>ReviewStage</code> × 2</td>
+</tr>
+<tr>
+<td>コメント</td>
+<td>解説（択一）または模範説明と不足観点（説明）</td>
+<td><code>PartnerBubble</code></td>
+</tr>
+<tr>
+<td>達成</td>
+<td>クエスト達成・バッジ獲得があれば表示</td>
+<td><code>QuestCard</code> / <code>GuildBadge</code></td>
+</tr>
+<tr>
+<td>操作</td>
+<td>「次の問題へ」（primary）、「ホームへ」</td>
+<td><code>Button</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-06 結果・フィードバック</p><div class="mock-row"><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
+<div class="mk-body">
+<div class="gd-card gd-score"><div class="gd-score-head"><span class="gd-score-num">75<small>点</small></span><span class="gd-verdict gd-verdict-pass">○ 合格</span></div><div class="gd-track"><div class="gd-fill gd-score-fill-pass" style="width:75%"></div><span class="gd-tick" style="left:60%"></span><span class="gd-tick-label" style="left:60%">合格 60</span></div><p class="gd-score-foot">正確性 42/50・網羅性 20/30・具体性 13/20</p></div>
+<div class="gd-card"><div class="gd-exp"><div class="gd-crest"><small>Lv</small><b>9</b></div><div class="gd-exp-main"><div class="gd-exp-head"><span class="gd-exp-gain">+45 EXP（復習ボーナス ×1.5）</span></div><div class="gd-track"><div class="gd-fill" style="width:62%"></div></div></div></div></div>
+<div class="gd-card"><div class="gd-review"><span class="gd-review-kind">説明</span><div class="gd-pips"><span class="gd-pip gd-pip-on">1日</span><span class="gd-pip gd-pip-on">3日</span><span class="gd-pip gd-pip-now">7日</span><span class="gd-pip">14日</span><span class="gd-pip">30日</span></div><span class="gd-review-state">次は7日後</span></div></div>
+<div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ</div>定義がはっきりしていて良いね！「鍵の配送が楽になる」点も入れると満点に近づくよ。</div></div>
+<button class="gd-btn gd-btn-primary gd-btn-block" type="button">次の問題へ</button>
+<button class="gd-btn gd-btn-quiet gd-btn-block" type="button">ホームへ</button>
+</div>
+</div><p class="mk-cap">説明問題で合格したとき</p></div></div><p class=mock-note>不合格のときは赤を使わず <code>gold</code> で「あと15点」と表示する（ScoreMeterの規定）。</p></div>
+<h4>S-07 週間ランキング</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>見出し</td>
+<td>コース名、集計期間（月〜日）、リセットまでの日数</td>
+<td><code>title</code> 書体</td>
+</tr>
+<tr>
+<td>順位表</td>
+<td>上位10名と自分の行（11位以下でも表示）。名前は<strong>ニックネーム</strong>で表示する</td>
+<td><code>RankingRow</code></td>
+</tr>
+<tr>
+<td>履歴</td>
+<td>過去週を選ぶ切り替え</td>
+<td><code>Button sm</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4>S-08 プロフィール</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>レベル</td>
+<td>ニックネーム（編集ボタンつき）、レベル、累計EXP</td>
+<td><code>ExpBar</code></td>
+</tr>
+<tr>
+<td>学習記録</td>
+<td>網羅率、正答率、連続学習日数</td>
+<td><code>gd-card</code></td>
+</tr>
+<tr>
+<td>バッジ</td>
+<td>獲得済み（獲得日つき）と未獲得（条件を表示）</td>
+<td><code>GuildBadge</code></td>
+</tr>
+<tr>
+<td>メニュー</td>
+<td>コース選択、AIパートナー選択、通知設定、ログアウト</td>
+<td><code>Button quiet</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>ニックネームのルール</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用途</td>
+<td>ランキングに表示する名前。氏名は学習者どうしには表示しない</td>
+</tr>
+<tr>
+<td>文字数</td>
+<td>2〜12文字</td>
+</tr>
+<tr>
+<td>使える文字</td>
+<td>ひらがな・カタカナ・漢字・英数字・<code>_-</code>。絵文字は不可</td>
+</tr>
+<tr>
+<td>重複</td>
+<td>同じコース内で重複しない（コースをまたいだ重複は可）</td>
+</tr>
+<tr>
+<td>登録</td>
+<td>初回ログイン時に必須。あとから S-08 の編集ダイアログで変更できる</td>
+</tr>
+<tr>
+<td>管理者からの見え方</td>
+<td>S-12・S-13 では氏名とニックネームを並べて表示する</td>
+</tr>
+</tbody>
+</table></div>
+<h4>S-09 AIパートナー選択</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>キャラクター</td>
+<td>3人の紋章・性格・発言例。選んだものは <code>teal</code> の枠</td>
+<td><code>PartnerBubble</code> ＋ 選択枠</td>
+</tr>
+<tr>
+<td>名前</td>
+<td>名前入力欄（初期名を薄く表示）</td>
+<td>テキスト入力</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>「この仲間と冒険する」</td>
+<td><code>Button primary block</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4>S-10 通知設定</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>メール通知</td>
+<td>オン／オフ、送信時刻（学習者が選ぶ。6:00〜22:00の30分刻み、初期値7:30）</td>
+<td>1</td>
+</tr>
+<tr>
+<td>プッシュ通知</td>
+<td>オン／オフ（ブラウザの許可を求める）</td>
+<td>2（Phase 1では「準備中」と表示）</td>
+</tr>
+<tr>
+<td>通知内容</td>
+<td>その日の復習対象数、デイリークエスト</td>
+<td>1</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.8 管理画面（ギルド管理局）</h3>
+<h4>S-11 問題取り込み・レビュー</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>取り込み</td>
+<td>コースを選び、PDF・画像（各20MBまで）をアップロード、またはテキストを貼り付け</td>
+</tr>
+<tr>
+<td>取り込み状況</td>
+<td>取り込みごとの状態（待機中・抽出中・完了・失敗）と抽出件数</td>
+</tr>
+<tr>
+<td>下書き一覧</td>
+<td>問題文の先頭、形式、キーワード数、状態（下書き・公開済み）</td>
+</tr>
+<tr>
+<td>編集</td>
+<td>問題文・選択肢4つ・正解・解説・キーワード（最大3つ）を修正</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>「公開する」（primary）、「保存する」、「削除する」（確認ダイアログあり）</td>
+</tr>
+</tbody>
+</table></div>
+<h4>S-12 学習状況ダッシュボード</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>コース切り替え</td>
+<td>担当コースのみ選べる</td>
+</tr>
+<tr>
+<td>集計</td>
+<td>受講者数、アクティブ率（直近7日間に2回以上ログイン）、平均網羅率、平均正答率</td>
+</tr>
+<tr>
+<td>受講者一覧</td>
+<td>氏名、ニックネーム、目指している資格、網羅率、正答率、最終ログイン日時、直近7日のログイン回数。並べ替えできる</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>「CSVで出力する」（Phase 1 に含める。形式は 5.4 参照）</td>
+</tr>
+</tbody>
+</table></div>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-12 学習状況ダッシュボード</p><div class="mock-row"><div class="ad-wrap"><div class="ad-frame gd-scope"><div class="ad-head"><span class="gd-serif">冒険者ギルド</span><span class="ad-label">ギルド管理局</span><span class="ad-role">システム管理者　山田 太郎 <i class="fa-solid fa-right-left"></i> 学習者画面へ</span></div><div class="ad-main"><ul class="ad-side"><li class="on"><i class="fa-solid fa-chart-column"></i>学習状況ダッシュボード</li><li class=""><i class="fa-solid fa-file-import"></i>問題取り込み・レビュー</li><li class=""><i class="fa-solid fa-users-gear"></i>利用者・コース・権限</li><li class=""><i class="fa-solid fa-masks-theater"></i>AIパートナー設定</li></ul><div class="ad-body">
+<div class="ad-top"><p class="gd-serif ad-h">学習状況ダッシュボード</p><span class="ad-sel">コース：基本情報技術者 <i class="fa-solid fa-caret-down"></i></span></div>
+<div class="ad-kpis"><div><small>受講者数</small><b>10</b>名</div><div><small>アクティブ率（直近7日に2回以上）</small><b>60</b>%</div><div><small>平均網羅率</small><b>34</b>%</div><div><small>平均正答率</small><b>71</b>%</div></div>
+<table class="ad-table"><thead><tr><th>氏名</th><th>ニックネーム</th><th>網羅率 <i class="fa-solid fa-sort"></i></th><th>正答率</th><th>最終ログイン</th><th>7日間</th></tr></thead><tbody>
+<tr><td>佐藤 花子</td><td>はなまる</td><td>52%</td><td>78%</td><td>10/19 07:42</td><td>6回</td></tr>
+<tr><td>鈴木 一郎</td><td>いちろー</td><td>41%</td><td>69%</td><td>10/18 21:05</td><td>4回</td></tr>
+<tr><td>高橋 健</td><td>ken_t</td><td>12%</td><td>55%</td><td>10/12 12:30</td><td>0回</td></tr></tbody></table>
+<div class="ad-act"><button class="gd-btn gd-btn-primary" type="button"><i class="fa-solid fa-download"></i>CSVで出力する</button></div>
+</div></div></div><p class="mk-cap">管理者：PC横（1280px基準）。図は縮小表示</p></div></div><p class=mock-note>ゲーム部品は使わず、表とフォームを中心にする。主要ボタンは1画面1つで右寄せ。</p></div>
+<h4>S-13 利用者・コース・権限管理</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>タブ</th>
+<th>表示内容と操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>利用者</td>
+<td>氏名、ニックネーム、メール、ロール、状態（有効・論理削除・削除予定日）。登録（招待メール送信）・ロール変更・削除・復活</td>
+</tr>
+<tr>
+<td>コース</td>
+<td>コース名、資格名、担当のコース管理者。登録・編集・担当者の割り当て</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>削除は確認ダイアログで「30日後に学習履歴を含めて完全に削除されます」と示す</li>
+<li>論理削除中の行には削除予定日と「復活する」ボタンを表示する</li>
+</ul>
+<h4>S-14 AIパートナー設定（追加）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容と操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>キャラクター一覧</td>
+<td>3人の性格名、初期名、現在の画像（なければ頭文字の表示）</td>
+</tr>
+<tr>
+<td>画像の差し替え</td>
+<td>画像を選ぶ → プレビュー → 「差し替える」。「画像を外す」で頭文字の表示に戻す</td>
+</tr>
+<tr>
+<td>見本表示</td>
+<td>学習者画面でどう見えるかを <code>PartnerBubble</code> で表示する（管理画面で唯一ゲーム部品を使う場所）</td>
+</tr>
+</tbody>
+</table></div>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-14 AIパートナー設定</p><div class="mock-row"><div class="ad-wrap"><div class="ad-frame gd-scope"><div class="ad-head"><span class="gd-serif">冒険者ギルド</span><span class="ad-label">ギルド管理局</span><span class="ad-role">システム管理者　山田 太郎 <i class="fa-solid fa-right-left"></i> 学習者画面へ</span></div><div class="ad-main"><ul class="ad-side"><li class=""><i class="fa-solid fa-chart-column"></i>学習状況ダッシュボード</li><li class=""><i class="fa-solid fa-file-import"></i>問題取り込み・レビュー</li><li class=""><i class="fa-solid fa-users-gear"></i>利用者・コース・権限</li><li class="on"><i class="fa-solid fa-masks-theater"></i>AIパートナー設定</li></ul><div class="ad-body">
+<div class="ad-top"><p class="gd-serif ad-h">AIパートナー設定</p></div>
+<div class="ad-chars">
+<div class="ad-char on"><div class="gd-sigil gd-sigil-encourage">ミ</div><div><b>励まし型</b><br><small>初期名 ミナ・画像 未設定</small></div></div>
+<div class="ad-char"><div class="gd-sigil gd-sigil-logic">セ</div><div><b>論理型</b><br><small>初期名 セージ・画像 未設定</small></div></div>
+<div class="ad-char"><div class="gd-sigil gd-sigil-rival">レ</div><div><b>ライバル型</b><br><small>初期名 レン・画像 未設定</small></div></div></div>
+<div class="ad-2col"><div class="ad-drop"><i class="fa-solid fa-cloud-arrow-up"></i><br>画像を選ぶ（PNG・WebP、正方形512px以上、2MBまで）</div>
+<div class="ad-prev"><p class="mk-meta" style="margin:0 0 6px">見本表示（学習者画面）</p><div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ<span>励まし型</span></div>今日もいこう！</div></div></div></div>
+<div class="ad-act"><button class="gd-btn gd-btn-quiet" type="button">画像を外す</button><button class="gd-btn gd-btn-primary" type="button">差し替える</button></div>
+</div></div></div><p class="mk-cap">見本表示だけゲーム部品（PartnerBubble）を使う</p></div></div><p class=mock-note>画像が未設定のときは名前の頭文字を表示する。</p></div>
+</section><section class="chapter" id="ch4"><h2><i class="fa-solid fa-gears h-ico" aria-hidden="true"></i>4. 機能設計</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.1 機能と画面・APIの対応</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>画面</th>
+<th>主なAPI</th>
+<th>Phase 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-01</td>
+<td>問題取り込み</td>
+<td>S-11</td>
+<td><code>POST /api/admin/imports</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-02</td>
+<td>問題レビュー・公開</td>
+<td>S-11</td>
+<td><code>PUT /api/admin/questions/{id}</code>、<code>POST /api/admin/questions/{id}/publish</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-03</td>
+<td>四肢択一演習</td>
+<td>S-04、S-06</td>
+<td><code>GET /api/quests/next</code>、<code>POST /api/answers/choice</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-04</td>
+<td>キーワード説明</td>
+<td>S-05、S-06</td>
+<td><code>POST /api/gradings</code>、<code>GET /api/gradings/{id}</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-05</td>
+<td>忘却曲線復習</td>
+<td>S-02、S-04、S-05</td>
+<td><code>GET /api/home</code>、<code>GET /api/quests/next</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-06</td>
+<td>学習状況ダッシュボード</td>
+<td>S-12</td>
+<td><code>GET /api/admin/dashboard</code>、<code>GET /api/admin/dashboard.csv</code></td>
+<td>○（基本項目＋CSV）</td>
+</tr>
+<tr>
+<td>F-07</td>
+<td>全体管理</td>
+<td>S-13</td>
+<td><code>/api/admin/users</code>、<code>/api/admin/courses</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-08</td>
+<td>経験値・レベル</td>
+<td>S-02、S-06、S-08</td>
+<td>解答APIの結果に含める</td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-09</td>
+<td>週間ランキング</td>
+<td>S-07</td>
+<td><code>GET /api/rankings</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-10</td>
+<td>デイリークエスト</td>
+<td>S-02、S-06</td>
+<td><code>GET /api/home</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-11</td>
+<td>バッジ</td>
+<td>S-06、S-08</td>
+<td><code>GET /api/me/badges</code></td>
+<td>習得・継続のみ</td>
+</tr>
+<tr>
+<td>F-12</td>
+<td>AIパートナー選択</td>
+<td>S-09、S-14</td>
+<td><code>PUT /api/me/partner</code>、<code>/api/admin/partners</code></td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-13</td>
+<td>通知</td>
+<td>S-10</td>
+<td><code>PUT /api/me/notify</code></td>
+<td>メールのみ</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.2 解答から結果表示までの処理</h3>
+<figure class="diagram"><div class="mermaid">flowchart TD
+  A["解答を送信"] --&gt; B{形式}
+  B --&gt;|"四肢択一"| C["正解データと照合"]
+  B --&gt;|"キーワード説明"| D["Bedrock Sonnet 5.5 で採点"]
+  C --&gt; E{正解}
+  D --&gt; F{60点以上}
+  E --&gt;|"はい"| G["復習段階を1つ進める"]
+  F --&gt;|"はい"| G
+  E --&gt;|"いいえ"| H["段階1に戻す"]
+  F --&gt;|"いいえ"| H
+  G --&gt; I["EXPを加算&lt;br&gt;復習なら1.5倍"]
+  H --&gt; J["EXPは0 減らさない"]
+  I --&gt; K["レベル判定"]
+  I --&gt; L["週間EXPに加算"]
+  J --&gt; M["クエスト判定"]
+  K --&gt; M
+  L --&gt; M
+  M --&gt; N["バッジ判定"]
+  N --&gt; O["結果を返す"]
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.3 出題ルール（F-03、F-05）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>順</th>
+<th>出題対象</th>
+<th>条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>今日の復習（期限切れを含む）</td>
+<td>復習予定日が今日以前。予定日の古い順</td>
+</tr>
+<tr>
+<td>2</td>
+<td>未学習の問題</td>
+<td>公開済みで、まだ解いていない問題。登録順</td>
+</tr>
+<tr>
+<td>3</td>
+<td>学習済みの問題</td>
+<td>1と2がないとき。正答率の低い順（復習段階は変えない）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>1回の冒険は10問。途中でやめてもそれまでの結果は保存する</li>
+<li>四肢択一とキーワード説明は、出題対象の中で交互に出す。キーワードがない問題は択一のみ</li>
+<li>キーワード説明は1問につき1キーワードを出す（復習予定日の早いもの）</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.4 忘却曲線復習（F-05）</h3>
+<figure class="diagram"><div class="mermaid">stateDiagram-v2
+  [*] --&gt; 未学習
+  未学習 --&gt; 段階1: 初回解答
+  段階1 --&gt; 段階2: 1日後に正解
+  段階2 --&gt; 段階3: 3日後に正解
+  段階3 --&gt; 段階4: 7日後に正解
+  段階4 --&gt; 段階5: 14日後に正解
+  段階5 --&gt; 習得済み: 30日後に正解
+  段階1 --&gt; 段階1: 不正解
+  段階2 --&gt; 段階1: 不正解
+  段階3 --&gt; 段階1: 不正解
+  段階4 --&gt; 段階1: 不正解
+  段階5 --&gt; 段階1: 不正解
+</div></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>管理の単位</td>
+<td>択一は「学習者×問題」、説明は「学習者×キーワード」で別々に管理</td>
+</tr>
+<tr>
+<td>次回予定日</td>
+<td>解答日＋段階の日数（1・3・7・14・30日）。日付は Asia/Tokyo で数える</td>
+</tr>
+<tr>
+<td>初回解答</td>
+<td>正誤にかかわらず段階1とし、次回予定日は翌日</td>
+</tr>
+<tr>
+<td>予定日より前の解答</td>
+<td>復習扱いにしない（段階は変わらず、復習ボーナスもつかない）</td>
+</tr>
+<tr>
+<td>予定日を過ぎた解答</td>
+<td>復習扱いとする（遅れても段階は下げない）</td>
+</tr>
+<tr>
+<td>習得済み</td>
+<td>復習対象から外す。学習済みの問題として出題される場合はある</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.5 経験値・レベル（F-08）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>行動</th>
+<th>獲得EXP</th>
+<th>復習のとき</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>四肢択一 正解</td>
+<td>10</td>
+<td>15</td>
+</tr>
+<tr>
+<td>キーワード説明 合格（60点以上）</td>
+<td>30</td>
+<td>45</td>
+</tr>
+<tr>
+<td>デイリークエスト達成</td>
+<td>クエストごと（4.7）</td>
+<td>対象外</td>
+</tr>
+<tr>
+<td>不正解・不合格</td>
+<td>0（減らさない）</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>レベル計算式</strong></p>
+<ul>
+<li>次のレベルまでの必要EXP ＝ 100 × Lv^1.2（端数は切り上げ）</li>
+<li>累計EXPは減らないため、レベルは下がらない</li>
+<li>上限は設けない</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>レベル</th>
+<th>次のレベルまでの必要EXP</th>
+<th>そのレベルに到達する累計EXP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>100</td>
+<td>0</td>
+</tr>
+<tr>
+<td>2</td>
+<td>230</td>
+<td>100</td>
+</tr>
+<tr>
+<td>3</td>
+<td>374</td>
+<td>330</td>
+</tr>
+<tr>
+<td>4</td>
+<td>528</td>
+<td>704</td>
+</tr>
+<tr>
+<td>5</td>
+<td>690</td>
+<td>1,232</td>
+</tr>
+<tr>
+<td>10</td>
+<td>1,585</td>
+<td>6,425</td>
+</tr>
+<tr>
+<td>15</td>
+<td>2,579</td>
+<td>16,306</td>
+</tr>
+<tr>
+<td>20</td>
+<td>3,642</td>
+<td>31,300</td>
+</tr>
+<tr>
+<td>30</td>
+<td>5,924</td>
+<td>77,833</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>目安：1日に択一10問正解・説明1問合格・クエスト達成（約210 EXP）を続けると、1週間でLv5、1か月でLv9、3か月でLv16。</p>
+</blockquote>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.6 週間ランキング（F-09）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>単位</td>
+<td>コースごと</td>
+</tr>
+<tr>
+<td>集計期間</td>
+<td>月曜0:00〜日曜23:59（Asia/Tokyo）</td>
+</tr>
+<tr>
+<td>順位</td>
+<td>その週に獲得したEXPの多い順。同点は同順位、表示はニックネームの五十音順</td>
+</tr>
+<tr>
+<td>対象</td>
+<td>受講中で、その週に1EXP以上獲得した学習者</td>
+</tr>
+<tr>
+<td>表示名</td>
+<td>ニックネーム</td>
+</tr>
+<tr>
+<td>表示</td>
+<td>上位10名＋自分の行</td>
+</tr>
+<tr>
+<td>締め</td>
+<td>月曜0:00の定期処理で前週の順位を確定し、履歴として保存</td>
+</tr>
+<tr>
+<td>論理削除中の利用者</td>
+<td>ランキングに表示しない</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.7 デイリークエスト（F-10）</h3>
+<p>毎日0:00に、次の候補から3つを学習者ごとに割り当てる（同じ種類は重ならない）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>クエスト</th>
+<th>達成条件</th>
+<th>報酬</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q-01</td>
+<td>択一を5問解く</td>
+<td>四肢択一を5問解答（正誤は問わない）</td>
+<td>20 EXP</td>
+</tr>
+<tr>
+<td>Q-02</td>
+<td>択一で3問正解する</td>
+<td>四肢択一で3問正解</td>
+<td>20 EXP</td>
+</tr>
+<tr>
+<td>Q-03</td>
+<td>キーワード説明を1問合格する</td>
+<td>説明で60点以上を1回</td>
+<td>30 EXP</td>
+</tr>
+<tr>
+<td>Q-04</td>
+<td>今日の復習をすべて終える</td>
+<td>0:00時点の復習対象をすべて解答。対象が0件の日は割り当てない</td>
+<td>30 EXP</td>
+</tr>
+<tr>
+<td>Q-05</td>
+<td>新しい問題に3問挑戦する</td>
+<td>未学習の問題を3問解答</td>
+<td>20 EXP</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>復習対象がある日は Q-04 を必ず含める</li>
+<li>達成したらその場でEXPを付与し、S-06 に「達成」スタンプを出す</li>
+<li>未達成でもペナルティはない。翌日0:00に入れ替える</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.8 バッジ（F-11）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>カテゴリ</th>
+<th>バッジ</th>
+<th>条件</th>
+<th>段階</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>習得 <code>mastery</code></td>
+<td>習得の証</td>
+<td>習得済みの問題が10／50／100問</td>
+<td>銅／銀／金</td>
+<td>1</td>
+</tr>
+<tr>
+<td>継続 <code>streak</code></td>
+<td>継続の証</td>
+<td>7日／30日／100日連続で1問以上解答</td>
+<td>銅／銀／金</td>
+<td>1</td>
+</tr>
+<tr>
+<td>網羅 <code>coverage</code></td>
+<td>網羅の証</td>
+<td>コース網羅率50%／80%／100%</td>
+<td>銅／銀／金</td>
+<td>2</td>
+</tr>
+<tr>
+<td>説明 <code>explain</code></td>
+<td>説明の達人</td>
+<td>説明で100点を1回／5回／20回</td>
+<td>銅／銀／金</td>
+<td>2</td>
+</tr>
+<tr>
+<td>復習 <code>review</code></td>
+<td>忘却への勝利</td>
+<td>30日後の復習に初めて正解／10回／50回</td>
+<td>銅／銀／金</td>
+<td>2</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>判定は解答のたび（習得）と毎日0:00（継続）に行う</li>
+<li>一度獲得したバッジは取り消さない</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.9 キーワード説明の採点（F-04）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入力</td>
+<td>キーワード、出典の問題文と解説、学習者の説明文、パートナーの性格・名前</td>
+</tr>
+<tr>
+<td>出力</td>
+<td>点数（0〜100）、合否、模範説明（50〜400文字。200文字を超えるときは行の先頭に【】の小見出しを付けて区切る）、不足していた観点（最大3つ）、パートナーのコメント（2〜3文）</td>
+</tr>
+<tr>
+<td>合格ライン</td>
+<td>60点</td>
+</tr>
+<tr>
+<td>採点の観点</td>
+<td>正確さ（50点）、重要な観点の網羅（30点）、自分の言葉での具体性（20点）</td>
+</tr>
+<tr>
+<td>時間の上限</td>
+<td>30秒。超えたら「採点に時間がかかっています。もう一度お試しください」と表示し、EXPと復習段階は変えない</td>
+</tr>
+<tr>
+<td>失敗時</td>
+<td>同じ説明文で「もう一度採点してもらう」を押せる（入力をやり直さなくてよい）</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.10 問題取り込み（F-01、F-02）</h3>
+<figure class="diagram"><div class="mermaid">sequenceDiagram
+  participant CM as コース管理者
+  participant API as api-handler
+  participant S3 as S3 取り込み原本
+  participant Q as SQS
+  participant W as import-worker
+  participant BR as Bedrock Sonnet 5.5
+  participant DB as Aurora
+  CM-&gt;&gt;API: POST /api/admin/imports
+  API-&gt;&gt;DB: 取り込みを登録 状態 待機中
+  API--&gt;&gt;CM: 署名付きURL
+  CM-&gt;&gt;S3: ファイルをアップロード
+  S3-&gt;&gt;Q: アップロード通知
+  Q-&gt;&gt;W: 起動
+  W-&gt;&gt;DB: 状態 抽出中
+  W-&gt;&gt;BR: 問題・キーワードの抽出を依頼
+  BR--&gt;&gt;W: JSONで抽出結果
+  W-&gt;&gt;DB: 下書きとして保存 状態 完了
+  CM-&gt;&gt;API: GET /api/admin/imports/{id}
+  API--&gt;&gt;CM: 下書き一覧
+  CM-&gt;&gt;API: 修正して公開
+  API-&gt;&gt;DB: 状態 公開済み
+</div></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入力</td>
+<td>PDF（50ページ・20MBまで）、画像（PNG・JPEG、20MBまで）、テキスト（2万文字まで）</td>
+</tr>
+<tr>
+<td>抽出項目</td>
+<td>問題文、選択肢4つ、正解、解説、キーワード（最大3つ）</td>
+</tr>
+<tr>
+<td>選択肢が4つでない問題</td>
+<td>下書きに「要確認」の印を付ける。公開前に4つにそろえる</td>
+</tr>
+<tr>
+<td>公開の条件</td>
+<td>問題文・選択肢4つ・正解・解説がそろっていること</td>
+</tr>
+<tr>
+<td>公開後の修正</td>
+<td>できる。学習者の解答履歴と復習段階はそのまま残す</td>
+</tr>
+<tr>
+<td>失敗時</td>
+<td>SQSで最大3回やり直し、それでも失敗したら状態を「失敗」にして理由を表示</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.11 アカウント管理（F-07）</h3>
+<figure class="diagram"><div class="mermaid">stateDiagram-v2
+  [*] --&gt; 招待中: 管理者が登録
+  招待中 --&gt; 有効: 初回ログイン
+  有効 --&gt; 論理削除: 管理者が削除
+  論理削除 --&gt; 有効: 30日以内に復活
+  論理削除 --&gt; 物理削除: 30日経過
+  物理削除 --&gt; [*]
+</div></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>アプリの処理</th>
+<th>Cognitoの処理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>登録</td>
+<td>利用者を「招待中」で登録</td>
+<td>ユーザーを作成し、招待メール（仮パスワード）を送る</td>
+</tr>
+<tr>
+<td>削除</td>
+<td>状態を「論理削除」、削除予定日＝30日後</td>
+<td>ユーザーを無効化（ログインできなくする）</td>
+</tr>
+<tr>
+<td>復活</td>
+<td>状態を「有効」に戻す。学習履歴はそのまま</td>
+<td>ユーザーを有効化</td>
+</tr>
+<tr>
+<td>物理削除</td>
+<td>学習履歴を含めて削除</td>
+<td>ユーザーを削除</td>
+</tr>
+</tbody>
+</table></div>
+</section><section class="chapter" id="ch5"><h2><i class="fa-solid fa-plug h-ico" aria-hidden="true"></i>5. 外部インターフェース設計</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.1 API共通仕様</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>仕様</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ベースURL</td>
+<td><code>https://app.example.co.jp/api</code>（CloudFront経由）</td>
+</tr>
+<tr>
+<td>形式</td>
+<td>JSON（UTF-8）。CSV出力のみ <code>text/csv</code></td>
+</tr>
+<tr>
+<td>認証</td>
+<td><code>Authorization: Bearer &lt;IDトークン&gt;</code>。API Gateway の JWT オーソライザーで検証</td>
+</tr>
+<tr>
+<td>権限</td>
+<td>トークンの <code>cognito:groups</code> で判定。コース管理者は担当コースのデータだけ扱える</td>
+</tr>
+<tr>
+<td>日時</td>
+<td>ISO 8601、タイムゾーン付き（<code>+09:00</code>）</td>
+</tr>
+<tr>
+<td>DB起動中</td>
+<td><code>503</code> とコード <code>DB_RESUMING</code> を返す。画面は 3.5 のとおり再試行する</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>エラー応答</strong></p>
+<pre><code class="language-json">{&quot;error&quot;: {&quot;code&quot;: &quot;VALIDATION_ERROR&quot;, &quot;message&quot;: &quot;説明は50文字以上で入力してください&quot;, &quot;details&quot;: [{&quot;field&quot;: &quot;text&quot;}]}}
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>HTTP</th>
+<th>コード</th>
+<th>場面</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td><code>VALIDATION_ERROR</code></td>
+<td>入力エラー</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>UNAUTHORIZED</code></td>
+<td>トークンがない・期限切れ</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>FORBIDDEN</code></td>
+<td>権限がない（担当外のコースなど）</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>NOT_FOUND</code></td>
+<td>対象がない</td>
+</tr>
+<tr>
+<td>409</td>
+<td><code>CONFLICT</code></td>
+<td>ニックネームの重複など</td>
+</tr>
+<tr>
+<td>503</td>
+<td><code>DB_RESUMING</code></td>
+<td>DBの起動中</td>
+</tr>
+<tr>
+<td>504</td>
+<td><code>GRADING_TIMEOUT</code></td>
+<td>採点が30秒を超えた</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 API一覧</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>メソッド</th>
+<th>パス</th>
+<th>用途</th>
+<th>ロール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A-01</td>
+<td>GET</td>
+<td><code>/me</code></td>
+<td>自分の情報（ニックネーム、ロール、パートナー、初回フラグ）</td>
+<td>全員</td>
+</tr>
+<tr>
+<td>A-02</td>
+<td>PUT</td>
+<td><code>/me/profile</code></td>
+<td>ニックネームの登録・変更</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-03</td>
+<td>PUT</td>
+<td><code>/me/partner</code></td>
+<td>パートナーと名前の設定</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-04</td>
+<td>GET／PUT</td>
+<td><code>/me/notify</code></td>
+<td>通知設定の取得・変更（送信時刻を含む）</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-05</td>
+<td>GET</td>
+<td><code>/home</code></td>
+<td>ホームの表示内容（レベル、ひとこと、クエスト、復習数）</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-06</td>
+<td>GET／POST</td>
+<td><code>/courses</code>、<code>/enrollments</code></td>
+<td>コース一覧、受講の開始</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-07</td>
+<td>GET</td>
+<td><code>/quests/next</code></td>
+<td>次の問題（10問の冒険の中の1問）</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-08</td>
+<td>POST</td>
+<td><code>/answers/choice</code></td>
+<td>四肢択一の解答と結果</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-09</td>
+<td>POST</td>
+<td><code>/gradings</code></td>
+<td>説明文の採点依頼（202で受付）</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-10</td>
+<td>GET</td>
+<td><code>/gradings/{id}</code></td>
+<td>採点結果の取得</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-11</td>
+<td>GET</td>
+<td><code>/rankings?course=&amp;week=</code></td>
+<td>週間ランキング</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-12</td>
+<td>GET</td>
+<td><code>/me/stats</code>、<code>/me/badges</code></td>
+<td>学習記録とバッジ</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-13</td>
+<td>POST</td>
+<td><code>/admin/imports</code></td>
+<td>取り込みの登録と署名付きURLの発行</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>A-14</td>
+<td>GET</td>
+<td><code>/admin/imports/{id}</code></td>
+<td>取り込み状況と下書き</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>A-15</td>
+<td>PUT／DELETE</td>
+<td><code>/admin/questions/{id}</code></td>
+<td>問題の修正・削除</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>A-16</td>
+<td>POST</td>
+<td><code>/admin/questions/{id}/publish</code></td>
+<td>問題の公開</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>A-17</td>
+<td>GET</td>
+<td><code>/admin/dashboard?course=</code></td>
+<td>ダッシュボードの集計と受講者一覧</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>A-18</td>
+<td>GET</td>
+<td><code>/admin/dashboard.csv?course=</code></td>
+<td>受講者一覧のCSV</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>A-19</td>
+<td>GET／POST／PUT</td>
+<td><code>/admin/users</code></td>
+<td>利用者の一覧・登録・ロール変更</td>
+<td>システム管理者</td>
+</tr>
+<tr>
+<td>A-20</td>
+<td>POST</td>
+<td><code>/admin/users/{id}/delete</code>、<code>/restore</code></td>
+<td>論理削除・復活</td>
+<td>システム管理者</td>
+</tr>
+<tr>
+<td>A-21</td>
+<td>GET／POST／PUT</td>
+<td><code>/admin/courses</code></td>
+<td>コースの一覧・登録・担当者の割り当て</td>
+<td>システム管理者</td>
+</tr>
+<tr>
+<td>A-22</td>
+<td>GET／PUT／DELETE</td>
+<td><code>/admin/partners/{persona}/image</code></td>
+<td>キャラクター画像の取得・差し替え・削除</td>
+<td>システム管理者</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 主なAPIの入出力</h3>
+<p><strong>A-09 採点依頼</strong></p>
+<pre><code class="language-json">// リクエスト
+{&quot;keywordId&quot;: &quot;kw_123&quot;, &quot;text&quot;: &quot;【定義】...\n【しくみ】...&quot;, &quot;isReview&quot;: true}
+// レスポンス 202
+{&quot;gradingId&quot;: &quot;gr_456&quot;, &quot;status&quot;: &quot;processing&quot;}
+</code></pre>
+<p><strong>A-10 採点結果</strong></p>
+<pre><code class="language-json">{&quot;status&quot;: &quot;done&quot;, &quot;score&quot;: 72, &quot;passed&quot;: true,
+ &quot;modelAnswer&quot;: &quot;...&quot;, &quot;missingPoints&quot;: [&quot;...&quot;],
+ &quot;comment&quot;: {&quot;partnerName&quot;: &quot;ミナ&quot;, &quot;persona&quot;: &quot;encourage&quot;, &quot;text&quot;: &quot;...&quot;},
+ &quot;exp&quot;: {&quot;gained&quot;: 45, &quot;reviewBonus&quot;: true, &quot;level&quot;: 5, &quot;levelUp&quot;: false, &quot;expInLevel&quot;: 410, &quot;next&quot;: 690},
+ &quot;review&quot;: {&quot;stage&quot;: 3, &quot;nextDate&quot;: &quot;2026-11-02&quot;},
+ &quot;quests&quot;: [{&quot;id&quot;: &quot;Q-03&quot;, &quot;done&quot;: true, &quot;reward&quot;: 30}],
+ &quot;badges&quot;: []}
+</code></pre>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 CSV出力（S-12）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>仕様</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ファイル名</td>
+<td><code>dashboard_{コースID}_{YYYYMMDD}.csv</code></td>
+</tr>
+<tr>
+<td>文字コード</td>
+<td>UTF-8（BOM付き。Excelで文字化けしないため）</td>
+</tr>
+<tr>
+<td>区切り・改行</td>
+<td>カンマ、CRLF</td>
+</tr>
+<tr>
+<td>列</td>
+<td>氏名、ニックネーム、メールアドレス、受講開始日、網羅率(%)、正答率(%)、習得済み問題数、レベル、累計EXP、最終ログイン日時、直近7日のログイン回数</td>
+</tr>
+<tr>
+<td>対象</td>
+<td>担当コースの受講者（論理削除中を除く）</td>
+</tr>
+<tr>
+<td>記録</td>
+<td>出力したことを操作記録に残す（出力者、日時、コース）</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 Bedrock連携</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>用途</th>
+<th>モデル</th>
+<th>呼び出し元</th>
+<th>出力形式</th>
+<th>上限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>問題・キーワードの抽出</td>
+<td>Sonnet 5.5</td>
+<td><code>import-worker</code></td>
+<td>JSON（問題の配列）</td>
+<td>1回あたり10ページずつ分けて送る</td>
+</tr>
+<tr>
+<td>説明の採点</td>
+<td>Sonnet 5.5</td>
+<td><code>grading-worker</code></td>
+<td>JSON（点数・模範説明・不足観点・コメント）</td>
+<td>25秒で打ち切り</td>
+</tr>
+<tr>
+<td>ひとこと・択一の解説コメント</td>
+<td>Haiku 5.5</td>
+<td><code>api-handler</code></td>
+<td>テキスト（2〜3文）</td>
+<td>5秒で打ち切り。失敗したら定型文を表示</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>指示文（プロンプト）の構成</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>部分</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>役割</td>
+<td>「資格学習の採点者」＋選ばれたパートナーの性格・口調（3.6.1）</td>
+</tr>
+<tr>
+<td>共通ルール</td>
+<td>2〜3文、説教しない、次にやることを1つ示す</td>
+</tr>
+<tr>
+<td>採点基準</td>
+<td>4.9 の観点と配点。書き方（見出しの有無など）で点数を変えない</td>
+</tr>
+<tr>
+<td>入力</td>
+<td>キーワード、出典の問題と解説、学習者の説明文</td>
+</tr>
+<tr>
+<td>出力</td>
+<td>決められたJSONの形。模範説明は50〜400文字、200文字を超えるときは【】の小見出しで区切る。形が崩れていたら1回だけやり直す</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>学習者の説明文は「採点対象のデータ」として渡し、その中の指示には従わないよう指示文に書く（指示の乗っ取り対策）</li>
+<li>ひとことは、ログイン時に1日1回だけ生成して保存し、同じ日は使い回す（コストを抑えるため）</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.6 メール（Amazon SES）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>種類</th>
+<th>送るタイミング</th>
+<th>件名</th>
+<th>主な本文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>招待</td>
+<td>利用者の登録時（Cognitoから送信）</td>
+<td>【RPG学習アプリ】ギルドへの招待</td>
+<td>ログインURL、仮パスワード</td>
+</tr>
+<tr>
+<td>学習のお知らせ</td>
+<td>学習者が選んだ時刻</td>
+<td>【RPG学習アプリ】今日の依頼が届いています</td>
+<td>今日の復習数、今日のクエスト3つ、パートナーのひとこと（定型文）</td>
+</tr>
+<tr>
+<td>削除予定の通知</td>
+<td>論理削除時（本人宛）</td>
+<td>【RPG学習アプリ】アカウント停止のお知らせ</td>
+<td>30日後に完全に削除されること、問い合わせ先</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>送信元：<code>no-reply@app.example.co.jp</code>（ドメイン決定後に確定）</li>
+<li>配信停止：本文末尾に通知設定画面（S-10）へのリンクを入れる</li>
+<li>SESは最初「サンドボックス」状態のため、本番利用前に上限解除を申請する（手順書に記載）</li>
+</ul>
+</section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-clock h-ico" aria-hidden="true"></i>6. 定期処理設計</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.1 一覧</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>処理</th>
+<th>実行タイミング</th>
+<th>DB</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B-01</td>
+<td>日次処理</td>
+<td>毎日 0:00</td>
+<td>使う</td>
+<td>クエストの割り当て、継続バッジの判定、物理削除、その日の通知内容の作成</td>
+</tr>
+<tr>
+<td>B-02</td>
+<td>ランキング締め</td>
+<td>毎週月曜 0:00（B-01の中で実行）</td>
+<td>使う</td>
+<td>前週の順位を確定して履歴に保存</td>
+</tr>
+<tr>
+<td>B-03</td>
+<td>メール送信</td>
+<td>毎日 6:00〜22:00 の30分ごと</td>
+<td><strong>使わない</strong></td>
+<td>その時刻の送信リストをS3から読み、SESで送る</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="diagram"><div class="mermaid">gantt
+  title 定期処理のスケジュール（Asia/Tokyo）
+  dateFormat HH:mm
+  axisFormat %H:%M
+  section 毎日 DBを使う
+  日次処理 クエスト更新・物理削除・通知準備 :a1, 00:00, 15m
+  section 毎週月曜 DBを使う
+  ランキング締め・リセット 日次処理の中で実行 :b1, 00:00, 15m
+  section 毎日 DBを使わない
+  メール送信 30分ごとの送信枠 :c1, 06:00, 16h
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 メール送信の方式（DBの自動停止との両立）</h3>
+<p>学習者が送信時刻を選べるため、メールは1日に何度も送る。そのたびにDBを起こすと自動停止の効果がなくなるため、次の方式にする。</p>
+<ol>
+<li>B-01（0:00）で、通知オンの学習者ごとに「送信時刻・宛先・復習数・クエスト」を作る</li>
+<li>送信時刻ごとのファイル（例：<code>notify/2026-10-20/0730.json</code>）にしてS3に置く</li>
+<li>B-03（30分ごと）は、その時刻のファイルだけを読んでSESで送る。DBにはアクセスしない</li>
+</ol>
+<ul>
+<li>0:00より後に通知設定を変えた場合は、翌日の送信から反映する（S-10に注記を表示）</li>
+<li>送信に失敗した宛先は1回だけやり直し、結果をCloudWatchに記録する</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.3 処理ごとのルール</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>処理</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>クエストの割り当て</td>
+<td>4.7 のとおり。前日の未達成クエストは残さない</td>
+</tr>
+<tr>
+<td>継続バッジ</td>
+<td>前日に1問以上解答していれば連続日数を1増やす。していなければ0に戻す（バッジは取り消さない）</td>
+</tr>
+<tr>
+<td>物理削除</td>
+<td>削除予定日を過ぎた利用者の学習履歴をすべて削除し、Cognitoのユーザーも削除する</td>
+</tr>
+<tr>
+<td>ランキング締め</td>
+<td>前週分の順位を履歴に保存し、今週の集計を0から始める</td>
+</tr>
+<tr>
+<td>失敗時</td>
+<td>最大2回やり直す。それでも失敗したらCloudWatchのアラームでシステム管理者にメール</td>
+</tr>
+</tbody>
+</table></div>
+</section><section class="chapter" id="ch7"><h2><i class="fa-solid fa-database h-ico" aria-hidden="true"></i>7. データ設計</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 ER図</h3>
+<figure class="diagram"><div class="mermaid">erDiagram
+  USERS ||--o{ ENROLLMENTS : 受講
+  ENROLLMENTS }o--|| COURSES : 含む
+  COURSES ||--o{ COURSE_ADMINS : 担当
+  COURSE_ADMINS }o--|| USERS : 担当
+  COURSES ||--o{ IMPORT_JOBS : 取り込み
+  QUESTIONS }o--o| IMPORT_JOBS : 抽出元
+  COURSES ||--o{ QUESTIONS : 持つ
+  CHOICES }|--|| QUESTIONS : 選択肢
+  QUESTIONS ||--o{ KEYWORDS : 最大3つ
+  ANSWER_LOGS }o--|| USERS : 解答
+  USERS ||--o{ REVIEW_ITEMS : 復習
+  REVIEW_ITEMS }o--o| QUESTIONS : 択一の対象
+  KEYWORDS |o--o{ REVIEW_ITEMS : 説明の対象
+  GRADING_JOBS }o--|| USERS : 採点依頼
+  USERS ||--o{ EXP_LOGS : 獲得
+  USER_QUESTS }o--|| USERS : 挑戦
+  QUEST_DEFS ||--o{ USER_QUESTS : 割当
+  USER_BADGES }o--|| USERS : 獲得
+  BADGE_DEFS ||--o{ USER_BADGES : 付与
+  USERS }o--|| PARTNERS : 選択
+  COURSES ||--o{ WEEKLY_RANKINGS : 週ごと
+  WEEKLY_RANKINGS }o--|| USERS : 順位
+  USERS ||--|| NOTIFY_SETTINGS : 設定
+</div></figure>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 主なデータ項目</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>データ</th>
+<th>主な項目</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>USERS</code></td>
+<td>利用者ID、Cognitoのsub、氏名、ニックネーム、メール、状態（招待中・有効・論理削除）、削除予定日、パートナー種別、パートナー名、累計EXP、レベル、連続学習日数、最終ログイン日時</td>
+</tr>
+<tr>
+<td><code>COURSES</code></td>
+<td>コースID、コース名、資格名</td>
+</tr>
+<tr>
+<td><code>ENROLLMENTS</code></td>
+<td>利用者ID、コースID、受講開始日</td>
+</tr>
+<tr>
+<td><code>QUESTIONS</code></td>
+<td>問題ID、コースID、問題文、正解、解説、状態（下書き・要確認・公開済み）、取り込みID</td>
+</tr>
+<tr>
+<td><code>KEYWORDS</code></td>
+<td>キーワードID、問題ID、キーワード</td>
+</tr>
+<tr>
+<td><code>ANSWER_LOGS</code></td>
+<td>利用者ID、問題ID、キーワードID、形式、正誤、点数、説明文、復習かどうか、解答日時</td>
+</tr>
+<tr>
+<td><code>REVIEW_ITEMS</code></td>
+<td>利用者ID、形式（択一・説明）、問題ID または キーワードID、段階（0〜6）、次回予定日</td>
+</tr>
+<tr>
+<td><code>GRADING_JOBS</code></td>
+<td>採点ID、状態（採点中・完了・失敗）、結果JSON、作成日時</td>
+</tr>
+<tr>
+<td><code>EXP_LOGS</code></td>
+<td>利用者ID、コースID、理由、EXP、獲得日時（週間ランキングの元データ）</td>
+</tr>
+<tr>
+<td><code>WEEKLY_RANKINGS</code></td>
+<td>コースID、週の開始日、利用者ID、週間EXP、順位、ニックネーム（確定時点）</td>
+</tr>
+<tr>
+<td><code>PARTNERS</code></td>
+<td>性格（encourage・logic・rival）、初期名、画像のS3キー（なければ空）</td>
+</tr>
+<tr>
+<td><code>NOTIFY_SETTINGS</code></td>
+<td>利用者ID、メール通知オン／オフ、送信時刻、プッシュ通知オン／オフ（Phase 2）</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.3 保持期間</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>データ</th>
+<th>保持</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>学習履歴</td>
+<td>利用者が有効な間は永続。物理削除時にすべて削除</td>
+</tr>
+<tr>
+<td>ランキング履歴</td>
+<td>永続（論理削除・物理削除された利用者の行は表示しない／削除する）</td>
+</tr>
+<tr>
+<td>取り込み原本（S3）</td>
+<td>90日で自動削除</td>
+</tr>
+<tr>
+<td>採点ジョブ</td>
+<td>30日で削除（結果は <code>ANSWER_LOGS</code> に残る）</td>
+</tr>
+<tr>
+<td>通知の送信リスト（S3）</td>
+<td>7日で自動削除</td>
+</tr>
+<tr>
+<td>ログ（CloudWatch）</td>
+<td>90日</td>
+</tr>
+</tbody>
+</table></div>
+</section><section class="chapter" id="ch8"><h2><i class="fa-solid fa-shield-halved h-ico" aria-hidden="true"></i>8. 非機能・セキュリティ設計</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.1 認証・権限</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>設計</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>認証</td>
+<td>Cognitoのマネージドログイン。パスワードは8文字以上・英大小文字と数字を含む</td>
+</tr>
+<tr>
+<td>トークン</td>
+<td>IDトークン1時間、リフレッシュトークン7日</td>
+</tr>
+<tr>
+<td>権限</td>
+<td>Cognitoのグループで判定。画面の出し分けだけでなく、APIでも必ず確認する</td>
+</tr>
+<tr>
+<td>コース管理者</td>
+<td>担当コースのデータだけ参照・操作できる</td>
+</tr>
+<tr>
+<td>管理画面の入口</td>
+<td>管理者のグループに入っている人にだけ、ヘッダーに「管理局へ」を表示</td>
+</tr>
+<tr>
+<td>将来のSSO</td>
+<td>Cognitoに社内のIDプロバイダー（SAML／OIDC）を追加する形で対応（Phase 3）</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.2 データ保護</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>設計</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>通信</td>
+<td>すべてHTTPS（TLS 1.2以上）。CloudFrontでHTTPをHTTPSに転送</td>
+</tr>
+<tr>
+<td>保存</td>
+<td>Aurora・S3とも暗号化を有効化</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>すべて非公開。CloudFront経由または署名付きURLでのみ読み書き</td>
+</tr>
+<tr>
+<td>Bedrock</td>
+<td>送ったデータはモデルの学習に使われない。構築時に確認して記録を残す。モデル呼び出しログは記録しない（学習者の説明文をログに残さないため）</td>
+</tr>
+<tr>
+<td>学習者どうし</td>
+<td>氏名・メールは見えない。ランキングはニックネームのみ</td>
+</tr>
+<tr>
+<td>操作記録</td>
+<td>管理者の操作（公開・削除・復活・ロール変更・CSV出力）を記録</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.3 性能・可用性</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>目標</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>画面表示</td>
+<td>通常2秒以内。DB起動中は最大30秒程度（3.5の待機表示）</td>
+</tr>
+<tr>
+<td>択一の判定</td>
+<td>1秒以内</td>
+</tr>
+<tr>
+<td>説明の採点</td>
+<td>30秒以内</td>
+</tr>
+<tr>
+<td>稼働時間</td>
+<td>業務時間内に使えること（パイロット期間は24時間保証なし）</td>
+</tr>
+<tr>
+<td>バックアップ</td>
+<td>Auroraの自動バックアップ7日分</td>
+</tr>
+<tr>
+<td>全社展開</td>
+<td>Phase 3でAuroraの最小容量、WAFのルール、CloudFrontの料金プラン（利用量が Free プランの上限を超える場合）、Lambdaの同時実行数を見直す</td>
+</tr>
+</tbody>
+</table></div>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.4 監視</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>アラームの条件</th>
+<th>通知先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APIのエラー</td>
+<td>5分間で5xxが5件以上</td>
+<td>システム管理者のメール</td>
+</tr>
+<tr>
+<td>採点</td>
+<td>採点の失敗・30秒超えが1時間で3件以上</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>定期処理</td>
+<td>失敗</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>コスト</td>
+<td>月の予測額が15,000円を超える（AWS Budgets）</td>
+<td>同上</td>
+</tr>
+</tbody>
+</table></div>
+</section><section class="chapter" id="ch9"><h2><i class="fa-solid fa-comment-dots h-ico" aria-hidden="true"></i>9. メッセージ設計</h2>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>9.1 方針</h3>
+<ul>
+<li>責めない。不正解・不合格・未達成に赤い警告色や強い言葉を使わない</li>
+<li>「〜できませんでした。〜してください」の形で、次にやることを示す</li>
+<li>ボタンは動詞で終える（「答える」「採点してもらう」）。「OK」「はい」だけにしない</li>
+</ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>9.2 主なメッセージ</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>場面</th>
+<th>文言</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M-01</td>
+<td>DBの起動中</td>
+<td>ギルドの扉を開けています…</td>
+</tr>
+<tr>
+<td>M-02</td>
+<td>通信エラー</td>
+<td>通信できませんでした。もう一度お試しください</td>
+</tr>
+<tr>
+<td>M-03</td>
+<td>説明が短い</td>
+<td>説明は50文字以上で入力してください（いま◯文字）</td>
+</tr>
+<tr>
+<td>M-04</td>
+<td>説明が長い</td>
+<td>説明は400文字以内で入力してください（いま◯文字）</td>
+</tr>
+<tr>
+<td>M-05</td>
+<td>（欠番）</td>
+<td>説明文の小見出しのルールをなくしたため使わない（第1.0版）</td>
+</tr>
+<tr>
+<td>M-06</td>
+<td>採点中</td>
+<td>◯◯が採点しています</td>
+</tr>
+<tr>
+<td>M-07</td>
+<td>採点の時間切れ</td>
+<td>採点に時間がかかっています。もう一度お試しください</td>
+</tr>
+<tr>
+<td>M-08</td>
+<td>ニックネームの重複</td>
+<td>このニックネームはすでに使われています</td>
+</tr>
+<tr>
+<td>M-09</td>
+<td>通知時刻の反映</td>
+<td>変更は明日の通知から反映されます</td>
+</tr>
+<tr>
+<td>M-10</td>
+<td>削除の確認</td>
+<td>◯◯さんを削除します。30日後に学習履歴を含めて完全に削除されます</td>
+</tr>
+<tr>
+<td>M-11</td>
+<td>権限なし</td>
+<td>この画面を開く権限がありません</td>
+</tr>
+<tr>
+<td>M-12</td>
+<td>公開できない</td>
+<td>選択肢を4つそろえてから公開してください</td>
+</tr>
+</tbody>
+</table></div>
+</section><section class="chapter" id="ch10"><h2><i class="fa-solid fa-circle-question h-ico" aria-hidden="true"></i>10. 未決事項</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>項目</th>
+<th>現在の仮置き</th>
+<th>決める時期</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>独自ドメイン</td>
+<td><code>app.example.co.jp</code>。決まるまではCloudFrontの既定ドメイン</td>
+<td>本番構築前</td>
+</tr>
+<tr>
+<td>2</td>
+<td>メールの送信元アドレス</td>
+<td><code>no-reply@app.example.co.jp</code></td>
+<td>ドメイン決定時</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Sonnet 5.5・Haiku 5.5 の東京リージョンでの提供状況と単価</td>
+<td>提供されていなければ東京で使える別バージョン</td>
+<td>構築時</td>
+</tr>
+<tr>
+<td>4</td>
+<td>キャラクター画像</td>
+<td>未提供の間は頭文字を表示</td>
+<td>パイロット開始前</td>
+</tr>
+<tr>
+<td>5</td>
+<td>表情の追加（喜び・考え中など）</td>
+<td>1種類のみ</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td>6</td>
+<td>パイロット後のDB常時起動の要否</td>
+<td>全環境で自動停止</td>
+<td>パイロット1か月後</td>
+</tr>
+<tr>
+<td>7</td>
+<td>利用回数の前提（コスト試算）</td>
+<td>説明5回・択一20回／人・日</td>
+<td>パイロット1か月後に実績で見直し</td>
+</tr>
+<tr>
+<td>8</td>
+<td>CloudFront の料金プラン</td>
+<td><strong>決定（2026-10-19）</strong>：全環境で定額の Free プラン（月0ドル、AWS WAF 付き）を使う。WAF は Phase 1 から付く</td>
+<td>決定済み</td>
+</tr>
+<tr>
+<td>9</td>
+<td>リリースの方式</td>
+<td><strong>決定（2026-10-20）</strong>：GitHub Actions で配置する（2.7）。AWSリソースの定義（IaC）は Phase 2 以降に検討</td>
+<td>決定済み</td>
+</tr>
+<tr>
+<td>10</td>
+<td>通知メールの文言（5.6）</td>
+<td>パートナーの定型のひとこと（persona ごとに1文。例：励まし型「今日もいっしょにがんばろうね！」）と、削除予定の通知の問い合わせ先（「所属部署の学習推進担当（社内ポータルの問い合わせ窓口）」）を仮置き</td>
+<td>パイロット開始前</td>
+</tr>
+<tr>
+<td>11</td>
+<td>stg 環境の要否</td>
+<td><strong>決定（2026-10-21）</strong>：コスト削減のため Phase 1 では作らない。受け入れ確認は dev で行う（2.7）。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める（CloudFront の Free プランの枠は1つ空けてある）</td>
+<td>Phase 3 の計画時</td>
+</tr>
+</tbody>
+</table></div></section>
+  </main>
+</div>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.0版（ドラフト：第1〜10章、HTML版あり。説明文の小見出しのルールをなくし、模範説明のルールに移す）</div></footer>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+  startOnLoad: true, securityLevel: "loose", theme: "base",
+  fontFamily: '"Noto Sans JP", sans-serif',
+  themeVariables: {
+    fontFamily: '"Noto Sans JP", sans-serif', fontSize: "14px",
+    primaryColor: "#E8F1FE", primaryBorderColor: "#0017C1", primaryTextColor: "#1A1A1C",
+    secondaryColor: "#F2F2F2", tertiaryColor: "#FFFFFF",
+    lineColor: "#414141", textColor: "#1A1A1C",
+    clusterBkg: "#FFFFFF", clusterBorder: "#B4B4B4",
+    edgeLabelBackground: "#FFFFFF",
+    actorBkg: "#E8F1FE", actorBorder: "#0017C1", actorTextColor: "#1A1A1C",
+    signalColor: "#414141", signalTextColor: "#1A1A1C",
+    noteBkgColor: "#FFF5C2", noteBorderColor: "#B4B4B4", noteTextColor: "#1A1A1C",
+    labelBoxBkgColor: "#E8F1FE", labelBoxBorderColor: "#0017C1", loopTextColor: "#00118F",
+    pie1: "#0017C1", pie2: "#264AF4", pie3: "#7096F8", pie4: "#00118F", pie5: "#9DB7F9", pie6: "#626264", pie7: "#C5D7FB",
+    pieStrokeColor: "#FFFFFF", pieOuterStrokeColor: "#B4B4B4", pieTitleTextSize: "16px", pieSectionTextColor: "#FFFFFF",
+    sectionBkgColor: "#E8F1FE", altSectionBkgColor: "#FFFFFF", taskBkgColor: "#0017C1", taskBorderColor: "#00118F", taskTextColor: "#FFFFFF", taskTextOutsideColor: "#1A1A1C", gridColor: "#E6E6E6", todayLineColor: "#00118F"
+  },
+  flowchart: { htmlLabels: true, curve: "basis", padding: 12 },
+  er: { useMaxWidth: true }, sequence: { useMaxWidth: true, mirrorActors: false }
+});
+</script>
+</body>
+</html>

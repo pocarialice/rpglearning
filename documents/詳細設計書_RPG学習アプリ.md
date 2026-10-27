@@ -3,9 +3,9 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.1版（ドラフト：第1〜12章、HTML版あり。A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加）      |
-| 作成日    | 2026-10-20                                                 |
-| 入力文書   | 要件定義書 第1.1版（ドラフト）、外部設計書 第1.0版、AWS構築手順書 第0.5版                 |
+| 版数     | 第1.2版（ドラフト：第1〜12章、HTML版あり。AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる）      |
+| 作成日    | 2026-10-20（第1.2版：2026-10-27）                                                 |
+| 入力文書   | 要件定義書 第1.1版（ドラフト）、外部設計書 第1.1版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は `aws/documents/` に退避                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
 
@@ -15,32 +15,36 @@
 
 ### 1.1 目的
 
-外部設計書で決めた画面・API・データ・定期処理を、プログラムの構造（ディレクトリ・モジュール・関数）とテーブル定義（CREATE TABLE文）に落とし込む。あわせて、AWSへのリリース（配置）手順とロールバック手順を定める。開発者が本書だけを見て実装・配置できる粒度を目標とする。
+外部設計書で決めた画面・API・データ・定期処理を、プログラムの構造（ディレクトリ・モジュール・関数）とテーブル定義（CREATE TABLE文）に落とし込む。あわせて、さくらのクラウドへのリリース（配置）手順とロールバック手順を定める。開発者が本書だけを見て実装・配置できる粒度を目標とする。
 
 ### 1.2 本書で確定する事項
 
 | 区分         | 確定内容                                                                                       | 外部設計書の対応 |
 | ---------- | ------------------------------------------------------------------------------------------ | -------- |
-| リポジトリ構成    | 1つのリポジトリに画面（`web/`）・Lambda（`functions/`）・DB（`db/`）・スクリプト（`scripts/`）をまとめる（モノレポ）            | 2.4、2.6  |
-| Lambdaの実装  | Node.js 22（ES Modules、arm64）。`esbuild` で関数ごとに1ファイルへ束ね、zipにする。AWS SDK v3 はランタイム同梱のものを使う           | 2.4      |
-| 画面の実装      | Vanilla JS（ES Modules）、ビルドなし。環境ごとの設定ファイルだけを差し替えて配置する                                         | 2.6      |
-| 入力チェック     | 画面とLambdaで同じファイル（`web/js/logic/validators.js`）を使う。Lambdaは esbuild で取り込む                      | 3.6〜3.7  |
+| リポジトリ構成    | 1つのリポジトリに画面（`web/`）・処理（`functions/`）・入口（`server/`）・DB（`db/`）・スクリプト（`scripts/`）をまとめる（モノレポ）。AWS 版は `aws/` に退避            | 2.4、2.6  |
+| サーバーの実装  | Node.js 22（ES Modules）。1つのコンテナイメージを、環境変数 `ROLE` で `api`（HTTP サーバー）・`worker`（ジョブと定期処理）に切り替える。束ね（バンドル）はせず、`npm ci --omit=dev` した依存ごとコンテナに入れる           | 2.4      |
+| 画面の実装      | Vanilla JS（ES Modules）、ビルドなし。環境ごとの設定ファイルだけを差し替えて、コンテナに入れる                                         | 2.6      |
+| 入力チェック     | 画面とサーバーで同じファイル（`web/js/logic/validators.js`）を使う                      | 3.6〜3.7  |
 | 主キー        | すべて `bigint GENERATED ALWAYS AS IDENTITY`。APIの入出力では `kw_123` のような接頭辞つき文字列に変換する                  | 5.3      |
 | ニックネームの重複  | DBの一意制約は付けず、アプリで「同じコースの受講者に同じニックネームがいないか」を確認する（登録・変更・受講開始の3か所）                           | 3.7 S-08 |
-| DBアクセス     | RDS Data API（`@aws-sdk/client-rds-data`）。DB起動中は `DB_RESUMING` を返す                         | 2.3、5.1  |
+| DBアクセス     | `pg`（node-postgres）で PostgreSQL に直接つなぐ。リポジトリの SQL は `:name` 形式のまま書き、`db/client.js` が `$1` 形式に変える。接続できないときは `DB_RESUMING` を返す                         | 2.3、5.1  |
+| 差し替え口 | DB（3.3）・AI（3.6、`AI_PROVIDER=sakura|bedrock`）・ファイル（3.9、S3 互換）・メール（3.8、SMTP）・ログイン（3.10）。AWS など別のクラウドへ移すときは、ここだけを差し替える | 2.1 |
+| ジョブと定期処理 | 採点・取り込みは DB のジョブキュー（`jobs`）、日次処理・メール送信は worker の時刻の見回り（`schedule_runs`）で動かす（3.7） | 2.4、2.5、6 |
 | テスト        | Vitest（モジュールテスト）。詳細はモジュールテスト仕様書                                                             | -        |
-| リリース方式     | GitHub Actions で配置（`main` への push で dev、dev での受け入れ確認のあとタグ `release-YYYYMMDD-NN` を付けて承認後に prod。stg 環境は置かない）。AWS へは OIDC で認証し、Lambda はコードの更新、画面は S3 への同期＋CloudFront のキャッシュ削除、DB は Data API でマイグレーション。AWSリソースの作成・設定変更はコンソール（構築手順書） | -        |
-| ロールバック     | リリースごとの成果物（zip・画面一式）を GitHub Release に保管し、ワークフロー `rollback.yml` で前回の成果物を配置し直して戻す                      | -        |
+| リリース方式     | GitHub Actions でテストしてコンテナを作り、さくらのクラウドのコンテナレジストリへ置く（`main` で手動実行すると dev 用、タグ `release-YYYYMMDD-NN` を付けて承認すると prod 用）。サーバーでは `docker compose pull` → `up -d` で入れ替え、DB のマイグレーションは api コンテナの起動時に流す。さくらのクラウドのリソースの作成・設定変更はコントロールパネル（構築手順書） | -        |
+| ロールバック     | 前のリリース番号のイメージを `.env` の `IMAGE` に書き戻して `docker compose up -d` する。DB は配置前に取ったバックアップで戻す                      | -        |
 
 ### 1.3 用語
 
 | 用語        | 意味                                                         |
 | --------- | ---------------------------------------------------------- |
 | モジュール     | 1つのJSファイル。公開する関数（export）を持つ単位。モジュールテストの単位でもある                   |
-| ドメインロジック  | 忘却曲線・EXP・クエスト・バッジ・ランキング・出題など、ゲームと学習のルールを計算する部分。DBやAWSに依存しない純粋な関数で書く |
+| ドメインロジック  | 忘却曲線・EXP・クエスト・バッジ・ランキング・出題など、ゲームと学習のルールを計算する部分。DBや外部サービスに依存しない純粋な関数で書く |
 | リポジトリ（層）  | テーブルごとのSQLをまとめたモジュール（`functions/shared/db/repositories/`）              |
 | 内部ID      | DBの主キー（bigint）。画面には出さない                                       |
 | 公開ID      | APIで使う接頭辞つきのID（例：`q_42`）                                    |
+| 差し替え口 | 外部サービスとのやり取りを1つのモジュールに閉じ込め、ほかのモジュールからは同じ関数で呼べるようにしたもの（`db/client.js`・`ai/client.js`・`storage/object-storage.js`・`mail/smtp.js`・`auth/`） |
+| ジョブ | worker が後で処理する仕事（採点・取り込み）。`jobs` テーブルに1行ずつ入れる |
 | リリース番号    | `YYYYMMDD-NN`（例：`20261105-01`）。成果物とリリース記録に付ける                    |
 | JST日付     | Asia/Tokyo で数えた日付（`YYYY-MM-DD`）。復習予定日・クエスト日・週の開始日はすべてJST日付              |
 
@@ -50,201 +54,157 @@
 
 ### 2.1 全体構成
 
-画面（`web/`）は CloudFront 経由で配信され、`/api/*` を `api-handler` に送る。Lambda 4関数は共通ライブラリ（`functions/shared/`）を esbuild で取り込み、それぞれ1つの `index.mjs` になる。
+画面（`web/`）と API は、同じ `api` コンテナ（`server/http.mjs`）から配信する。`/api/*` は `functions/api-handler` に渡し、時間のかかる採点・取り込みは DB のジョブキューに入れて `worker` コンテナ（`server/worker.mjs`）が処理する。中の処理（`functions/`）は AWS 版の Lambda 4関数のものをそのまま使い、外部サービスとのやり取りだけを差し替え口に替えた。
 
 ```mermaid
 flowchart LR
-  subgraph WEB["web/（S3 rpg-env-web）"]
-    PG["pages/ 画面"] --> CMP["components/ 部品"]
+  subgraph WEB["web/（api コンテナが配信）"]
+    PG["pages/ 画面・login"] --> CMP["components/ 部品"]
     PG --> CORE["core/ router・auth・api・store"]
     PG --> LOGIC["logic/ validators・format・poller"]
   end
-  subgraph FN["functions/（Lambda 4関数）"]
+  subgraph SV["server/（コンテナの入口）"]
+    HTTP["http.mjs<br>/api・画面・/partners"]
+    WK["worker.mjs<br>ジョブ・定期処理"]
+    MAIN["main.mjs<br>ROLE で切り替え"]
+  end
+  subgraph FN["functions/（処理）"]
     API["api-handler<br>router・routes"]
     GRD["grading-worker"]
     IMP["import-worker"]
     BAT["batch-runner"]
     subgraph SH["shared/"]
-      DOM["domain/<br>review・exp・quest<br>badge・ranking・picker"]
-      DB["db/<br>data-api・tx<br>repositories"]
-      AI["ai/<br>bedrock・prompts<br>persona・json-guard"]
-      UT["util/<br>errors・ids・date-jst<br>authz・logger"]
-      ML["mail/ ses"]
+      DOM["domain/"]
+      DB["db/<br>client・tx・migrate<br>repositories"]
+      AI["ai/<br>client・sakura・bedrock<br>prompts・json-guard"]
+      AU["auth/<br>password・token"]
+      ST["storage/<br>object-storage"]
+      ML["mail/ smtp・templates"]
+      UT["util/"]
     end
   end
-  CORE -->|"fetch /api/*"| API
-  LOGIC -.->|"同じファイルを取り込む"| UT
+  CORE -->|"fetch /api/*"| HTTP
+  HTTP --> API
+  WK --> GRD
+  WK --> IMP
+  WK --> BAT
   API --> DOM
   API --> DB
   API --> AI
-  GRD --> DOM
+  API --> AU
   GRD --> DB
   GRD --> AI
   IMP --> DB
   IMP --> AI
-  BAT --> DOM
+  IMP --> ST
   BAT --> DB
   BAT --> ML
-  DB --> AURORA[("Aurora<br>Data API")]
-  AI --> BR["Bedrock"]
+  BAT --> ST
+  DB --> PGDB[("PostgreSQL<br>データベースアプライアンス")]
+  AI --> AIE["さくらのAI Engine<br>（または Bedrock）"]
+  ST --> OBJ["オブジェクトストレージ"]
+  ML --> SMTP["SMTP"]
 ```
 
 **依存のルール**
 
 | 層           | 呼んでよい層                     | 呼んではいけない層             |
 | ----------- | -------------------------- | --------------------- |
-| routes・ハンドラ | domain、db、ai、mail、util     | -                     |
-| services | domain、db、util | ai、mail、AWS SDK（DBへの書き込みの組み立てだけを受け持つ） |
-| domain      | util（date-jst・errors だけ）   | db、ai、mail、AWS SDK（純粋関数にするため） |
+| routes・ハンドラ | domain、db、ai、mail、auth、storage、util     | -                     |
+| services | domain、db、util | ai、mail、外部サービス（DBへの書き込みの組み立てだけを受け持つ） |
+| domain      | util（date-jst・errors だけ）   | db、ai、mail、外部サービス（純粋関数にするため） |
 | db          | util                       | domain、ai             |
-| ai          | util                       | db、domain             |
+| ai・storage・mail・auth | util                       | db、domain             |
+| server（入口） | functions のすべて | -（functions から server を呼ばない） |
 | util | なし（標準ライブラリと `process.env` のみ） | すべて |
 
-### 2.2 ディレクトリ構成（AWSリリースを想定した案）
+### 2.2 ディレクトリ構成
 
 ```text
-rpg-learning-app/
-├─ README.md                      # 開発の始め方・リリースの概要
-├─ package.json                   # npm workspaces、scripts（test / build / pack）
+rpglearning/
+├─ package.json                   # scripts（test・start・migrate・create-admin・build:web）
 ├─ package-lock.json
 ├─ vitest.config.js               # テスト設定（環境・カバレッジ閾値）
-├─ .gitignore                     # dist/、release/、coverage/、node_modules/
-├─ .github/
-│  └─ workflows/
-│     ├─ ci.yml                     # プルリクエストで test・build（11.2）
-│     ├─ release.yml                # main → dev、タグ release-* → prod（承認つき）
-│     ├─ deploy.yml                 # 1環境への配置（release.yml から呼ばれる）
-│     └─ rollback.yml               # 手動。前回のリリースに戻す
-├─ db/
-│  ├─ migrations/
-│  │  ├─ V001__create_tables.sql        # 第8章のCREATE TABLE
-│  │  ├─ V002__seed_masters.sql         # partners・quest_defs・badge_defs
-│  │  └─ V001__create_tables.down.sql   # 取り消し用（dev専用）
-│  └─ seeds/
-│     └─ dev_sample.sql                 # dev用のコース・問題のサンプル
+├─ Dockerfile                     # コンテナ（画面を組み立てて入れる。ROLE で役割を切り替える）
+├─ compose.yaml                   # サーバーでの構成（caddy・api・worker）
+├─ Caddyfile                      # HTTPS の終端
+├─ .env.example                   # サーバーの .env の見本（値は構築手順書）
+├─ .github/workflows/
+│  ├─ ci.yml                      # プルリクエストで test・画面のビルド・コンテナのビルド（11.2）
+│  └─ release.yml                 # コンテナを作ってレジストリへ（main の手動実行 → dev、タグ release-* → prod）
+├─ db/migrations/
+│  ├─ V001__create_tables.sql     # 第8章のCREATE TABLE
+│  ├─ V002__seed_masters.sql      # partners・quest_defs・badge_defs
+│  └─ V003__auth_jobs.sql         # ログイン・ジョブキュー・定期処理の記録（8.4.1）
+├─ server/                        # コンテナの入口
+│  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
+│  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
+│  └─ worker.mjs                  # ジョブキューの処理と定期処理
 ├─ functions/
 │  ├─ shared/
-│  │  ├─ util/
-│  │  │  ├─ errors.js             # AppError、エラーコード、HTTP応答への変換
-│  │  │  ├─ ids.js                # 公開ID ⇔ 内部ID
-│  │  │  ├─ date-jst.js           # JST日付の計算
-│  │  │  ├─ authz.js              # トークンからの利用者・ロール取得、権限確認
-│  │  │  ├─ logger.js             # JSON構造化ログ
-│  │  │  ├─ http.js               # 応答の組み立て、本文の読み取り
-│  │  │  ├─ validators.js         # web/js/logic/validators.js を再公開
-│  │  │  └─ env.js                # 環境変数の確認（起動時）
+│  │  ├─ util/                    # errors・ids・date-jst・authz・logger・http・validators・alert
 │  │  ├─ db/
-│  │  │  ├─ data-api.js           # Data API呼び出し・型変換・DB起動中の判定
+│  │  │  ├─ client.js             # pg の接続と SQL の実行（:name → $1）
 │  │  │  ├─ tx.js                 # トランザクション
-│  │  │  └─ repositories/         # users・courses・questions・reviews・exp・quests
-│  │  │                           # badges・rankings・gradings・imports・adventures・audit・notify
-│  │  ├─ domain/
-│  │  │  ├─ review.js             # 忘却曲線（復習段階と次回予定日）
-│  │  │  ├─ exp.js                # 獲得EXP・レベル計算
-│  │  │  ├─ quest.js              # デイリークエストの割り当てと進み具合
-│  │  │  ├─ badge.js              # バッジ判定
-│  │  │  ├─ ranking.js            # 順位づけ
-│  │  │  ├─ picker.js             # 出題の選び方
-│  │  │  └─ answer-flow.js        # 解答後の一連の更新（段階→EXP→クエスト→バッジ）の組み立て
+│  │  │  ├─ migrate.js            # マイグレーションの適用
+│  │  │  └─ repositories/         # users・courses・questions・reviews・exp・quests・badges・rankings
+│  │  │                           # gradings・imports・adventures・audit・notify・partners
+│  │  │                           # auth・jobs・schedules（さくら版で追加）
+│  │  ├─ domain/                  # review・exp・quest・badge・ranking・picker・answer-flow
 │  │  ├─ ai/
-│  │  │  ├─ bedrock.js            # Converse API呼び出し（打ち切り時間つき）
-│  │  │  ├─ json-guard.js         # 出力JSONの取り出しと検証
-│  │  │  ├─ persona.js            # パートナー3人の性格・口調
-│  │  │  └─ prompts/              # grading.js・extraction.js・comment.js・daily-message.js
+│  │  │  ├─ client.js             # 差し替え口（AI_PROVIDER）
+│  │  │  ├─ sakura.js             # さくらのAI Engine（OpenAI 互換）
+│  │  │  ├─ bedrock.js            # Amazon Bedrock（Converse）
+│  │  │  ├─ json-guard.js・persona.js
+│  │  │  └─ prompts/              # grading・extraction・comment・daily-message
+│  │  ├─ auth/
+│  │  │  ├─ password.js           # scrypt のハッシュ・パスワードの決まり・仮パスワード
+│  │  │  └─ token.js              # JWT（HS256）・使い捨ての値
+│  │  ├─ storage/
+│  │  │  └─ object-storage.js     # S3 互換のオブジェクトストレージ
 │  │  ├─ mail/
-│  │  │  ├─ ses.js                # SES送信
+│  │  │  ├─ smtp.js               # SMTP 送信（nodemailer）
 │  │  │  └─ templates.js          # メール本文
-│  │  └─ services/
-│  │     └─ answer-recorder.js    # 解答の記録（A-08 と grading-worker で共用）
-│  ├─ api-handler/
-│  │  ├─ index.mjs                # Lambdaの入口
-│  │  ├─ router.js                # パスとメソッドからハンドラを選ぶ
-│  │  └─ routes/                  # health・me・home・courses・quests・answers・gradings
-│  │                              # rankings・admin-imports・admin-questions・admin-dashboard
-│  │                              # admin-users・admin-courses・admin-partners
-│  ├─ grading-worker/
-│  │  ├─ index.mjs
-│  │  └─ grader.js
-│  ├─ import-worker/
-│  │  ├─ index.mjs
-│  │  ├─ extractor.js             # Bedrockでの抽出と正規化
-│  │  └─ pdf-splitter.js          # PDFを10ページずつに分ける（pdf-lib）
-│  └─ batch-runner/
-│     ├─ index.mjs                # {"job":"daily"|"mail"} で振り分け
-│     ├─ jobs/
-│     │  ├─ daily.js              # B-01（B-02を含む）
-│     │  └─ mail.js               # B-03（DBを使わない）
-│     └─ steps/                   # close-ranking・update-streak・assign-quests
-│                                 # purge-users・cleanup-gradings・build-notify
-├─ web/
-│  ├─ index.html
-│  ├─ manifest.webmanifest
-│  ├─ sw.js                       # Service Worker（キャッシュ名にリリース番号）
-│  ├─ icons/                      # PWAアイコン
-│  ├─ css/
-│  │  ├─ bundle.css               # アプリ用デザインシステム（そのまま複製）
-│  │  └─ app.css                  # 画面固有の調整
-│  ├─ config/
-│  │  ├─ config.dev.js            # 環境ごとの設定（CloudFront・Cognitoの値）
-│  │  └─ config.prod.js
-│  └─ js/
-│     ├─ main.js                  # 起動処理
-│     ├─ config.js                # ※ビルド時に config/config.{env}.js で上書き
-│     ├─ core/
-│     │  ├─ router.js             # #/home などのハッシュで画面を切り替える
-│     │  ├─ auth.js               # 認可コード＋PKCE、トークン管理
-│     │  ├─ api.js                # fetchの共通処理（DB起動中の再試行）
-│     │  └─ store.js              # 画面の状態
-│     ├─ logic/
-│     │  ├─ validators.js         # 入力チェック（Lambdaと共用）
-│     │  ├─ format.js             # HTMLエスケープ・日付・数値の表示
-│     │  └─ grading-poller.js     # 採点結果の2秒ごとの確認
-│     ├─ components/              # exp-bar・partner-bubble・quest-card・choice-option
-│     │                           # score-meter・review-stage・ranking-row・guild-badge・dialog
-│     └─ pages/
-│        ├─ learner/              # s02-home・s03-courses・s04-choice・s05-explain・s06-result
-│        │                        # s07-ranking・s08-profile・s09-partner・s10-notify・onboarding
-│        └─ admin/                # s11-import・s12-dashboard・s13-users・s14-partners
-├─ tests/
-│  ├─ unit/                       # functions/・web/ と同じ階層に *.test.js を置く
-│  ├─ fixtures/                   # Bedrockの応答例、Data APIの応答例、SQSイベント
-│  └─ helpers/                    # モックの組み立て
+│  │  └─ services/answer-recorder.js
+│  ├─ api-handler/                # index.mjs（main）・router.js・routes/（auth を追加）
+│  ├─ grading-worker/             # index.mjs（runGradingJob）・grader.js
+│  ├─ import-worker/              # index.mjs（runImportJob）・extractor.js・pdf-splitter.js・pdf-text.js
+│  └─ batch-runner/               # index.mjs（main）・jobs/（daily・mail）・steps/
+├─ web/                           # 画面（pages/login.js を追加。そのほかは AWS 版と同じ）
+├─ tests/                         # unit/（functions・server・web）・fixtures・helpers
 ├─ scripts/
-│  ├─ build-functions.mjs         # esbuildで束ねて dist/functions/*.zip を作る
 │  ├─ build-web.mjs               # dist/web-{env}/ を作る（config差し込み・キャッシュ名更新）
-│  ├─ pack-release.mjs            # release/{リリース番号}/ に成果物とmanifest.jsonを集める
-│  ├─ migrate.mjs                 # Data API で未適用のマイグレーションを流す（GitHub Actions から）
-│  ├─ deploy-functions.mjs        # Lambda 4関数のコード更新と SHA-256 の照合
-│  └─ health-check.mjs            # api-handler の health を呼んで 200 を確かめる
-├─ dist/                          # 生成物（git管理外）
-└─ release/                       # 成果物の置き場（git管理外。保管は GitHub Release）
+│  ├─ migrate.mjs                 # マイグレーションを流す（手動で使うとき）
+│  ├─ create-admin.mjs            # 最初のシステム管理者を作る（構築手順書）
+│  └─ test-report.mjs             # モジュールテスト結果報告書を作る
+└─ aws/                           # AWS 版（退避。aws/README.md）
 ```
 
 **配置先との対応**
 
-| リポジトリ                          | 成果物                                  | 配置先（AWS）                                 | 配置の方法             |
-| ------------------------------ | ------------------------------------ | ---------------------------------------- | ----------------- |
-| `functions/api-handler/`       | `dist/functions/api-handler.zip`     | Lambda `rpg-{env}-api-handler`           | GitHub Actions（`update-function-code`） |
-| `functions/grading-worker/`    | `dist/functions/grading-worker.zip`  | Lambda `rpg-{env}-grading-worker`        | 同上                |
-| `functions/import-worker/`     | `dist/functions/import-worker.zip`   | Lambda `rpg-{env}-import-worker`         | 同上                |
-| `functions/batch-runner/`      | `dist/functions/batch-runner.zip`    | Lambda `rpg-{env}-batch-runner`          | 同上                |
-| `web/`                         | `dist/web-{env}/`                    | S3 `rpg-{env}-web-<アカウントID>`             | GitHub Actions（`s3 sync`＋キャッシュ削除） |
-| `db/migrations/`               | `V***__*.sql`                        | Aurora `rpg-{env}-db`（データベース `rpg`）      | GitHub Actions（`scripts/migrate.mjs`、Data API） |
-| -                              | キャラクター画像                             | S3 `rpg-{env}-assets-<アカウントID>/partners/` | S-14 の画面から登録（リリース対象外） |
+| リポジトリ | 成果物 | 配置先（さくらのクラウド） | 配置の方法 |
+| --- | --- | --- | --- |
+| `functions/`・`server/`・`db/`・`web/` | コンテナイメージ `rpg-app:<リリース番号>` | コンテナレジストリ → サーバー `rpg-{env}-app` の `api`・`worker` | GitHub Actions（`release.yml`）がレジストリへ置き、サーバーで `docker compose pull` → `up -d` |
+| `db/migrations/` | （イメージに入る） | データベースアプライアンス `rpg-{env}-db`（データベース `rpg`） | api コンテナの起動時（`MIGRATE_ON_START=true`） |
+| `compose.yaml`・`Caddyfile` | - | サーバーの `/opt/rpg/` | 構築時に置く（変えたときだけ手で置き直す） |
+| - | キャラクター画像 | オブジェクトストレージ `rpg-{env}-assets` の `partners/` | S-14 の画面から登録（リリース対象外） |
 
 ### 2.3 技術スタック
 
 | 区分          | 採用                                    | 版・設定                                         |
 | ----------- | ------------------------------------- | -------------------------------------------- |
-| 実行環境        | Node.js                               | 22.x（Lambdaのランタイム `nodejs22.x`、arm64）         |
+| 実行環境        | Node.js                               | 22.x（コンテナ `node:22-slim`）         |
 | モジュール形式     | ES Modules                            | `package.json` に `"type": "module"`          |
-| AWS SDK     | AWS SDK for JavaScript v3             | ランタイム同梱のものを使う（esbuildで `@aws-sdk/*` を外部扱い）    |
-| PDFの分割      | pdf-lib                               | import-worker だけが使う。zipに束ねる                  |
-| 束ね（バンドル）    | esbuild                               | `platform: node`、`target: node22`、`format: esm` |
-| zip作成       | archiver                              | `scripts/build-functions.mjs` から使う           |
+| DB          | PostgreSQL（データベースアプライアンス）、`pg` | 接続プールは1コンテナ5本まで。セッションのタイムゾーンは UTC |
+| ファイル        | `@aws-sdk/client-s3`・`@aws-sdk/s3-request-presigner` | S3 互換 API としてさくらのオブジェクトストレージにつなぐ（パス形式） |
+| AI          | さくらのAI Engine（`fetch` で OpenAI 互換の API）、`@aws-sdk/client-bedrock-runtime` | `AI_PROVIDER` で切り替え |
+| メール         | nodemailer                            | SMTP（587 は STARTTLS、465 は TLS） |
+| PDF         | pdf-lib（分割）、unpdf（文字の取り出し）              | import-worker だけが使う                  |
+| ログイン        | Node.js の `crypto`（scrypt・HMAC-SHA256）       | 外部のライブラリは使わない |
 | テスト         | Vitest、@vitest/coverage-v8、jsdom、aws-sdk-client-mock | モジュールテスト仕様書を参照                               |
 | 画面          | Vanilla JS（ES Modules）、アプリ用デザインシステム `bundle.css` | ビルドなし                                         |
-| CI/CD       | GitHub Actions、AWS CLI v2                     | ランナー `ubuntu-latest`。AWS へは `aws-actions/configure-aws-credentials`（OIDC）で認証 |
+| コンテナ        | Docker、Docker Compose、Caddy 2              | サーバーは Ubuntu |
+| CI/CD       | GitHub Actions                     | ランナー `ubuntu-latest`。レジストリへはユーザー名・パスワード（GitHub の Secrets）でログイン |
 
 ### 2.4 共通の実装方針
 
@@ -275,7 +235,7 @@ rpg-learning-app/
 #### 2.4.3 日時と日付
 
 - DBの日時は `timestamptz` で保存し、APIでは `+09:00` 付きのISO 8601で返す
-- 「今日」「週の開始日」は必ず `util/date-jst.js` で求める。Lambdaの `TZ` 環境変数やDBの `CURRENT_DATE` には頼らない（DBはUTCで動くため）
+- 「今日」「週の開始日」は必ず `util/date-jst.js` で求める。コンテナの `TZ` 環境変数やDBの `CURRENT_DATE` には頼らない（DBの接続はUTCで動かす）
 - テストで時刻を固定できるよう、日付を扱う関数は `now`（Date）を引数で受け取る
 
 | 関数                      | 内容                               | 例（now＝2026-10-20T15:30Z）     |
@@ -294,20 +254,23 @@ rpg-learning-app/
 | コード                 | HTTP | 投げる場所                         |
 | ------------------- | ---- | ----------------------------- |
 | `VALIDATION_ERROR`  | 400  | validators、ids、各ハンドラ           |
-| `UNAUTHORIZED`      | 401  | authz（クレームがない）                |
+| `UNAUTHORIZED`      | 401  | authz（クレームがない）、A-31・A-32（期限切れ・使えないトークン）                |
+| `LOGIN_FAILED`      | 401  | A-30（メールアドレスかパスワードが違う。どちらが違うかは返さない） |
+| `PASSWORD_EXPIRED`  | 401  | A-30（仮パスワードの期限切れ） |
+| `ACCOUNT_LOCKED`    | 423  | A-30（5回続けて失敗して15分ロック中） |
 | `FORBIDDEN`         | 403  | authz（ロール・担当コース外）             |
 | `NOT_FOUND`         | 404  | 各ハンドラ、router（ルートがない）          |
 | `CONFLICT`          | 409  | ニックネームの重複、自分自身の削除、状態の食い違い     |
 | `ONBOARDING_REQUIRED` | 409 | 学習者APIでニックネームが未登録（画面は初回の流れへ）   |
 | `COURSE_REQUIRED`   | 409  | 学習者APIで受講中のコースがない（画面はS-03へ）       |
-| `DB_RESUMING`       | 503  | data-api（`DatabaseResumingException`） |
+| `DB_RESUMING`       | 503  | db/client（接続できない・起動中：`57P03`・`ECONNREFUSED`・`ECONNRESET`・`ETIMEDOUT`） |
 | `GRADING_TIMEOUT`   | 504  | A-10（30秒を超えた採点）               |
 | `INTERNAL_ERROR`    | 500  | ハンドラの一番外側                     |
-| `AI_TIMEOUT`・`AI_ERROR` | （500） | ai/bedrock.js（内部用。呼び出し側が定型文に切り替える・採点を失敗にする）。画面には返さない想定だが、万一ハンドラの外まで出たときのため status は500にする |
+| `AI_TIMEOUT`・`AI_ERROR` | （500） | ai/sakura.js・ai/bedrock.js（内部用。呼び出し側が定型文に切り替える・採点を失敗にする）。画面には返さない想定だが、万一ハンドラの外まで出たときのため status は500にする |
 
 #### 2.4.5 ログ（`util/logger.js`）
 
-1行1件のJSONで CloudWatch Logs に出す。
+1行1件のJSONで標準出力に出す（コンテナのログ。`docker compose logs` で見る）。
 
 ```json
 {"level":"INFO","ts":"2026-10-20T07:30:01.120+09:00","fn":"api-handler","requestId":"c0ffee","userId":15,"route":"POST /api/answers/choice","status":200,"durationMs":184}
@@ -317,26 +280,37 @@ rpg-learning-app/
 | ------ | ---------------------------------------------------------------------- |
 | レベル    | `DEBUG`（dev のみ）・`INFO`・`WARN`・`ERROR`。`APP_ENV=prod` では `INFO` 以上       |
 | 出してよい  | 内部ID、ルート、HTTP状態、所要時間、エラーコード、件数                                      |
-| 出さない   | 学習者の説明文、メールアドレス、氏名、トークン、Bedrockへの指示文と応答の本文（外部設計書 8.2）             |
-| 自動の伏せ字 | 誤って渡しても出ないよう、キー名 `text`・`explanationText`・`email`・`fullName`・`idToken`・`authorization` の値は logger が `[REDACTED]` に置き換える |
-| 決まった文字列 | 採点の30秒超えは `"code":"GRADING_TIMEOUT"` を含めて出す（構築手順書 3.12 のメトリクスフィルター） |
+| 出さない   | 学習者の説明文、メールアドレス、氏名、パスワード・トークン、AIへの指示文と応答の本文（外部設計書 8.2）             |
+| 自動の伏せ字 | 誤って渡しても出ないよう、キー名 `text`・`explanationText`・`email`・`fullName`・`idToken`・`authorization`・`password`・`newPassword`・`tempPassword`・`refreshToken`・`session`・`token` の値は logger が `[REDACTED]` に置き換える |
+| 決まった文字列 | 採点の30秒超えは `"code":"GRADING_TIMEOUT"` を含めて出す（ログの検索に使う。10.2） |
 
 #### 2.4.6 設定（環境変数）
 
-構築手順書 3.8 で決めた変数だけを使う。`util/config.js` を作らず、各関数の `index.mjs` の先頭で読み、足りなければ起動時に例外を投げる。
+サーバーの `.env`（構築手順書。見本は `.env.example`）に書き、`compose.yaml` からコンテナに渡す。`server/main.mjs` が起動時に `ROLE` と `AI_PROVIDER` に応じて足りないものを確かめ、足りなければ起動しない（`checkEnv`）。
 
-| 変数                 | 使う関数                          | 使い方                                    |
+| 変数                 | 使う役割                          | 使い方                                    |
 | ------------------ | ----------------------------- | -------------------------------------- |
+| `ROLE`             | すべて                           | `api`・`worker`・`all`（既定は `all`）               |
 | `APP_ENV`          | すべて                           | ログのレベル、メール件名の `[dev]` 付与                 |
-| `DB_CLUSTER_ARN`・`DB_SECRET_ARN`・`DB_NAME` | すべて          | Data API の接続先                          |
-| `MODEL_HIGH`       | grading-worker、import-worker  | Sonnet のモデルID                          |
-| `MODEL_LIGHT`      | api-handler                   | Haiku のモデルID                           |
-| `GRADING_FUNCTION` | api-handler                   | 採点の非同期起動先                              |
-| `IMPORT_BUCKET`    | api-handler、import-worker     | 取り込み原本の置き場（`uploads/` の下）              |
-| `ASSETS_BUCKET`    | api-handler                   | 紋章画像の置き場（`partners/` の下）               |
-| `NOTIFY_BUCKET`    | batch-runner                  | 通知の送信リスト（`notify/` の下）                 |
-| `USER_POOL_ID`     | api-handler、batch-runner      | Cognito の利用者操作                         |
-| `MAIL_FROM`・`APP_URL` | api-handler、batch-runner   | メールの送信元と本文のリンク                         |
+| `APP_URL`          | すべて                           | メール本文のリンク、キャラクター画像の URL                 |
+| `RELEASE_NO`       | すべて                           | ログに出すリリース番号（コンテナを作るときに入る）          |
+| `DATABASE_URL`・`DATABASE_SSL`・`DB_POOL_MAX` | すべて          | DB の接続先（`postgres://ユーザー:パスワード@IPアドレス:5432/rpg`）、TLS（`require`）、接続の数                          |
+| `MIGRATE_ON_START` | api                           | `true` なら起動時にマイグレーションを流す（compose.yaml で api だけに付ける）  |
+| `AUTH_SECRET`      | api                           | アクセストークンの署名の鍵（32文字以上。漏れたら作り直す＝全員がログインし直す）     |
+| `AI_PROVIDER`      | すべて                           | `sakura`（既定）・`bedrock`                 |
+| `AI_BASE_URL`・`AI_API_KEY` | すべて（sakura のとき）       | さくらのAI Engine の URL（既定 `https://api.ai.sakura.ad.jp/v1`）とアカウントトークン |
+| `AWS_REGION`・`AWS_ACCESS_KEY_ID`・`AWS_SECRET_ACCESS_KEY` | すべて（bedrock のとき） | Bedrock の呼び出し（`bedrock:InvokeModel` だけを許した IAM ユーザー） |
+| `MODEL_HIGH`       | worker                        | 高精度モデル（`gpt-oss-120b`／Sonnet のモデルID）                          |
+| `MODEL_LIGHT`      | api                           | 軽量モデル（`gpt-oss-120b`／Haiku のモデルID）                           |
+| `S3_ENDPOINT`・`S3_REGION`・`S3_ACCESS_KEY_ID`・`S3_SECRET_ACCESS_KEY` | すべて | オブジェクトストレージの接続先 |
+| `IMPORT_BUCKET`    | api、worker     | 取り込み原本の置き場（`uploads/` の下）              |
+| `ASSETS_BUCKET`    | api                   | キャラクター画像の置き場（`partners/` の下）               |
+| `NOTIFY_BUCKET`    | worker                  | 通知の送信リスト（`notify/` の下）                 |
+| `SMTP_HOST`・`SMTP_PORT`・`SMTP_SECURE`・`SMTP_USER`・`SMTP_PASS`・`MAIL_FROM` | すべて | メールの送信 |
+| `ALERT_EMAIL`      | すべて                           | 監視のお知らせの宛先（なければ送らない）                 |
+| `MAIL_SCHEDULE_ENABLED` | worker                   | `true` のときだけ B-03（30分ごとのメール送信）を動かす（dev は確認のときだけ） |
+| `WORKER_GRADING_CONCURRENCY`・`WORKER_IMPORT_CONCURRENCY` | worker | 同時に処理する採点（既定2）・取り込み（既定1）の数 |
+| `PORT`・`WEB_ROOT` | api                           | 待ち受けるポート（既定 8080）、画面のファイルの場所（コンテナでは `/app/web`） |
 
 ---
 
@@ -349,14 +323,16 @@ rpg-learning-app/
 | M-U01 | `util/errors.js`              | エラーの型と応答への変換                           | `AppError`、`toErrorResponse(err)`                              |
 | M-U02 | `util/ids.js`                 | 公開IDの変換                                | `encodeId`、`decodeId`                                          |
 | M-U03 | `util/date-jst.js`            | JST日付                                  | `todayJst`、`addDays`、`weekStartJst`、`jstSlot`、`toIsoJst`、`diffDays` |
-| M-U04 | `util/authz.js`               | 認証情報と権限                                | `getAuth(event)`、`requireRole(auth, role)`、`assertCourseAdmin(...)` |
+| M-U04 | `util/authz.js`               | 認証情報と権限                                | `getAuth(event)`、`requireRole(auth, role)`、`loadUser(db, auth)`、`assertCourseAdmin(...)` |
 | M-U05 | `util/logger.js`              | ログ                                     | `createLogger(fn, ctx)`                                       |
 | M-U06 | `util/http.js`                | 応答・本文                                  | `ok(body, status)`、`csv(text, filename)`、`parseBody(event)`   |
 | M-U07 | `logic/validators.js`（共用）     | 入力チェック                                 | `validateExplanation`、`validateNickname`、`validatePartnerName`、`validateNotifyTime`、`validateImportRequest`、`validateQuestionDraft` |
-| M-U08 | `util/env.js` | 環境変数の確認 | `requireEnv(names)`（足りなければ起動時に例外） |
-| M-D01 | `db/data-api.js`              | SQL実行                                  | `query(sql, params, opts)`、`execute(...)`                     |
-| M-D02 | `db/tx.js`                    | トランザクション                               | `withTx(fn, opts)`                                            |
+| M-U08 | `util/alert.js` | 監視のお知らせメール | `alert(key, subject, lines, opts)`（同じ key は1時間に1通） |
+| M-D01 | `db/client.js`              | SQL実行（PostgreSQL）                                  | `query(sql, params, opts)`、`execute(...)`、`toPositional`、`getPool`・`setPool`                     |
+| M-D02 | `db/tx.js`                    | トランザクション                               | `withTx(fn)`                                            |
 | M-D03 | `db/repositories/*.js`        | テーブルごとのSQL                             | 3.4 参照                                                        |
+| M-D04 | `db/repositories/jobs.js`・`schedules.js`・`auth.js` | ジョブキュー・定期処理の記録・ログイン | 3.7・3.10 参照 |
+| M-D05 | `db/migrate.js` | マイグレーションの適用 | `migrate({ pool, dir, release, log })`、`listMigrations(dir)` |
 | M-G01 | `domain/review.js`            | 忘却曲線                                   | `nextReview(item, correct, today)`                            |
 | M-G02 | `domain/exp.js`               | EXPとレベル                                | `calcAnswerExp`、`requiredExp`、`levelInfo`                     |
 | M-G03 | `domain/quest.js`             | デイリークエスト                               | `pickDailyQuests`、`applyQuestEvent`                           |
@@ -365,11 +341,16 @@ rpg-learning-app/
 | M-G06 | `domain/picker.js`            | 出題                                     | `chooseKind(...)`、`pickNext(candidates, state)`               |
 | M-G07 | `domain/answer-flow.js`       | 解答後の更新内容の計算                            | `buildAnswerOutcome(input)`                                   |
 | M-A01 | `ai/bedrock.js`               | Bedrock呼び出し                            | `converse({modelId, system, messages, maxTokens, temperature, timeoutMs})` |
+| M-A05 | `ai/sakura.js` | さくらのAI Engine 呼び出し | `converse(...)`（M-A01 と同じ引数・戻り値）、`toChatMessages` |
+| M-A06 | `ai/client.js` | AI の差し替え口 | `converse(...)`、`provider()`、`supportsDocuments()` |
 | M-A02 | `ai/json-guard.js`            | 出力JSONの取り出しと検証                         | `extractJson(text)`、`validateShape(obj, schema)`              |
 | M-A03 | `ai/persona.js`               | パートナーの性格                               | `PERSONAS`、`personaInstruction(persona, name)`               |
 | M-A04 | `ai/prompts/*.js`             | 指示文の組み立て                               | `buildGradingPrompt`、`buildExtractionPrompt`、`buildCommentPrompt`、`buildDailyMessagePrompt` |
-| M-M01 | `mail/ses.js`・`templates.js`  | メール                                    | `sendMail({to, subject, text})`、`notifyMail(item)`、`deletionMail(user)` |
-| M-S01 | `services/answer-recorder.js` | 解答の記録 | `loadAnswerContext(tx, a)`、`computeOutcome(ctx, a)`、`writeOutcome(tx, outcome, ctx, a)`、`outcomeView(outcome)` |
+| M-M01 | `mail/smtp.js`・`templates.js`  | メール                                    | `sendMail({to, subject, text})`、`setTransport`、`notifyMail(item)`、`deletionMail(user)`、`inviteMail(…)`、`resetMail(…)` |
+| M-O01 | `storage/object-storage.js` | オブジェクトストレージ | `putObject`、`getBytes`、`getText`、`getStream`、`deleteObject`、`presignPut` |
+| M-K01 | `auth/password.js` | パスワード | `hashPassword`、`verifyPassword`、`passwordProblems`、`generateTempPassword` |
+| M-K02 | `auth/token.js` | トークン | `signToken`、`verifyToken`、`newOpaqueToken`、`sha256` |
+| -     | `services/answer-recorder.js` | 解答の記録 | `loadAnswerContext(tx, a)`、`computeOutcome(ctx, a)`、`writeOutcome(tx, outcome, ctx, a)`、`outcomeView(outcome)` |
 
 ### 3.2 util
 
@@ -377,19 +358,19 @@ rpg-learning-app/
 
 | 関数                                        | 処理                                                                                                      |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `getAuth(event)`                          | `event.requestContext.authorizer.jwt.claims` から `sub` と `cognito:groups` を取り出す。groups は `"[a b]"` の文字列でも配列でも受け付ける。`sub` がなければ `UNAUTHORIZED` |
+| `getAuth(event)`                          | `event.requestContext.authorizer.jwt.claims` から `sub` と `groups` を取り出す（`server/http.mjs` が正しいアクセストークンのときだけクレームを置く）。groups は `"[a b]"` の文字列でも配列でも受け付ける。`sub` がなければ `UNAUTHORIZED` |
 | `requireRole(auth, ...roles)`             | どれかのロールを持っていなければ `FORBIDDEN`                                                                          |
-| `loadUser(db, auth)`                      | `users` を `cognito_sub` で引く。いない・`status='deleted'` なら `FORBIDDEN`。`status='invited'` なら `active` に更新（初回ログイン） |
+| `loadUser(db, auth)`                      | `users` を `auth_sub` で引く。いない・`status='deleted'` なら `FORBIDDEN`。`status='invited'` なら `active` に更新（初回ログイン） |
 | `assertCourseAdmin(db, user, courseId)`   | `system_admin` は通す。`course_admin` は `course_admins` に行があるときだけ通す。なければ `FORBIDDEN`                       |
 
 - util は db を呼べない（2.1 の依存ルール）ため、`loadUser`・`assertCourseAdmin` の `db` には呼び出し側がリポジトリ（`{ users, courses }`）を渡す。担当コースの確認は `courses.isAdmin(courseId, userId)` を使う
-- `loadUser` の戻り値の `roles` は `user_roles` の値（なければトークンの `cognito:groups`）
+- `loadUser` の戻り値の `roles` は `user_roles` の値（なければトークンの `groups`）。ロールを変えたときは、トークンの更新を待たずに次の API から効く
 
-#### M-U07 `web/js/logic/validators.js`（画面とLambdaで共用）
+#### M-U07 `web/js/logic/validators.js`（画面とサーバーで共用）
 
-戻り値は `{ ok: true }` または `{ ok: false, code: 'M-03', field, params }`。Lambda側は `ok:false` を `VALIDATION_ERROR` に変換する。
+戻り値は `{ ok: true }` または `{ ok: false, code: 'M-03', field, params }`。サーバー側は `ok:false` を `VALIDATION_ERROR` に変換する。
 
-`code` は画面のメッセージID（`M-03`・`M-04`・`M-12`）。メッセージIDのない入力エラー（ニックネーム・パートナー名・通知時刻・取り込み）は `code: 'INVALID'` とし、`field`（`nickname`・`partnerName`・`sendTime`・`sourceType`・`fileName`・`contentType`・`size`・`text`）と `params`（上限・下限・文字数など）で画面が文言を組み立てる。Lambda側は `assertValid(result)`（`util/validators.js`）で変換する。
+`code` は画面のメッセージID（`M-03`・`M-04`・`M-12`）。メッセージIDのない入力エラー（ニックネーム・パートナー名・通知時刻・取り込み）は `code: 'INVALID'` とし、`field`（`nickname`・`partnerName`・`sendTime`・`sourceType`・`fileName`・`contentType`・`size`・`text`）と `params`（上限・下限・文字数など）で画面が文言を組み立てる。サーバー側は `assertValid(result)`（`util/validators.js`）で変換する。
 
 | 関数                          | ルール（外部設計書の根拠）                                                                                     |
 | --------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -403,25 +384,34 @@ rpg-learning-app/
 
 ### 3.3 db
 
-#### M-D01 `db/data-api.js`
+#### M-D01 `db/client.js`
 
 | 項目        | 設計                                                                                                   |
 | --------- | ---------------------------------------------------------------------------------------------------- |
-| 呼び出し      | `ExecuteStatementCommand`（`resourceArn`・`secretArn`・`database`・`sql`・`parameters`・`formatRecordsAs: 'JSON'`） |
-| パラメータ     | `{ name: value }` のオブジェクトを渡すと型を判定して変換する。`null` → `isNull`、整数 → `longValue`、小数 → `doubleValue`、真偽 → `booleanValue`、文字列 → `stringValue`、`{date: 'YYYY-MM-DD'}` → `typeHint: 'DATE'`、`{json: obj}` → `typeHint: 'JSON'` |
-| 戻り値       | `formattedRecords` を `JSON.parse` した配列。列名はスネークケースのまま返し、リポジトリでキャメルケースに直す                                 |
-| DB起動中     | `DatabaseResumingException` を受けたら、`opts.resumeRetries`（api-handler は0、ほかの関数は6）回まで5秒おきにやり直す。尽きたら `AppError('DB_RESUMING', 503)`。`opts.resumeRetries` を省いたときの既定値は `setDefaultResumeRetries(n)` で関数ごとに設定する（各 `index.mjs` の先頭で呼ぶ。設定しなければ0） |
-| 1MB制限     | Data API の応答は1MBまで。一覧取得は必ず `LIMIT` を付ける（CSV出力は1,000件ずつ繰り返す）                                          |
+| 接続        | `pg.Pool`（`DATABASE_URL`。接続は最大 `DB_POOL_MAX`＝5本）。接続ごとに `TimeZone=UTC` にする。`setPool(p)` でテスト用に差し替えられる |
+| パラメータ     | リポジトリは AWS 版と同じ `:name` 形式で SQL を書き、`{ name: value }` を渡す。`toPositional` が `:name` を `$1, $2 …` に置き換える（同じ名前は同じ番号。`::text` などの型変換は置き換えない）。`undefined` は `null`、`{date: 'YYYY-MM-DD'}` は日付の文字列、`{json: obj}` は `JSON.stringify` した文字列にする。SQL にない名前を使うと `INTERNAL_ERROR` |
+| 戻り値       | `execute` は `{ rows, numberOfRecordsUpdated }`（`rowCount`）、`query` は `rows`。列名はスネークケースのまま返し、リポジトリでキャメルケースに直す（AWS 版の Data API と同じ形にそろえた） |
+| 型         | `bigint`・`numeric` は数値、`date` は `'YYYY-MM-DD'`、`timestamp`・`timestamptz` は UTC の `'YYYY-MM-DD HH:MM:SS.sss'`（`toUtcText`）、`json`・`jsonb` はオブジェクト |
+| 接続できない    | `57P03`（起動中）・`ECONNREFUSED`・`ECONNRESET`・`ETIMEDOUT` は `AppError('DB_RESUMING', 503)`。画面は M-01 を出して再試行する |
 
 #### M-D02 `db/tx.js`
 
-`withTx(async (tx) => { ... })` で `BeginTransaction` → 処理 → `CommitTransaction`。例外なら `RollbackTransaction` して投げ直す。`tx.query()` は `transactionId` を付けて M-D01 を呼ぶ。
+`withTx(async (tx) => { ... })` で接続を1本借り、`BEGIN` → 処理 → `COMMIT`。例外なら `ROLLBACK` して投げ直し、最後に必ず接続を返す。1本の接続では SQL を同時に流せないため、`tx.query`・`tx.execute` は `Promise.all` で並べて呼ばれても順番に流す。
+
+#### M-D05 `db/migrate.js`
+
+| 項目 | 設計 |
+| --- | --- |
+| 対象 | `db/migrations/V{3桁}__{英小文字}.sql`（`*.down.sql` などは除く）を番号順 |
+| 二重の実行を防ぐ | `pg_advisory_lock` を取ってから流す（api コンテナが2つ同時に起動しても片方だけが流す） |
+| 流し方 | `schema_migrations` にないファイルだけを、1ファイル＝1トランザクションで流す。ファイルの最後の文で `schema_migrations` に1行入れ、`release_no` は `migrate` が入れる。1行も入らなければ失敗にする |
+| 失敗 | そのファイルを取り消して止める（`V00X の適用に失敗しました: …`）。api コンテナは起動しない |
 
 ### 3.4 リポジトリ（db/repositories）
 
 | ファイル            | 主な関数                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
-| `users.js` | `findBySub`、`findById`、`activate`、`touchLogin`、`lastLoginLogAt`（A-01 のログイン記録の間隔）、`updateNickname`、`updatePartner`、`setCurrentCourse`、`addExp`、`setDailyMessage`、`updateStreak`、`listForStreak`、`listForAdmin`、`create`、`setRoles`、`markDeleted`、`restore`、`listPurgeTargets`、`purge` |
+| `users.js` | `findBySub`（`auth_sub`）、`findById`、`activate`、`touchLogin`、`lastLoginLogAt`（A-01 のログイン記録の間隔）、`updateNickname`、`updatePartner`、`setCurrentCourse`、`addExp`、`setDailyMessage`、`updateStreak`、`listForStreak`、`listForAdmin`、`create`、`setRoles`、`markDeleted`、`restore`、`listPurgeTargets`、`purge` |
 | `courses.js` | `listWithProgress`、`listAll`（担当者つき）、`listIds`、`findById`、`create`、`update`、`assignAdmins`、`listAdminCourses`、`isAdmin`（担当コースの確認）、`dashboardRows`（8.6 のダッシュボードの一覧） |
 | `enrollments.js` | `enroll`、`isEnrolled`、`listCourseIds`、`nicknameTaken(courseIds, nickname, exceptUserId)` |
 | `questions.js` | `findForLearner`、`findById`、`findKeyword`、`findDraftsByImport`、`update`（選択肢・キーワードは番号ごとに更新。5.3 A-15）、`publish`、`deleteOrArchive(questionId, status, …)`（下書き・要確認は削除、公開済みは archived） |
@@ -437,6 +427,9 @@ rpg-learning-app/
 | `audit.js`      | `write(actorId, action, target, detail)`                                                              |
 | `notify.js`     | `get`、`put`、`listForSlotBuild(today)`                                                                 |
 | `partners.js` | `get`、`list`、`setImage`（キャラクター画像のキー。null で外す） |
+| `auth.js`（さくら版） | `findByEmail`（大文字小文字を区別しない）、`findById`、`recordFailure`（5回で15分ロック）、`recordSuccess`、`setPassword`（仮パスワードは期限つき）、`tempPasswordExpired`、`saveRefreshToken`、`consumeRefreshToken`（使い捨て）、`revokeRefreshToken`、`revokeAllForUser`、`recentResetExists`、`saveReset`、`consumeReset`、`deleteExpired` |
+| `jobs.js`（さくら版） | `enqueue(kind, payload)`、`claimNext(kinds, lockSeconds)`、`complete`、`retry(jobId, error, delaySeconds)`、`fail`、`countFailedSince`、`deleteFinishedBefore` |
+| `schedules.js`（さくら版） | `claim(name, slot)`、`finish(name, slot, result)`、`release(name, slot)` |
 
 ### 3.5 domain（純粋関数）
 
@@ -522,6 +515,28 @@ buildAnswerOutcome({ kind, correct, score, reviewItem, today, user, quests, owne
 
 ### 3.6 ai
 
+AI の呼び出しは、必ず差し替え口 `ai/client.js` を通す（`grading-worker/grader.js`・`import-worker/extractor.js`・`routes/answers.js`・`routes/home.js`）。
+
+#### M-A06 `ai/client.js`（差し替え口）
+
+| 項目 | 設計 |
+| --- | --- |
+| 切り替え | 環境変数 `AI_PROVIDER`（`sakura`＝既定、`bedrock`）。知らない値なら `INTERNAL_ERROR` |
+| `converse(args)` | 選んだ方の `converse` をそのまま呼ぶ。引数・戻り値は M-A01 と同じ（`{ text, usage, stopReason }`） |
+| `supportsDocuments()` | PDF・画像をそのまま読めるか。`bedrock` のときだけ true（4.4 で PDF を文字にするかを決める） |
+| Bedrock に戻すとき | `.env` の `AI_PROVIDER=bedrock`、`MODEL_HIGH`・`MODEL_LIGHT`（Claude のモデルID）、`AWS_*` を書き換えて `docker compose up -d`。コードは変えない |
+
+#### M-A05 `ai/sakura.js`（さくらのAI Engine）
+
+| 項目 | 設計 |
+| --- | --- |
+| API | `POST {AI_BASE_URL}/chat/completions`（OpenAI 互換）。`Authorization: Bearer {AI_API_KEY}`。本文は `{ model, messages, max_tokens, temperature }` |
+| メッセージの変換 | `system` を先頭の `role: system` にし、Converse の形（`content` がブロックの配列）を文字列にする（`text` のブロックを改行でつなぐ）。文書・画像のブロックがあれば送らずに `AI_ERROR`（「このAIは文書・画像を読めません」） |
+| 打ち切り | `AbortController` で `timeoutMs` 後に中止し、`AI_TIMEOUT` |
+| 失敗 | HTTP の 4xx・5xx、通信の失敗は `AI_ERROR`（`cause` に `HTTP_429` など）。やり直しは呼び出し側（採点の JSON のやり直し・取り込みのジョブのやり直し）に任せる |
+| 戻り値 | `choices[0].message.content` を `text`、`usage.prompt_tokens`・`completion_tokens` をトークン数、`finish_reason` の `stop`・`length` を `end_turn`・`max_tokens` にする |
+| ログ | `ai.converse`（`provider: sakura`、用途、モデル、トークン数、所要時間）。本文・API キーは出さない |
+
 #### M-A01 `ai/bedrock.js`
 
 | 項目       | 設計                                                                                   |
@@ -538,37 +553,78 @@ buildAnswerOutcome({ kind, correct, score, reviewItem, today, user, quests, owne
 - `validateShape(obj, schema)`：必須キー・型・範囲（例：`score` は0〜100の整数）を確かめ、`{ ok, errors }` を返す
 - 呼び出し側は、検証に失敗したら「前回の出力はJSONの形が崩れていました」と添えて1回だけやり直す（外部設計書 5.5）
 
----
+### 3.7 ジョブキューと定期処理（`db/repositories/jobs.js`・`schedules.js`）
 
-## 4. Lambda関数設計
+AWS 版の「Lambda の非同期呼び出し（採点）」「S3 のイベント通知と SQS（取り込み）」「EventBridge Scheduler（定期処理）」の代わり。
+
+| 項目 | 設計 |
+| --- | --- |
+| ジョブを入れる | `enqueue('grading', { gradingId })`（A-09）、`enqueue('import', { importId })`（A-13 のテキスト、A-13b）。やり直しの上限は採点1回・取り込み3回（`max_attempts`） |
+| 取り出す | `claimNext(kinds, lockSeconds)`：`status='queued'` で `run_after` を過ぎたもの、または `status='running'` で `locked_until` を過ぎたもの（ワーカーが落ちた）を1件、`FOR UPDATE SKIP LOCKED` で取り、`running`・`attempts+1`・`locked_until` を付ける。ワーカーが複数いても同じジョブを取り合わない |
+| 終える | `complete`（done）、`retry(jobId, error, delaySeconds)`（queued に戻して `run_after` を遅らせる）、`fail`（failed） |
+| 掃除 | 日次処理で、終わってから30日を過ぎたジョブを消す（`deleteFinishedBefore`） |
+| 定期処理の枠 | `claim(name, slot)`：`schedule_runs` に `(name, slot)` を `ON CONFLICT DO NOTHING` で入れ、入れられたら自分が動かす。`finish` で結果を残す。失敗したら `release` で消し、次の見回りでやり直す |
+
+### 3.8 メール（`mail/smtp.js`・`templates.js`）
+
+| 項目 | 設計 |
+| --- | --- |
+| 送信 | nodemailer の SMTP。`SMTP_HOST`・`SMTP_PORT`（既定587）・`SMTP_SECURE`（465 のとき true）・`SMTP_USER`・`SMTP_PASS`。送信元は `MAIL_FROM`。テキストメールのみ |
+| テスト | `setTransport(t)` で送り先を差し替える |
+| 本文 | 9.2 のとおり。さくら版で `inviteMail`（招待・再招待）と `resetMail`（パスワード再設定）を追加 |
+| 監視のお知らせ | `util/alert.js` の `alert(key, subject, lines)`。`ALERT_EMAIL` がなければ送らない。同じ key は1時間に1通。送れなくても例外は投げない（10.4） |
+
+### 3.9 ファイル（`storage/object-storage.js`）
+
+| 項目 | 設計 |
+| --- | --- |
+| 接続 | `@aws-sdk/client-s3` の `S3Client` を S3 互換 API として使う（`S3_ENDPOINT`、`S3_REGION`、パス形式 `forcePathStyle: true`、`S3_ACCESS_KEY_ID`・`S3_SECRET_ACCESS_KEY`） |
+| 関数 | `putObject(bucket, key, body, contentType)`、`getBytes`、`getText`（ないときは null）、`getStream`（キャラクター画像の配信用。ないときは null）、`deleteObject`、`presignPut(bucket, key, contentType)` |
+| 署名付きURL | PUT・15分・`content-type` を署名に含める（AWS 版と同じ）。画面はこの URL へ直接ファイルを置く。バケットの CORS で画面のドメインからの PUT を許す（構築手順書） |
+| バケットの中 | `uploads/{importId}/{ファイル名}`（取り込み原本）、`partners/{persona}-{yyyyMMddHHmmss}.{png|webp}`（キャラクター画像）、`notify/{日付}/{HHMM}.json`（送信リスト）。AWS 版と同じ |
+
+### 3.10 ログイン（`auth/`・`db/repositories/auth.js`・`routes/auth.js`）
+
+AWS 版の Cognito の代わり。外部設計書 3.7 S-01・8.1。
+
+| 項目 | 設計 |
+| --- | --- |
+| パスワード | `hashPassword`：scrypt（N=16384・r=8・p=1、32バイト、ソルト16バイト）。`scrypt$N$r$p$ソルト$ハッシュ`（base64）で `users.password_hash` に保存。照合は `timingSafeEqual` |
+| パスワードの決まり | `passwordProblems`：8〜128文字、数字・大文字・小文字を1つ以上（記号は必須にしない。AWS 版の Cognito と同じ）。画面の `pages/login.js` も同じ決まりでボタンを押せるかを決める |
+| 仮パスワード | `generateTempPassword`：12文字。見間違えやすい文字（0・O・1・l・I）を除き、数字・大文字・小文字を必ず含める。期限7日（`temp_password_expires_at`） |
+| アクセストークン | `signToken`：JWT（HS256、鍵は `AUTH_SECRET`）。クレームは `sub`（`users.auth_sub`）・`groups`（ロール）・`iss`（`rpg-learning`）・`iat`・`exp`（60分） |
+| トークンの確認 | `verifyToken(token, { purpose })`：署名（`timingSafeEqual`）・`alg`（HS256 だけ）・発行者・期限・用途（`purpose`。アクセストークンは用途なし、初回のパスワード設定用は `new_password`）。合わなければ null |
+| リフレッシュトークン | 32バイトの乱数（base64url）。DB には SHA-256 だけを保存（7日）。使うと無効にして新しいものを出す（使い回しを防ぐ） |
+| ロック | ログインに5回続けて失敗したら15分（`locked_until`）。成功で数え直す |
+| 再設定リンク | 32バイトの乱数。DB には SHA-256 だけを保存（60分・1回だけ）。同じ利用者には60秒に1通まで。登録の有無に関わらず同じ応答を返す |
+| 利用者の sub | 登録時に UUID を振る（`users.auth_sub`）。メールアドレスを変えてもトークンの持ち主が変わらないようにするため |
+
+## 4. 処理の入口設計（コンテナ）
 
 ### 4.1 共通の入口処理
 
-4関数とも `index.mjs` の `handler` は次の形にする。
+1つのコンテナイメージを `server/main.mjs` で起動し、環境変数 `ROLE` で役割を決める。AWS 版の Lambda 4関数の本体（`main`・`gradeJob`・抽出・日次処理）はそのまま使い、呼び出し方だけを替えた。
 
-```text
-export const handler = async (event, context) => {
-  const log = createLogger('<関数名>', { requestId: context.awsRequestId })
-  const started = Date.now()
-  try {
-    const result = await main(event, { log, now: new Date() })   // 本体（テストでは main を直接呼ぶ）
-    log.info({ durationMs: Date.now() - started })
-    return result
-  } catch (err) {
-    log.error({ code: err.code ?? 'INTERNAL_ERROR', stack: err.stack })
-    // api-handler は toErrorResponse(err) を返す。ほかの関数は投げ直す（再試行・DLQに任せる）
-  }
-}
-```
+| 役割（`ROLE`） | 起動するもの | AWS 版での担当 | 中で呼ぶ本体 |
+| --- | --- | --- | --- |
+| `api` | HTTP サーバー（4.6） | CloudFront・API Gateway・`api-handler` | `functions/api-handler/index.mjs` の `main(event, { log, now })` |
+| `worker` | ジョブの処理と定期処理（4.7） | `grading-worker`・`import-worker`・`batch-runner`・SQS・EventBridge Scheduler | `runGradingJob`（4.3）・`runImportJob`（4.4）・`batch-runner` の `main`（4.5） |
+| `all` | 両方（小さな環境・手元の確認用） | - | - |
 
-- `now` は api-handler・batch-runner では Date（処理の開始時刻）を渡す。grading-worker だけは、JSONのやり直しの前に経過時間を測るため、**呼ぶたびに今の時刻を返す関数 `now()`** を渡す（時刻そのものを渡すと経過時間が常に0秒になり、時間切れ直前でもやり直してしまう）
+**起動の流れ（`start`）**
 
-| 関数               | メモリ／タイムアウト | Data API の起動待ち（`resumeRetries`） | 起動元               |
-| ---------------- | ---------- | ------------------------------ | ----------------- |
-| `api-handler`    | 512MB／29秒  | 0回（すぐ 503 を返し、画面が再試行）          | API Gateway（HTTP API 2.0） |
-| `grading-worker` | 512MB／60秒  | 6回（5秒おき、最大30秒）                 | api-handler からの非同期起動（再試行0回） |
-| `import-worker`  | 1024MB／15分 | 6回                             | SQS（バッチサイズ1、部分的なバッチ応答） |
-| `batch-runner`   | 256MB／15分  | 6回（`job='mail'` はDBを使わない）       | EventBridge Scheduler |
+1. `checkEnv(role)`：2.4.6 の環境変数のうち、役割と `AI_PROVIDER` に要るものがそろっているかを確かめる。足りなければ `server.start_failed` を出して終了コード1で止まる（compose が再起動を繰り返すので、ログで気づける）
+2. `MIGRATE_ON_START=true`（api だけ）なら、マイグレーションを流す（3.3 M-D05）。失敗したら起動しない
+3. 役割のものを起動する。`SIGTERM`（`docker compose stop`）を受けたら、HTTP サーバーを閉じ、処理中のジョブが終わるのを待ってから DB の接続を閉じて止まる（compose の `stop_grace_period` は worker を2分）
+
+- `now` は api・batch-runner では Date（処理の開始時刻）を渡す。採点だけは、JSONのやり直しの前に経過時間を測るため、**呼ぶたびに今の時刻を返す関数 `now()`** を渡す（AWS 版と同じ）
+
+| 処理 | 時間の上限 | 同時に動く数 |
+| --- | --- | --- |
+| API（1リクエスト） | なし（画面は採点の結果を30秒で打ち切る。Caddy の本文は2MBまで） | Node.js の1プロセス（DB の接続は5本まで） |
+| 採点 | AI の呼び出しが25秒（`AI_TIMEOUT_MS`）。ジョブのロックは2分 | `WORKER_GRADING_CONCURRENCY`（既定2） |
+| 取り込み | AI の呼び出しが1かたまり120秒。ジョブのロックは20分 | `WORKER_IMPORT_CONCURRENCY`（既定1。AI の使いすぎを防ぐ） |
+| 定期処理 | なし（日次処理は順に流す） | 1つ（枠は DB で取り合う） |
 
 ### 4.2 api-handler
 
@@ -576,9 +632,9 @@ export const handler = async (event, context) => {
 
 ```mermaid
 flowchart TD
-  A["API Gateway イベント"] --> B["router.match（メソッド・パス）"]
+  A["HTTP サーバーが作った event"] --> B["router.match（メソッド・パス）"]
   B -->|"なし"| N["404 NOT_FOUND"]
-  B --> C["getAuth：JWTクレームから sub・groups"]
+  B --> C["getAuth：トークンのクレームから sub・groups"]
   C --> D["requireRole：ルートのロール"]
   D --> E["loadUser：users を取得<br>招待中なら有効にする"]
   E --> F["入力チェック（validators・ids）"]
@@ -594,7 +650,7 @@ flowchart TD
 
 | No   | メソッド・パス                                     | ハンドラ（routes/）                 | ロール            |
 | ---- | ------------------------------------------- | ------------------------------ | -------------- |
-| A-00 | `GET /api/health`                           | `health.get`（DBに `SELECT 1`）    | 不要（配置時のヘルスチェック用。Lambda を直接呼び出す。API Gateway経由ではJWTが必要） |
+| A-00 | `GET /api/health`                           | `health.get`（DBに `SELECT 1`）    | 不要（コンテナのヘルスチェック・シンプル監視・配置後の確認） |
 | A-01 | `GET /api/me`                               | `me.get`                       | 全員             |
 | A-02 | `PUT /api/me/profile`                       | `me.putProfile`                | learner        |
 | A-03 | `PUT /api/me/partner`                       | `me.putPartner`                | learner        |
@@ -608,6 +664,7 @@ flowchart TD
 | A-11 | `GET /api/rankings?course=&week=`           | `rankings.get`                 | learner        |
 | A-12 | `GET /api/me/stats`、`GET /api/me/badges`    | `me.stats`・`me.badges`         | learner        |
 | A-13 | `POST /api/admin/imports`                   | `adminImports.create`          | course_admin   |
+| A-13b | `POST /api/admin/imports/{id}/uploaded`    | `adminImports.uploaded`        | course_admin   |
 | A-14 | `GET /api/admin/imports/{id}`、`GET /api/admin/imports?course=` | `adminImports.get`・`adminImports.list` | course_admin   |
 | A-15 | `PUT・DELETE /api/admin/questions/{id}`      | `adminQuestions.put`・`.delete` | course_admin   |
 | A-16 | `POST /api/admin/questions/{id}/publish`    | `adminQuestions.publish`       | course_admin   |
@@ -615,23 +672,27 @@ flowchart TD
 | A-18 | `GET /api/admin/dashboard.csv?course=`      | `adminDashboard.csv`           | course_admin   |
 | A-19 | `GET・POST /api/admin/users`、`PUT /api/admin/users/{id}` | `adminUsers.list`・`.create`・`.update` | system_admin   |
 | A-20 | `POST /api/admin/users/{id}/delete`・`/restore` | `adminUsers.delete`・`.restore` | system_admin   |
+| A-21b | `POST /api/admin/users/{id}/reinvite`     | `adminUsers.reinvite`          | system_admin   |
 | A-21 | `GET・POST /api/admin/courses`、`PUT /api/admin/courses/{id}` | `adminCourses.list`・`.create`・`.update` | system_admin   |
 | A-22 | `GET・PUT・DELETE /api/admin/partners/{persona}/image` | `adminPartners.get`・`.put`・`.delete` | system_admin   |
+| A-30〜A-35 | `POST /api/auth/login`・`new-password`・`refresh`・`logout`・`forgot`・`reset` | `auth.login`・`.newPassword`・`.refresh`・`.logout`・`.forgot`・`.reset` | 不要（ログイン前に呼ぶ） |
 
 - `course_admin` のルートは `system_admin` も使える（`requireRole(auth, 'course_admin', 'system_admin')`）
 - パスの `{id}` は router が取り出し、ハンドラの中で `decodeId` する
 
 ### 4.3 grading-worker
 
-入力：`{ "gradingId": 456 }`（内部ID。api-handler が `InvocationType: 'Event'` で起動）
+入力：ジョブ `{ kind: 'grading', payload: { gradingId: 456 } }`（内部ID。A-09 がジョブキューに入れ、worker が取り出して `runGradingJob(job)` を呼ぶ）
 
 ```mermaid
 sequenceDiagram
-  participant API as api-handler
-  participant W as grading-worker
-  participant DB as Aurora
-  participant BR as Bedrock Sonnet
-  API->>W: 非同期起動 gradingId
+  participant API as api（A-09）
+  participant Q as jobs
+  participant W as worker（採点）
+  participant DB as DB
+  participant BR as AI 高精度モデル
+  API->>Q: enqueue grading gradingId
+  W->>Q: claimNext（1秒ごと）
   W->>DB: grading_jobs・keywords・questions・users を取得
   alt 状態が processing でない
     W-->>W: 何もせず終了（二重起動・時間切れ済み）
@@ -653,61 +714,64 @@ sequenceDiagram
 | 項目       | 設計                                                                                  |
 | -------- | ----------------------------------------------------------------------------------- |
 | 合否       | `score >= 60` を合格。点数はAIの返した `accuracy`・`coverage`・`concreteness` の合計（AIの `score` とずれたら合計を正とする） |
-| 失敗       | Bedrockの例外・時間切れ・2回ともJSONが崩れた → `grading_jobs` を `failed`（`failure_reason` に `ai_error`／`ai_timeout`）にして終了。例外は投げない（非同期の再試行は0回） |
+| 失敗       | AIの例外・時間切れ・2回ともJSONが崩れた → `grading_jobs` を `failed`（`failure_reason` に `ai_error`／`ai_timeout`）にして終了。DB の失敗など想定外の例外は `runGradingJob` が受け止めて `ai_error` にし、ジョブも failed にする（やり直しは0回。学習者が「もう一度採点してもらう」を押す） |
 | 結果JSON   | 外部設計書 5.3 の A-10 の応答の形のまま `grading_jobs.result` に保存する。A-10 はそれを返すだけにする                     |
 | 説明文      | `answer_logs.explanation_text` に保存する（学習履歴）。ログには出さない                                     |
 
 ### 4.4 import-worker
 
-入力：SQSメッセージ（本文はS3のイベント通知）。キー `uploads/{importId}/{ファイル名}` から `importId` を取り出す。
+入力：ジョブ `{ kind: 'import', payload: { importId: 8 }, attempts, maxAttempts: 3 }`。テキストは A-13 が、PDF・画像は画面がアップロードを終えて A-13b を呼んだときにキューに入る。worker が取り出して `runImportJob(job)` を呼ぶ。
 
 ```mermaid
 flowchart TD
-  A["SQS メッセージ"] --> B["S3キーから importId"]
-  B --> C{"import_jobs.status"}
-  C -->|"done・failed"| Z["何もしない（重複通知）"]
+  A["ジョブ import importId"] --> C{"import_jobs.status"}
+  C -->|"done・failed"| Z["何もしない（重複）"]
   C -->|"waiting・extracting"| D["status = extracting"]
-  D --> E["S3 から原本を取得"]
-  E --> F{"種類"}
-  F -->|"PDF"| G["pdf-splitter：10ページずつ"]
-  F -->|"画像"| H["1枚をそのまま"]
+  D --> E["オブジェクトストレージから原本を取得（import_jobs.s3_key）"]
+  E --> F{"種類と AI"}
+  F -->|"PDF・Bedrock"| G["pdf-splitter：10ページずつの PDF"]
+  F -->|"PDF・さくら"| G2["pdf-text：10ページずつの文字（さらに8,000文字ずつ）"]
+  F -->|"画像・Bedrock"| H["1枚をそのまま"]
+  F -->|"画像・さくら"| HX["取り込めない（すぐ failed）"]
   F -->|"テキスト"| I["8,000文字ずつ（段落の切れ目で）"]
-  G --> J["かたまりごとに Bedrock Sonnet で抽出"]
+  G --> J["かたまりごとに AI（高精度）で抽出"]
+  G2 --> J
   H --> J
   I --> J
   J --> K["normalizeDraft：選択肢4つでなければ needs_review<br>キーワードは3つまで"]
   K --> L["questions・choices・keywords に下書きを保存"]
   L --> M["status = done、extracted_count"]
-  J -->|"例外"| R{"受信回数 3回目?"}
-  R -->|"いいえ"| S["batchItemFailures に入れて再試行"]
-  R -->|"はい"| T["status = failed、error_message"]
+  J -->|"例外"| R{"attempts が3回目?"}
+  R -->|"いいえ"| S["status = waiting に戻し、1分後にやり直す（retry）"]
+  R -->|"はい"| T["status = failed、error_message。管理者に監視のお知らせ"]
 ```
 
 | 項目        | 設計                                                                                                   |
 | --------- | ---------------------------------------------------------------------------------------------------- |
-| 重複を防ぐ     | かたまりごとの抽出結果は、全部そろってから1つのトランザクションで保存する。途中で失敗したら何も保存しない（再試行で最初からやり直す）                                 |
+| 重複を防ぐ     | かたまりごとの抽出結果は、全部そろってから1つのトランザクションで保存する。途中で失敗したら何も保存しない（やり直しで最初からやり直す）                                 |
 | ページ上限     | PDFは50ページまで。超えていたら抽出せず `failed`（「50ページ以内に分けて取り込んでください」）                                               |
-| 再試行しない失敗  | ページ上限超え・PDFとして読めない・対応していない形式は、やり直しても同じ結果になるため、受信回数にかかわらずすぐ `failed` にしてメッセージを消す |
+| 文字の取り出し | さくらのAI Engine（`supportsDocuments()` が false）のときは、unpdf（pdf.js）でページごとの文字を取り出す（`pdf-text.js`）。すべてのページに文字がなければ `failed`（「PDFから文字を読み取れませんでした（画像だけのPDFは、いまのAIでは取り込めません）」） |
+| やり直さない失敗  | ページ上限超え・PDFとして読めない・文字のないPDF・対応していない形式・さくらのときの画像（`PermanentImportError`）は、すぐ `failed` にする |
 | 抽出の正規化    | 問題文・解説の前後の空白を除く。正解が選択肢の番号でなければ `correct_choice = null` で `needs_review`。キーワードは重複（大文字・小文字を区別しない）を除き最大3つ                      |
-| 受信回数      | `record.attributes.ApproximateReceiveCount`。3回目（DLQの最大受信数と同じ）で失敗したら `failed` にして、メッセージは成功扱いで消す                |
-| 同時実行      | 予約された同時実行2（構築手順書 3.8）                                                                                |
+| やり直し      | `job.attempts` が3回目（`max_attempts`）で失敗したら `failed`（「問題の抽出に失敗しました。時間をおいてもう一度取り込んでください」）。それまでは `waiting` に戻して1分後 |
+| 同時実行      | worker の取り込みは同時に1件（`WORKER_IMPORT_CONCURRENCY`）                                                                                |
 
 ### 4.5 batch-runner
 
-入力：`{"job":"daily"}`（毎日0:00）または `{"job":"mail"}`（6:00〜22:30の30分ごと）。
+入力：`{"job":"daily"}`（毎日0:00以降に1回）または `{"job":"mail"}`（6:00〜22:30の30分ごと。`MAIL_SCHEDULE_ENABLED=true` のときだけ）。worker のスケジューラ（4.7）が呼ぶ。
 
 #### 4.5.1 daily（B-01・B-02）
 
-ステップは順に実行し、各ステップは**何度実行しても結果が同じ**（冪等）になるように作る。失敗したらそこで例外を投げ、EventBridge Scheduler の再試行（最大2回）で最初からやり直す。
+ステップは順に実行し、各ステップは**何度実行しても結果が同じ**（冪等）になるように作る。失敗したらそこで例外を投げ、スケジューラが次の見回り（30秒後）で最初からやり直す（3回まで。3回とも失敗したら監視のお知らせ）。
 
 | 順 | ステップ（steps/）           | 処理                                                                                                          | 冪等にする工夫                                                       |
 | - | ----------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | 1 | `close-ranking.js`      | 月曜だけ：前週（今日−7日〜昨日）の `exp_logs` をコース・利用者ごとに合計し、`rankRows` で順位をつけて `weekly_rankings` に保存。論理削除中の利用者は除く | `INSERT ... ON CONFLICT (course_id, week_start, user_id) DO NOTHING` |
 | 2 | `update-streak.js`      | 昨日 `last_active_on = 昨日` の利用者は `streak_days + 1`、それ以外は0。継続バッジを判定して付与                                         | `streak_checked_on = 今日` の利用者は飛ばす                              |
 | 3 | `assign-quests.js`      | 有効な学習者ごとに、0:00時点の復習対象数（全コース）を数え、`pickDailyQuests` で3つ選んで `user_quests` に入れる                                     | `UNIQUE (user_id, quest_on, quest_code)`。今日の行がある利用者は飛ばす          |
-| 4 | `purge-users.js`        | `delete_scheduled_on <= 今日` の利用者を、Cognito の `AdminDeleteUser` → `DELETE FROM users`（関連テーブルはCASCADE）の順で消す。操作記録 `user.purge`（操作者は NULL）を残す        | Cognito で `UserNotFoundException` なら削除済みとして続ける                 |
-| 5 | `cleanup-gradings.js`   | 作成から30日を過ぎた `grading_jobs` を削除                                                                            | 条件付きDELETEなので何度でも同じ                                          |
-| 6 | `build-notify.js`       | メール通知オンの有効な学習者について、送信時刻ごとに送信リストを作り、S3 `notify/{今日}/{HHMM}.json` に置く                                             | 同じキーに上書き                                                      |
+| 4 | `purge-users.js`        | `delete_scheduled_on <= 今日` の利用者を `DELETE FROM users` で消す（関連テーブル・トークン・再設定リンクはCASCADE）。操作記録 `user.purge`（操作者は NULL）を残す。あわせて期限の切れたトークン・再設定リンクを消す（`auth.deleteExpired`）        | 条件付きDELETEなので何度でも同じ                 |
+| 5 | `cleanup-gradings.js`   | 作成から30日を過ぎた `grading_jobs` と、終わってから30日を過ぎた `jobs` を削除                                                                            | 条件付きDELETEなので何度でも同じ                                          |
+| 6 | `build-notify.js`       | メール通知オンの有効な学習者について、送信時刻ごとに送信リストを作り、オブジェクトストレージ `notify/{今日}/{HHMM}.json` に置く                                             | 同じキーに上書き                                                      |
 
 **送信リストの形（`notify/2026-10-20/0730.json`）**
 
@@ -720,9 +784,32 @@ flowchart TD
 #### 4.5.2 mail（B-03、DBを使わない）
 
 1. `jstSlot(now)` で送信枠（例：`0730`）を求める。分が0〜29なら `00`、30〜59なら `30`
-2. S3 から `notify/{今日}/{枠}.json` を取得する。`NoSuchKey` なら件数0で正常終了（22:30 の枠など）
-3. 1件ずつ `notifyMail(item)` で本文を作り、SES で送る。失敗したら1回だけやり直し、それでも失敗したら `WARN` で件数を出して次へ
-4. 送信件数・失敗件数を `INFO` で出す。例外は投げない（メールの再送で二重送信しないため。スケジュールの再試行は0回）
+2. オブジェクトストレージから `notify/{今日}/{枠}.json` を取得する。ないときは件数0で正常終了（22:30 の枠など）
+3. 1件ずつ `notifyMail(item)` で本文を作り、SMTP で送る。失敗したら1回だけやり直し、それでも失敗したら `WARN` で件数を出して次へ
+4. 送信件数・失敗件数を `INFO` で出す。例外は投げない（メールの再送で二重送信しないため。スケジューラのやり直しは起きない）
+
+### 4.6 HTTP サーバー（`server/http.mjs`）
+
+| パス | 処理 |
+| --- | --- |
+| `/api/*` | 本文（POST・PUT・PATCH・DELETE。1MBまで、超えたら 413）を読み、API Gateway（HTTP API 2.0）と同じ形の event（`rawPath`・`queryStringParameters`・`requestContext.http`・`body`）を作って `api-handler` の `main` を呼ぶ。`Authorization: Bearer` のトークンが正しいときだけ、`requestContext.authorizer.jwt.claims` にクレームを置く（JWT オーソライザーの代わり） |
+| `/partners/*` | `partners/{persona}-{14桁}.(png|webp)` の形のときだけ、`ASSETS_BUCKET` から読んで返す（1日キャッシュ）。ないときは 404 |
+| それ以外（GET・HEAD） | 画面のファイル（`WEB_ROOT`）。`/` は `index.html`。`index.html`・`sw.js` は `no-cache`、ほかは1日キャッシュ。`WEB_ROOT` の外は読ませない（`..` を含むパスは 403／404） |
+| それ以外のメソッド | 405 |
+
+- すべての応答に `X-Content-Type-Options: nosniff`・`X-Frame-Options: DENY`・`Referrer-Policy: strict-origin-when-cross-origin` を付ける。HSTS は Caddy が付ける
+- 想定外の例外は 500（`INTERNAL_ERROR`）。5分間に5xx が5回以上あったら監視のお知らせ（`api-5xx`）
+
+### 4.7 ワーカー（`server/worker.mjs`）
+
+| 部分 | 処理 |
+| --- | --- |
+| ジョブの見回り（`jobLoop`） | 種類（grading・import）ごとに決めた数だけ動かす。`claimNext` で1件取り、`runGradingJob`・`runImportJob` を呼ぶ。待ちがなければ1秒休む |
+| 結果の扱い（`runOnce`） | `done` → `complete`。`retry` → `retry`（既定60秒後）。`failed` → `fail`（取り込みなら監視のお知らせ）。本体が例外を投げたら、回数が残っていれば `retry`、なければ `fail`。取り戻したジョブ（落ちたワーカーのもの）が回数を使い切っていたら、処理せずに `fail` |
+| 定期処理（`createScheduler`） | 30秒ごとに、今の時刻で動かすべき枠（`dueSlots`）を見る。daily は `YYYY-MM-DD`（その日の0:00以降に1回）、mail は `YYYY-MM-DDTHHMM`（6:00〜22:30、`MAIL_SCHEDULE_ENABLED=true` のとき）。`schedules.claim` で枠を取れたら `batch-runner` の `main` を呼び、`finish` で結果を残す |
+| 定期処理の失敗 | 枠を `release` して次の見回りでやり直す。同じ枠で3回失敗したらやめて監視のお知らせ（`schedule-{name}`） |
+| 止まっていた日 | worker が0:00に止まっていても、起動したときにその日の daily を動かす（その日の枠がまだないため）。メールは今の枠だけを動かし、過ぎた枠は送らない |
+
 
 ---
 
@@ -797,7 +884,7 @@ flowchart TD
 
 #### A-09 `POST /api/gradings`
 
-`{ adventureId, keywordId, text }` → `validateExplanation`（NGなら400）→ キーワードが現在のコースの公開済み問題のものか確認 → `grading_jobs` に `processing` で追加 → `LambdaClient.InvokeCommand({ FunctionName: GRADING_FUNCTION, InvocationType: 'Event', Payload: {gradingId} })` → `202 { gradingId, status: 'processing' }`。起動（Invoke）が失敗したら、ジョブを `failed`（`ai_error`）にして 500 を返す。
+`{ adventureId, keywordId, text }` → `validateExplanation`（NGなら400）→ キーワードが現在のコースの公開済み問題のものか確認 → `grading_jobs` に `processing` で追加 → ジョブキューに `grading`（`{gradingId}`）を入れる（3.7）→ `202 { gradingId, status: 'processing' }`。キューに入れられなかったら、採点を `failed`（`ai_error`）にして 500 を返す。
 
 - 画面が送る `isReview` は使わない（復習かどうかは worker が `review_items` から判断する）
 
@@ -830,10 +917,20 @@ flowchart TD
 
 1. `assertCourseAdmin` → `validateImportRequest`
 2. `import_jobs` に `waiting` で追加。キーに取り込みIDを含めるため、仮の値（`pending`）で登録して `setKey` で書き換える。**登録と書き換えは1つのトランザクションで行い**、途中で失敗したら登録ごと取り消す（仮の値の記録を残さない）
-3. PDF・画像：S3 `uploads/{importId}/{安全なファイル名}` への署名付きURL（PUT、15分、`Content-Type` 固定）を返す → `201 { importId, uploadUrl }`
-4. テキスト：api-handler が `uploads/{importId}/source.txt` に直接書き込む → `201 { importId }`（どちらも S3 の通知で import-worker が動く）
+3. PDF・画像：オブジェクトストレージ `uploads/{importId}/{安全なファイル名}` への署名付きURL（PUT、15分、`Content-Type` 固定）を返す → `201 { importId, uploadUrl }`。画面は置き終えたら A-13b を呼ぶ
+4. テキスト：api が `uploads/{importId}/source.txt` に直接書き込み、取り込みのジョブを入れる → `201 { importId }`
 
 - 安全なファイル名：英数字・`.`・`-`・`_` 以外を `_` に置き換え、100文字まで
+
+#### A-13b `POST /api/admin/imports/{id}/uploaded`
+
+AWS 版の「S3 のイベント通知 → SQS」の代わり。画面が署名付きURLでファイルを置き終えたら呼ぶ。
+
+1. 取り込みがない、またはテキストの取り込みなら `404`。担当外のコースなら `403`
+2. 状態が `waiting` でなければ `409`（二重に押したときなど）
+3. 取り込みのジョブを入れる → `202 { importId, status: 'waiting' }`
+
+- 画面がアップロードに失敗した（A-13b を呼ばなかった）取り込みは `waiting` のまま残る。S-11 の一覧には「待機中」と出るため、もう一度取り込んでもらう（Phase 2 で、古い `waiting` の掃除を検討）
 
 #### A-14 `GET /api/admin/imports/{id}`・`GET /api/admin/imports?course=`
 
@@ -854,20 +951,22 @@ flowchart TD
 
 - 集計は 8.5 の SQL（受講者ごとの網羅率・正答率・最終ログイン・直近7日のログイン回数）を1回で取り、合計値はアプリで計算する
 - CSVは外部設計書 5.4 の形。先頭にBOM（`﻿`）、改行はCRLF、値に `,`・`"`・改行があれば `"` で囲み `"` は `""` にする。`=`・`+`・`-`・`@` で始まる値は先頭に `'` を付ける（Excelの数式の実行を防ぐ）
-- API Gateway の応答上限（6MB）を超えないよう、1コース1,000名までを想定（Phase 3 で見直す）
+- 応答を一度に組み立てるため、1コース1,000名までを想定（Phase 3 で見直す）
 
 #### A-19・A-20 利用者管理
 
-| 操作            | DB                                                       | Cognito                                                              |
+| 操作            | DB（1つのトランザクション）                                                       | ログイン・メール（AWS 版では Cognito）                                                              |
 | ------------- | -------------------------------------------------------- | -------------------------------------------------------------------- |
-| 登録（POST）      | `users`（`invited`）・`user_roles`・`notify_settings`（初期値）を追加 | `AdminCreateUser`（`email_verified=true`、招待メール）→ `AdminAddUserToGroup`。Cognito が先に失敗したらDBに書かない |
-| ロール変更（PUT）    | `user_roles` を置き換え                                       | 追加・削除したグループだけ `AdminAddUserToGroup`／`AdminRemoveUserFromGroup`         |
-| 論理削除          | `status='deleted'`、`delete_scheduled_on = 今日＋30日`、`deleted_at` | `AdminDisableUser`。本人に削除予定の通知メールを送る                                     |
-| 復活            | `status='active'`、削除予定日を空に                               | `AdminEnableUser`                                                    |
+| 登録（POST）      | `users`（`invited`、`auth_sub` に UUID）・`user_roles`・`notify_settings`（初期値）を追加し、仮パスワードのハッシュと期限（7日）を保存 | トランザクションの中で招待メール（仮パスワード）を送る。送れなければ登録ごと取り消して `500`（「招待メールを送れませんでした。メールの設定を確認してください」）。メールアドレスの重複（一意制約 `23505`）は `409` |
+| ロール変更（PUT）    | `user_roles` を置き換え                                       | なし（次の API から効く。トークンの `groups` は次の更新で変わる）         |
+| 論理削除          | `status='deleted'`、`delete_scheduled_on = 今日＋30日`、`deleted_at`。リフレッシュトークンをすべて無効にする | ログインできなくなる（A-30 が `LOGIN_FAILED` を返す）。本人に削除予定の通知メールを送る（失敗してもログだけ）                                     |
+| 復活            | `status='active'`、削除予定日を空に                               | もとのパスワードでログインできる                                                    |
+| 再招待（A-21b）     | 仮パスワードを作り直してハッシュと期限（7日）を保存。操作記録 `user.reinvite`。`invited` の利用者だけ（ほかは `409`） | 招待メールを送り直す（送れなければ取り消して `500`） |
 
 - 自分自身の削除・`system_admin` ロールの解除はできない（`409`）。最後の `system_admin` を守るため
 - 有効な利用者の「復活」、論理削除中の利用者の「削除」は状態の食い違いとして `409`
 - 一覧（GET）は `{ users: [{ id, fullName, nickname, email, roles, status, deleteScheduledOn, lastLoginAt }] }`。最終ログイン日時 `lastLoginAt` は `+09:00` 付き
+- 仮パスワードはメールにだけ書き、ログ・操作記録・API の応答には出さない
 
 #### A-21 コース管理
 
@@ -881,7 +980,20 @@ flowchart TD
 | PUT     | `{ action: 'prepare', contentType, size }` → PNG・WebP、2MBまでを確認 → キー `partners/{persona}-{yyyyMMddHHmmss}.{拡張子}` の署名付きURLを返す。`{ action: 'commit', imageKey }` → `partners.image_key` を更新し、古い画像を削除 |
 | DELETE  | `image_key` を空にして画像を削除（頭文字の表示に戻る）                                                                                 |
 
-- キーに日時を入れて毎回名前を変えるため、CloudFront のキャッシュ削除は不要
+- キーに日時を入れて毎回名前を変えるため、画面・Service Worker のキャッシュを消す必要はない。画像は api コンテナの `/partners/*` が配信する（4.6）
+
+### 5.4 ログインAPI（A-30〜A-35）
+
+トークンなしで呼べる（4.2.2）。応答の形は外部設計書 5.1。
+
+| No | 入力 | 処理と応答 |
+| --- | --- | --- |
+| A-30 `POST /api/auth/login` | `{ email, password }` | メールアドレスで利用者を引き（大文字小文字を区別しない）、いなくても同じ時間をかけてハッシュを照合する。いない・パスワードなし・削除予定・違う → `401 LOGIN_FAILED`（違うときだけ失敗を数える）。ロック中 → `423 ACCOUNT_LOCKED`。合えば失敗の数を0に戻し、仮パスワードなら期限を確かめて（切れていたら `401 PASSWORD_EXPIRED`）`200 { challenge: 'NEW_PASSWORD_REQUIRED', session }`（`session` は10分有効・用途 `new_password` のトークン）。そうでなければ `200 { idToken, refreshToken, expiresIn: 3600 }` |
+| A-31 `POST /api/auth/new-password` | `{ session, newPassword }` | `session` を確かめ（だめなら `401`）、パスワードの決まりを確かめ（だめなら `400`、`details` に `TOO_SHORT`・`NO_DIGIT`・`NO_UPPER`・`NO_LOWER`・`TOO_LONG`）、利用者がまだ仮パスワードのときだけ保存して、A-30 と同じトークンを返す |
+| A-32 `POST /api/auth/refresh` | `{ refreshToken }` | 有効なリフレッシュトークンを無効にして（使い捨て）、新しいトークンの組を返す。使えない・利用者が削除予定・仮パスワードのまま → `401` |
+| A-33 `POST /api/auth/logout` | `{ refreshToken }` | 無効にして `204`。トークンがなくても `204` |
+| A-34 `POST /api/auth/forgot` | `{ email }` | 登録があり、削除予定でなく、パスワードを決めた利用者なら、再設定リンク（60分・1回）をメールで送る（同じ人へは60秒に1通）。どの場合も `202 { status: 'accepted' }` |
+| A-35 `POST /api/auth/reset` | `{ token, newPassword }` | パスワードの決まりを確かめ、リンクを使用済みにして保存し、ロックを解いて、その人のリフレッシュトークンをすべて無効にする → `204`。リンクが使えない・利用者が削除予定 → `400`（`details: [{ field: 'token', code: 'INVALID' }]`） |
 
 ---
 
@@ -894,15 +1006,19 @@ sequenceDiagram
   participant B as ブラウザ
   participant M as main.js
   participant AU as core/auth.js
-  participant CG as Cognito マネージドログイン
+  participant L as pages/login.js
   participant API as /api
   B->>M: index.html を開く
   M->>AU: ensureLogin()
-  alt URL に ?code= がある
-    AU->>CG: POST /oauth2/token（code・code_verifier）
-    CG-->>AU: IDトークン・リフレッシュトークン
-  else トークンがない
-    AU->>CG: /oauth2/authorize（PKCE・lang=ja）へ移動
+  alt sessionStorage にトークンがない
+    AU->>L: showLogin()（S-01）
+    L->>API: POST /api/auth/login（A-30）
+    alt 仮パスワード
+      API-->>L: challenge・session
+      L->>API: POST /api/auth/new-password（A-31）
+    end
+    API-->>AU: IDトークン・リフレッシュトークン
+    AU->>B: 読み込み直す
   end
   M->>API: GET /api/me
   API-->>M: 利用者情報・onboarding
@@ -911,7 +1027,8 @@ sequenceDiagram
 
 | モジュール               | 公開関数                                                   | 処理                                                                                                    |
 | ------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `core/auth.js`      | `ensureLogin`、`getIdToken`、`refresh`、`logout`          | `code_verifier`（64文字）と `state` を `crypto.getRandomValues` で作り、`S256` のチャレンジを付けて移動。戻ったら `state` を照合。トークンはメモリと `sessionStorage`。期限の5分前に `refresh`。失敗したらログイン画面へ |
+| `core/auth.js`      | `ensureLogin`、`signIn`、`completeNewPassword`、`refresh`、`login`、`getIdToken`、`logout`、`forgot`、`resetPassword` | A-30〜A-35 を呼ぶ。トークンはメモリと `sessionStorage`（キー `rpg.auth`）だけに置く。期限の5分前に `refresh`（A-32）。失敗したら消して読み込み直し、ログイン画面へ。`logout` は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする） |
+| `pages/login.js`    | `renderLogin`、`renderSignIn`                           | S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（`#/reset?token=…`）の4つの表示を切り替える。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED） |
 | `core/api.js`       | `apiGet`、`apiPost`、`apiPut`、`apiDelete`                 | `/api` に `Authorization: Bearer` を付ける。`503 DB_RESUMING` は2・4・8秒あけて最大3回やり直し、その間 M-01 を表示。`401` は1回だけ `refresh` してやり直す。そのほかは `ApiError(code, status)` を投げる |
 | `core/router.js`    | `register(path, page, roles)`、`start`、`go(path)`        | `#/home` などのハッシュで画面モジュールを選び `render(root, params)` を呼ぶ。知らないハッシュは `#/home` にする。ロールが足りなければ M-11。初回の流れ（ニックネーム→コース→パートナー）が終わるまでほかの画面へ行かせない（管理局 `/admin/…` は除く。管理者は学習者の初回の流れを済ませなくても管理の作業ができる） |
 | `core/store.js`     | `getState`、`setState`、`subscribe`                      | 利用者・現在のコース・冒険ID などを持つ                                                                              |
@@ -933,10 +1050,10 @@ sequenceDiagram
 | S-08 | `learner/s08-profile.js`      | A-12、A-02                | ニックネーム編集ダイアログ                                              |
 | S-09 | `learner/s09-partner.js`      | A-03                     | `validatePartnerName`                                      |
 | S-10 | `learner/s10-notify.js`       | A-04                     | 6:00〜22:00 の30分刻みの選択肢、M-09 の注記                            |
-| S-11 | `admin/s11-import.js`         | A-13、A-14、A-15、A-16      | 署名付きURLへ `PUT` でアップロード。取り込み状況は5秒ごとに再取得（完了・失敗で止める）             |
+| S-11 | `admin/s11-import.js`         | A-13、A-13b、A-14、A-15、A-16 | 署名付きURLへ `PUT` でアップロードし、終わったら A-13b。取り込み状況は5秒ごとに再取得（完了・失敗で止める）             |
 | S-12 | `admin/s12-dashboard.js`      | A-17、A-18                | 並べ替えは画面で行う。CSVは `Blob` にしてダウンロード                            |
-| S-13 | `admin/s13-users.js`          | A-19、A-20、A-21           | 削除の確認ダイアログ（M-10）                                           |
-| S-14 | `admin/s14-partners.js`       | A-22                     | `prepare` → S3 へ `PUT` → `commit` の3段階                       |
+| S-13 | `admin/s13-users.js`          | A-19、A-20、A-21、A-21b     | 削除の確認ダイアログ（M-10）。招待中の利用者に「招待メールを送り直す」                                           |
+| S-14 | `admin/s14-partners.js`       | A-22                     | `prepare` → オブジェクトストレージへ `PUT` → `commit` の3段階                       |
 
 ### 6.3 設定ファイル（`web/config/config.{env}.js`）
 
@@ -944,26 +1061,33 @@ sequenceDiagram
 export const CONFIG = {
   env: 'dev',
   apiBase: '/api',
-  cognitoDomain: 'https://rpg-dev-xxxx.auth.ap-northeast-1.amazoncognito.com',
-  clientId: 'xxxxxxxxxxxxxxxxxxxxxxxxxx',
-  redirectUri: 'https://dxxxxxxxxxxxx.cloudfront.net/',
   release: '__RELEASE__'
 }
 ```
 
-- 値は構築手順書の V-08・V-09。`release` は `build-web.mjs` がリリース番号に置き換える
-- 秘密の値（シークレット）は画面に置かない（SPAのためクライアントシークレットなし）
+- 画面と API は同じドメイン（Caddy）で受けるため、ログインの設定値は持たない。`release` は `build-web.mjs`（コンテナイメージを作るとき）がリリース番号に置き換える
+- 秘密の値（シークレット）は画面に置かない
 - `release` は S-08 の下部とログイン後のホームの最下部に小さく表示する（リリース後の確認用）
 
 ---
 
-## 7. Bedrock連携の詳細
+## 7. AI連携の詳細
+
+AI はすべて差し替え口 `ai/client.js`（M-A06）から呼ぶ。呼び出し先は環境変数 `AI_PROVIDER` で決まる。
+
+| `AI_PROVIDER` | 呼び出し先 | `MODEL_HIGH`・`MODEL_LIGHT` | PDF・画像 |
+| --- | --- | --- | --- |
+| `sakura`（当面の既定） | さくらのAI Engine（OpenAI 互換の Chat Completions、M-A05） | どちらも `gpt-oss-120b` | PDF は文字を取り出して（unpdf）テキストとして渡す。画像は取り込めない |
+| `bedrock`（復旧後） | Amazon Bedrock の Converse API（M-A01） | Sonnet・Haiku のモデルID（AWS 版と同じ） | PDF・画像をそのまま渡す |
+
+- 指示文（7.2〜7.5）・出力の検証・正規化はどちらでも同じ。差し替えで変わるのは呼び出し部分だけ
+- Bedrock が使えるようになったら、`.env` の `AI_PROVIDER`・`MODEL_*`・AWS の認証情報（`AWS_ACCESS_KEY_ID` ほか）を変えて `docker compose up -d` し直す（コードは変えない。11.5）
 
 ### 7.1 呼び出しの一覧
 
 | 用途           | モジュール（prompts/）       | モデル            | temperature | maxTokens | 打ち切り | 失敗時                    |
 | ------------ | -------------------- | -------------- | ----------- | --------- | ---- | ---------------------- |
-| 問題・キーワードの抽出  | `extraction.js`      | `MODEL_HIGH`   | 0           | 8,000     | 120秒 | SQSで再試行（4.4）           |
+| 問題・キーワードの抽出  | `extraction.js`      | `MODEL_HIGH`   | 0           | 8,000     | 120秒 | ジョブを再試行（4.4）           |
 | 説明の採点        | `grading.js`         | `MODEL_HIGH`   | 0           | 1,500     | 25秒  | 採点を `failed`（4.3）      |
 | 択一の解説コメント    | `comment.js`         | `MODEL_LIGHT`  | 0.7         | 300       | 5秒   | 問題の解説文をそのまま表示          |
 | ホームのひとこと     | `daily-message.js`   | `MODEL_LIGHT`  | 0.8         | 200       | 5秒   | 定型文を表示（保存しない）          |
@@ -1035,7 +1159,7 @@ export const PERSONAS = {
 {"questions":[{"body":"...","choices":["...","...","...","..."],"correct":1,"explanation":"...","keywords":["...","..."]}]}
 ```
 
-**user**：PDFのかたまり（document）または画像（image）、テキストのかたまりと「この資料から問題を抽出してください」。
+**user**：PDFのかたまり（document）または画像（image）、テキストのかたまりと「この資料から問題を抽出してください」。`AI_PROVIDER=sakura` のときは、PDF から取り出した文字をテキストのかたまりとして渡す（document・image のブロックは使わない）。
 
 **正規化（`extractor.normalizeDraft`）**
 
@@ -1062,14 +1186,14 @@ export const PERSONAS = {
 
 | 項目       | 方針                                                                                                 |
 | -------- | -------------------------------------------------------------------------------------------------- |
-| DB       | Aurora PostgreSQL Serverless v2（16.3以降または17系）、データベース名 `rpg`、スキーマ `public`                           |
+| DB       | さくらのクラウド データベースアプライアンス（PostgreSQL 16以降）、データベース名 `rpg`、スキーマ `public`。アプリは `pg` でつなぐ（3.3）                           |
 | 主キー      | `bigint GENERATED ALWAYS AS IDENTITY`。マスタ（パートナー・クエスト・バッジ）はコード値の `text`                             |
-| 区分値      | PostgreSQL の enum 型は使わず、`text` ＋ `CHECK` 制約（Data API で扱いやすく、値の追加もしやすいため）                           |
+| 区分値      | PostgreSQL の enum 型は使わず、`text` ＋ `CHECK` 制約（値の追加がしやすいため）                           |
 | 日時       | `timestamptz`（UTCで保存）。JST日付は `date` 型の列にアプリが計算して入れる                                                |
 | 共通列      | 更新される表に `created_at`・`updated_at`。`updated_at` はアプリが `now()` を入れる（トリガーは使わない）                       |
 | 外部キー     | 利用者に属するデータは `ON DELETE CASCADE`（物理削除で学習履歴をまとめて消すため）。管理者の操作記録など、残したいものは `ON DELETE SET NULL` |
 | 論理削除     | `users` だけ（`status='deleted'`）。問題は公開後の削除を `status='archived'` で表す                                      |
-| 文字コード    | UTF-8（Aurora の既定）                                                                                  |
+| 文字コード    | UTF-8                                                                                  |
 
 ### 8.2 ER図
 
@@ -1111,7 +1235,7 @@ erDiagram
 | ---- | ------------------- | ---------- | ----------------------------------- | ----------------- | -------------- |
 | T-01 | `partners`          | パートナー      | `persona`                           | 3                 | PARTNERS       |
 | T-02 | `users`             | 利用者        | `user_id`                           | 1,000             | USERS          |
-| T-03 | `user_roles`        | 利用者のロール    | `user_id, role`                     | 1,100             | 追加（Cognitoグループの写し） |
+| T-03 | `user_roles`        | 利用者のロール    | `user_id, role`                     | 1,100             | 追加（認可の正） |
 | T-04 | `notify_settings`   | 通知設定       | `user_id`                           | 1,000             | NOTIFY_SETTINGS |
 | T-05 | `login_logs`        | ログイン記録     | `login_id`                          | 30万               | 追加（直近7日のログイン回数） |
 | T-06 | `courses`           | コース        | `course_id`                         | 30                | COURSES        |
@@ -1133,15 +1257,19 @@ erDiagram
 | T-22 | `user_badges`       | 獲得バッジ      | `user_id, badge_code`               | 1万                | USER_BADGES    |
 | T-23 | `audit_logs`        | 操作記録       | `audit_id`                          | 1万                | 追加（外部設計書 8.2） |
 | T-24 | `schema_migrations` | 適用済みマイグレーション | `version`                         | 数十                | 追加（リリース管理） |
+| T-25 | `auth_refresh_tokens` | リフレッシュトークン | `token_hash`                     | 数千                | 追加（V003、ログイン） |
+| T-26 | `password_resets`   | パスワード再設定   | `token_hash`                        | 数百                | 追加（V003、ログイン） |
+| T-27 | `jobs`              | ジョブキュー     | `job_id`                            | 数万（30日で削除）        | 追加（V003、SQS の代わり） |
+| T-28 | `schedule_runs`     | 定期処理の実行記録  | `name, slot`                        | 年に約1万            | 追加（V003、EventBridge の代わり） |
 
 ### 8.4 CREATE TABLE文（`db/migrations/V001__create_tables.sql`）
 
-GitHub Actions の配置ジョブ（11.6 手順1、`scripts/migrate.mjs`）が上から順に実行する（外部キーの参照先を先に作る順番になっている）。Data API で1文ずつ実行するため、`BEGIN`／`COMMIT` で囲まず、**何度流しても同じ結果になる書き方**（`IF NOT EXISTS`・`ON CONFLICT DO NOTHING`）にしている。途中で失敗したら、原因を直したファイルを含めてもう一度配置すればよい。
+api コンテナの起動時（`MIGRATE_ON_START=true`）または `npm run migrate` が、未適用のファイルを番号順に流す（8.7）。1ファイルを1つのトランザクションで流すため、途中で失敗してもそのファイルはまるごと取り消される。外部キーの参照先を先に作る順番になっている。何度流しても同じ結果になるよう `IF NOT EXISTS`・`ON CONFLICT DO NOTHING` で書いている。
 
 ```sql
 -- =========================================================
 -- V001__create_tables.sql  RPG学習アプリ テーブル作成
--- 対象: Aurora PostgreSQL 16.3以降 / データベース rpg
+-- 対象: PostgreSQL 16以降（さくらのクラウド データベースアプライアンス） / データベース rpg
 -- =========================================================
 -- T-24 適用済みマイグレーション
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -1156,7 +1284,7 @@ CREATE TABLE IF NOT EXISTS partners (
   persona       text        PRIMARY KEY CHECK (persona IN ('encourage', 'logic', 'rival')),
   label         text        NOT NULL,                   -- 励まし型など
   default_name  text        NOT NULL CHECK (char_length(default_name) BETWEEN 1 AND 10),
-  image_key     text,                                   -- S3 assets の partners/... なければNULL
+  image_key     text,                                   -- オブジェクトストレージ assets の partners/... なければNULL
   updated_at    timestamptz NOT NULL DEFAULT now()
 );
 
@@ -1173,7 +1301,7 @@ CREATE TABLE IF NOT EXISTS courses (
 -- T-02 利用者
 CREATE TABLE IF NOT EXISTS users (
   user_id              bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  cognito_sub          text        NOT NULL UNIQUE,
+  auth_sub             text        NOT NULL UNIQUE,      -- JWT の sub（作成時にアプリが UUID を振る）
   email                text        NOT NULL CHECK (char_length(email) <= 254),
   full_name            text        NOT NULL CHECK (char_length(full_name) BETWEEN 1 AND 50),
   nickname             text        CHECK (char_length(nickname) BETWEEN 2 AND 12),  -- コース内の重複はアプリで確認
@@ -1200,9 +1328,9 @@ CREATE TABLE IF NOT EXISTS users (
   )
 );
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_uq      ON users (lower(email));
-CREATE INDEX        users_purge_idx     ON users (delete_scheduled_on) WHERE status = 'deleted';
+CREATE INDEX IF NOT EXISTS users_purge_idx     ON users (delete_scheduled_on) WHERE status = 'deleted';
 
--- T-03 利用者のロール（Cognitoグループの写し。認可の正はCognito）
+-- T-03 利用者のロール（認可の正。ログイン時にアクセストークンの groups にも入れる）
 CREATE TABLE IF NOT EXISTS user_roles (
   user_id  bigint NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
   role     text   NOT NULL CHECK (role IN ('learner', 'course_admin', 'system_admin')),
@@ -1255,7 +1383,7 @@ CREATE TABLE IF NOT EXISTS import_jobs (
   created_by       bigint      REFERENCES users (user_id) ON DELETE SET NULL,
   source_type      text        NOT NULL CHECK (source_type IN ('pdf', 'image', 'text')),
   file_name        text        NOT NULL,
-  s3_key           text        NOT NULL,
+  s3_key           text        NOT NULL,                -- オブジェクトストレージ（S3互換）のキー
   status           text        NOT NULL DEFAULT 'waiting'
                                CHECK (status IN ('waiting', 'extracting', 'done', 'failed')),
   extracted_count  integer     NOT NULL DEFAULT 0 CHECK (extracted_count >= 0),
@@ -1479,7 +1607,74 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE INDEX IF NOT EXISTS audit_logs_created_idx ON audit_logs (created_at DESC);
 
 INSERT INTO schema_migrations (version, description) VALUES ('V001', 'create tables') ON CONFLICT DO NOTHING;
+```
 
+#### 8.4.1 ログイン・ジョブキュー・定期処理（`db/migrations/V003__auth_jobs.sql`）
+
+AWS 版で Cognito・SQS・EventBridge Scheduler が持っていたものを DB に置く。`users.cognito_sub` は V001 で `auth_sub`（アプリが作る UUID）に名前を変えている。
+
+```sql
+-- =========================================================
+-- V003__auth_jobs.sql  さくら版の基盤（ログイン・ジョブキュー・定期処理の記録）
+-- Cognito・SQS・EventBridge Scheduler の代わりにアプリと DB で持つ（詳細設計書 3.7・3.8）
+-- =========================================================
+-- T-02 利用者（ログイン用の列を追加）
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash            text;                          -- scrypt。招待前はNULL
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password     boolean     NOT NULL DEFAULT true;  -- 仮パスワードのとき true
+ALTER TABLE users ADD COLUMN IF NOT EXISTS temp_password_expires_at timestamptz;                   -- 仮パスワードの期限（7日）
+ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_count       integer     NOT NULL DEFAULT 0 CHECK (failed_login_count >= 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until             timestamptz;                   -- 5回続けて失敗したら15分
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at      timestamptz;
+-- T-23 操作記録（再招待を追加。名前のない CHECK は PostgreSQL が audit_logs_action_check と名づける）
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'question.update', 'question.publish', 'question.delete',
+  'user.create', 'user.role', 'user.delete', 'user.restore', 'user.purge', 'user.reinvite',
+  'course.create', 'course.update', 'course.assign',
+  'partner.image', 'dashboard.csv'));
+-- T-25 リフレッシュトークン（値そのものは保存せず SHA-256 だけを持つ）
+CREATE TABLE IF NOT EXISTS auth_refresh_tokens (
+  token_hash   text        PRIMARY KEY,
+  user_id      bigint      NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+  expires_at   timestamptz NOT NULL,                     -- 発行から7日
+  revoked_at   timestamptz,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS auth_refresh_tokens_user_idx ON auth_refresh_tokens (user_id);
+-- T-26 パスワード再設定（メールのリンクの値の SHA-256。1回だけ使える）
+CREATE TABLE IF NOT EXISTS password_resets (
+  token_hash   text        PRIMARY KEY,
+  user_id      bigint      NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+  expires_at   timestamptz NOT NULL,                     -- 発行から1時間
+  used_at      timestamptz,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+-- T-27 ジョブキュー（採点・取り込み）。ワーカーが FOR UPDATE SKIP LOCKED で1件ずつ取り出す
+CREATE TABLE IF NOT EXISTS jobs (
+  job_id        bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  kind          text        NOT NULL CHECK (kind IN ('grading', 'import')),
+  payload       jsonb       NOT NULL,                    -- {"gradingId":1} / {"importId":1}
+  status        text        NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'running', 'done', 'failed')),
+  attempts      integer     NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  max_attempts  integer     NOT NULL DEFAULT 1 CHECK (max_attempts >= 1),   -- 採点1回、取り込み3回
+  run_after     timestamptz NOT NULL DEFAULT now(),       -- やり直しの待ち
+  locked_until  timestamptz,                              -- 処理中のワーカーが落ちたときに取り戻す期限
+  last_error    text,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS jobs_ready_idx ON jobs (run_after, job_id) WHERE status IN ('queued', 'running');
+-- T-28 定期処理の実行記録（同じ枠を二重に動かさない）
+CREATE TABLE IF NOT EXISTS schedule_runs (
+  name         text        NOT NULL,                     -- daily / mail
+  slot         text        NOT NULL,                     -- 例: 2026-11-05 / 2026-11-05T0730
+  started_at   timestamptz NOT NULL DEFAULT now(),
+  finished_at  timestamptz,
+  result       jsonb,
+  PRIMARY KEY (name, slot)
+);
+
+INSERT INTO schema_migrations (version, description) VALUES ('V003', 'auth jobs') ON CONFLICT DO NOTHING;
 ```
 
 ### 8.5 初期データ（`db/migrations/V002__seed_masters.sql`）
@@ -1520,11 +1715,7 @@ ON CONFLICT (badge_code) DO NOTHING;
 INSERT INTO schema_migrations (version, description) VALUES ('V002', 'seed masters') ON CONFLICT DO NOTHING;
 ```
 
-> 最初のシステム管理者（構築手順書 3.6 (7) で Cognito に作った人）は、アプリの `users` にも行が必要になる。環境ごとの初回の配置のあと、RDS のクエリエディタで次のSQLを1回だけ実行して登録する（環境ごとに値が違うためマイグレーションには入れない。`<sub>` は Cognito のユーザー詳細の「ユーザーID（sub）」）。
->
-> `INSERT INTO users (cognito_sub, email, full_name, status) VALUES ('<sub>', '<メール>', '<氏名>', 'active');`
-> `INSERT INTO user_roles (user_id, role) SELECT user_id, r FROM users, unnest(ARRAY['system_admin','learner']) r WHERE cognito_sub = '<sub>';`
-> `INSERT INTO notify_settings (user_id) SELECT user_id FROM users WHERE cognito_sub = '<sub>';`
+> 最初のシステム管理者は、環境ごとの初回の起動のあと、api コンテナで `docker compose exec api node scripts/create-admin.mjs <メール> <氏名>` を1回だけ実行して登録する（構築手順書 3.10。環境ごとに値が違うためマイグレーションには入れない）。`users`・`user_roles`（`system_admin`・`learner`）・`notify_settings` を1つのトランザクションで作り、仮パスワードを画面に出す（メールは送らない）。初回ログインで新しいパスワードに変える
 
 ### 8.6 主なSQL
 
@@ -1607,9 +1798,10 @@ LIMIT :limit OFFSET :offset;
 | ルール      | 内容                                                                                             |
 | -------- | ---------------------------------------------------------------------------------------------- |
 | ファイル名    | `V{3桁の連番}__{英小文字の説明}.sql`。一度リリースしたファイルは書き換えない（直すときは新しい番号で出す）                                  |
-| 中身       | `scripts/migrate.mjs` は**行末の `;` で文を区切り**、Data API で1文ずつ実行するため、トランザクションで囲まない。1つの文の途中で行末を `;` にしない（関数定義の `$$` は使わない）。`IF NOT EXISTS`・`ON CONFLICT DO NOTHING`・`ADD COLUMN IF NOT EXISTS` を使い、途中で失敗しても再実行できる形にする。最後の文で `schema_migrations` に1行入れる（`release_no` はスクリプトが入れる） |
-| 適用のしかた   | プルリクエストに含めて main にマージすると dev に、タグを付けて承認すると prod に適用される（11.6）。クエリエディタで手で流さない                          |
-| 互換性      | 列の追加は「NULL可または既定値つき」にし、**古いLambdaのまま動ける形**にする。列の削除・名前の変更は、新しいLambdaのリリース後に別のマイグレーションで行う（拡張→縮小の2段階） |
+| 中身       | `db/migrate.js`（M-D05）が**1ファイルを1つのトランザクション**で流す（ファイルの中に `BEGIN`／`COMMIT` を書かない）。`IF NOT EXISTS`・`ON CONFLICT DO NOTHING`・`ADD COLUMN IF NOT EXISTS` を使い、再実行できる形にする。最後の文で `schema_migrations` に1行入れる（入っていなければ失敗にする。`release_no` は M-D05 が入れる） |
+| 同時の起動    | advisory lock（`pg_advisory_lock(20261027)`）で、複数のコンテナが同時に起動しても1つだけが流す |
+| 適用のしかた   | 新しいイメージで api コンテナを起動し直すと適用される（11.5）。失敗したら api は起動しない（ログに `migrate.failed`）。DB に手で流さない                          |
+| 互換性      | 列の追加は「NULL可または既定値つき」にし、**古いイメージのまま動ける形**にする（切り戻し（11.6）に備える）。列の削除・名前の変更は、新しいイメージのリリース後に別のマイグレーションで行う（拡張→縮小の2段階） |
 | 取り消し用    | dev だけで使う `*.down.sql` を用意する。prod では使わず、直すマイグレーションを新しく出す                                   |
 | 適用の確認    | `SELECT version, release_no, applied_at FROM schema_migrations ORDER BY version;`                |
 
@@ -1621,15 +1813,18 @@ LIMIT :limit OFFSET :offset;
 
 | 脅威・要件               | 対策                                                                                         | 実装箇所                              |
 | ------------------- | ------------------------------------------------------------------------------------------ | --------------------------------- |
-| なりすまし               | API Gateway の JWT オーソライザーで署名・期限・対象者を検証。Lambda はクレームだけを信じる                                     | API Gateway、`util/authz.js`       |
+| なりすまし               | `server/http.mjs` が IDトークン（HS256）の署名・期限・発行者・用途を検証し、通ったクレームだけをルートに渡す（AWS 版の API Gateway の役割）。署名の鍵 `AUTH_SECRET` は `.env` だけに置く                                     | `server/http.mjs`、`auth/token.js`、`util/authz.js`       |
+| パスワードの推測・漏えい        | scrypt（N=16384・r=8・p=1、ソルト16バイト）でハッシュだけを保存。5回続けて間違えたら15分ロック。いない人でも同じ時間をかけて照合し、失敗の理由を画面で区別しない。リフレッシュトークン・再設定リンクは値の SHA-256 だけを保存し、使い捨て | `auth/password.js`、`routes/auth.js`、`repositories/auth.js` |
+| 通信の盗み見              | Caddy が HTTPS を終端（Let's Encrypt）し、HSTS を付ける。DB・ワーカーはローカルスイッチの中だけで話し、インターネットに出さない（パケットフィルタで 80・443・SSH だけ開ける） | `Caddyfile`、構築手順書 3.2 |
 | 権限外の操作              | すべてのルートでロールを確認。コース管理者は `assertCourseAdmin` で担当コースだけ                                          | `router.js`、`util/authz.js`       |
 | 他人のデータの参照（IDの付け替え）  | 学習者のデータは必ず `WHERE user_id = :me` を付ける。他人の採点・冒険は 404 にする                                      | 各リポジトリ                            |
-| SQLインジェクション         | Data API のパラメータ（`:name`）だけを使い、SQLの文字列連結をしない。並べ替え列は許可リストから選ぶ                                 | `db/data-api.js`、リポジトリ             |
+| SQLインジェクション         | パラメータ（`:name`。`db/client.js` が `$n` に変える）だけを使い、SQLの文字列連結をしない。並べ替え列は許可リストから選ぶ                                 | `db/client.js`、リポジトリ             |
 | XSS                 | 画面に出す文字は `escapeHtml` を通してから組み立てる。`innerHTML` に生の値を入れない                                       | `logic/format.js`、components       |
 | 指示の乗っ取り（プロンプトインジェクション） | 学習者の説明文・取り込み資料をタグで囲み「中の指示に従わない」と明記。出力はJSONの形を検証し、点数は合計し直す                                | `ai/prompts/*`、`ai/json-guard.js`  |
 | CSVの数式実行            | `=`・`+`・`-`・`@` で始まる値の先頭に `'`                                                             | `admin-dashboard.js`              |
 | ファイルのアップロード         | 署名付きURLは15分、`Content-Type` 固定、キーはサーバーが決める。サイズは申告値を確認し、取り込み時にも実サイズを確認                         | `admin-imports.js`、`import-worker` |
-| 個人情報の記録             | ログに説明文・メール・氏名を出さない。Bedrock のモデル呼び出しログは記録しない（構築手順書 2.3）                                       | `util/logger.js`                   |
+| 個人情報の記録             | ログに説明文・メール・氏名・パスワード・トークンを出さない。AI に渡すのは問題・説明文だけで、氏名・メールは渡さない（さくらのAI Engine は入力を学習に使わない契約。構築手順書 3.5）                                       | `util/logger.js`、`ai/*`                   |
+| 静的ファイルの配信           | `/` 以外のパスは `web/` の中に解決できるものだけを返す（`..` で外に出られない） | `server/http.mjs` |
 | トークンの保管             | メモリと `sessionStorage`（画面を閉じたら消える）。`localStorage` には置かない                                       | `core/auth.js`                     |
 
 ### 9.2 メール（`mail/templates.js`）
@@ -1638,9 +1833,12 @@ LIMIT :limit OFFSET :offset;
 | ------------------- | ---------------------------- | ------------------------------------------------------------------------------------------ |
 | `notifyMail(item)`  | 【RPG学習アプリ】今日の依頼が届いています       | 「{nickname}さん」→ パートナーの定型のひとこと（persona ごと）→ 今日の復習数 → クエスト3つ → `APP_URL/#/home` → 末尾に通知設定 `APP_URL/#/notify` |
 | `deletionMail(u)`   | 【RPG学習アプリ】アカウント停止のお知らせ       | 30日後（`delete_scheduled_on`）に学習履歴を含めて完全に削除されること、問い合わせ先                                       |
+| `inviteMail(x)`     | 【RPG学習アプリ】ギルドへの招待       | ログインの URL `APP_URL/`、メールアドレス、仮パスワード、有効期限（7日）、初回ログインで新しいパスワードに変えること（AWS 版では Cognito が送っていた） |
+| `resetMail(x)`      | 【RPG学習アプリ】パスワードの再設定       | 再設定の URL `APP_URL/#/reset?token=…`、有効期限（60分・1回だけ）、心当たりがなければ何もしなくてよいこと |
 
 - テキストメールのみ（HTMLメールにしない）。`APP_ENV` が `prod` 以外なら件名の先頭に `[{APP_ENV}]`（通常は `[dev]`）を付ける
-- 招待メールは Cognito が送る（構築手順書 3.6 (6)）ため、アプリでは作らない
+- 送信は `mail/smtp.js`（M-O01、nodemailer）。送信元は `MAIL_FROM`。SPF・DKIM を送信元のドメインに設定する（構築手順書 3.6）
+- 監視のお知らせ（10.4）も同じ SMTP で `ALERT_EMAIL` に送る
 
 ---
 
@@ -1648,30 +1846,31 @@ LIMIT :limit OFFSET :offset;
 
 ### 10.1 アプリが出す主なログ
 
-| イベント             | レベル   | 出す項目                                         | 監視との関係                          |
+ログは1行1つの JSON を標準出力に出す（`util/logger.js`）。Docker の json-file に、コンテナごとに20MB×10ファイルまで残る（`compose.yaml`）。
+
+| イベント（`msg`）             | レベル   | 出す項目                                         | 監視との関係                          |
 | ---------------- | ----- | -------------------------------------------- | ------------------------------- |
-| APIの処理完了         | INFO  | route、status、durationMs、userId              | -                               |
-| 採点の30秒超え         | WARN  | `code: GRADING_TIMEOUT`、gradingId            | メトリクスフィルター `GradingTimeout`（構築手順書 3.12） |
-| 採点の失敗            | WARN  | gradingId、failureReason、inputTokens         | `rpg-{env}-grading-errors` は Lambda の Errors。失敗を例外にしないため、件数はこのログで確認 |
-| DBの起動待ち          | INFO  | `code: DB_RESUMING`、retry                    | 起動にかかった時間の把握                    |
-| Bedrockの呼び出し     | INFO  | purpose、modelId、inputTokens、outputTokens、durationMs | コストの確認（Logs Insights で集計）       |
-| 取り込みの失敗          | ERROR | importId、receiveCount、errorName            | 3回目は DLQ のアラーム                  |
-| 定期処理の各ステップ       | INFO  | job、step、count、durationMs                   | 失敗は `rpg-{env}-batch-errors`    |
+| APIの処理完了（`api`）         | INFO  | route、status、durationMs、userId              | 5xx が5分に5回で監視メール（10.4）                               |
+| 採点の30秒超え         | WARN  | `code: GRADING_TIMEOUT`、gradingId            | -（件数はログで確認） |
+| 採点の失敗            | WARN  | gradingId、failureReason、inputTokens         | 失敗を例外にしないため、件数はこのログで確認 |
+| DBにつながらない          | WARN  | `code: DB_RESUMING`                    | 続くならシンプル監視（DB）も赤になる                    |
+| AIの呼び出し（さくら：`ai.converse`、Bedrock：`bedrock.converse`）     | INFO  | purpose、modelId、inputTokens、outputTokens、durationMs（さくらは provider も） | コストの確認（10.2 で集計）       |
+| ジョブの終わり（`job.end`）・失敗（`job.error`・`job.exhausted`） | INFO・ERROR | jobId、kind、outcome、attempts            | 取り込みが最後まで失敗したら監視メール                  |
+| 定期処理（`schedule.done`・`schedule.failed`）       | INFO・ERROR  | name、slot、attempt                   | 3回失敗したら監視メール    |
 | メール送信の失敗         | WARN  | slot、failedCount                             | -                               |
+| マイグレーション（`migrate.done`・`migrate.failed`）・起動（`http.listen`・`worker.start`・`server.start_failed`） | INFO・ERROR | version、role | 起動できなければシンプル監視（HTTPS）が赤になる |
 
-### 10.2 よく使う Logs Insights の検索
+### 10.2 よく使うログの見方
 
-```text
-fields @timestamp, route, status, durationMs
-| filter fn = "api-handler" and status >= 500
-| sort @timestamp desc
-| limit 50
-```
+サーバーに SSH で入り、compose のディレクトリで実行する。
 
-```text
-fields purpose, inputTokens, outputTokens
-| filter ispresent(purpose)
-| stats sum(inputTokens) as inTok, sum(outputTokens) as outTok, count(*) as calls by purpose, bin(1d)
+```bash
+# API の 5xx（直近1時間）
+docker compose logs --since 1h api | grep '"status":5'
+# 定期処理・ジョブの失敗
+docker compose logs --since 24h worker | grep -E '"level":"ERROR"'
+# AI の呼び出し回数とトークン数（用途ごと）
+docker compose logs --since 24h api worker | grep -E '"msg":"(ai|bedrock).converse"' | sed 's/^[^{]*//' | jq -s 'group_by(.purpose) | map({purpose: .[0].purpose, calls: length, inTok: (map(.inputTokens) | add), outTok: (map(.outputTokens) | add)})'
 ```
 
 ### 10.3 画面でのエラーの扱い
@@ -1687,347 +1886,144 @@ fields purpose, inputTokens, outputTokens
 | 504 `GRADING_TIMEOUT`    | 「もう一度採点してもらう」ボタンを出す（入力はそのまま）                          | M-07  |
 | そのほか・通信エラー               | 画面上部の帯                                                | M-02  |
 
+### 10.4 監視
+
+AWS 版の CloudWatch アラーム・SNS の代わりに、アプリが監視のお知らせメールを送り、外からの死活はさくらのクラウドのシンプル監視で見る。
+
+| 監視 | しくみ | 知らせ先 |
+| --- | --- | --- |
+| サイトが開けるか | シンプル監視（HTTPS `https://{SITE_ADDRESS}/api/health`、5分ごと、ステータス200） | シンプル監視の通知メール（構築手順書 3.12） |
+| サーバーが生きているか | シンプル監視（ping） | 同上 |
+| DB が生きているか | `/api/health` が DB に `SELECT 1` を投げる（失敗すると 503） | 同上 |
+| API の 5xx が続く | `server/http.mjs` が5分に5回数えたら `alert('api-5xx')` | `ALERT_EMAIL`（`util/alert.js`） |
+| 取り込みが最後まで失敗 | worker が `alert('import-failed')` | 同上 |
+| 定期処理が3回失敗 | worker が `alert('schedule-daily')`・`alert('schedule-mail')` | 同上 |
+| ディスク・メモリ | サーバーのリソースモニタ（コントロールパネル）を月に1回見る（構築手順書 5.2） | - |
+
+- 監視メールは同じ種類なら1時間に1通まで（M-U08）。件名の先頭に `[{APP_ENV}]` を付ける
+- `ALERT_EMAIL` が空なら送らない（ローカル・テスト）
+
 ---
 
 ## 11. ビルド・リリース手順
 
-AWSへのリリース（ビルド・配置）は **GitHub Actions** で行う。AWSのリソースそのもの（Lambda関数・S3バケット・CloudFront・Aurora など）の作成と設定の変更は、これまでどおり構築手順書に沿ってマネジメントコンソールで行い、GitHub Actions は **コードと画面とDBの変更（マイグレーション）を配置するだけ** とする。
+アプリは **1つのコンテナイメージ**（api・worker の両方に使う）にまとめ、GitHub Actions がテストして作り、さくらのクラウドのコンテナレジストリに置く。サーバーではそのイメージを `docker compose pull` → `up -d` で入れ替える。さくらのクラウドのリソース（サーバー・DB・オブジェクトストレージなど）の作成と設定の変更は、構築手順書に沿ってコントロールパネルで行う。
 
 ### 11.1 リリースの全体像
 
 ```mermaid
 flowchart LR
   PR["1 プルリクエスト<br>ci.yml：test・build"] --> M["2 main にマージ"]
-  M --> DEV["3 dev に自動配置<br>release.yml"]
-  DEV --> UAT["4 dev を凍結して<br>受け入れ確認"]
-  UAT --> T["5 確かめた版に<br>タグ release-YYYYMMDD-NN"]
-  T --> GR["6 ビルド<br>GitHub Release に保管"]
-  GR --> E{"7 リリース判定<br>prod の承認"}
-  E -->|"承認"| PRD["8 prod に配置<br>スモークテスト"]
+  M --> DEV["3 dev 用のイメージ<br>release.yml（手動）"]
+  DEV --> DUP["4 dev サーバーで<br>pull・up -d"]
+  DUP --> UAT["5 受け入れ確認"]
+  UAT --> T["6 タグ<br>release-YYYYMMDD-NN"]
+  T --> E{"7 prod の承認"}
+  E -->|"承認"| IMG["8 prod 用のイメージ"]
   E -->|"却下"| PR
-  PRD --> REC["9 リリース記録"]
-  PRD -->|"問題あり"| RB["ロールバック<br>rollback.yml 11.9"]
+  IMG --> PUP["9 prod サーバーで<br>pull・up -d<br>スモークテスト"]
+  PUP --> REC["10 リリース記録"]
+  PUP -->|"問題あり"| RB["切り戻し 11.6"]
 ```
 
-| 区分   | 内容                                                                                                                         |
-| ---- | -------------------------------------------------------------------------------------------------------------------------- |
-| 方式   | GitHub Actions（GitHub ホストのランナー `ubuntu-latest`）から AWS CLI で配置する。AWSへの認証は **OIDC**（一時的な認証情報）で行い、長期のアクセスキーは作らない。IaC は使わない         |
-| きっかけ | `main` への push で **dev**、タグ `release-YYYYMMDD-NN` の push で **prod**（承認者の承認が必要）。検証用の stg 環境は置かず、システムテスト・受け入れ確認は dev を凍結して行う（下の「受け入れ確認と dev の凍結」）                                      |
-| 作業者  | 開発者（プルリクエスト・タグ付け・スモークテスト）と承認者（prod の配置を承認する。タグを付けた人とは別の人）                                                                   |
-| 権限   | 環境ごとの配置用ロール `rpg-{env}-deploy-role`（構築手順書 3.13・4.13）。ワークフローは自分の環境のロールしか引き受けられない                                        |
-| 時間帯  | prod の承認は平日の 13:00〜13:30 を基本とする。ワークフローは 0:00 の日次処理と30分ごとのメール送信（:00・:30）の前後5分を避け、該当する場合は待ってから batch-runner を入れ替える |
-| 所要時間 | 1環境あたり約10分（DBの変更がある場合は約15分）。prod は配置のたびにスナップショットを取るため、さらに5〜10分                                                                   |
-| 順番   | **DB → Lambda → 画面** の順。DBの変更は古いLambdaでも動く形（8.7）にしているため、途中の状態でもサービスは止まらない                                                  |
+| 区分   | 内容 |
+| ---- | --- |
+| 方式   | GitHub Actions（`ubuntu-latest`）でテストし、`docker build` してレジストリへ `docker push`。サーバーへの反映は人が SSH で行う（GitHub からサーバーへは入らない。サーバーの SSH を GitHub に開けないため） |
+| きっかけ | dev：`main` で「Run workflow」（手動）。prod：タグ `release-YYYYMMDD-NN` の push（Environment `prod` の承認が必要） |
+| 作業者  | 開発者（プルリクエスト・タグ付け・サーバーでの反映・スモークテスト）と承認者（prod のイメージ作成を承認する。タグを付けた人とは別の人） |
+| 時間帯  | prod の反映は平日の 13:00〜13:30 を基本とする。0:00 の日次処理と、メール送信の枠（:00・:30）の前後5分は避ける（worker の入れ替えで、その枠が次の見回りまで遅れるため） |
+| 所要時間 | イメージ作成 約5分、サーバーでの反映 約2分（停止は api の入れ替えの数秒〜十数秒） |
+| 順番   | api の起動時にマイグレーション → api が healthy になってから worker（`depends_on`）。DB の変更は古いイメージでも動く形（8.7）にしているため、切り戻しても動く |
 
-**受け入れ確認と dev の凍結**
+**受け入れ確認**
 
-検証用の stg 環境は置かない（外部設計書 2.7）。システムテストとコース管理者の受け入れ確認は dev で行い、その間は dev への自動配置を止めて、確かめている版が変わらないようにする。
-
-1. 受け入れ確認を始めるとき、リポジトリの Variables `DEV_DEPLOY_PAUSED` を `true` にする（`release.yml` の `deploy-dev` が動かなくなる）。dev に入っている版（画面下部のリリース番号 `dev-YYYYMMDD-<コミット>`）を控え、コース管理者に確認の期間を知らせる
-2. 凍結中もプルリクエストのマージはできるが、dev には自動で配置されない。受け入れ確認で見つかった不具合だけを直してマージし、「Run workflow」（ブランチ `main`）で手動で dev に配置して確かめ直す。ほかの変更は、確認が終わるまでマージを控える（確かめていない変更が prod に混ざるのを防ぐ）
-3. システムテスト・受け入れ確認がすべてOKになったら、dev に入っている版のコミットにタグ `release-YYYYMMDD-NN` を付ける（11.8 のリリース判定へ）
-4. prod への配置とスモークテストが終わったら、`DEV_DEPLOY_PAUSED` を `false` に戻す。凍結中にマージした変更は、戻したあとの次の push で dev に配置される
-
-- stg がないため、本番と同じ容量・設定での事前確認はできない。その分の備えとして、prod への配置の前には DB の変更の有無にかかわらず必ずスナップショットを取る（11.6 手順1）。全社展開の前に stg を作り直すかを見直す（12 未決事項 No.10）
+検証用の stg 環境は置かない。システムテストとコース管理者の受け入れ確認は dev で行う。dev への反映は手動のため、確認の間は dev サーバーで `pull` しなければ版は変わらない。確認が終わったら、dev に入っている版（S-08 下部のリリース番号 `dev-YYYYMMDD-NN`）のコミットにタグを付ける。
 
 ### 11.2 ワークフロー一覧
 
-ワークフローはリポジトリの `.github/workflows/` に置く。
+| ファイル | きっかけ | 内容 |
+| --- | --- | --- |
+| `ci.yml` | `main` へのプルリクエスト・手動 | `npm ci` → `npm test -- --coverage`（基準を下回ったら失敗）→ `npm run build:web` → `docker build`（押し出さない） |
+| `release.yml` | `main` で手動実行（dev）、タグ `release-*`（prod） | テスト → リリース番号を決める → レジストリにログイン → `docker build`（`APP_ENV`・`RELEASE_NO`）→ `docker push`。イメージ名をジョブの概要に書く |
 
-| ファイル          | きっかけ                                          | 処理                                                                                                |
-| ------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `ci.yml`      | `main` へのプルリクエスト                              | `npm ci` → `npm test -- --coverage`（カバレッジの要約をジョブの概要に書き、`coverage-{実行番号}` を14日保管）→ `build:functions -- --verify`（束ねたファイルを読み込んで `handler` を確かめる）→ `build:web`（2環境）。AWS には接続しない。`build:web` は `--release=ci-{実行番号}` で dev・prod の2環境を作る（2026-10-21 作成。同日、画面の実装に合わせて `build:web` を追加）                 |
-| `release.yml` | `main` への push、タグ `release-*` の push、手動（`main` を選んで dev に配置し直すとき） | ジョブ `build` → `deploy-dev`（main のとき。Variables `DEV_DEPLOY_PAUSED` が `true` の間は動かさない）／`publish` → `deploy-prod`（タグのとき）                    |
-| `deploy.yml`  | `release.yml` から呼ばれる（`workflow_call`）            | 1つの環境への配置（DB → Lambda → 画面 → ヘルスチェック）。入力は環境名とリリース番号                                                  |
-| `rollback.yml` | 手動（`workflow_dispatch`）。戻したいタグを選んで実行            | GitHub Release に保管した前回の成果物で Lambda・画面を戻す。DB は戻さない                                                    |
-
-- `release.yml` は `paths-ignore` で `documents/**`・`**.md` だけの変更では動かさない
-- 同じ環境への配置が重ならないよう、`deploy.yml` に `concurrency: deploy-{env}`（`cancel-in-progress: false`）を付ける
-
-```mermaid
-sequenceDiagram
-  participant Dev as 開発者
-  participant GH as GitHub
-  participant GA as GitHub Actions
-  participant AWS as AWS（rpg-env-*）
-  Dev->>GH: プルリクエスト
-  GH->>GA: ci.yml（test・build）
-  Dev->>GH: main にマージ
-  GH->>GA: release.yml（main）
-  GA->>AWS: OIDC で rpg-dev-deploy-role を引き受け、dev に配置
-  Dev->>GH: タグ release-YYYYMMDD-NN を push
-  GH->>GA: release.yml（タグ）
-  GA->>GH: GitHub Release に成果物を保管
-  GA-->>GH: prod は承認待ち
-  Dev->>GH: 承認者が「Approve and deploy」
-  GA->>AWS: rpg-prod-deploy-role で prod に配置
-```
+- AWS 版の `deploy.yml`・`rollback.yml` はない（反映と切り戻しはサーバーで行う。11.5・11.6）
 
 ### 11.3 リリース物
 
-| 成果物                                     | 作り方（ジョブ `build`）                      | 配置先                                        |
-| --------------------------------------- | ------------------------------------- | ------------------------------------------ |
-| `dist/functions/api-handler.zip`        | `npm run build:functions`             | Lambda `rpg-{env}-api-handler`             |
-| `dist/functions/grading-worker.zip`     | 同上                                    | Lambda `rpg-{env}-grading-worker`          |
-| `dist/functions/import-worker.zip`      | 同上                                    | Lambda `rpg-{env}-import-worker`           |
-| `dist/functions/batch-runner.zip`       | 同上                                    | Lambda `rpg-{env}-batch-runner`            |
-| `dist/web-{env}/`（index.html・js・css など） | `npm run build:web -- --env={env}`（dev・prod の2環境分） | S3 `rpg-{env}-web-<アカウントID>`の直下             |
-| `db/migrations/V***__*.sql`             | 手で書いてプルリクエストに含める                      | Aurora `rpg-{env}-db` のデータベース `rpg`        |
-| `manifest.json`                         | `npm run pack -- --release={番号}`      | 保管のみ（配置時の照合に使う）                            |
+| リリース物 | 作り方 | 置き場所 |
+| --- | --- | --- |
+| コンテナイメージ `rpg-app:{リリース番号}` | `Dockerfile`（Node.js 22。`npm ci --omit=dev`、`web/` を `build-web.mjs` で環境ごとに組み立てて同梱） | コンテナレジストリ `{REGISTRY}/rpg-app` |
+| `db/migrations/V***__*.sql` | 手で書いてプルリクエストに含める | イメージの中。api の起動時に流れる |
+| `compose.yaml`・`Caddyfile` | リポジトリのもの | サーバーの `/opt/rpg/`（変えたときだけ手で置き直す） |
 
-**成果物の保管場所**
+- リリース番号：prod はタグの `release-` を除いた部分（例 `20261105-01`）、dev は `dev-YYYYMMDD-{実行番号}`
+- イメージは dev と prod で別々に作る（画面の設定 `config.{env}.js` を中に入れるため）。タグは上書きしない
 
-| きっかけ     | 保管場所                                                       | 保管期間 | 使いみち                 |
-| -------- | ---------------------------------------------------------- | ---- | -------------------- |
-| main への push | Actions の成果物（artifact）`bundle-{リリース番号}`                     | 30日  | dev への配置             |
-| タグの push  | Actions の成果物に加えて、**GitHub Release** `release-{リリース番号}` の添付ファイル `bundle-{リリース番号}.zip` | 無期限  | prod への配置、ロールバック |
+### 11.4 GitHub の設定
 
-**リリース番号**
+| 場所 | 名前 | 値 |
+| --- | --- | --- |
+| Environment `dev`・`prod` の Variables | `REGISTRY` | コンテナレジストリのドメイン（構築手順書 V-20） |
+| 同上 | `APP_ENV` | `dev`／`prod` |
+| Environment `dev`・`prod` の Secrets | `REGISTRY_USER`・`REGISTRY_PASSWORD` | レジストリの push 用ユーザー（構築手順書 3.7） |
+| Environment `prod` | 承認者（Required reviewers） | システム管理者と開発リーダー。タグを付けた人は承認できない設定にする |
+| ブランチ保護（`main`） | `ci.yml` の成功を必須にする | - |
 
-| きっかけ     | リリース番号                        | 例                   |
-| -------- | ----------------------------- | ------------------- |
-| タグの push  | タグ名から `release-` を除いたもの（`YYYYMMDD-NN`） | `20261105-01`       |
-| main への push | `dev-{YYYYMMDD}-{コミットの先頭7文字}`      | `dev-20261105-a1b2c3d` |
+### 11.5 サーバーへの反映
 
-**manifest.json の例**
+サーバーに SSH で入り、`/opt/rpg` で行う。
 
-```json
-{"release":"20261105-01","commit":"a1b2c3d","createdAt":"2026-11-05T10:12:00+09:00",
- "workflowRun":"https://github.com/<オーナー>/rpg-learning-app/actions/runs/123456789",
- "functions":{"api-handler":{"file":"api-handler.zip","sha256Base64":"Qm9nVXM..."}},
- "web":["index.html","sw.js","js/main.js"],"migrations":["V003__add_xxx.sql"]}
-```
+1. `.env` の `IMAGE=` を新しいリリース番号に書き換える（前の値は `.env` の末尾に `# 前回 IMAGE=...` として残しておく）
+2. `docker compose pull` でイメージを取る
+3. `docker compose up -d` で入れ替える（api の起動時にマイグレーションが流れる）
+4. `docker compose ps` で api が `healthy`、worker・caddy が `running` であることを確かめる
+5. `docker compose logs --since 10m api | grep -E 'migrate|ERROR'` で、マイグレーションの結果とエラーがないことを確かめる
+6. 11.7 のスモークテスト
 
-- `sha256Base64` は Lambda の `CodeSha256`（Base64）と同じ形式。配置後にワークフローが照合する
+- マイグレーションが失敗すると api は起動しない（ログに `server.start_failed`）。その場合は 11.6 で前のイメージに戻す（失敗したファイルはトランザクションで取り消されている）
+- Bedrock に切り替えるときも同じ手順で、1. の代わりに `.env` の `AI_PROVIDER`・`MODEL_*`・AWS の認証情報を書き換える（構築手順書 5.5）
 
-### 11.4 ビルド（ジョブ `build`）
+### 11.6 切り戻し
 
-| 順 | ステップ                                                    | 確かめること                                                    |
-| - | ------------------------------------------------------- | --------------------------------------------------------- |
-| 1 | `actions/checkout`（タグのときは `fetch-depth: 0`）             | -                                                         |
-| 2 | （タグのとき）タグ名が `release-YYYYMMDD-NN` の形で、そのコミットが `main` に含まれる | `git merge-base --is-ancestor $GITHUB_SHA origin/main`。違えば失敗させる（dev を通っていないコードを出さない） |
-| 3 | `actions/setup-node`（Node.js 22、`cache: npm`）           | -                                                         |
-| 4 | `npm ci`                                                | エラーがない                                                    |
-| 5 | `npm test -- --coverage`                                | 全件成功、カバレッジがモジュールテスト仕様書の基準以上（下回るとジョブが失敗する）                      |
-| 6 | `npm run build:functions`                               | `dist/functions/` に zip が4つ。各50MB未満（API で直接アップロードできる上限）         |
-| 7 | `npm run build:web -- --env=dev`（prod も同様に作る）         | `dist/web-{env}/js/config.js` の値がその環境のもの、`sw.js` のキャッシュ名にリリース番号 |
-| 8 | `npm run pack -- --release={番号}`                         | `release/{番号}/` に zip・web一式・SQL・manifest.json                 |
-| 9 | `actions/upload-artifact` で `release/{番号}/` を `bundle-{番号}` として保管 | -                                                         |
+| 対象 | 方法 | 時間 |
+| --- | --- | --- |
+| アプリ（api・worker・画面） | `.env` の `IMAGE=` を前回の値に戻して `docker compose up -d` | 約2分 |
+| DB | 原則として戻さない（新しい列・テーブルは古いイメージでは使われないため）。データを壊す不具合だった場合だけ、データベースアプライアンスのバックアップから復元する（システム管理者の判断。構築手順書 5.3） | 1時間以上 |
 
-タグのときは、続くジョブ `publish` が `bundle-{番号}.zip` を GitHub Release `release-{番号}` に添付する（本文は 11.10 のリリース記録のひな形）。
+- prod に反映する前に、DB の変更があるリリースでは、データベースアプライアンスの「今すぐバックアップ」を取る（構築手順書 5.3）
 
-**`scripts/build-functions.mjs` の要点**
+### 11.7 スモークテスト（反映後に人が行う）
 
-```js
-await esbuild.build({
-  entryPoints: [`functions/${name}/index.mjs`],
-  bundle: true, platform: 'node', target: 'node22', format: 'esm',
-  outfile: `dist/build/${name}/index.mjs`,
-  external: ['@aws-sdk/*'],          // ランタイム同梱のSDKを使う
-  banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" },
-  minify: false, sourcemap: 'inline' // 障害時にスタックの行番号が分かるようにする
-})
-// archiver で dist/build/{name}/ を dist/functions/{name}.zip にする（zipの直下に index.mjs）
-```
-
-- `--verify` を付けると、束ねた `index.mjs` を実際に読み込み、`handler` が関数であることを確かめる（依存の取り込み漏れや ESM／CommonJS の食い違いを、配置の前に見つけるため）。読み込みに使う環境変数はダミーの値で、AWS には接続しない
-- 各 zip が50MB以上なら失敗させる。サイズはジョブの概要に書く
-
-- Lambda のハンドラ設定は既定の `index.handler` のまま（構築手順書 3.8 の設定を変えない）
-- zip は同じリリース番号なら dev・prod で同じものを使う（環境の違いは Lambda の環境変数で吸収する）
-
-### 11.5 GitHub と AWS の設定
-
-**AWS 側**（構築手順書 2.6・3.13・4.13・5.13 で作る）
-
-| 項目                | 内容                                                                                                    |
-| ----------------- | ----------------------------------------------------------------------------------------------------- |
-| OIDC IDプロバイダー     | `token.actions.githubusercontent.com`、対象者 `sts.amazonaws.com`（アカウントで1つ）                                |
-| 配置用ロール            | `rpg-dev-deploy-role`・`rpg-prod-deploy-role`。信頼ポリシーの条件 `sub` を `repo:<オーナー>/rpg-learning-app:environment:{env}` に絞る |
-| 配置用ロールの権限         | 下の表。リソースはすべて自分の環境（`rpg-{env}-`）のものだけ                                                                  |
-
-| 対象            | Action                                                                                         | 使う場面                  |
-| ------------- | ---------------------------------------------------------------------------------------------- | --------------------- |
-| Lambda        | `lambda:UpdateFunctionCode`、`lambda:GetFunction`、`lambda:GetFunctionConfiguration`、`lambda:InvokeFunction`（api-handler のみ） | コードの入れ替え・照合・ヘルスチェック   |
-| S3            | `s3:ListBucket`、`s3:PutObject`、`s3:GetObject`（web バケットのみ）                                       | 画面の配置                 |
-| CloudFront    | `cloudfront:CreateInvalidation`、`cloudfront:GetInvalidation`                                     | キャッシュ削除               |
-| RDS Data API  | `rds-data:ExecuteStatement`、`rds-data:BatchExecuteStatement`、`secretsmanager:GetSecretValue`（DBのシークレットのみ） | マイグレーション              |
-| RDS           | `rds:CreateDBClusterSnapshot`、`rds:DescribeDBClusterSnapshots`、`rds:AddTagsToResource`（prod のみ）   | 配置前のスナップショット          |
-
-**GitHub 側**（リポジトリの「Settings」）
-
-| 場所                       | 設定                                                                                                                                                   |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Environments `dev`       | 配置できるブランチ：`main` のみ                                                                                                                                |
-| Environments `prod`      | 配置できるタグ：`release-*` のみ。**Required reviewers** に承認者（システム管理者・開発リーダー）を登録し、**Prevent self-review** をオン                                                 |
-| 各 Environment の Variables | `AWS_ROLE_ARN`（配置用ロールのARN）、`WEB_BUCKET`、`CF_DISTRIBUTION_ID`（V-08）、`DB_CLUSTER_ARN`（V-06）、`DB_SECRET_ARN`（V-07）、`DB_CLUSTER_ID`（`rpg-{env}-db`） |
-| リポジトリの Variables | `AWS_REGION` = `ap-northeast-1`、`DEV_DEPLOY_PAUSED` = `false`（受け入れ確認の間だけ `true`。11.1） |
-| Rulesets（ブランチ `main`）   | プルリクエスト必須、`ci.yml` の成功を必須、force push 禁止                                                                                                             |
-| Rulesets（タグ `release-*`） | 作成は管理者（Maintain 以上）だけ。更新・削除は禁止（一度出したリリース番号を付け替えない）                                                                                                    |
-
-- ARN などはどれも秘密の値ではないため、Secrets ではなく Variables に入れる。AWS のアクセスキーは GitHub に置かない
-- ワークフローには `permissions: id-token: write, contents: read`（`publish` だけ `contents: write`）を付ける
-
-### 11.6 配置（`deploy.yml`）
-
-配置ジョブは環境ごとに1つ動き、`environment: {env}` を指定する（prod はここで承認待ちになる）。
-
-**`deploy.yml` の要点**
-
-```yaml
-on:
-  workflow_call:
-    inputs:
-      env:     { type: string, required: true }   # dev / prod
-      release: { type: string, required: true }   # 20261105-01 など
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.env }}
-    concurrency: { group: deploy-${{ inputs.env }}, cancel-in-progress: false }
-    permissions: { id-token: write, contents: read }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - run: npm ci
-      - uses: actions/download-artifact@v4
-        with: { name: bundle-${{ inputs.release }}, path: release/${{ inputs.release }} }
-      - uses: aws-actions/configure-aws-credentials@v4
-        with: { role-to-assume: "${{ vars.AWS_ROLE_ARN }}", aws-region: "${{ vars.AWS_REGION }}" }
-      - name: DB（マイグレーション）
-        run: node scripts/migrate.mjs --env=${{ inputs.env }} --release=${{ inputs.release }}
-      - name: Lambda（4関数）
-        run: node scripts/deploy-functions.mjs --env=${{ inputs.env }} --release=${{ inputs.release }}
-      - name: 画面
-        run: |
-          aws s3 sync release/${{ inputs.release }}/web-${{ inputs.env }}/ s3://${{ vars.WEB_BUCKET }}/
-          ID=$(aws cloudfront create-invalidation --distribution-id ${{ vars.CF_DISTRIBUTION_ID }} --paths '/*' --query Invalidation.Id --output text)
-          aws cloudfront wait invalidation-completed --distribution-id ${{ vars.CF_DISTRIBUTION_ID }} --id $ID
-      - name: ヘルスチェック
-        run: node scripts/health-check.mjs --env=${{ inputs.env }}
-```
-
-- アクションのバージョンは、使い始めるときにその時点の最新のメジャー版に合わせる
-
-**手順1：DBの変更（`scripts/migrate.mjs`）**
-
-1. Data API で `SELECT version FROM schema_migrations` を実行し、適用済みの番号を得る（`schema_migrations` がまだない初回は「すべて未適用」とみなす）。DBが止まっていて `DatabaseResumingException` が返ったら、15秒おきに最大8回やり直す
-2. 未適用のファイルがなければ、DBの変更はせずに終わる（prod は次の手順3のスナップショットだけ取る）
-3. （prod のみ）未適用のファイルの有無にかかわらず、`aws rds create-db-cluster-snapshot` で `rpg-prod-before-{リリース番号}` を取り、`available` になるまで待つ（stg がないための備え。古いスナップショットは直近5回分を残して手で消す）
-4. 未適用のファイルを番号の小さい順に、**行末の `;` で文を区切って1文ずつ** `ExecuteStatement` で実行する（8.7）
-5. ファイルの最後の文で入った行に、`UPDATE schema_migrations SET release_no = :release WHERE version = :version` でリリース番号を入れる
-6. 実行したファイルと件数をジョブの概要（`$GITHUB_STEP_SUMMARY`）に書く。1文でも失敗したらそこで止め、ジョブを失敗させる（Lambda・画面は入れ替えない）
-
-**手順2：Lambda（`scripts/deploy-functions.mjs`）**
-
-| 順 | 関数                         | 理由                                       |
-| - | -------------------------- | ---------------------------------------- |
-| 1 | `rpg-{env}-grading-worker` | api-handler から呼ばれる側を先に入れる                 |
-| 2 | `rpg-{env}-import-worker`  | 同上（SQS から呼ばれる）                           |
-| 3 | `rpg-{env}-batch-runner`   | 定期処理の時刻（:00・:30）の前後5分なら、その時間帯が過ぎるまで待ってから入れる |
-| 4 | `rpg-{env}-api-handler`    | 最後に入れ替える（画面から使われるため）                     |
-
-各関数で次を行う。
-
-1. `aws lambda update-function-code --function-name rpg-{env}-{関数名} --zip-file fileb://release/{番号}/functions/{関数名}.zip`
-2. `aws lambda wait function-updated-v2` で更新の完了を待つ
-3. `CodeSha256` が manifest.json の `sha256Base64` と同じことを確かめる（違えばジョブを失敗させる）
-
-- 環境変数は配置で変えない。変える場合は、配置の**前に**コンソールの「設定」→「環境変数」で変更し、リリース記録に書く（新しい変数は古いコードでは使われないため、先に入れても害はない）
-
-**手順3：画面**
-
-1. `aws s3 sync` で `release/{番号}/web-{env}/` の中身を web バケットの直下に上書きする（`--delete` は付けない。今回だけにないファイルは残っても参照されない）
-2. CloudFront `rpg-{env}-cdn` のキャッシュを `/*` で削除し、完了まで待つ（1〜3分）
-
-**手順4：ヘルスチェック（`scripts/health-check.mjs`）**
-
-`aws lambda invoke` で `rpg-{env}-api-handler` に次のイベントを送り、`statusCode: 200` を確かめる。503（DBの起動待ち）のときは30秒待って最大3回やり直す。
-
-```json
-{"version":"2.0","routeKey":"GET /api/health","rawPath":"/api/health","headers":{},"requestContext":{"http":{"method":"GET","path":"/api/health"}},"isBase64Encoded":false}
-```
-
-### 11.7 スモークテスト（配置後に人が行う）
-
-ワークフローが成功したら、作業者が次を確かめる。
-
-| No | 確かめること                                         | 期待する結果                               |
-| -- | ---------------------------------------------- | ------------------------------------ |
-| 1  | 画面を開き直す（スマホはホーム画面のアプリを一度閉じてから開く）                | ログイン後にホームが表示される。画面下部のリリース番号が今回のもの     |
-| 2  | 確認用の学習者でホーム → 冒険に出る → 択一を1問解く                   | 結果・EXPが表示される                          |
-| 3  | キーワード説明を1問送る                                   | 30秒以内に採点結果が返る                        |
-| 4  | 週間ランキング・プロフィールを開く                              | エラーなく表示される                           |
-| 5  | 管理者で S-11・S-12・S-13 を開く                         | 一覧が表示される                             |
-| 6  | CloudWatch の `/aws/lambda/rpg-{env}-*` を配置後5分間見る | `ERROR` が出ていない                        |
-| 7  | 今回のリリースで変えた機能                                  | リリース記録の「確認項目」のとおりに動く                  |
-
-- prod の確認用の学習者は、ランキングに出ないよう専用のテストコース（`[確認用]`）だけを受講させておく
-- dev はプルリクエストのマージのたびに配置されるため、ふだんは No.1〜3 と変えた機能だけでよい。受け入れ確認の期間（dev の凍結中）は No.1〜7 をすべて行う
+| No | 確認 | 期待する結果 |
+| -- | --- | --- |
+| 1  | `https://{SITE_ADDRESS}/api/health` を開く | `{"status":"ok"}` |
+| 2  | 確認用の利用者でログインし、S-08 下部のリリース番号を見る | 反映したリリース番号 |
+| 3  | 択一を1問解く | 結果とパートナーのコメントが出る |
+| 4  | 説明を1問送る | 30秒以内に採点結果が出る |
+| 5  | 管理者で S-11・S-12・S-13 を開く | 一覧が表示される |
+| 6  | `docker compose logs --since 10m` | `ERROR` が出ていない |
 
 ### 11.8 環境ごとの違い
 
-| 項目         | dev                                                   | prod                                        |
-| ---------- | ----------------------------------------------------- | ------------------------------------------- |
-| 配置のきっかけ    | `main` への push（自動）。受け入れ確認の間は止める（`DEV_DEPLOY_PAUSED`） | dev で受け入れ確認した版にタグ `release-*` を付け、承認者が GitHub で承認 |
-| 事前のお知らせ    | 受け入れ確認の期間をコース管理者へ                                     | 利用者全員（前日まで。「13:00〜13:30 にメンテナンス。操作中に画面が切り替わることがあります」） |
-| DBスナップショット | 不要                                                    | 配置のたびにワークフローが自動で取る                          |
-| 確認         | ふだんは 11.7（一部）。受け入れ確認の期間は 11.7＋受け入れ確認（変更した機能の画面確認）     | 11.7                                        |
-| 作業者        | 1人（受け入れ確認はコース管理者）                                     | 2人（タグを付けた人と承認者）                             |
+| 項目 | dev | prod |
+| --- | --- | --- |
+| イメージを作るきっかけ | `main` で手動 | タグ＋承認 |
+| `MAIL_SCHEDULE_ENABLED` | `false`（確かめるときだけ `true`） | `true` |
+| サーバー・DB の大きさ | 構築手順書 3.3・3.8 | 構築手順書 4 |
+| DB のバックアップ | 自動バックアップ（1日1回） | 自動バックアップ（1日1回）＋リリース前の手動 |
 
-**リリース判定（prod の承認の前）**
+### 11.9 リリース記録
 
-承認者は、次をすべて満たすことを確かめてから「Review deployments」→ `prod` →「Approve and deploy」を押す。満たさない場合は「Reject」し、直したものを新しいリリース番号のタグで出し直す。
+リリースのたびに GitHub の Release（タグ `release-YYYYMMDD-NN`）に次を書く。
 
-| 判定項目                         | 基準                                   |
-| ---------------------------- | ------------------------------------ |
-| モジュールテスト                     | ジョブ `build` が成功（全件成功・カバレッジ基準以上。モジュールテスト仕様書 第6章） |
-| dev での確認（受け入れ確認）            | dev を凍結した状態で、システムテスト・スモークテスト（11.7 No.1〜7）・受け入れ確認がすべてOK。タグのコミットが、dev の画面下部に出ているリリース番号のコミットと同じ |
-| 未解決の不具合                      | 重大度「高」が0件                            |
-| DBの変更                        | 古いLambdaで動く形になっている（8.7）。dev で適用済み        |
-| ロールバックの準備                    | 前回のリリースの GitHub Release に成果物が添付されている  |
-| 時間帯                          | 平日 13:00〜13:30（お知らせした時間）              |
-
-- 承認待ちは30日で期限切れになる。期限切れや却下のときは、同じタグのワークフローを「Re-run」するか、新しいタグで出し直す
-
-### 11.9 ロールバック手順
-
-**判断の目安**：スモークテストで失敗した、配置後に 5xx のアラームが出た、利用者から「操作できない」連絡が続いた。迷ったら戻してから調べる。
-
-**prod**
-
-1. GitHub の「Actions」→「rollback」→「Run workflow」
-2. 「Use workflow from」で **戻したいリリースのタグ**（例：`release-20261029-01`）を選ぶ
-3. 入力：環境（`prod`）、対象（`all`／`functions`／`web`）を選んで実行する（承認が必要）
-4. ワークフローが GitHub Release `release-{前回の番号}` の `bundle-{前回の番号}.zip` を取り出し、11.6 の手順2〜4（Lambda・画面・ヘルスチェック）を行う。**DB は戻さない**
-
-**dev**：直前に成功した `release.yml` の実行を開いて「Re-run all jobs」を押す。または、原因のプルリクエストを revert して main にマージする。
-
-| 対象      | 戻し方                                                                                                    | 所要時間 |
-| ------- | ------------------------------------------------------------------------------------------------------ | ---- |
-| Lambda  | `rollback.yml`（対象 `functions`）。SHA-256 が前回の manifest.json と同じことをワークフローが確かめる | 約5分  |
-| 画面      | `rollback.yml`（対象 `web`）。今回だけにあるファイルは残っても害はない（参照されない） | 約5分  |
-| DB      | 原則として戻さない（新しい列・テーブルは古いLambdaでは使われないため）。データを壊す不具合だった場合だけ、ワークフローが取ったスナップショット `rpg-prod-before-{リリース番号}` から新しいクラスターを復元し、切り替えを相談する（データの巻き戻りを伴うため、システム管理者の判断で行う） | 1時間以上 |
-
-- 戻したら、リリース記録に「ロールバック」と理由・時刻を書き、原因を直したものを新しいリリース番号で出し直す
-- 画面だけ、Lambdaだけを戻すこともできる。ただし API の入出力を変えたリリースでは、両方を戻す（対象 `all`）
-
-### 11.10 リリース記録
-
-リリースごとに GitHub Release `release-{リリース番号}` の本文に書く（ジョブ `publish` がひな形を入れる）。配置の日時・実行した人・承認者は Actions の実行履歴と Environments の「Deployments」に自動で残るため、本文には実行のURLを貼る。
-
-| 項目       | 記入例                                              |
-| -------- | ------------------------------------------------ |
-| リリース番号   | 20261105-01（タグ `release-20261105-01`、コミット a1b2c3d） |
-| 前回のリリース番号 | 20261029-01                                      |
-| 変更内容     | 週間ランキングの過去週の切り替えを追加（プルリクエストの一覧は GitHub が自動で作る）         |
-| DBの変更    | V003__add_weekly_index.sql                        |
-| 環境変数の変更  | なし                                               |
-| 配置の記録    | dev 11/04 10:20（受け入れ確認 11/04〜11/05）、prod 11/06 13:05（Actions の実行URL） |
-| 作業者・承認者  | ○○・△△                                            |
-| 確認項目と結果  | 11.7 No.1〜7：OK。過去週の切り替え：OK                    |
-| 特記事項     | なし（ロールバックした場合は理由と時刻）                             |
+| 項目 | 内容 |
+| --- | --- |
+| リリース番号・日時 | 例 `20261105-01`、2026-11-05 13:10 |
+| 内容 | マージしたプルリクエストの一覧（自動生成） |
+| DB の変更 | 適用したマイグレーションの番号（なければ「なし」） |
+| 承認者・作業者 | GitHub のユーザー名 |
+| スモークテスト | 11.7 の結果 |
+| 前回のイメージ | 切り戻し先 |
 
 ---
 
@@ -2037,11 +2033,15 @@ jobs:
 | -- | ------------------------------- | --------------------------------------------------------- | --------------- |
 | 1  | ニックネームの重複確認の同時登録                | アプリで確認するだけのため、同じ瞬間の登録で重複する可能性がわずかに残る。見つかったら管理者が片方を変更してもらう | パイロット1か月後       |
 | 2  | 取り込みのテキスト分割の長さ                  | 8,000文字ずつ。抽出の精度を見て調整                                       | dev での試行時       |
-| 3  | Bedrock の打ち切り時間（抽出120秒）          | 10ページのPDFで実測して調整                                           | dev での試行時       |
+| 3  | AI の打ち切り時間（抽出120秒）          | 10ページのPDFで実測して調整（さくらのAI Engine と Bedrock の両方）                                           | dev での試行時       |
 | 4  | `login_logs` の保持期間              | 永続（1年で約30万行）。Phase 3 で1年より古い行の削除を検討                         | Phase 3         |
 | 5  | prod の確認用テストコース                 | `[確認用]` コースを作り、ランキング・ダッシュボードの集計から除く設定は設けない（受講者が確認用の利用者だけのため） | パイロット開始前        |
-| 6  | リリースの自動化                        | **決定（2026-10-20）**：Phase 1 から GitHub Actions で配置する（第11章）。AWSリソースの定義（IaC。AWS SAM など）への移行は、利用者数と構成変更の頻度が増えたら検討 | Phase 2 の計画時     |
-| 7  | `esbuild` が使う依存ライブラリのライセンス確認     | pdf-lib（MIT）、esbuild（MIT）、archiver（MIT。2026-10-21 確認）。追加のたびに確認                                       | ライブラリ追加時        |
+| 6  | リリースの自動化                        | **決定（2026-10-27）**：イメージの作成は GitHub Actions、サーバーへの反映は人が SSH で行う（第11章）。サーバーへの反映の自動化（サーバーで定期的に pull するなど）は、リリースの頻度が増えたら検討 | Phase 2 の計画時     |
+| 7  | 依存ライブラリのライセンス確認     | pdf-lib（MIT）、pg（MIT）、nodemailer（MIT-0）、unpdf（MIT）（2026-10-27 確認）。追加のたびに確認                                       | ライブラリ追加時        |
 | 8  | GitHub のリポジトリ名・承認者               | `<オーナー>/rpg-learning-app`。prod の承認者はシステム管理者と開発リーダーの2名を仮置き     | dev 構築前         |
 | 9  | 通知メールの文言                       | パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を `mail/templates.js` に仮置き。外部設計書 10 No.10 で確定する | パイロット開始前        |
-| 10 | stg 環境を作り直すか                    | **決定（2026-10-21）**：コスト削減のため Phase 1 では作らない（外部設計書 10 No.11）。受け入れ確認は dev を凍結して行い（11.1）、prod は配置のたびにスナップショットを取る。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める | Phase 3 の計画時     |
+| 10 | stg 環境を作り直すか                    | **決定（2026-10-21）**：コスト削減のため Phase 1 では作らない（外部設計書 10 No.11）。受け入れ確認は dev で行い（11.1）、prod は DB の変更があるリリースの前にバックアップを取る。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める | Phase 3 の計画時     |
+| 11 | Bedrock への切り替え                   | Bedrock が使えるようになったら、AI だけを `AI_PROVIDER=bedrock` に切り替える（7章・11.5）。採点の質とコストを dev で比べてから prod を切り替える | AWS の制限が解けたとき |
+| 12 | 画像の取り込み                         | さくらのAI Engine では使えない（7章）。Bedrock に切り替えたら使える。それまでは S-11 で画像を選ぶと「失敗」になる | Bedrock の切り替え時 |
+| 13 | 古い `waiting` の取り込みの掃除          | A-13b が呼ばれなかった取り込みは `waiting` のまま残る。日次処理で1日より古いものを `failed` にするかを検討 | Phase 2 |
+| 14 | さくらのクラウドの料金                   | サーバー・DB・オブジェクトストレージの月額は構築時に料金表で確認し、外部設計書のコストの表に書く | dev 構築時 |

@@ -45,3 +45,28 @@ export function deletionMail(user) {
   ]
   return { to: user.email, subject: `${subjectPrefix()}【RPG学習アプリ】アカウント停止のお知らせ`, text: lines.join('\n') }
 }
+// 招待（仮パスワード）。外部設計書 5.6 の招待メールの文面
+export function inviteMail({ email, tempPassword, validDays }) {
+  const appUrl = process.env.APP_URL
+  const lines = [
+    '冒険者ギルドへようこそ。',
+    `ログインURL：${appUrl}/`,
+    `メールアドレス：${email}`,
+    `仮パスワード：${tempPassword}`,
+    `初回ログイン時に新しいパスワードを設定してください。仮パスワードの期限は${validDays}日です。`
+  ]
+  return { to: email, subject: `${subjectPrefix()}【RPG学習アプリ】ギルドへの招待`, text: lines.join('\n') }
+}
+// パスワードの再設定
+export function resetMail({ email, token, validMinutes }) {
+  const appUrl = process.env.APP_URL
+  const lines = [
+    'RPG学習アプリのパスワードの再設定を受け付けました。',
+    `次のリンクを開いて、${validMinutes}分以内に新しいパスワードを設定してください。`,
+    `${appUrl}/#/reset?token=${encodeURIComponent(token)}`,
+    '',
+    '心当たりがない場合は、このメールを捨ててください。パスワードは変わりません。',
+    `問い合わせ先：${SUPPORT_CONTACT}`
+  ]
+  return { to: email, subject: `${subjectPrefix()}【RPG学習アプリ】パスワードの再設定`, text: lines.join('\n') }
+}

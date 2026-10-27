@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPG学習アプリ 要件定義書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;family=Noto+Sans+Mono&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  /* DADS color tokens */
+  --blue-1000: #00118F;
+  --blue-900: #0017C1;
+  --blue-700: #264AF4;
+  --blue-200: #C5D7FB;
+  --blue-100: #D9E6FF;
+  --blue-50: #E8F1FE;
+  --gray-900: #1A1A1C;
+  --gray-700: #414141;
+  --gray-600: #626264;
+  --gray-536: #767676;
+  --gray-300: #B4B4B4;
+  --gray-100: #E6E6E6;
+  --gray-50: #F2F2F2;
+  --white: #FFFFFF;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --focus: #FFD43D;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--gray-900);
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+a { color: var(--blue-900); text-underline-offset: 3px; }
+a:hover { color: var(--blue-1000); }
+a:focus-visible { outline: 4px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.site-header {
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--white);
+}
+.site-header .inner {
+  max-width: 1120px; margin: 0 auto; padding: 40px 16px 32px;
+}
+.eyebrow {
+  display: inline-block; font-size: 14px; font-weight: 700; color: var(--blue-900);
+  background: var(--blue-50); border-radius: 999px; padding: 2px 12px; margin-bottom: 12px;
+}
+.site-header h1 {
+  font-size: 32px; line-height: 1.4; margin: 0 0 16px; font-weight: 700;
+}
+.meta {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding: 0; list-style: none;
+  font-size: 14px; color: var(--gray-600);
+}
+.meta b { color: var(--gray-900); font-weight: 700; margin-left: 4px; }
+
+.layout {
+  max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px;
+}
+nav.toc { position: sticky; top: 24px; align-self: start; }
+nav.toc p { font-size: 14px; font-weight: 700; color: var(--gray-600); margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--gray-100); }
+nav.toc a {
+  display: block; padding: 6px 12px; margin-left: -2px; border-left: 2px solid transparent;
+  color: var(--gray-700); text-decoration: none; font-size: 15px;
+}
+nav.toc a:hover { color: var(--blue-900); border-left-color: var(--blue-900); background: var(--blue-50); }
+
+main { min-width: 0; }
+.chapter { padding-bottom: 48px; margin-bottom: 48px; border-bottom: 1px solid var(--gray-100); scroll-margin-top: 24px; }
+.chapter:last-child { border-bottom: none; }
+h2 {
+  font-size: 28px; line-height: 1.4; margin: 0 0 24px; padding-left: 16px;
+  border-left: 6px solid var(--blue-900);
+}
+h3 {
+  font-size: 20px; line-height: 1.5; margin: 32px 0 12px; color: var(--blue-1000);
+}
+p { margin: 0 0 16px; }
+.h-ico { color: var(--blue-900); display: inline-block; width: 1.2em; text-align: center; margin-right: 0.45em; font-size: 0.9em; vertical-align: 0.02em; }
+h3 .h-ico { font-size: 0.85em; margin-right: 0.4em; }
+ul, ol { margin: 0 0 16px; padding-left: 1.5em; }
+li { margin: 4px 0; }
+li::marker { color: var(--blue-900); }
+
+.table-wrap { overflow-x: auto; margin: 0 0 24px; border: 1px solid var(--gray-300); border-radius: var(--radius-8); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--gray-100); }
+th { background: var(--blue-50); color: var(--gray-900); font-weight: 700; border-bottom: 2px solid var(--blue-900); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+.mermaid .node rect, .mermaid rect.actor, .mermaid .statediagram-state rect { rx: 8px; ry: 8px; }
+.mermaid .edgeLabel, .mermaid .edgeLabel p { font-size: 13px; color: var(--gray-700); }
+
+figure.diagram {
+  margin: 8px 0 32px; padding: 24px 16px; background: var(--white);
+  border: 1px solid var(--gray-300); border-radius: var(--radius-12); overflow-x: auto;
+  text-align: center;
+}
+.mermaid { font-family: "Noto Sans JP", sans-serif; }
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* ===== chapter visuals (DADS components) ===== */
+.vis {
+  background: var(--blue-50); border-radius: var(--radius-12); padding: 24px;
+  margin: 0 0 32px; display: grid; gap: 16px;
+}
+.vis p { margin: 0; }
+.vis-grid { display: grid; gap: 16px; }
+.vis-grid.c1 { grid-template-columns: minmax(220px, 1fr) 2fr; }
+.vis-grid.c2 { grid-template-columns: 1fr 1fr; }
+.vis-grid.c5 { grid-template-columns: 280px 1fr; align-items: center; }
+.vis-grid.cards4 { grid-template-columns: repeat(4, 1fr); }
+.vis-grid.cards4.c6 { grid-template-columns: repeat(2, 1fr); }
+.vis-grid.tiles4 { grid-template-columns: repeat(4, 1fr); }
+.vis-stack { display: grid; gap: 16px; }
+.card, .role, .tile, .kpi-hero {
+  background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px;
+}
+.vis-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin-bottom: 8px !important; }
+.vis-label.inline { margin: 0 8px 0 0 !important; }
+.vis-title { font-size: 17px; font-weight: 700; }
+.count { font-size: 13px; color: var(--white); background: var(--blue-900); border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
+.lead { font-size: 17px; font-weight: 400; line-height: 1.6; }
+.lead strong { color: var(--blue-900); }
+.note { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-top: 6px !important; }
+.tag-row, .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-row { margin-top: 12px; }
+.tag { display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; line-height: 1.4; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.tag.solid { background: var(--blue-900); color: var(--white); }
+.tag.line { background: var(--white); color: var(--blue-900); border: 1px solid var(--blue-900); }
+.tag.mute { background: var(--gray-50); color: var(--gray-600); border: 1px solid var(--gray-300); }
+.pill { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--blue-100); color: var(--blue-1000); }
+.scope { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+/* KPI hero */
+.kpi-hero { background: var(--blue-900); border-color: var(--blue-900); color: var(--white); display: flex; flex-direction: column; justify-content: center; }
+.kpi-hero .vis-label { color: var(--blue-100); }
+.kpi-num { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: 0; }
+.kpi-num span { font-size: 32px; margin-left: 2px; }
+.kpi-num small { font-size: 16px; margin-left: 6px; font-weight: 400; }
+.kpi-name { font-size: 17px; font-weight: 700; margin-top: 12px !important; }
+.kpi-def { font-size: 14px; color: var(--blue-100); margin-top: 4px !important; }
+/* scale */
+.scale { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.scale-pt { display: flex; align-items: center; gap: 10px; }
+.scale-num { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1; }
+.scale-num small { font-size: 15px; margin-left: 2px; }
+.scale-cap { font-size: 13px; color: var(--gray-600); line-height: 1.4; }
+.scale-bar { height: 8px; background: var(--blue-100); border-radius: 999px; position: relative; }
+.scale-bar span { position: absolute; inset: 0; background: linear-gradient(90deg, var(--blue-200), var(--blue-900)); border-radius: 999px; }
+.scale-bar::after { content: ""; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); border-left: 12px solid var(--blue-900); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+/* role */
+.ico { width: 44px; height: 44px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; margin-bottom: 10px; }
+.ico.sm { width: 32px; height: 32px; margin: 0; }
+.ico.sm svg { width: 18px; height: 18px; }
+.role.ai { border-style: dashed; border-color: var(--blue-700); }
+.role-name { font-size: 17px; font-weight: 700; margin-bottom: 6px !important; }
+ul.mini, ul.checks { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--gray-700); }
+ul.mini li { padding-left: 14px; position: relative; margin: 2px 0; }
+ul.mini li::before { content: ""; position: absolute; left: 0; top: 0.7em; width: 6px; height: 6px; border-radius: 50%; background: var(--blue-900); }
+.info-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* feature map */
+.vis-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--gray-700); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.lg.l1, .feat.l1 { background: var(--white); border: 1px solid var(--blue-900); }
+.lg.l2, .feat.l2 { background: var(--blue-900); border: 1px solid var(--blue-900); color: var(--white); }
+.lg.l3, .feat.l3 { background: var(--gray-900); border: 1px solid var(--gray-900); color: var(--white); }
+.fmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fcol { display: flex; flex-direction: column; gap: 8px; }
+.fcol-h { font-size: 14px; font-weight: 700; color: var(--blue-1000); border-bottom: 2px solid var(--blue-900); padding-bottom: 4px; }
+.feat { display: flex; align-items: baseline; gap: 8px; font-size: 14px; padding: 8px 12px; border-radius: 6px; }
+.feat b { font-family: "Noto Sans Mono", monospace; font-size: 12px; opacity: 0.8; }
+.interval { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+ol.steps-mini { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+ol.steps-mini li { position: relative; font-size: 13px; color: var(--gray-700); background: var(--blue-50); border: 1px solid var(--blue-200); border-radius: 6px; padding: 6px 12px 6px 12px; margin: 0; }
+ol.steps-mini li b { font-size: 18px; color: var(--blue-900); margin-right: 2px; }
+ol.steps-mini li:not(:last-child)::after { content: "›"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--blue-900); font-weight: 700; }
+ol.steps-mini li.done { background: var(--blue-900); color: var(--white); border-color: var(--blue-900); font-weight: 700; display: flex; align-items: center; }
+/* tiles */
+.tile { text-align: center; }
+.tile.strong { border: 2px solid var(--blue-900); }
+.tile-num { font-size: 36px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.tile-num small { font-size: 14px; margin-left: 4px; }
+.tile-num.sm { font-size: 26px; }
+.tile-cap { font-size: 13px; color: var(--gray-700); margin-top: 6px !important; }
+ul.checks li { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--gray-100); }
+ul.checks li::before { content: ""; width: 16px; height: 16px; flex: none; border: 2px solid var(--blue-900); border-radius: 4px; }
+.badges { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 20px; }
+.badge { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--gray-700); }
+.medal { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--blue-900); background: var(--blue-50); border: 2px solid var(--blue-900); box-shadow: 0 0 0 3px var(--blue-100); }
+/* phone */
+.phone { background: var(--gray-900); border-radius: 32px; padding: 10px; width: 260px; justify-self: center; }
+.phone-in { background: var(--white); border-radius: 24px; padding: 18px 14px; display: grid; gap: 10px; font-size: 12px; }
+.ph-lv { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 8px; }
+.ph-badge { grid-row: span 2; background: var(--blue-900); color: var(--white); font-weight: 700; border-radius: 8px; padding: 6px 8px; font-size: 14px; }
+.ph-bar { height: 8px; background: var(--blue-100); border-radius: 999px; overflow: hidden; }
+.ph-bar span { display: block; height: 100%; background: var(--blue-900); }
+.ph-exp { font-size: 11px; color: var(--gray-600); }
+.ph-say { display: flex; gap: 8px; align-items: flex-start; }
+.ph-ava { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; }
+.ph-ava svg { width: 16px; height: 16px; }
+.ph-say p { background: var(--blue-50); border-radius: 0 10px 10px 10px; padding: 8px 10px; line-height: 1.5; }
+.ph-quest { border: 1px solid var(--gray-100); border-radius: 10px; padding: 8px 10px; }
+.ph-quest p { font-weight: 700; margin-bottom: 4px !important; }
+.ph-quest ul { list-style: none; margin: 0; padding: 0; }
+.ph-quest li { display: flex; gap: 6px; align-items: center; margin: 3px 0; color: var(--gray-700); }
+.ph-quest li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--blue-900); border-radius: 3px; flex: none; }
+.ph-quest li.ok { color: var(--gray-536); text-decoration: line-through; }
+.ph-quest li.ok::before { background: var(--blue-900); }
+.ph-btn { background: var(--blue-900); color: var(--white); text-align: center; font-weight: 700; border-radius: 8px; padding: 10px; font-size: 13px; }
+ol.prio-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+ol.prio-list li { display: flex; gap: 12px; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px 14px; margin: 0; }
+ol.prio-list li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--blue-900); color: var(--white); display: grid; place-items: center; font-size: 14px; }
+ol.prio-list span { font-weight: 700; display: flex; flex-direction: column; }
+ol.prio-list small { font-weight: 400; font-size: 13px; color: var(--gray-600); }
+.mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-stats > div { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px; text-align: center; }
+/* non-functional */
+.nf-h { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 10px; }
+ul.model { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 14px; }
+ul.model li { display: flex; align-items: center; gap: 8px; margin: 0; }
+ul.model .tag { min-width: 72px; justify-content: center; }
+.auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.arrow { color: var(--blue-900); font-weight: 700; }
+ol.tl { list-style: none; padding: 0 0 0 14px; margin: 0; border-left: 2px solid var(--blue-200); display: grid; gap: 8px; font-size: 14px; }
+ol.tl li { position: relative; margin: 0; color: var(--gray-700); }
+ol.tl li::before { content: ""; position: absolute; left: -21px; top: 0.45em; width: 12px; height: 12px; border-radius: 50%; background: var(--white); border: 2px solid var(--blue-900); }
+ol.tl li:last-child::before { background: var(--blue-900); }
+ol.tl b { display: block; color: var(--gray-900); font-size: 13px; }
+/* step navigation */
+ol.stepnav { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1.5fr auto 1fr 1fr; gap: 12px; align-items: stretch; }
+ol.stepnav > li { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px; display: flex; gap: 12px; margin: 0; }
+ol.stepnav > li.current { border: 2px solid var(--blue-900); }
+.sn-num { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue-900); color: var(--blue-900); display: grid; place-items: center; font-weight: 700; }
+li.current .sn-num { background: var(--blue-900); color: var(--white); }
+.sn-h { font-weight: 700; font-size: 17px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sn-sub { font-size: 13px; color: var(--blue-900); font-weight: 700; }
+ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-items: center; }
+.gate-in { font-size: 12px; text-align: center; color: var(--gray-700); border: 2px dashed var(--blue-900); border-radius: var(--radius-8); padding: 8px 10px; background: var(--white); line-height: 1.5; }
+.gate-in b { color: var(--blue-900); }
+/* banner */
+.banner { display: flex; gap: 14px; align-items: flex-start; background: var(--white); border: 1px solid var(--blue-900); border-left: 6px solid var(--blue-900); border-radius: var(--radius-8); padding: 16px 20px; }
+.banner-ico { color: var(--blue-900); flex: none; }
+.banner-h { font-size: 17px; font-weight: 700; }
+.banner-h b { color: var(--blue-900); font-size: 22px; }
+.cat-n { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.cat-n small { font-size: 14px; margin-left: 2px; }
+.cat-h { font-weight: 700; margin-top: 4px !important; }
+
+@media (max-width: 860px) {
+  .vis { padding: 16px; }
+  .card, .role, .tile, .kpi-hero { padding: 14px; }
+  .role-name, .cat-h { font-size: 15px; }
+  .vis-grid.c1, .vis-grid.c2, .vis-grid.c5, .scope, .fmap { grid-template-columns: 1fr; }
+  .vis-grid.tiles4, .mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .mini-stats { grid-template-columns: repeat(3, 1fr); }
+  ol.stepnav { grid-template-columns: 1fr; }
+  .vis-grid.cards4 { grid-template-columns: repeat(2, 1fr); }
+  .vis-grid.cards4.c6 { grid-template-columns: 1fr; }
+  ol.stepnav > li.gate { justify-content: center; }
+  .scale { grid-template-columns: 1fr; text-align: left; }
+  .scale-bar { height: 6px; margin-right: 12px; }
+  .kpi-num { font-size: 52px; }
+}
+@media print { .vis { break-inside: avoid; } }
+
+.site-footer { border-top: 1px solid var(--gray-100); color: var(--gray-600); font-size: 14px; }
+.site-footer .inner { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }
+  nav.toc { position: static; background: var(--gray-50); border-radius: var(--radius-8); padding: 16px; }
+  nav.toc ol { border-left: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  nav.toc a { padding: 6px 4px; border-left: none; font-size: 14px; }
+  .site-header h1 { font-size: 26px; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 18px; }
+  th, td { padding: 10px 12px; font-size: 14px; }
+}
+@media print {
+  nav.toc { display: none; }
+  .layout { display: block; }
+  .chapter { break-inside: auto; }
+  figure.diagram { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <span class="eyebrow">要件定義書</span>
+    <h1>
+<i class="fa-solid fa-file-lines h-ico" aria-hidden="true"></i>RPG学習アプリ 要件定義書</h1>
+    <ul class="meta">
+      <li>版数<b>第1.1版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更）</b>
+</li>
+      <li>作成日<b>2026-10-17</b>
+</li>
+      <li>作成者<b>ジュン</b>
+</li>
+    </ul>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p>目次</p>
+    <ol>
+<li><a href="#ch1">1. 目的・背景・スコープ</a></li>
+<li><a href="#ch2">2. 利用者とロール</a></li>
+<li><a href="#ch3">3. 機能要件</a></li>
+<li><a href="#ch4">4. ゲーム要素</a></li>
+<li><a href="#ch5">5. データ・画面・処理フロー</a></li>
+<li><a href="#ch6">6. 非機能要件・制約</a></li>
+<li><a href="#ch7">7. リリース計画</a></li>
+<li><a href="#ch8">8. 仮置き事項（要確認）</a></li>
+    </ol>
+  </nav>
+  <main>
+
+<section class="chapter" id="ch1"><h2>
+<i class="fa-solid fa-flag h-ico" aria-hidden="true"></i>1. 目的・背景・スコープ</h2>
+<div class="vis" aria-label="第1章の図解">
+  <div class="vis-grid c1">
+    <div class="kpi-hero">
+      <p class="vis-label">成功指標（KPI）</p>
+      <p class="kpi-num">50<span>%</span><small>以上</small></p>
+      <p class="kpi-name">アクティブユーザー率</p>
+      <p class="kpi-def">直近7日間に2回以上ログインした利用者の割合</p>
+    </div>
+    <div class="vis-stack">
+      <div class="card">
+        <p class="vis-label">目的</p>
+        <p class="lead">AIパートナーと一緒に、<strong>RPG感覚で楽しみながら</strong>資格知識を定着させる</p>
+        <div class="pill-row">
+          <span class="pill">忘却曲線で復習</span>
+          <span class="pill">自分の言葉で説明</span>
+          <span class="pill">覚えたつもりを防ぐ</span>
+        </div>
+      </div>
+      <div class="card scope">
+        <div>
+          <p class="vis-label">対象</p>
+          <div class="tag-row">
+<span class="tag solid">IT系の資格試験</span><span class="tag solid">スマホ対応Webアプリ</span><span class="tag solid">社内メンバー</span>
+</div>
+        </div>
+        <div>
+          <p class="vis-label">対象外</p>
+          <div class="tag-row"><span class="tag mute">社内業務知識の教材化</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<h3>
+<i class="fa-solid fa-book-open h-ico" aria-hidden="true"></i>1.1 背景</h3>
+<ul>
+<li>チームメンバーが資格学習を始めても継続できず、合格や知識定着につながりにくい</li>
+<li>学習が孤独な作業になりやすく、進捗や理解度が本人にもチームにも見えにくい</li>
+</ul>
+<h3>
+<i class="fa-solid fa-bullseye h-ico" aria-hidden="true"></i>1.2 目的</h3>
+<ul>
+<li>AIパートナーと一緒に、RPGのようにゲーム感覚で楽しみながら資格知識を定着させる仕組みを提供する</li>
+<li>忘却曲線に基づく復習と「自分の言葉で説明する」学習で、覚えたつもりを防ぐ</li>
+</ul>
+<h3>
+<i class="fa-solid fa-crop-simple h-ico" aria-hidden="true"></i>1.3 スコープ</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>区分</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>IT系を中心とした資格試験の学習</td>
+</tr>
+<tr>
+<td>対象外</td>
+<td>社内業務知識・システム固有知識の教材化</td>
+</tr>
+<tr>
+<td>利用者</td>
+<td>社内メンバー（学習者・コース管理者・システム管理者）</td>
+</tr>
+<tr>
+<td>提供形態</td>
+<td>スマホ対応Webアプリ</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-chart-line h-ico" aria-hidden="true"></i>1.4 成功指標（KPI）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指標</th>
+<th>定義</th>
+<th>目標値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>アクティブユーザー率</td>
+<td>直近7日間に2回以上ログインした利用者 ÷ 全利用者</td>
+<td>50%以上</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>1.5 全体像</h3>
+<figure class="diagram"><div class="mermaid">flowchart LR
+  CM[コース管理者] --&gt;|問題を取り込む| APP[RPG学習アプリ]
+  U[学習者] --&gt;|解答・説明を入力| APP
+  AI[AIパートナー] &lt;--&gt;|出題案内・採点・励まし| APP
+  APP --&gt;|復習タイミング通知| U
+  CM --&gt;|学習状況を確認| APP
+  SA[システム管理者] --&gt;|利用者・コース・権限を管理| APP
+</div></figure>
+
+</section><section class="chapter" id="ch2"><h2>
+<i class="fa-solid fa-users-gear h-ico" aria-hidden="true"></i>2. 利用者とロール</h2>
+<div class="vis" aria-label="第2章の図解">
+  <div class="scale">
+    <div class="scale-pt">
+<span class="scale-num">10<small>名</small></span><span class="scale-cap">パイロット<br>チーム内で検証</span>
+</div>
+    <div class="scale-bar" aria-hidden="true"><span></span></div>
+    <div class="scale-pt end">
+<span class="scale-num">1,000<small>名</small></span><span class="scale-cap">全社展開<br>資格学習基盤</span>
+</div>
+  </div>
+  <div class="vis-grid cards4">
+    <div class="role">
+      <div class="ico"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path><path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"></path></svg></div>
+      <p class="role-name">学習者</p>
+      <ul class="mini">
+<li>コースを選んで演習</li>
+<li>キーワードを説明</li>
+<li>ランキング閲覧</li>
+</ul>
+    </div>
+    <div class="role">
+      <div class="ico"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15Z"></path><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5"></path></svg></div>
+      <p class="role-name">コース管理者</p>
+      <ul class="mini">
+<li>問題の取り込み・公開</li>
+<li>担当コースの状況把握</li>
+</ul>
+    </div>
+    <div class="role">
+      <div class="ico"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg></div>
+      <p class="role-name">システム管理者</p>
+      <ul class="mini">
+<li>利用者・コース・権限</li>
+<li>アカウント削除・復活</li>
+</ul>
+    </div>
+    <div class="role ai">
+      <div class="ico"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"></path><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z"></path></svg></div>
+      <p class="role-name">AIパートナー</p>
+      <ul class="mini">
+<li>出題案内・採点</li>
+<li>励まし・フィードバック</li>
+</ul>
+    </div>
+  </div>
+  <div class="info-strip">
+    <span class="vis-label inline">管理者が見る指標</span>
+    <span class="tag line">受講コース</span><span class="tag line">問題網羅率</span><span class="tag line">正答率</span><span class="tag line">最終ログイン</span><span class="tag line">ログイン頻度</span>
+  </div>
+</div>
+<h3>
+<i class="fa-solid fa-users h-ico" aria-hidden="true"></i>2.1 利用規模</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>フェーズ</th>
+<th>利用者数</th>
+<th>位置づけ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>パイロット</td>
+<td>約10名</td>
+<td>チーム内で検証</td>
+</tr>
+<tr>
+<td>全社展開</td>
+<td>約1,000名</td>
+<td>全社の資格学習基盤</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-id-badge h-ico" aria-hidden="true"></i>2.2 ロール定義</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ロール</th>
+<th>主な操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>学習者</td>
+<td>コース選択、問題演習、復習、キーワード説明、ランキング閲覧、AIパートナー選択</td>
+</tr>
+<tr>
+<td>コース管理者</td>
+<td>担当コースの問題取り込み・レビュー・公開、担当コースの学習状況把握</td>
+</tr>
+<tr>
+<td>システム管理者</td>
+<td>利用者・コース・コース管理者の登録と権限付与、アカウントの削除・復活</td>
+</tr>
+<tr>
+<td>AIパートナー</td>
+<td>出題案内、キーワード説明の採点、フィードバック、励まし</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-clipboard-list h-ico" aria-hidden="true"></i>2.3 コース管理者が把握する項目</h3>
+<ul>
+<li>学習者が目指している資格（受講コース）</li>
+<li>問題網羅率（コース内の全問題のうち解いた割合）</li>
+<li>正答率</li>
+<li>最終ログイン日時、ログイン頻度</li>
+</ul>
+<h3>
+<i class="fa-solid fa-diagram-project h-ico" aria-hidden="true"></i>2.4 ユースケース</h3>
+<figure class="diagram"><div class="mermaid">flowchart LR
+  L[学習者] --&gt; C1[コース選択]
+  L --&gt; C2[問題演習・復習]
+  L --&gt; C3[キーワード説明]
+  L --&gt; C4[週間ランキング閲覧]
+  L --&gt; C5[AIパートナー選択]
+  CM[コース管理者] --&gt; D1[問題の取り込み・レビュー・公開]
+  CM --&gt; D2[担当コースの学習状況把握]
+  SA[システム管理者] --&gt; E1[利用者・コース・権限管理]
+  SA --&gt; E2[アカウント削除・復活]
+  AI[AIパートナー] --&gt; C2
+  AI --&gt; C3
+</div></figure>
+
+</section><section class="chapter" id="ch3"><h2>
+<i class="fa-solid fa-gears h-ico" aria-hidden="true"></i>3. 機能要件</h2>
+<div class="vis" aria-label="第3章の図解">
+  <div class="vis-head">
+    <p class="vis-title">機能マップ <span class="count">全13機能</span></p>
+    <div class="legend">
+<span><i class="lg l1"></i>学習者</span><span><i class="lg l2"></i>コース管理者</span><span><i class="lg l3"></i>システム管理者</span>
+</div>
+  </div>
+  <div class="fmap">
+    <div class="fcol">
+      <p class="fcol-h">学ぶ</p>
+      <span class="feat l1"><b>F-03</b>四肢択一演習</span>
+      <span class="feat l1"><b>F-04</b>キーワード説明</span>
+      <span class="feat l1"><b>F-05</b>忘却曲線復習</span>
+    </div>
+    <div class="fcol">
+      <p class="fcol-h">続ける</p>
+      <span class="feat l1"><b>F-08</b>経験値・レベル</span>
+      <span class="feat l1"><b>F-09</b>週間ランキング</span>
+      <span class="feat l1"><b>F-10</b>デイリークエスト</span>
+      <span class="feat l1"><b>F-11</b>バッジ</span>
+      <span class="feat l1"><b>F-12</b>AIパートナー選択</span>
+      <span class="feat l1"><b>F-13</b>通知</span>
+    </div>
+    <div class="fcol">
+      <p class="fcol-h">整える</p>
+      <span class="feat l2"><b>F-01</b>問題取り込み</span>
+      <span class="feat l2"><b>F-02</b>問題レビュー・公開</span>
+      <span class="feat l2"><b>F-06</b>学習状況ダッシュボード</span>
+      <span class="feat l3"><b>F-07</b>全体管理</span>
+    </div>
+  </div>
+  <div class="interval">
+    <p class="vis-label">復習間隔（固定）</p>
+    <ol class="steps-mini">
+      <li>
+<b>1</b>日後</li>
+<li>
+<b>3</b>日後</li>
+<li>
+<b>7</b>日後</li>
+<li>
+<b>14</b>日後</li>
+<li>
+<b>30</b>日後</li>
+<li class="done">習得済み</li>
+    </ol>
+    <p class="note">正解で次の段階へ、不正解で1日後に戻る。択一と説明は別々に管理する</p>
+  </div>
+</div>
+<h3>
+<i class="fa-solid fa-list-check h-ico" aria-hidden="true"></i>3.1 機能一覧</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>機能</th>
+<th>利用者</th>
+<th>概要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-01</td>
+<td>問題取り込み</td>
+<td>コース管理者</td>
+<td>PDF・画像・テキストからAIが問題とキーワードを抽出</td>
+</tr>
+<tr>
+<td>F-02</td>
+<td>問題レビュー・公開</td>
+<td>コース管理者</td>
+<td>抽出結果を確認・修正し、コースに公開</td>
+</tr>
+<tr>
+<td>F-03</td>
+<td>四肢択一演習</td>
+<td>学習者</td>
+<td>選択肢から解答し、正誤と解説を表示</td>
+</tr>
+<tr>
+<td>F-04</td>
+<td>キーワード説明</td>
+<td>学習者</td>
+<td>キーワードを自分の言葉で説明し、AIが採点</td>
+</tr>
+<tr>
+<td>F-05</td>
+<td>忘却曲線復習</td>
+<td>学習者</td>
+<td>固定間隔で復習対象を自動出題</td>
+</tr>
+<tr>
+<td>F-06</td>
+<td>学習状況ダッシュボード</td>
+<td>コース管理者</td>
+<td>担当コースの網羅率・正答率・ログイン状況を表示</td>
+</tr>
+<tr>
+<td>F-07</td>
+<td>全体管理</td>
+<td>システム管理者</td>
+<td>利用者・コース・管理者の登録、権限付与、アカウント削除・復活</td>
+</tr>
+<tr>
+<td>F-08</td>
+<td>経験値・レベル</td>
+<td>学習者</td>
+<td>学習行動に応じてEXPを付与しレベルアップ</td>
+</tr>
+<tr>
+<td>F-09</td>
+<td>週間ランキング</td>
+<td>学習者</td>
+<td>コース別に週間獲得EXPで順位を表示</td>
+</tr>
+<tr>
+<td>F-10</td>
+<td>デイリークエスト</td>
+<td>学習者</td>
+<td>毎日のクエストを提示し達成でEXPを付与</td>
+</tr>
+<tr>
+<td>F-11</td>
+<td>バッジ</td>
+<td>学習者</td>
+<td>学習成果に応じてバッジを付与し一覧表示</td>
+</tr>
+<tr>
+<td>F-12</td>
+<td>AIパートナー選択</td>
+<td>学習者</td>
+<td>性格の異なるキャラクターから1人を選ぶ</td>
+</tr>
+<tr>
+<td>F-13</td>
+<td>通知</td>
+<td>学習者</td>
+<td>復習対象・クエストをメールとプッシュで通知</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-file-import h-ico" aria-hidden="true"></i>3.2 問題取り込み（F-01, F-02）</h3>
+<ul>
+<li>入力形式：PDF、画像、テキスト貼り付け</li>
+<li>問題の登録はコース管理者のみが行う（学習者はアップロードしない。問題品質をそろえ、ランキングの公平性を保つため）</li>
+<li>AIが問題文・選択肢・正解・解説・キーワードを抽出する</li>
+<li>1問につきキーワードは最大3つ</li>
+<li>コース管理者が確認・修正して確定するまで学習者には公開しない</li>
+</ul>
+<figure class="diagram"><div class="mermaid">sequenceDiagram
+  participant CM as コース管理者
+  participant APP as アプリ
+  participant AI as Bedrock
+  CM-&gt;&gt;APP: PDF・画像・テキストをアップロード
+  APP-&gt;&gt;AI: 問題・キーワードの抽出を依頼
+  AI--&gt;&gt;APP: 抽出結果（下書き）
+  APP--&gt;&gt;CM: 下書きを表示
+  CM-&gt;&gt;APP: 確認・修正して公開
+  APP--&gt;&gt;APP: コースに問題を追加
+</div></figure>
+<h3>
+<i class="fa-solid fa-shapes h-ico" aria-hidden="true"></i>3.3 問題形式</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>形式</th>
+<th>内容</th>
+<th>採点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>四肢択一</td>
+<td>4つの選択肢から1つ選ぶ</td>
+<td>正解データとの照合による正誤判定</td>
+</tr>
+<tr>
+<td>キーワード説明</td>
+<td>問題に含まれるキーワードを自分の言葉で説明する</td>
+<td>AIが100点満点で部分点採点</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-pen-to-square h-ico" aria-hidden="true"></i>3.4 キーワード説明の採点（F-04）</h3>
+<ul>
+<li>AIが点数、模範説明、不足していた観点を返す</li>
+<li>60点以上を合格（正解扱い）とし、復習スケジュールに反映する</li>
+<li>採点コメントは学習者が選んだAIパートナーの口調で返す</li>
+</ul>
+<h3>
+<i class="fa-solid fa-rotate h-ico" aria-hidden="true"></i>3.5 忘却曲線復習（F-05）</h3>
+<ul>
+<li>復習間隔は固定：1日後 → 3日後 → 7日後 → 14日後 → 30日後</li>
+<li>正解で次の段階へ進み、不正解で段階1（1日後）に戻る</li>
+<li>30日後の復習に正解した項目は「習得済み」とする</li>
+<li>四肢択一とキーワード説明は別々に復習段階を管理する（「選べるが説明できない」状態を可視化するため）</li>
+</ul>
+<figure class="diagram"><div class="mermaid">stateDiagram-v2
+  [*] --&gt; 未学習
+  未学習 --&gt; 段階1: 初回解答
+  段階1 --&gt; 段階2: 1日後に正解
+  段階2 --&gt; 段階3: 3日後に正解
+  段階3 --&gt; 段階4: 7日後に正解
+  段階4 --&gt; 段階5: 14日後に正解
+  段階5 --&gt; 習得済み: 30日後に正解
+  段階2 --&gt; 段階1: 不正解
+  段階3 --&gt; 段階1: 不正解
+  段階4 --&gt; 段階1: 不正解
+  段階5 --&gt; 段階1: 不正解
+</div></figure>
+
+</section><section class="chapter" id="ch4"><h2>
+<i class="fa-solid fa-gamepad h-ico" aria-hidden="true"></i>4. ゲーム要素</h2>
+<div class="vis" aria-label="第4章の図解">
+  <div class="vis-grid tiles4">
+    <div class="tile">
+<p class="tile-num">10<small>EXP</small></p>
+<p class="tile-cap">四肢択一 正解</p>
+</div>
+    <div class="tile strong">
+<p class="tile-num">30<small>EXP</small></p>
+<p class="tile-cap">キーワード説明 合格</p>
+</div>
+    <div class="tile">
+<p class="tile-num">×1.5</p>
+<p class="tile-cap">復習での正解ボーナス</p>
+</div>
+    <div class="tile">
+<p class="tile-num">0</p>
+<p class="tile-cap">ペナルティ（減点なし）</p>
+</div>
+  </div>
+  <div class="vis-grid c2">
+    <div class="card">
+      <p class="vis-label">ランキング</p>
+      <p class="lead">コース別 × <strong>週間獲得EXP</strong></p>
+      <p class="note">毎週月曜0時にリセット。新しく始めた人も上位を狙える</p>
+    </div>
+    <div class="card">
+      <p class="vis-label">デイリークエスト</p>
+      <ul class="checks">
+<li>択一を5問解く</li>
+<li>キーワード説明を1問合格</li>
+<li>今日の復習をすべて終える</li>
+</ul>
+    </div>
+  </div>
+  <div class="badges">
+    <p class="vis-label">バッジ（学習成果の見える化）</p>
+    <div class="badge-row">
+      <div class="badge">
+<span class="medal"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>習得</div>
+      <div class="badge">
+<span class="medal"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"></path><path d="M9 4v14M15 6v14"></path></svg></span>網羅</div>
+      <div class="badge">
+<span class="medal"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4V5Z"></path><path d="M8 9h8M8 12h5"></path></svg></span>説明</div>
+      <div class="badge">
+<span class="medal"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2-5.5 1 1 1.5 2 1.5 3.5C12 9 12 6 12 3Z"></path></svg></span>継続</div>
+      <div class="badge">
+<span class="medal"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5M4 4v3h3"></path><path d="M4 13a8 8 0 0 0 14.5 4.5M20 20v-3h-3"></path></svg></span>復習</div>
+    </div>
+  </div>
+</div>
+<h3>
+<i class="fa-solid fa-star h-ico" aria-hidden="true"></i>4.1 経験値（EXP）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>行動</th>
+<th>獲得EXP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>四肢択一 正解</td>
+<td>10</td>
+</tr>
+<tr>
+<td>キーワード説明 合格（60点以上）</td>
+<td>30</td>
+</tr>
+<tr>
+<td>復習での正解</td>
+<td>上記 × 1.5</td>
+</tr>
+<tr>
+<td>デイリークエスト達成</td>
+<td>クエストごとに設定</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>キーワード説明は学習負荷が高いため、択一より多くのEXPを与える</li>
+<li>不正解でもEXPは減らさない</li>
+</ul>
+<h3>
+<i class="fa-solid fa-arrow-trend-up h-ico" aria-hidden="true"></i>4.2 レベル</h3>
+<ul>
+<li>累計EXPに応じてレベルアップする</li>
+<li>必要EXPはレベルが上がるほど緩やかに増える</li>
+</ul>
+<h3>
+<i class="fa-solid fa-ranking-star h-ico" aria-hidden="true"></i>4.3 ランキング</h3>
+<ul>
+<li>コース別に用意する（異なる資格同士で比較しない）</li>
+<li>週単位で集計し、毎週月曜0時にリセットする</li>
+<li>週間獲得EXPで順位をつける（古参と新規の差がつきすぎないようにするため）</li>
+<li>過去週の順位は履歴として閲覧できる</li>
+</ul>
+<h3>
+<i class="fa-solid fa-scroll h-ico" aria-hidden="true"></i>4.4 デイリークエスト</h3>
+<ul>
+<li>毎日3つ程度のクエストを提示し、毎日0時に更新する</li>
+<li>例：択一を5問解く、キーワード説明を1問合格する、今日の復習をすべて終える</li>
+</ul>
+<h3>
+<i class="fa-solid fa-medal h-ico" aria-hidden="true"></i>4.5 バッジ</h3>
+<ul>
+<li>これまでの学習成果を可視化する目的で付与する</li>
+<li>獲得済みバッジは獲得日つきでプロフィールに一覧表示する</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>カテゴリ</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>習得</td>
+<td>習得済み問題10問／50問／100問</td>
+</tr>
+<tr>
+<td>網羅</td>
+<td>コース網羅率50%／100%</td>
+</tr>
+<tr>
+<td>説明</td>
+<td>キーワード説明で満点を獲得</td>
+</tr>
+<tr>
+<td>継続</td>
+<td>7日連続／30日連続で学習</td>
+</tr>
+<tr>
+<td>復習</td>
+<td>30日後復習を初クリア</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-robot h-ico" aria-hidden="true"></i>4.6 AIパートナー</h3>
+<ul>
+<li>性格の異なる複数キャラクターから1人を選ぶ（例：励まし型、論理型、ライバル型）</li>
+<li>選んだキャラクターが出題案内・採点コメント・励ましを担当する</li>
+<li>あとから変更できる</li>
+</ul>
+<h3>
+<i class="fa-solid fa-shield-heart h-ico" aria-hidden="true"></i>4.7 ペナルティ</h3>
+<ul>
+<li>設けない（学習しない日があってもレベルやEXPは減らない）</li>
+</ul>
+<h3>
+<i class="fa-solid fa-route h-ico" aria-hidden="true"></i>4.8 EXPの流れ</h3>
+<figure class="diagram"><div class="mermaid">flowchart LR
+  Q1[四肢択一 正解] --&gt;|10 EXP| EXP[(累計EXP)]
+  Q2[説明 合格] --&gt;|30 EXP| EXP
+  R[復習で正解] --&gt;|× 1.5| EXP
+  D[デイリークエスト達成] --&gt; EXP
+  EXP --&gt; LV[レベルアップ]
+  EXP --&gt; RK[週間ランキング]
+  ACT[学習実績] --&gt; BG[バッジ付与]
+</div></figure>
+
+</section><section class="chapter" id="ch5"><h2>
+<i class="fa-solid fa-layer-group h-ico" aria-hidden="true"></i>5. データ・画面・処理フロー</h2>
+<div class="vis" aria-label="第5章の図解">
+  <div class="vis-grid c5">
+    <div class="phone" aria-label="ホーム画面のイメージ">
+      <div class="phone-in">
+        <div class="ph-lv">
+<span class="ph-badge">Lv.12</span><div class="ph-bar"><span style="width:68%"></span></div>
+<span class="ph-exp">680 / 1,000 EXP</span>
+</div>
+        <div class="ph-say">
+<span class="ph-ava"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"></path><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z"></path></svg></span><p>きのうの続き、あと3問で今日のクエスト達成だよ！</p>
+</div>
+        <div class="ph-quest">
+<p>デイリークエスト</p>
+<ul>
+<li class="ok">択一を5問解く</li>
+<li>説明を1問合格</li>
+<li>今日の復習を終える</li>
+</ul>
+</div>
+        <div class="ph-btn">今日の復習 12問をはじめる</div>
+      </div>
+    </div>
+    <div class="prio">
+      <p class="vis-label">ホーム画面の表示優先度</p>
+      <ol class="prio-list">
+        <li>
+<b>1</b><span>レベルとEXP<small>成長が一目でわかる</small></span>
+</li>
+        <li>
+<b>2</b><span>AIパートナーのひとこと<small>今日の一歩を後押し</small></span>
+</li>
+        <li>
+<b>3</b><span>デイリークエスト<small>今日やることを3つに絞る</small></span>
+</li>
+        <li>
+<b>4</b><span>今日の復習数<small>ボタン1つで開始</small></span>
+</li>
+      </ol>
+      <div class="mini-stats">
+        <div>
+<p class="tile-num sm">13</p>
+<p class="tile-cap">画面</p>
+</div>
+        <div>
+<p class="tile-num sm">3</p>
+<p class="tile-cap">キーワード上限/問</p>
+</div>
+        <div>
+<p class="tile-num sm">2</p>
+<p class="tile-cap">通知（メール・プッシュ）</p>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+<h3>
+<i class="fa-solid fa-table-cells-large h-ico" aria-hidden="true"></i>5.1 画面一覧</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>画面</th>
+<th>利用者</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S-01</td>
+<td>ログイン</td>
+<td>全員</td>
+</tr>
+<tr>
+<td>S-02</td>
+<td>ホーム</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-03</td>
+<td>コース選択</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-04</td>
+<td>演習（四肢択一）</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-05</td>
+<td>キーワード説明</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-06</td>
+<td>結果・フィードバック</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-07</td>
+<td>週間ランキング</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-08</td>
+<td>プロフィール（レベル・バッジ）</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-09</td>
+<td>AIパートナー選択</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-10</td>
+<td>通知設定</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-11</td>
+<td>問題取り込み・レビュー</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>S-12</td>
+<td>学習状況ダッシュボード</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>S-13</td>
+<td>利用者・コース・権限管理</td>
+<td>システム管理者</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-mobile-screen h-ico" aria-hidden="true"></i>5.2 ホーム画面の表示優先度</h3>
+<ol>
+<li>レベルとEXP</li>
+<li>AIパートナーのひとこと</li>
+<li>デイリークエスト</li>
+<li>今日の復習数（開始ボタンつき）</li>
+</ol>
+<h3>
+<i class="fa-solid fa-bell h-ico" aria-hidden="true"></i>5.3 通知</h3>
+<ul>
+<li>メール通知とブラウザのプッシュ通知の両方に対応する</li>
+<li>学習者が通知設定画面でそれぞれオン・オフできる</li>
+<li>通知内容：その日の復習対象数、デイリークエスト更新</li>
+</ul>
+<h3>
+<i class="fa-solid fa-shuffle h-ico" aria-hidden="true"></i>5.4 画面遷移</h3>
+<figure class="diagram"><div class="mermaid">flowchart TD
+  S01[ログイン] --&gt; S02[ホーム]
+  S02 --&gt; S04[演習 四肢択一]
+  S02 --&gt; S05[キーワード説明]
+  S04 --&gt; S06[結果・フィードバック]
+  S05 --&gt; S06
+  S06 --&gt; S02
+  S02 --&gt; S07[週間ランキング]
+  S02 --&gt; S08[プロフィール]
+  S02 --&gt; S03[コース選択]
+  S08 --&gt; S09[AIパートナー選択]
+  S08 --&gt; S10[通知設定]
+  S01 --&gt; S11[問題取り込み・レビュー]
+  S01 --&gt; S12[ダッシュボード]
+  S01 --&gt; S13[全体管理]
+</div></figure>
+<h3>
+<i class="fa-solid fa-database h-ico" aria-hidden="true"></i>5.5 データモデル（ER図）</h3>
+<figure class="diagram"><div class="mermaid">erDiagram
+  USER ||--o{ ENROLLMENT : 受講
+  COURSE ||--o{ ENROLLMENT : 含む
+  COURSE ||--o{ COURSE_ADMIN : 担当
+  USER ||--o{ COURSE_ADMIN : 担当
+  COURSE ||--o{ QUESTION : 持つ
+  QUESTION ||--|{ CHOICE : 選択肢
+  QUESTION ||--o{ KEYWORD : 最大3つ
+  USER ||--o{ ANSWER_LOG : 解答
+  USER ||--o{ REVIEW_SCHEDULE : 復習
+  QUESTION ||--o{ REVIEW_SCHEDULE : 対象
+  KEYWORD ||--o{ REVIEW_SCHEDULE : 対象
+  USER ||--o{ EXP_LOG : 獲得
+  USER ||--o{ USER_QUEST : 挑戦
+  QUEST ||--o{ USER_QUEST : 割当
+  USER ||--o{ USER_BADGE : 獲得
+  BADGE ||--o{ USER_BADGE : 付与
+  PARTNER ||--o{ USER : 選択
+</div></figure>
+<h3>
+<i class="fa-solid fa-arrows-spin h-ico" aria-hidden="true"></i>5.6 学習の処理フロー</h3>
+<figure class="diagram"><div class="mermaid">flowchart TD
+  A[ホームで学習開始] --&gt; B{今日の復習対象あり?}
+  B --&gt;|あり| C[復習問題を出題]
+  B --&gt;|なし| D[未学習問題を出題]
+  C --&gt; E[解答・説明を入力]
+  D --&gt; E
+  E --&gt; F[採点とAIパートナーのコメント]
+  F --&gt; G[復習段階を更新]
+  G --&gt; H[EXP加算・クエスト判定・バッジ判定]
+  H --&gt; I{続ける?}
+  I --&gt;|はい| B
+  I --&gt;|いいえ| J[ホームへ]
+</div></figure>
+
+</section><section class="chapter" id="ch6"><h2>
+<i class="fa-solid fa-shield-halved h-ico" aria-hidden="true"></i>6. 非機能要件・制約</h2>
+<div class="vis" aria-label="第6章の図解">
+  <div class="vis-grid cards4 c6">
+    <div class="card nf">
+      <div class="nf-h">
+<span class="ico sm"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18h10.5a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.5A3.3 3.3 0 0 0 7 18Z"></path></svg></span>インフラ</div>
+      <p class="lead">AWS ＋ Amazon Bedrock</p>
+      <p class="note">送信データは再学習に使わせない（オプトアウトを担保）</p>
+    </div>
+    <div class="card nf">
+      <div class="nf-h">
+<span class="ico sm"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"></path><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z"></path></svg></span>AIモデルの使い分け</div>
+      <ul class="model">
+        <li>
+<span class="tag solid">高精度</span>問題抽出・説明採点</li>
+        <li>
+<span class="tag line">軽量</span>解説コメント・ひとこと</li>
+        <li>
+<span class="tag mute">AI不使用</span>択一の正誤判定</li>
+      </ul>
+    </div>
+    <div class="card nf">
+      <div class="nf-h">
+<span class="ico sm"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span>認証</div>
+      <div class="auth">
+<span class="tag solid">ID/パスワード</span><span class="arrow">→</span><span class="tag line">将来SSO</span>
+</div>
+      <p class="note">採点の応答上限は30秒。速度より精度を優先</p>
+    </div>
+    <div class="card nf">
+      <div class="nf-h">
+<span class="ico sm"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"></ellipse><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"></path></svg></span>データ保持</div>
+      <ol class="tl">
+        <li>
+<b>削除</b>論理削除</li>
+        <li>
+<b>30日以内</b>復活で履歴を引き継ぎ</li>
+        <li>
+<b>30日経過</b>物理削除</li>
+      </ol>
+    </div>
+  </div>
+</div>
+<h3>
+<i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>6.1 インフラ</h3>
+<ul>
+<li>AWS上にホストする</li>
+<li>生成AIはAmazon Bedrockを利用する</li>
+<li>AWSへのリリース（アプリの配置）は GitHub Actions で行う。テストに通ったものだけを、dev → prod（承認つき）の順に配置する。コストを抑えるため検証用の stg 環境は置かず、受け入れ確認は dev で行う（2026-10-21 変更）</li>
+</ul>
+<h3>
+<i class="fa-solid fa-user-shield h-ico" aria-hidden="true"></i>6.2 AIの利用とデータ保護</h3>
+<ul>
+<li>問題文・学習者の説明をBedrockに送信してよい</li>
+<li>送信データがモデルの再学習に使われない設定・契約であることを確認し、オプトアウトを担保する</li>
+</ul>
+<h3>
+<i class="fa-solid fa-microchip h-ico" aria-hidden="true"></i>6.3 AIモデルの使い分け</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>用途</th>
+<th>モデル方針</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>問題・キーワードの抽出</td>
+<td>高精度モデル</td>
+<td>誤抽出は全学習者に影響するため</td>
+</tr>
+<tr>
+<td>キーワード説明の採点</td>
+<td>高精度モデル</td>
+<td>速度より採点精度を重視するため</td>
+</tr>
+<tr>
+<td>四肢択一の解説コメント・パートナーのひとこと</td>
+<td>軽量モデル</td>
+<td>呼び出し回数が多くコストを抑えるため</td>
+</tr>
+<tr>
+<td>四肢択一の正誤判定</td>
+<td>AI不使用</td>
+<td>正解データとの照合で足りるため</td>
+</tr>
+</tbody>
+</table></div>
+<h3>
+<i class="fa-solid fa-gauge-high h-ico" aria-hidden="true"></i>6.4 性能</h3>
+<ul>
+<li>説明採点は精度を優先し、応答時間の上限は30秒とする</li>
+<li>採点中はAIパートナーの待機演出を表示する</li>
+<li>全社展開時に約1,000名の利用に耐えること</li>
+</ul>
+<h3>
+<i class="fa-solid fa-lock h-ico" aria-hidden="true"></i>6.5 認証・セキュリティ</h3>
+<ul>
+<li>ID/パスワード認証（パスワードはハッシュ化して保存）</li>
+<li>将来のSSO（SAML/OIDC）対応を前提とした認証基盤を採用する</li>
+<li>通信はすべてTLSで暗号化する</li>
+<li>ロールに応じたアクセス制御を行う（コース管理者は担当コースのデータのみ参照可能）</li>
+</ul>
+<h3>
+<i class="fa-solid fa-box-archive h-ico" aria-hidden="true"></i>6.6 データ保持</h3>
+<ul>
+<li>学習履歴は同一ユーザーについて永続的に保持する</li>
+<li>システム管理者がアカウントを削除すると論理削除状態になる</li>
+<li>論理削除から30日以内に復活させた場合は、学習履歴をすべて引き継ぐ</li>
+<li>論理削除から30日経過後に、学習履歴を含めて物理削除する（以降は復活できない）</li>
+</ul>
+<figure class="diagram"><div class="mermaid">stateDiagram-v2
+  [*] --&gt; 有効: 管理者が登録
+  有効 --&gt; 論理削除: 管理者が削除
+  論理削除 --&gt; 有効: 30日以内に復活（履歴引き継ぎ）
+  論理削除 --&gt; 物理削除: 30日経過
+  物理削除 --&gt; [*]
+</div></figure>
+<h3>
+<i class="fa-solid fa-laptop h-ico" aria-hidden="true"></i>6.7 対応環境</h3>
+<ul>
+<li>スマートフォン・PCの主要ブラウザの最新版</li>
+</ul>
+
+</section><section class="chapter" id="ch7"><h2>
+<i class="fa-solid fa-rocket h-ico" aria-hidden="true"></i>7. リリース計画</h2>
+<div class="vis" aria-label="第7章の図解">
+  <ol class="stepnav">
+    <li class="current">
+      <span class="sn-num">1</span>
+      <div>
+<p class="sn-h">MVP<span class="tag solid">体験重視型</span></p>
+<p class="sn-sub">パイロット 約10名</p>
+      <p class="note">取り込み・演習・復習・EXP・ランキング・クエスト・AIパートナー複数・バッジ基本・メール通知</p>
+</div>
+    </li>
+    <li class="gate"><span class="gate-in">KPI検証<br><b>アクティブ率50%</b></span></li>
+    <li>
+      <span class="sn-num">2</span>
+      <div>
+<p class="sn-h">拡張</p>
+<p class="sn-sub">パイロット継続</p>
+      <p class="note">バッジ全カテゴリ・プッシュ通知・ダッシュボードの傾向分析</p>
+</div>
+    </li>
+    <li>
+      <span class="sn-num">3</span>
+      <div>
+<p class="sn-h">全社展開</p>
+<p class="sn-sub">約1,000名</p>
+      <p class="note">SSO対応・大規模利用への性能対応</p>
+</div>
+    </li>
+  </ol>
+</div>
+<h3>
+<i class="fa-solid fa-compass h-ico" aria-hidden="true"></i>7.1 方針</h3>
+<ul>
+<li>KPI（アクティブユーザー率50%以上）の達成には「楽しさ」が鍵となるため、MVPの段階からゲーム要素の中核を含める（体験重視型）</li>
+</ul>
+<h3>
+<i class="fa-solid fa-flag-checkered h-ico" aria-hidden="true"></i>7.2 フェーズ別スコープ</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>機能</th>
+<th>Phase 1：MVP（パイロット約10名）</th>
+<th>Phase 2：拡張</th>
+<th>Phase 3：全社展開（約1,000名）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>問題取り込み（PDF・画像・テキスト）</td>
+<td>○</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>四肢択一・キーワード説明</td>
+<td>○</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>忘却曲線復習</td>
+<td>○</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>EXP・レベル</td>
+<td>○</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>週間ランキング</td>
+<td>○</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>デイリークエスト</td>
+<td>○</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>AIパートナー（複数から選択）</td>
+<td>○</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>バッジ</td>
+<td>基本セット（習得・継続）</td>
+<td>全カテゴリ</td>
+<td></td>
+</tr>
+<tr>
+<td>通知</td>
+<td>メール</td>
+<td>プッシュ通知</td>
+<td></td>
+</tr>
+<tr>
+<td>学習状況ダッシュボード</td>
+<td>基本項目</td>
+<td>傾向分析</td>
+<td></td>
+</tr>
+<tr>
+<td>SSO</td>
+<td></td>
+<td></td>
+<td>○</td>
+</tr>
+<tr>
+<td>大規模利用への性能対応</td>
+<td></td>
+<td></td>
+<td>○</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="diagram"><div class="mermaid">flowchart LR
+  P1[Phase 1 MVP&lt;br&gt;パイロット10名&lt;br&gt;体験重視型] --&gt; R1{KPI検証&lt;br&gt;アクティブ率50%}
+  R1 --&gt;|達成| P2[Phase 2 拡張&lt;br&gt;バッジ全種・プッシュ通知&lt;br&gt;ダッシュボード強化]
+  R1 --&gt;|未達| F[ゲーム要素・EXP設計を調整]
+  F --&gt; P1
+  P2 --&gt; P3[Phase 3 全社展開&lt;br&gt;1,000名・SSO対応]
+</div></figure>
+
+</section><section class="chapter" id="ch8"><h2>
+<i class="fa-solid fa-triangle-exclamation h-ico" aria-hidden="true"></i>8. 仮置き事項（要確認）</h2>
+<div class="vis" aria-label="第8章の図解">
+  <div class="banner" role="note">
+    <span class="banner-ico"><svg viewbox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3Z"></path><path d="M12 10v4M12 17h.01"></path></svg></span>
+    <div>
+      <p class="banner-h">仮置き事項が <b>9件</b> あります</p>
+      <p class="note">基本設計に入る前に、関係者と確認して確定してください</p>
+    </div>
+  </div>
+  <div class="vis-grid cards4">
+    <div class="card cat">
+<p class="cat-n">4<small>件</small></p>
+<p class="cat-h">ゲーム・学習ルール</p>
+<p class="note">合格ライン、不正解時の戻り先、復習ボーナス、ランキングのリセット</p>
+</div>
+    <div class="card cat">
+<p class="cat-n">2<small>件</small></p>
+<p class="cat-h">運用・体験</p>
+<p class="note">デイリークエスト数、MVPの通知範囲</p>
+</div>
+    <div class="card cat">
+<p class="cat-n">1<small>件</small></p>
+<p class="cat-h">性能</p>
+<p class="note">説明採点の応答時間上限</p>
+</div>
+    <div class="card cat">
+<p class="cat-n">2<small>件</small></p>
+<p class="cat-h">基本設計で決定</p>
+<p class="note">レベルの計算式、AIパートナーのキャラクター設定</p>
+</div>
+  </div>
+</div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>項目</th>
+<th>仮置き内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>説明問題の合格ライン</td>
+<td>60点</td>
+</tr>
+<tr>
+<td>2</td>
+<td>復習で不正解のとき</td>
+<td>段階1に戻す</td>
+</tr>
+<tr>
+<td>3</td>
+<td>復習ボーナス</td>
+<td>1.5倍</td>
+</tr>
+<tr>
+<td>4</td>
+<td>ランキングのリセット</td>
+<td>毎週月曜0時</td>
+</tr>
+<tr>
+<td>5</td>
+<td>説明採点の応答時間上限</td>
+<td>30秒</td>
+</tr>
+<tr>
+<td>6</td>
+<td>デイリークエスト数</td>
+<td>1日3つ程度</td>
+</tr>
+<tr>
+<td>7</td>
+<td>MVPの通知</td>
+<td>メールのみ（プッシュはPhase 2）</td>
+</tr>
+<tr>
+<td>8</td>
+<td>レベルアップに必要なEXPの計算式</td>
+<td>基本設計で決定</td>
+</tr>
+<tr>
+<td>9</td>
+<td>AIパートナーのキャラクター数・設定</td>
+<td>基本設計で決定</td>
+</tr>
+</tbody>
+</table></div></section>
+  </main>
+</div>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 要件定義書 第1.1版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更）</div></footer>
+
+</body>
+</html>

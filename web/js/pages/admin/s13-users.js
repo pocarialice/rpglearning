@@ -63,7 +63,7 @@ function userRow(u, meId) {
     : `<span class="app-status app-status-${u.status === 'active' ? 'done' : 'waiting'}">${STATUS_LABEL[u.status] ?? escapeHtml(u.status)}</span>`
   const ops = u.status === 'deleted'
     ? button({ label: '復活する', size: 'sm', attrs: `data-restore="${escapeHtml(u.id)}"` })
-    : `${button({ label: 'ロールを変える', size: 'sm', attrs: `data-roles="${escapeHtml(u.id)}"` })}${me ? '' : button({ label: '削除する', size: 'sm', variant: 'quiet', attrs: `data-delete="${escapeHtml(u.id)}"` })}`
+    : `${button({ label: 'ロールを変える', size: 'sm', attrs: `data-roles="${escapeHtml(u.id)}"` })}${u.status === 'invited' ? button({ label: '招待を送り直す', size: 'sm', attrs: `data-reinvite="${escapeHtml(u.id)}"` }) : ''}${me ? '' : button({ label: '削除する', size: 'sm', variant: 'quiet', attrs: `data-delete="${escapeHtml(u.id)}"` })}`
   return `<tr><td>${escapeHtml(u.fullName)}${me ? '<span class="meta">（あなた）</span>' : ''}</td><td>${escapeHtml(u.nickname ?? '-')}</td><td>${escapeHtml(u.email)}</td>
 <td>${u.roles.map((r) => ROLE_LABEL[r] ?? escapeHtml(r)).join('・')}</td><td>${status}</td><td>${u.lastLoginAt ? escapeHtml(formatDateTime(u.lastLoginAt)) : '-'}</td>
 <td><div class="app-row-ops">${ops}</div></td></tr>`
@@ -126,7 +126,19 @@ ${button({ label: '利用者を登録する', variant: 'primary', attrs: 'data-a
     const roles = e.target.closest('[data-roles]')
     const del = e.target.closest('[data-delete]')
     const restore = e.target.closest('[data-restore]')
-    if (roles) {
+    const reinvite = e.target.closest('[data-reinvite]')
+    if (reinvite) {
+      // 仮パスワードの期限（7日）が切れた・招待メールが届かないとき
+      const u = find(reinvite.dataset.reinvite)
+      reinvite.disabled = true
+      try {
+        await api.apiPost(`/admin/users/${encodeURIComponent(u.id)}/reinvite`)
+        await done(`${u.fullName}さんに新しい仮パスワードで招待メールを送り直した`)
+      } catch (err) {
+        msg.innerHTML = errorBand(saveMessage(err))
+        reinvite.disabled = false
+      }
+    } else if (roles) {
       const u = find(roles.dataset.roles)
       dialogForm({
         title: `${u.fullName}さんのロール`, submitLabel: 'ロールを変える',

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { ConverseCommand } from '@aws-sdk/client-bedrock-runtime'
 import { converse, bedrockClient } from '../../../../../functions/shared/ai/bedrock.js'
-import { bedrockMock, awsError } from '../../../../helpers/aws-mocks.js'
+import { bedrockMock, awsError } from '../../../../helpers/mocks.js'
 import { converseOutput } from '../../../../fixtures/bedrock/grading.js'
 const br = bedrockMock()
 const messages = [{ role: 'user', content: [{ text: '秘密の説明文' }] }]

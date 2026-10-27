@@ -1,5 +1,4 @@
-// A-13 取り込みの登録、A-14 取り込み状況と下書き
-import { PutObjectCommand } from '@aws-sdk/client-s3'
+// A-13 取り込みの登録、A-13b アップロード完了、A-14 取り込み状況と下書き
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
@@ -8,7 +7,8 @@ import { assertValid, validateImportRequest } from '../../shared/util/validators
 import { withTx } from '../../shared/db/tx.js'
 import * as imports from '../../shared/db/repositories/imports.js'
 import * as questions from '../../shared/db/repositories/questions.js'
-import { s3Client, presignPut } from '../lib/aws.js'
+import * as jobs from '../../shared/db/repositories/jobs.js'
+import { putObject, presignPut } from '../../shared/storage/object-storage.js'
 import { requireCourseAdmin } from './_admin.js'
 // 英数字・.・-・_ 以外を _ に置き換え、100文字まで
 export function safeFileName(name) {
@@ -30,11 +30,22 @@ export async function create(ctx) {
   })
   const res = { importId: encodeId(PREFIX.import, importId) }
   if (isText) {
-    await s3Client().send(new PutObjectCommand({ Bucket: process.env.IMPORT_BUCKET, Key: key, Body: body.text, ContentType: 'text/plain; charset=utf-8' }))
+    await putObject(process.env.IMPORT_BUCKET, key, body.text, 'text/plain; charset=utf-8')
+    await jobs.enqueue('import', { importId })
   } else {
     res.uploadUrl = await presignPut(process.env.IMPORT_BUCKET, key, body.contentType)
   }
   return ok(res, 201)
+}
+// A-13b 画面が署名付きURLでファイルを置き終えたら呼ぶ（S3 のイベント通知の代わり）。待ち状態のときだけキューに入れる
+export async function uploaded(ctx) {
+  const importId = decodeId(PREFIX.import, ctx.params.id)
+  const job = await imports.find(importId)
+  if (!job || job.sourceType === 'text') throw new AppError('NOT_FOUND', '取り込みが見つかりません')
+  await requireCourseAdmin(ctx, job.courseId)
+  if (job.status !== 'waiting') throw new AppError('CONFLICT', 'すでに取り込みを始めています')
+  await jobs.enqueue('import', { importId })
+  return ok({ importId: encodeId(PREFIX.import, importId), status: 'waiting' }, 202)
 }
 const draftView = (q) => ({
   id: encodeId(PREFIX.question, q.questionId), bodyHead: [...q.body].slice(0, 40).join(''), body: q.body,

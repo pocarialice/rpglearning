@@ -37,7 +37,7 @@ export function toIsoJst(date, { ms = false } = {}) {
 export function diffDays(fromDate, toDate) {
   return Math.round((parseDate(toDate) - parseDate(fromDate)) / DAY_MS)
 }
-// Data API の timestamptz（'2026-10-20 01:00:00.123' のようにUTCで返る）やISO文字列を Date にする
+// DB（db/client.js）の timestamptz（'2026-10-20 01:00:00.123' のようにUTCで返る）やISO文字列を Date にする
 export function parseDbTimestamp(value) {
   if (value instanceof Date) return value
   const s = String(value).trim().replace(' ', 'T')

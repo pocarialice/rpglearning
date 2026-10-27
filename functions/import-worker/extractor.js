@@ -1,6 +1,6 @@
 // Bedrock での抽出と正規化（詳細設計書 4.4・7.4）
 import { AppError } from '../shared/util/errors.js'
-import { converse } from '../shared/ai/bedrock.js'
+import { converse } from '../shared/ai/client.js'
 import { extractJson, validateShape, EXTRACTION_SCHEMA } from '../shared/ai/json-guard.js'
 import { buildExtractionPrompt } from '../shared/ai/prompts/extraction.js'
 export const TEXT_CHUNK_CHARS = 8000

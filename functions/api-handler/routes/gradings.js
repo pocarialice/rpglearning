@@ -1,5 +1,4 @@
 // A-09 採点依頼、A-10 採点結果
-import { InvokeCommand } from '@aws-sdk/client-lambda'
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
@@ -8,7 +7,7 @@ import { assertValid, validateExplanation } from '../../shared/util/validators.j
 import * as questions from '../../shared/db/repositories/questions.js'
 import * as gradings from '../../shared/db/repositories/gradings.js'
 import * as adventures from '../../shared/db/repositories/adventures.js'
-import { lambdaClient } from '../lib/aws.js'
+import * as jobs from '../../shared/db/repositories/jobs.js'
 export const GRADING_LIMIT_MS = 30 * 1000
 export async function create(ctx) {
   const { user, log } = ctx
@@ -24,13 +23,10 @@ export async function create(ctx) {
   }
   const job = await gradings.create({ userId: user.userId, courseId: user.currentCourseId, keywordId, adventureId, explanationText: body.text })
   try {
-    await lambdaClient().send(new InvokeCommand({
-      FunctionName: process.env.GRADING_FUNCTION, InvocationType: 'Event',
-      Payload: new TextEncoder().encode(JSON.stringify({ gradingId: job.gradingId }))
-    }))
+    await jobs.enqueue('grading', { gradingId: job.gradingId })
   } catch (err) {
     await gradings.fail(job.gradingId, 'ai_error')
-    log.error({ msg: 'grading.invoke_failed', gradingId: job.gradingId, err })
+    log.error({ msg: 'grading.enqueue_failed', gradingId: job.gradingId, err })
     throw new AppError('INTERNAL_ERROR', '採点を開始できませんでした')
   }
   return ok({ gradingId: encodeId(PREFIX.grading, job.gradingId), status: 'processing' }, 202)

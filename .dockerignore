@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+reports
+aws
+documents
+tests
+.git
+.github
+*.md
+.env

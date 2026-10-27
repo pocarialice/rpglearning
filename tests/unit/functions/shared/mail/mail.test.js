@@ -1,15 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { SendEmailCommand } from '@aws-sdk/client-ses'
-import { sendMail } from '../../../../../functions/shared/mail/ses.js'
-import { notifyMail, deletionMail, SUPPORT_CONTACT } from '../../../../../functions/shared/mail/templates.js'
-import { sesMock, awsError } from '../../../../helpers/aws-mocks.js'
-const ses = sesMock()
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import nodemailer from 'nodemailer'
+import { sendMail, setTransport } from '../../../../../functions/shared/mail/smtp.js'
+import { notifyMail, deletionMail, inviteMail, resetMail, SUPPORT_CONTACT } from '../../../../../functions/shared/mail/templates.js'
+import { mailMock } from '../../../../helpers/mocks.js'
+const mail = mailMock()
 const item = { to: 'taro@example.co.jp', nickname: 'たろう', partnerPersona: 'encourage', partnerName: 'ミナ', reviewCount: 5,
   quests: ['択一を5問解く', '今日の復習をすべて終える', '新しい問題に3問挑戦する'] }
 describe('M-M01 mail', () => {
   beforeEach(() => {
-    ses.reset()
-    ses.on(SendEmailCommand).resolves({ MessageId: 'mid-1' })
+    mail.reset()
   })
   it('MT-M01-01 通知メールの本文', () => {
     process.env.APP_ENV = 'prod'
@@ -38,17 +37,41 @@ describe('M-M01 mail', () => {
     delete process.env.APP_ENV
     expect(deletionMail({ email: 'a@x.jp', fullName: '山田', deleteScheduledOn: '2026-11-19' }).subject.startsWith('【')).toBe(true)
   })
-  it('MT-M01-04 SES への送信', async () => {
-    expect(await sendMail({ to: 'taro@example.co.jp', subject: '件名', text: '本文' })).toBe('mid-1')
-    const input = ses.commandCalls(SendEmailCommand)[0].args[0].input
-    expect(input.Source).toBe('no-reply@app.example.co.jp')
-    expect(input.Destination).toEqual({ ToAddresses: ['taro@example.co.jp'] })
-    expect(input.Message.Body).toEqual({ Text: { Data: '本文', Charset: 'UTF-8' } })
-    expect(input.Message.Body.Html).toBeUndefined()
+  it('MT-M01-04 SMTP での送信', async () => {
+    expect(await sendMail({ to: 'taro@example.co.jp', subject: '件名', text: '本文' })).toBe('<m1@test>')
+    expect(mail.sent()).toEqual([{ from: 'no-reply@app.example.co.jp', to: 'taro@example.co.jp', subject: '件名', text: '本文' }])
   })
   it('MT-M01-05 送信の失敗', async () => {
-    ses.on(SendEmailCommand).rejects(awsError('MessageRejected'))
-    await expect(sendMail({ to: 'x@example.co.jp', subject: 's', text: 't' })).rejects.toMatchObject({ name: 'MessageRejected' })
-    expect(ses.commandCalls(SendEmailCommand)).toHaveLength(1)
+    mail.fail(1)
+    await expect(sendMail({ to: 'x@example.co.jp', subject: 's', text: 't' })).rejects.toMatchObject({ name: 'SMTPError' })
+    expect(mail.sent()).toHaveLength(0)
+  })
+  it('MT-M01-06 SMTP の接続設定', async () => {
+    const spy = vi.spyOn(nodemailer, 'createTransport').mockReturnValue({ sendMail: async () => ({ messageId: 'x' }) })
+    Object.assign(process.env, { SMTP_HOST: 'smtp.example.jp', SMTP_PORT: '465', SMTP_SECURE: 'true', SMTP_USER: 'u', SMTP_PASS: 'p' })
+    setTransport(undefined)
+    await sendMail({ to: 'a@x.jp', subject: 's', text: 't' })
+    expect(spy).toHaveBeenCalledWith({ host: 'smtp.example.jp', port: 465, secure: true, auth: { user: 'u', pass: 'p' } })
+    for (const k of ['SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS']) delete process.env[k]
+    setTransport(undefined)
+    await sendMail({ to: 'a@x.jp', subject: 's', text: 't' })
+    expect(spy).toHaveBeenLastCalledWith({ host: 'smtp.example.jp', port: 587, secure: false, auth: undefined })
+  })
+  it('MT-M01-07 招待メール', () => {
+    process.env.APP_ENV = 'dev'
+    const m = inviteMail({ email: 'a@x.jp', tempPassword: 'Abcd2345efgh', validDays: 7 })
+    expect(m.to).toBe('a@x.jp')
+    expect(m.subject).toBe('[dev]【RPG学習アプリ】ギルドへの招待')
+    expect(m.text).toContain('ログインURL：https://app.example.co.jp/')
+    expect(m.text).toContain('仮パスワード：Abcd2345efgh')
+    expect(m.text).toContain('期限は7日')
+  })
+  it('MT-M01-08 再設定メール', () => {
+    process.env.APP_ENV = 'prod'
+    const m = resetMail({ email: 'a@x.jp', token: 'a+b/c', validMinutes: 60 })
+    expect(m.subject).toBe('【RPG学習アプリ】パスワードの再設定')
+    expect(m.text).toContain('https://app.example.co.jp/#/reset?token=a%2Bb%2Fc')
+    expect(m.text).toContain('60分以内')
+    expect(m.text).toContain(SUPPORT_CONTACT)
   })
 })

@@ -1,0 +1,33 @@
+{
+  "name": "rpg-learning-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "build:functions": "node scripts/build-functions.mjs",
+    "build:web": "node scripts/build-web.mjs"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1153.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1153.0",
+    "@aws-sdk/client-lambda": "^3.1153.0",
+    "@aws-sdk/client-rds-data": "^3.1153.0",
+    "@aws-sdk/client-s3": "^3.1153.0",
+    "@aws-sdk/client-ses": "^3.1153.0",
+    "@aws-sdk/s3-request-presigner": "^3.1153.0",
+    "@vitest/coverage-v8": "^3.2.7",
+    "archiver": "^8.0.0",
+    "aws-sdk-client-mock": "^4.1.0",
+    "esbuild": "^0.28.2",
+    "jsdom": "^29.1.1",
+    "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

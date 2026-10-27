@@ -1,23 +1,19 @@
-// grading-worker の入口（詳細設計書 4.1・4.3）。api-handler から非同期で起動される
-import { createLogger } from '../shared/util/logger.js'
-import { setDefaultResumeRetries } from '../shared/db/data-api.js'
-import { requireEnv } from '../shared/util/env.js'
+// 採点ジョブ1件の処理（詳細設計書 4.3）
 import { gradeJob } from './grader.js'
-export const ENV = requireEnv(['APP_ENV', 'DB_CLUSTER_ARN', 'DB_SECRET_ARN', 'DB_NAME', 'MODEL_HIGH'])
-export const RESUME_RETRIES = 6
-setDefaultResumeRetries(RESUME_RETRIES)
-export async function main(event, { log, now = () => new Date() }) {
-  return gradeJob(Number(event.gradingId), { log, now })
-}
-export const handler = async (event, context) => {
-  const log = createLogger('grading-worker', { requestId: context?.awsRequestId })
-  const started = Date.now()
+import * as gradings from '../shared/db/repositories/gradings.js'
+export async function runGradingJob(job, { log, now = () => new Date() }) {
+  const gradingId = Number(job.payload.gradingId)
   try {
-    const res = await main(event, { log })
-    log.info({ durationMs: Date.now() - started, status: res.status })
-    return res
+    const res = await gradeJob(gradingId, { log, now })
+    return { outcome: 'done', ...res }
   } catch (err) {
-    log.error({ code: err.code ?? 'INTERNAL_ERROR', err })
-    throw err
+    // DB の失敗など。画面は30秒で打ち切り、学習者が「もう一度採点してもらう」を押す
+    log.error({ msg: 'grading.error', gradingId, code: err.code ?? 'INTERNAL_ERROR', err })
+    try {
+      await gradings.fail(gradingId, 'ai_error')
+    } catch {
+      // 採点の記録を変えられなくても、A-10 が30秒で時間切れにする
+    }
+    return { outcome: 'failed', error: err.message }
   }
 }

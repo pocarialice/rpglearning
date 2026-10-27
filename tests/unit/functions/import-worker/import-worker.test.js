@@ -1,32 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ConverseCommand } from '@aws-sdk/client-bedrock-runtime'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
-import { CommitTransactionCommand } from '@aws-sdk/client-rds-data'
 vi.mock('../../../../functions/shared/db/repositories/imports.js')
 import * as imports from '../../../../functions/shared/db/repositories/imports.js'
-import { main, handler, importIdFromKey } from '../../../../functions/import-worker/index.mjs'
+import { runImportJob, processImport, buildChunks, FAILED_MESSAGE, RETRY_DELAY_SECONDS } from '../../../../functions/import-worker/index.mjs'
+import { pdfTextChunks } from '../../../../functions/import-worker/pdf-text.js'
 import { splitPdf, PermanentImportError } from '../../../../functions/import-worker/pdf-splitter.js'
 import { splitText, normalizeDraft } from '../../../../functions/import-worker/extractor.js'
 import { memoryLogger } from '../../../helpers/logger.js'
-import { bedrockMock, s3Mock, rdsMock, routeSql, awsError } from '../../../helpers/aws-mocks.js'
+import { bedrockMock, s3Mock, dbMock, awsError } from '../../../helpers/mocks.js'
 import { converseOutput } from '../../../fixtures/bedrock/grading.js'
-import { s3Message } from '../../../fixtures/events/sqs.js'
-import { blankPdf } from '../../../fixtures/pdf/make.js'
+import { blankPdf, textPdf } from '../../../fixtures/pdf/make.js'
 const br = bedrockMock()
 const s3 = s3Mock()
-const rds = rdsMock()
+const db = dbMock()
 let log
 const body = (bytes) => ({ Body: { transformToByteArray: async () => bytes } })
 const q = (n, patch = {}) => ({ body: `問${n}`, choices: ['ア', 'イ', 'ウ', 'エ'], correct: 1, explanation: '解説', keywords: ['DNS'], ...patch })
 const extraction = (...qs) => converseOutput(JSON.stringify({ questions: qs }))
-const job = (patch = {}) => ({ importId: 8, courseId: 3, sourceType: 'pdf', fileName: 'sample.pdf', status: 'waiting', ...patch })
-const run = (key = 'uploads/8/sample.pdf', opts) => main({ Records: [s3Message(key, opts)] }, { log })
+const job = (patch = {}) => ({ importId: 8, courseId: 3, sourceType: 'pdf', fileName: 'sample.pdf', s3Key: 'uploads/8/sample.pdf', status: 'waiting', ...patch })
+// ワーカーがジョブキューから取り出した1件（attempts は何回目か）
+const run = (attempts = 1) => runImportJob({ jobId: 1, payload: { importId: 8 }, attempts, maxAttempts: 3 }, { log })
 beforeEach(async () => {
   log = memoryLogger()
   br.reset()
   s3.reset()
-  rds.reset()
-  routeSql(rds, [])
+  db.reset()
   br.on(ConverseCommand).resolves(extraction(q(1)))
   s3.on(GetObjectCommand).resolves(body(await blankPdf(1)))
   imports.find.mockResolvedValue(job())
@@ -34,17 +33,18 @@ beforeEach(async () => {
 })
 const saved = () => imports.insertDrafts.mock.calls[0]?.[2]
 describe('M-W02 import-worker', () => {
-  it('MT-W02-01 キーから取り込みID', async () => {
-    expect(importIdFromKey('uploads/8/sample.pdf')).toBe(8)
-    expect(importIdFromKey('uploads/8/%E8%A9%A6%E9%A8%93+%E5%95%8F%E9%A1%8C.pdf')).toBe(8)
-    expect(importIdFromKey('notify/2026-10-20/0730.json')).toBeNull()
-    await run('uploads/8/%E8%A9%A6%E9%A8%93+%E5%95%8F%E9%A1%8C.pdf')
+  it('MT-W02-01 取り込みのキーで原本を読む', async () => {
+    imports.find.mockResolvedValue(job({ s3Key: 'uploads/8/試験 問題.pdf' }))
+    expect(await run()).toMatchObject({ outcome: 'done', status: 'done', extracted: 1 })
     expect(imports.find).toHaveBeenCalledWith(8)
     expect(s3.commandCalls(GetObjectCommand)[0].args[0].input).toEqual({ Bucket: 'rpg-test-import', Key: 'uploads/8/試験 問題.pdf' })
+    expect(imports.setStatus.mock.calls[0]).toEqual([8, 'extracting'])
   })
-  it('MT-W02-02 処理済みの通知', async () => {
+  it('MT-W02-02 処理済み・取り込みがない', async () => {
     imports.find.mockResolvedValue(job({ status: 'done' }))
-    expect(await run()).toEqual({ batchItemFailures: [] })
+    expect(await run()).toEqual({ outcome: 'done', status: 'skipped' })
+    imports.find.mockResolvedValue(null)
+    expect(await run()).toEqual({ outcome: 'done', status: 'skipped' })
     expect(imports.setStatus).not.toHaveBeenCalled()
     expect(br.commandCalls(ConverseCommand)).toHaveLength(0)
   })
@@ -61,14 +61,14 @@ describe('M-W02 import-worker', () => {
     br.reset()
     imports.setStatus.mockClear()
     s3.on(GetObjectCommand).resolves(body(await blankPdf(51)))
-    expect(await run()).toEqual({ batchItemFailures: [] })
+    expect(await run()).toEqual({ outcome: 'failed', error: '50ページ以内に分けて取り込んでください' })
     expect(br.commandCalls(ConverseCommand)).toHaveLength(0)
     expect(imports.setStatus).toHaveBeenLastCalledWith(8, 'failed', { errorMessage: '50ページ以内に分けて取り込んでください' })
   })
   it('MT-W02-05 画像', async () => {
     imports.find.mockResolvedValue(job({ sourceType: 'image', fileName: 'shot.PNG' }))
     s3.on(GetObjectCommand).resolves(body(new Uint8Array([137, 80, 78, 71])))
-    await run('uploads/8/shot.PNG')
+    await run()
     const calls = br.commandCalls(ConverseCommand)
     expect(calls).toHaveLength(1)
     expect(calls[0].args[0].input.messages[0].content[0]).toEqual({ image: { format: 'png', source: { bytes: new Uint8Array([137, 80, 78, 71]) } } })
@@ -99,7 +99,7 @@ describe('M-W02 import-worker', () => {
     await run()
     expect(saved()).toHaveLength(4)
     expect(imports.setStatus).toHaveBeenLastCalledWith(8, 'done', { extractedCount: 4 }, expect.anything())
-    expect(rds.commandCalls(CommitTransactionCommand)).toHaveLength(1)
+    expect(db.commits()).toBe(1)
   })
   it('MT-W02-11 一部のかたまりで失敗', async () => {
     s3.on(GetObjectCommand).resolves(body(await blankPdf(23)))
@@ -107,51 +107,43 @@ describe('M-W02 import-worker', () => {
     await run()
     expect(imports.insertDrafts).not.toHaveBeenCalled()
   })
-  it('MT-W02-12 再試行（1・2回目）', async () => {
+  it('MT-W02-12 やり直し（1・2回目）は待ち状態に戻す', async () => {
     br.on(ConverseCommand).rejects(awsError('ThrottlingException'))
-    for (const receiveCount of ['1', '2']) {
-      expect(await run(undefined, { receiveCount, messageId: `m-${receiveCount}` })).toEqual({ batchItemFailures: [{ itemIdentifier: `m-${receiveCount}` }] })
+    for (const attempts of [1, 2]) {
+      expect(await run(attempts)).toEqual({ outcome: 'retry', error: expect.any(String), delaySeconds: RETRY_DELAY_SECONDS })
     }
-    expect(imports.setStatus.mock.calls.map((c) => c[1])).toEqual(['extracting', 'extracting'])
+    expect(imports.setStatus.mock.calls.map((c) => c[1])).toEqual(['extracting', 'waiting', 'extracting', 'waiting'])
+    expect(log.lines.filter((l) => l.msg === 'import.retry')).toHaveLength(2)
   })
-  it('MT-W02-13 再試行（3回目）', async () => {
+  it('MT-W02-13 やり直し（3回目）は失敗にする', async () => {
     br.on(ConverseCommand).resolves(converseOutput('JSONではありません'))
-    expect(await run(undefined, { receiveCount: '3' })).toEqual({ batchItemFailures: [] })
-    expect(imports.setStatus).toHaveBeenLastCalledWith(8, 'failed', { errorMessage: expect.stringContaining('抽出に失敗しました') })
+    expect((await run(3)).outcome).toBe('failed')
+    expect(imports.setStatus).toHaveBeenLastCalledWith(8, 'failed', { errorMessage: FAILED_MESSAGE })
+    expect(log.lines.some((l) => l.msg === 'import.failed')).toBe(true)
   })
   it('MT-W02-14 壊れたPDF', async () => {
     s3.on(GetObjectCommand).resolves(body(new TextEncoder().encode('これはPDFではありません')))
-    expect(await run(undefined, { receiveCount: '1' })).toEqual({ batchItemFailures: [] })
+    expect((await run()).outcome).toBe('failed')
     expect(imports.setStatus).toHaveBeenLastCalledWith(8, 'failed', { errorMessage: 'PDFとして読めませんでした。ファイルを確認してください' })
     expect(br.commandCalls(ConverseCommand)).toHaveLength(0)
   })
-  it('MT-W02-15 テキスト・JPEG・対応外の画像・知らないキー・取り込みがない・入口（handler）', async () => {
-    imports.find.mockResolvedValue(job({ sourceType: 'text', fileName: 'テキスト' }))
+  it('MT-W02-15 テキスト・JPEG・対応外の画像・失敗の記録が書けない', async () => {
+    imports.find.mockResolvedValue(job({ sourceType: 'text', fileName: 'テキスト', s3Key: 'uploads/8/source.txt' }))
     s3.on(GetObjectCommand).resolves(body(new TextEncoder().encode('問1 …\n\n問2 …')))
-    await run('uploads/8/source.txt')
+    await run()
     expect(br.commandCalls(ConverseCommand)[0].args[0].input.messages[0].content[0].text).toContain('<source>問1 …\n\n問2 …</source>')
     br.resetHistory()
     imports.find.mockResolvedValue(job({ sourceType: 'image', fileName: 'a.jpg' }))
-    await run('uploads/8/a.jpg')
+    await run()
     expect(br.commandCalls(ConverseCommand)[0].args[0].input.messages[0].content[0].image.format).toBe('jpeg')
     imports.find.mockResolvedValue(job({ sourceType: 'image', fileName: 'a.gif' }))
-    expect(await run('uploads/8/a.gif')).toEqual({ batchItemFailures: [] })
+    expect((await run()).outcome).toBe('failed')
     expect(imports.setStatus).toHaveBeenLastCalledWith(8, 'failed', { errorMessage: expect.stringContaining('PNG・JPEG') })
-    imports.find.mockClear()
-    expect(await run('other/x.pdf')).toEqual({ batchItemFailures: [] })
-    expect(imports.find).not.toHaveBeenCalled()
-    imports.find.mockResolvedValue(null)
-    expect(await run()).toEqual({ batchItemFailures: [] })
-    expect(await main({}, { log })).toEqual({ batchItemFailures: [] })
-    expect(await main({ Records: [{ messageId: 'x', body: '{}' }] }, { log })).toEqual({ batchItemFailures: [] })
-    imports.setStatus.mockRejectedValue(awsError('BadRequestException'))
+    // 失敗の記録も書けないときは、ワーカーに例外を返す（ジョブを failed にする）
     imports.find.mockResolvedValue(job())
-    expect(await run(undefined, { receiveCount: '3' })).toEqual({ batchItemFailures: [] })
-    expect(log.lines.some((l) => l.msg === 'import.mark_failed_error')).toBe(true)
-    imports.setStatus.mockResolvedValue(true)
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    expect(await handler({ Records: [] }, { awsRequestId: 'r' })).toEqual({ batchItemFailures: [] })
-    expect(JSON.parse(spy.mock.calls.at(-1)[0])).toMatchObject({ fn: 'import-worker', failures: 0 })
+    br.on(ConverseCommand).rejects(awsError('ThrottlingException'))
+    imports.setStatus.mockImplementation(async (id, status) => { if (status !== 'extracting') throw new Error('db down') })
+    await expect(run(3)).rejects.toThrow('db down')
   })
   it('MT-W02-16 正規化の細部（空白・長さ・選択肢の上限・形の崩れ）', () => {
     expect(normalizeDraft(null)).toBeNull()
@@ -165,5 +157,43 @@ describe('M-W02 import-worker', () => {
     expect(splitText('a'.repeat(9000))).toEqual(['a'.repeat(8000), 'a'.repeat(1000)])
     expect(splitText('')).toEqual([])
     expect(new PermanentImportError('x').name).toBe('PermanentImportError')
+  })
+})
+describe('M-W02 import-worker（さくらのAI Engine：PDF・画像を読めないAI）', () => {
+  beforeEach(() => {
+    delete process.env.AI_PROVIDER
+    globalThis.fetch = vi.fn(async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ questions: [q(1)] }) }, finish_reason: 'stop' }] }) }))
+  })
+  it('MT-W02-17 PDFは文字を取り出してから渡す', async () => {
+    s3.on(GetObjectCommand).resolves(body(await textPdf(['Question 1 DNS', 'Question 2 TTL'])))
+    expect(await run()).toMatchObject({ outcome: 'done', extracted: 1 })
+    const sent = JSON.parse(globalThis.fetch.mock.calls[0][1].body)
+    expect(sent.messages[1].content).toContain('Question 1 DNS')
+    expect(sent.messages[1].content).toContain('Question 2 TTL')
+    expect(br.commandCalls(ConverseCommand)).toHaveLength(0)
+  })
+  it('MT-W02-18 文字のないPDF・画像は取り込めない', async () => {
+    s3.on(GetObjectCommand).resolves(body(await blankPdf(2)))
+    expect(await run()).toEqual({ outcome: 'failed', error: expect.stringContaining('PDFから文字を読み取れませんでした') })
+    imports.find.mockResolvedValue(job({ sourceType: 'image', fileName: 'a.png' }))
+    expect(await run()).toEqual({ outcome: 'failed', error: expect.stringContaining('画像の取り込みは、いまのAIでは使えません') })
+    expect(globalThis.fetch).not.toHaveBeenCalled()
+  })
+  it('MT-W02-19 文字のかたまり（10ページずつ・上限・読めない）', async () => {
+    const pages = Array.from({ length: 23 }, (_, i) => `p${i + 1}`)
+    const chunks = await pdfTextChunks(new Uint8Array(1), { extract: async () => pages })
+    expect(chunks).toHaveLength(3)
+    expect(chunks[2]).toBe('p21\n\np22\n\np23')
+    await expect(pdfTextChunks(new Uint8Array(1), { extract: async () => Array(51).fill('x') })).rejects.toThrow('50ページ以内')
+    await expect(pdfTextChunks(new Uint8Array(1), { extract: async () => { throw new Error('bad') } })).rejects.toThrow('PDFとして読めませんでした')
+    await expect(pdfTextChunks(new TextEncoder().encode('not pdf'))).rejects.toThrow('PDFとして読めませんでした')
+    // Bedrock のときは PDF のまま渡す
+    const asPdf = await buildChunks(job(), await blankPdf(1), { documents: true })
+    expect(asPdf[0]).toMatchObject({ chunkType: 'pdf', name: 'p1-1' })
+  })
+  it('MT-W02-20 processImport を直接呼ぶ', async () => {
+    imports.find.mockResolvedValue(job({ sourceType: 'text', s3Key: 'uploads/8/source.txt' }))
+    s3.on(GetObjectCommand).resolves(body(new TextEncoder().encode('問1')))
+    expect(await processImport(8, { log })).toEqual({ status: 'done', extracted: 1 })
   })
 })

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ConverseCommand } from '@aws-sdk/client-bedrock-runtime'
-import { BeginTransactionCommand, CommitTransactionCommand, RollbackTransactionCommand } from '@aws-sdk/client-rds-data'
 vi.mock('../../../../../functions/shared/db/repositories/users.js')
 vi.mock('../../../../../functions/shared/db/repositories/adventures.js', async (orig) => {
   const m = await orig()
@@ -23,12 +22,12 @@ import * as badges from '../../../../../functions/shared/db/repositories/badges.
 import { main } from '../../../../../functions/api-handler/index.mjs'
 import { httpEvent, parse } from '../../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../../helpers/logger.js'
-import { bedrockMock, rdsMock, awsError } from '../../../../helpers/aws-mocks.js'
+import { bedrockMock, dbMock, awsError } from '../../../../helpers/mocks.js'
 import { converseOutput } from '../../../../fixtures/bedrock/grading.js'
 import { NOW } from '../../../../helpers/clock.js'
 import { learner } from '../../../../fixtures/users.js'
 const br = bedrockMock()
-const rds = rdsMock()
+const db = dbMock()
 const call = (opts) => main(httpEvent(opts), { log: memoryLogger(), now: NOW })
 const Q42 = { questionId: 42, courseId: 3, body: 'DNSの役割は？', choices: ['ア', 'イ', 'ウ', 'エ'], correctChoice: 2, explanation: '名前解決の解説', status: 'published', keywords: [{ keywordId: 123, keyword: 'DNS' }] }
 const adv = (patch = {}) => ({ adventureId: 90, userId: 15, courseId: 3, servedCount: 0, lastKind: null, served: [], ...patch })
@@ -99,10 +98,7 @@ describe('M-H05 quests（A-07）', () => {
 describe('M-H06 answers（A-08）', () => {
   beforeEach(() => {
     br.reset()
-    rds.reset()
-    rds.on(BeginTransactionCommand).resolves({ transactionId: 'tx-1' })
-    rds.on(CommitTransactionCommand).resolves({})
-    rds.on(RollbackTransactionCommand).resolves({})
+    db.reset()
     br.on(ConverseCommand).resolves(converseOutput('正解！名前解決のしくみをよく覚えてるね。'))
     users.findBySub.mockResolvedValue({ ...learner })
     adventures.find.mockResolvedValue(adv())
@@ -121,12 +117,15 @@ describe('M-H06 answers（A-08）', () => {
     expect(body.correct).toBe(true)
     expect(body.exp.gained).toBe(10)
     const txOf = (fn) => fn.mock.calls[0].at(-1)
-    for (const fn of [answers.insert, reviews.upsertItem, exp.insertLog, users.addExp]) expect(txOf(fn).transactionId).toBe('tx-1')
+    // 4つとも同じトランザクション（withTx が渡す tx）で書く
+    const tx = txOf(answers.insert)
+    expect(typeof tx.query).toBe('function')
+    for (const fn of [reviews.upsertItem, exp.insertLog, users.addExp]) expect(txOf(fn)).toBe(tx)
     expect(answers.insert.mock.calls[0][0]).toMatchObject({ userId: 15, courseId: 3, questionId: 42, kind: 'choice', selectedChoice: 2, isCorrect: true, adventureId: 90, answeredOn: '2026-10-20' })
     expect(exp.insertLog.mock.calls[0][0]).toMatchObject({ reason: 'choice', refId: 777, exp: 10, weekStart: '2026-10-19' })
     expect(users.addExp.mock.calls[0][1]).toEqual({ exp: 10, level: 3, today: '2026-10-20' })
     expect(quests.saveProgress.mock.calls[0][0]).toEqual([expect.objectContaining({ userQuestId: 5, progress: 1 })])
-    expect(rds.commandCalls(CommitTransactionCommand)).toHaveLength(1)
+    expect(db.commits()).toBe(1)
   })
   it('MT-H06-02 不正解', async () => {
     const body = parse(await answer(3))
@@ -136,7 +135,7 @@ describe('M-H06 answers（A-08）', () => {
   })
   it.each([0, 5, '2'])('MT-H06-03 選択肢の範囲 %j', async (choiceNo) => {
     expect((await answer(choiceNo)).statusCode).toBe(400)
-    expect(rds.commandCalls(BeginTransactionCommand)).toHaveLength(0)
+    expect(db.txLog()).toHaveLength(0)
   })
   it('MT-H06-04 非公開・他コースの問題', async () => {
     expect((await answer(2, { questionId: 'q_43' })).statusCode).toBe(404)
@@ -154,8 +153,8 @@ describe('M-H06 answers（A-08）', () => {
     reviews.upsertItem.mockRejectedValue(awsError('BadRequestException'))
     const res = await answer(2)
     expect(res.statusCode).toBe(500)
-    expect(rds.commandCalls(RollbackTransactionCommand)).toHaveLength(1)
-    expect(rds.commandCalls(CommitTransactionCommand)).toHaveLength(0)
+    expect(db.rollbacks()).toBe(1)
+    expect(db.commits()).toBe(0)
     expect(br.commandCalls(ConverseCommand)).toHaveLength(0)
   })
   it('MT-H06-07 応答の形', async () => {

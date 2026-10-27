@@ -1,4 +1,4 @@
-// 入力チェック（画面とLambdaで共用。詳細設計書 3.2 M-U07）
+// 入力チェック（画面とサーバーで共用。詳細設計書 3.2 M-U07）
 // 戻り値は { ok: true } または { ok: false, code, field, params }
 const OK = Object.freeze({ ok: true })
 const ng = (code, field, params = {}) => ({ ok: false, code, field, params })

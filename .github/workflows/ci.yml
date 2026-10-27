@@ -1,4 +1,4 @@
-# プルリクエストごとのテストとビルド（詳細設計書 11.2）。AWS には接続しない
+# プルリクエストごとのテストとビルド（詳細設計書 11.2）。さくらのクラウドには接続しない
 name: ci
 on:
   pull_request:
@@ -41,7 +41,7 @@ jobs:
           path: coverage/
           retention-days: 14
           if-no-files-found: ignore
-      - name: Lambda のビルド（4関数の zip・読み込みの確認）
-        run: npm run build:functions -- --verify
       - name: 画面のビルド（dev・prod の2環境。config の差し込みとキャッシュ名の確認）
         run: npm run build:web -- --release=ci-${{ github.run_number }}
+      - name: コンテナのビルド（押し出しはしない）
+        run: docker build --build-arg APP_ENV=dev --build-arg RELEASE_NO=ci-${{ github.run_number }} -t rpg-app:ci .

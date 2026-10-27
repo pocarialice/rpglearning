@@ -1,6 +1,6 @@
 // JSON構造化ログ（詳細設計書 2.4.5）。個人情報のキーは自動で伏せ字にする
 import { toIsoJst } from './date-jst.js'
-export const REDACT_KEYS = ['text', 'explanationText', 'email', 'fullName', 'idToken', 'authorization']
+export const REDACT_KEYS = ['text', 'explanationText', 'email', 'fullName', 'idToken', 'authorization', 'password', 'newPassword', 'tempPassword', 'refreshToken', 'session', 'token']
 const LEVELS = { DEBUG: 10, INFO: 20, WARN: 30, ERROR: 40 }
 function minLevel() {
   return process.env.APP_ENV === 'dev' ? LEVELS.DEBUG : LEVELS.INFO

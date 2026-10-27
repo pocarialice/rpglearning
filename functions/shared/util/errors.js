@@ -2,6 +2,9 @@
 export const ERROR_STATUS = {
   VALIDATION_ERROR: 400,
   UNAUTHORIZED: 401,
+  LOGIN_FAILED: 401,
+  PASSWORD_EXPIRED: 401,
+  ACCOUNT_LOCKED: 423,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
@@ -16,6 +19,9 @@ export const ERROR_STATUS = {
 const DEFAULT_MESSAGE = {
   VALIDATION_ERROR: '入力内容に誤りがあります',
   UNAUTHORIZED: 'ログインが必要です',
+  LOGIN_FAILED: 'メールアドレスかパスワードが正しくありません',
+  PASSWORD_EXPIRED: '仮パスワードの期限が切れています。管理者に再発行を依頼してください',
+  ACCOUNT_LOCKED: 'ログインに続けて失敗したため、しばらくログインできません。15分ほど待ってからもう一度お試しください',
   FORBIDDEN: 'この操作を行う権限がありません',
   NOT_FOUND: '対象が見つかりません',
   CONFLICT: '状態が食い違っています',

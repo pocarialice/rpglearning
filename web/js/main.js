@@ -1,6 +1,7 @@
-// 起動処理（詳細設計書 6.1）：ログイン → A-01 → 画面の切り替えを始める
+// 起動処理（詳細設計書 6.1）：ログイン（S-01） → A-01 → 画面の切り替えを始める
 import { CONFIG } from './config.js'
 import { createAuth } from './core/auth.js'
+import { renderLogin } from './pages/login.js'
 import { createApi } from './core/api.js'
 import { createRouter } from './core/router.js'
 import { getState, setState } from './core/store.js'
@@ -20,7 +21,10 @@ export async function boot({ win = window, config = CONFIG } = {}) {
   const root = doc.getElementById('app')
   const resuming = doc.getElementById('app-resuming')
   applyTheme(win)
-  const auth = createAuth({ config, win, onError: (m) => { root.innerHTML = errorBand(m) } })
+  const auth = createAuth({
+    config, storage: win.sessionStorage, reload: () => win.location.reload(),
+    showLogin: () => renderLogin(root, { auth, win })
+  })
   const raw = createApi({ auth, base: config.apiBase, onResuming: () => { resuming.hidden = false } })
   // DBの起動待ち（M-01）の表示は、応答が返ったら消す
   const settle = (fn) => async (...args) => {
@@ -31,7 +35,9 @@ export async function boot({ win = window, config = CONFIG } = {}) {
     }
   }
   const api = { apiGet: settle(raw.apiGet), apiPost: settle(raw.apiPost), apiPut: settle(raw.apiPut), apiDelete: settle(raw.apiDelete) }
-  if (!(await auth.ensureLogin())) return
+  // 再設定リンク（#/reset?token=…）はログイン中でも再設定の画面を出す
+  if (/^#\/reset\?/.test(win.location.hash)) return renderLogin(root, { auth, win })
+  if (!auth.ensureLogin()) return
   let me
   try {
     me = await api.apiGet('/me')

@@ -1,4 +1,4 @@
-// S-14 AIパートナー設定：画像を選ぶ → プレビュー → 差し替える（prepare → S3 へ PUT → commit の3段階）。「画像を外す」で頭文字に戻す
+// S-14 AIパートナー設定：画像を選ぶ → プレビュー → 差し替える（prepare → オブジェクトストレージへ PUT → commit の3段階）。「画像を外す」で頭文字に戻す
 // 見本表示だけは学習者画面と同じ PartnerBubble を使う（外部設計書 3.8）
 import { getContext } from '../../core/context.js'
 import { button } from '../../components/button.js'

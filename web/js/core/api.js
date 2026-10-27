@@ -30,7 +30,7 @@ export function createApi({ auth, base = '/api', fetchFn = (...a) => globalThis.
     try {
       data = await res.json()
     } catch {
-      // JSONでない応答（API Gateway のエラーなど）
+      // JSONでない応答（リバースプロキシのエラーなど）
     }
     const e = data?.error ?? {}
     return new ApiError(e.code ?? `HTTP_${res.status}`, res.status, { message: e.message, details: e.details })

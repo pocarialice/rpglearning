@@ -503,6 +503,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 .ad-prev .gd-bubble { font-size: 12px; padding: 6px 10px; }
 @media print { .mock { break-inside: avoid; } }
 
+
+/* 2章の構成の図解（さくらのクラウド） */
+.arch { display: grid; grid-template-columns: 1fr auto 2.2fr auto 1.6fr; gap: 12px; align-items: stretch; margin: 16px 0 24px; }
+.arch-col { border: 1px solid var(--blue-200); border-radius: var(--radius-12); padding: 12px; background: var(--white); }
+.arch-col h4 { margin: 0 0 8px; font-size: 14px; color: var(--blue-1000); }
+.arch-col h4 i { margin-right: 6px; }
+.arch-box { border-radius: var(--radius-8); background: var(--blue-50); padding: 8px 10px; margin-bottom: 8px; font-size: 14px; line-height: 1.5; }
+.arch-box:last-child { margin-bottom: 0; }
+.arch-box b { display: block; color: var(--gray-900); }
+.arch-box span { color: var(--gray-700); font-size: 13px; }
+.arch-box.ext { background: var(--gray-50); border: 1px dashed var(--gray-300); }
+.arch-arrow { display: flex; align-items: center; color: var(--blue-700); font-size: 22px; }
+.arch-note { font-size: 13px; color: var(--gray-600); margin: -12px 0 24px; }
+@media (max-width: 760px) { .arch { grid-template-columns: 1fr; } .arch-arrow { justify-content: center; transform: rotate(90deg); } }
 </style>
 </head>
 <body>
@@ -511,8 +525,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.0版（ドラフト：第1〜10章、HTML版あり。説明文の小見出しのルールをなくし、模範説明のルールに移す）</b></li>
-      <li>作成日<b>2026-10-19（第1.0版：2026-10-21）</b></li>
+      <li>版数<b>第1.1版（ドラフト：第1〜10章、HTML版あり。AWS からさくらのクラウドへ切り替え、ログイン・AI・メール・定期処理の方式を見直す）</b></li>
+      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27）</b></li>
       <li>入力文書<b>RPG学習アプリ 要件定義書 第1.1版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
@@ -550,22 +564,22 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>方式</td>
-<td>サーバーレス構成（CloudFront＋S3／API Gateway＋Lambda／Aurora Serverless v2）</td>
+<td>さくらのクラウド（国内）：サーバー1台のコンテナ（API・ワーカー・HTTPS終端）＋データベースアプライアンス（PostgreSQL）＋オブジェクトストレージ。2026-10-27 に AWS から切り替え（AWS 版は <code>aws/</code> に退避）</td>
 <td>6.1</td>
 </tr>
 <tr>
 <td>認証</td>
-<td>Amazon Cognito（将来のSAML/OIDCに対応）</td>
+<td>アプリでログインを持つ（メールアドレス＋パスワード、仮パスワードでの招待、パスワード再設定）。将来の社内SSOは OIDC 連携を追加して対応</td>
 <td>6.5</td>
 </tr>
 <tr>
 <td>環境</td>
-<td>dev／prod の2環境を1つのAWSアカウント内でリソース名の接頭辞（rpg-dev- など）とタグ Environment で分ける。東京リージョン（ap-northeast-1）</td>
+<td>dev／prod の2環境を1つのさくらのクラウドのアカウント内で、リソース名の接頭辞（rpg-dev- など）とタグで分ける。データはすべて国内に置く</td>
 <td>6.1</td>
 </tr>
 <tr>
 <td>AIモデル</td>
-<td>高精度＝Claude Sonnet 5.5、軽量＝Claude Haiku 5.5。東京リージョンで使えない場合は、東京リージョンで使える別バージョンを使う（クロスリージョン推論は使わない）</td>
+<td>当面はさくらのAI Engine（gpt-oss-120b）を高精度・軽量の両方に使う。Amazon Bedrock が使えるようになりしだい、設定（<code>AI_PROVIDER=bedrock</code>）で Claude Sonnet・Haiku に戻す（2.8）</td>
 <td>6.3</td>
 </tr>
 <tr>
@@ -575,7 +589,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>リリース方式</td>
-<td>GitHub Actions で配置する（<code>main</code> への push で dev、タグを付けて承認後に prod）。AWS へは OIDC で認証し、アクセスキーは使わない。AWSリソースの作成はマネジメントコンソール</td>
+<td>GitHub Actions でコンテナを作り、さくらのクラウドのコンテナレジストリへ置く（手動実行で dev、タグを付けて承認後に prod）。サーバーでは <code>docker compose</code> で入れ替える。さくらのクラウドのリソースはコントロールパネルで作る</td>
 <td>6.1</td>
 </tr>
 <tr>
@@ -595,7 +609,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>コスト方針</td>
-<td>パイロット期間はコスト最小構成：Aurora は全環境で自動停止。CloudFront は定額の Free プラン（月0ドル、AWS WAF 付き）を全環境で使う</td>
+<td>パイロット期間はコスト最小構成：各環境サーバー1台・DB1台。AIは従量課金（2.9）</td>
 <td>6.1</td>
 </tr>
 <tr>
@@ -657,8 +671,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>本書HTML版の体裁</td>
 </tr>
 <tr>
-<td>AWS構築手順書_RPG学習アプリ</td>
-<td>AWSマネジメントコンソールでの構築手順と、GitHub Actions との連携（OIDC・配置用ロール）の設定</td>
+<td>さくらのクラウド構築手順書_RPG学習アプリ</td>
+<td>さくらのクラウドのコントロールパネルでの構築手順と、サーバーへの配置、GitHub Actions との連携の設定</td>
+</tr>
+<tr>
+<td>aws/documents/（AWS 版の文書）</td>
+<td>2026-10-27 までの AWS 版の外部設計書・詳細設計書・AWS構築手順書（退避したもの）</td>
 </tr>
 <tr>
 <td>詳細設計書_RPG学習アプリ</td>
@@ -667,7 +685,25 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch2"><h2><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>2. システム方式設計</h2>
+<div class="arch" role="img" aria-label="さくらのクラウドの構成：利用者の端末から、サーバー1台のコンテナ（Caddy・api・worker）を通って、データベース・オブジェクトストレージ・AIにつながる">
+<div class="arch-col"><h4><i class="fa-solid fa-users" aria-hidden="true"></i>利用者</h4>
+<div class="arch-box"><b>学習者</b><span>スマホ・PC</span></div>
+<div class="arch-box"><b>コース管理者・システム管理者</b><span>PC</span></div></div>
+<div class="arch-arrow"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div>
+<div class="arch-col"><h4><i class="fa-solid fa-server" aria-hidden="true"></i>サーバー1台（Docker Compose）</h4>
+<div class="arch-box"><b>Caddy</b><span>HTTPS の入口。証明書を自動で更新</span></div>
+<div class="arch-box"><b>api コンテナ</b><span>画面の配信・API・ログイン</span></div>
+<div class="arch-box"><b>worker コンテナ</b><span>説明の採点・問題の取り込み・日次処理・メール送信</span></div></div>
+<div class="arch-arrow"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div>
+<div class="arch-col"><h4><i class="fa-solid fa-cubes" aria-hidden="true"></i>データとAI（国内）</h4>
+<div class="arch-box"><b>データベースアプライアンス</b><span>PostgreSQL。業務データ・ジョブキュー</span></div>
+<div class="arch-box"><b>オブジェクトストレージ</b><span>取り込み原本・キャラクター画像・送信リスト</span></div>
+<div class="arch-box"><b>さくらのAI Engine</b><span>gpt-oss-120b（あとで Bedrock に戻せる）</span></div>
+<div class="arch-box ext"><b>メール送信（SMTP）</b><span>招待・お知らせ・再設定</span></div></div>
+</div>
+<p class="arch-note">AWS 版の CloudFront・API Gateway・Lambda・Cognito・SQS・EventBridge の役割は、サーバーの中の api・worker コンテナがまとめて受け持つ。</p>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 方式の選定理由</h3>
+<p>2026-10-27 に、AWS からさくらのクラウドへ切り替えた。AWS アカウントで Amazon Bedrock（全モデル）と AWS Lambda が使えなくなり、復旧の見込みが立たなかったため。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -677,86 +713,67 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </thead>
 <tbody>
 <tr>
+<td>データの置き場所</td>
+<td>さくらのクラウドは国内の事業者・国内のデータセンター。学習者の説明文を含め、すべてのデータを国内に置ける</td>
+</tr>
+<tr>
 <td>規模の変動</td>
-<td>パイロット約10名から全社約1,000名まで、構成を変えずに自動で拡張できる</td>
+<td>パイロット約10名はサーバー1台で足りる。全社約1,000名では、サーバーのプランを上げるか、API のコンテナを増やす（Phase 3）</td>
 </tr>
 <tr>
 <td>コスト</td>
-<td>利用がない時間はほぼ課金されない（Aurora Serverless v2は最小容量まで縮小）</td>
+<td>月額の固定費（サーバー・DB）が中心で、見通しが立てやすい。AI は使った分だけ（2.9）</td>
 </tr>
 <tr>
 <td>運用</td>
-<td>サーバーのOS管理が不要。少人数での運用に向く</td>
+<td>サーバーの OS は自分たちで更新する。アプリはコンテナにまとめ、<code>docker compose</code> だけで入れ替えられるようにする</td>
 </tr>
 <tr>
-<td>AI連携</td>
-<td>Lambdaから同じリージョンのBedrockを直接呼べる</td>
+<td>移し替えやすさ</td>
+<td>DB・ファイル・メール・AI・ログインを「差し替え口」にしてあるため、AWS や別のクラウドにも移しやすい（詳細設計書 3.6〜3.10）</td>
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 AWS構成図</h3>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 さくらのクラウド構成図</h3>
 <figure class="diagram wide"><div class="mermaid">flowchart LR
   subgraph Client["利用者端末"]
     U["学習者&lt;br&gt;スマホ・PC"]
     M["コース管理者&lt;br&gt;システム管理者"]
   end
-  subgraph Edge["エッジ（グローバル）"]
-    R53["Route 53&lt;br&gt;DNS"]
-    WAF["AWS WAF&lt;br&gt;Freeプランに付属"]
-    CF["CloudFront"]
-    ACM["ACM&lt;br&gt;証明書"]
-  end
-  subgraph Tokyo["ap-northeast-1 東京リージョン"]
-    S3W["S3&lt;br&gt;Webアプリ配信"]
-    S3A["S3&lt;br&gt;キャラクター画像"]
-    COG["Cognito&lt;br&gt;ユーザープール"]
-    APIGW["API Gateway&lt;br&gt;HTTP API"]
-    subgraph Compute["Lambda"]
-      LAPI["APIハンドラ"]
-      LGRD["説明採点"]
-      LIMP["問題取り込み"]
-      LBAT["定期処理"]
+  subgraph Sakura["さくらのクラウド（国内）"]
+    DNS["DNS"]
+    subgraph VM["サーバー（1台・Docker Compose）"]
+      CADDY["Caddy&lt;br&gt;HTTPS終端・証明書の自動更新"]
+      API["api コンテナ&lt;br&gt;画面の配信・API・ログイン"]
+      WK["worker コンテナ&lt;br&gt;採点・取り込み・定期処理"]
     end
-    S3U["S3&lt;br&gt;取り込み原本"]
-    SQS["SQS&lt;br&gt;取り込みキュー"]
-    DB["Aurora PostgreSQL&lt;br&gt;Serverless v2&lt;br&gt;自動停止・Data API"]
-    SM["Secrets Manager"]
-    BR["Amazon Bedrock&lt;br&gt;Sonnet 5.5 / Haiku 5.5"]
-    EB["EventBridge&lt;br&gt;Scheduler"]
-    SES["Amazon SES&lt;br&gt;メール"]
-    CW["CloudWatch&lt;br&gt;CloudTrail"]
+    DB["データベースアプライアンス&lt;br&gt;PostgreSQL"]
+    OBJ["オブジェクトストレージ&lt;br&gt;取り込み原本・キャラクター画像・送信リスト"]
+    AIE["さくらのAI Engine&lt;br&gt;gpt-oss-120b"]
+    CR["コンテナレジストリ"]
+    MON["シンプル監視"]
   end
-  U --&gt; R53
-  M --&gt; R53
-  R53 --&gt; CF
-  WAF --- CF
-  ACM --- CF
-  CF --&gt; S3W
-  CF --&gt; S3A
-  CF --&gt;|"/api/*"| APIGW
-  U -.-&gt;|"ログイン"| COG
-  M -.-&gt;|"ログイン"| COG
-  APIGW --&gt;|"JWT検証"| COG
-  APIGW --&gt; LAPI
-  LAPI --&gt;|"非同期起動"| LGRD
-  LAPI --&gt;|"署名付きURL発行"| S3U
-  S3U --&gt;|"アップロード通知"| SQS
-  SQS --&gt; LIMP
-  LAPI --&gt; DB
-  LGRD --&gt; DB
-  LIMP --&gt; DB
-  LBAT --&gt; DB
-  DB --- SM
-  LAPI --&gt; BR
-  LGRD --&gt; BR
-  LIMP --&gt; BR
-  EB --&gt; LBAT
-  LBAT --&gt; SES
-  LAPI --&gt; SES
-  Compute -.-&gt; CW
+  SMTP["メール送信（SMTP）"]
+  GH["GitHub Actions"]
+  U --&gt; DNS
+  M --&gt; DNS
+  DNS --&gt; CADDY
+  CADDY --&gt; API
+  U -.-&gt;|"ファイルを直接アップロード（署名付きURL）"| OBJ
+  API --&gt; DB
+  WK --&gt; DB
+  API --&gt; OBJ
+  WK --&gt; OBJ
+  API --&gt; AIE
+  WK --&gt; AIE
+  API --&gt; SMTP
+  WK --&gt; SMTP
+  GH --&gt;|"コンテナを置く"| CR
+  CR -.-&gt;|"docker compose pull"| VM
+  MON --&gt;|"/api/health を見張る"| CADDY
 </div></figure>
-<p>※ CloudFront は定額の Free プランを使う。AWS WAF はプランに含まれ、Phase 1 から有効になる（ルールは5個まで。Phase 3 で見直す）。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 AWSサービス一覧</h3>
+<p>※ Amazon Bedrock に戻すときは、AI の呼び出し先だけが AWS（東京リージョン）に変わる（2.8）。</p>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 サービス一覧</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -767,150 +784,110 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </thead>
 <tbody>
 <tr>
-<td>Route 53</td>
-<td>独自ドメインのDNS</td>
-<td>CloudFrontへのエイリアスレコード（ドメイン未定。決まるまではCloudFrontの既定ドメインで運用可）</td>
+<td>サーバー（さくらのクラウド）</td>
+<td>アプリを動かす</td>
+<td>Ubuntu。Docker Compose で <code>caddy</code>・<code>api</code>・<code>worker</code> の3つのコンテナを動かす。パケットフィルタで 80・443 だけ開け、SSH は管理者のIPアドレスからだけ受ける</td>
 </tr>
 <tr>
-<td>ACM</td>
-<td>TLS証明書</td>
-<td>CloudFront用は us-east-1 で発行</td>
+<td>Caddy（コンテナ）</td>
+<td>HTTPS の終端</td>
+<td>Let's Encrypt の証明書を自動で取って更新する。HSTS を付け、本文は2MBまで</td>
 </tr>
 <tr>
-<td>CloudFront</td>
-<td>配信の入口。画面・画像・APIを1つのドメインにまとめる</td>
-<td><code>/api/*</code> をAPI Gatewayへ、それ以外をS3へ</td>
+<td>api コンテナ</td>
+<td>画面の配信・API・ログイン</td>
+<td>画面（HTML／CSS／JS）と <code>/api/*</code> を1つのドメインで出す。キャラクター画像はオブジェクトストレージから読んで返す</td>
 </tr>
 <tr>
-<td>AWS WAF</td>
-<td>不正アクセスの遮断</td>
-<td>CloudFront の Free プランに含まれる（追加料金なし、外せない）。Phase 1 はプランの既定ルールで運用し、Phase 3 でAWSマネージドルール（共通・既知の不正入力・IP評価）とレート制限に見直す。ルールは5個まで</td>
+<td>worker コンテナ</td>
+<td>時間のかかる処理と定期処理</td>
+<td>採点・問題取り込みをジョブキュー（DB）から1件ずつ取り出して処理する。日次処理とメール送信を時刻どおりに動かす</td>
 </tr>
 <tr>
-<td>S3（Webアプリ配信）</td>
-<td>HTML／CSS／JSの配置</td>
-<td>非公開。CloudFrontのOACからのみ読み取り</td>
-</tr>
-<tr>
-<td>S3（キャラクター画像）</td>
-<td>AIパートナーの紋章画像（管理画面からアップロード・差し替え）</td>
-<td>非公開。CloudFront経由で配信</td>
-</tr>
-<tr>
-<td>S3（取り込み原本）</td>
-<td>問題取り込みのPDF・画像</td>
-<td>非公開。署名付きURLでアップロード。90日で自動削除</td>
-</tr>
-<tr>
-<td>Cognito ユーザープール</td>
-<td>ログイン・パスワード管理・ロール</td>
-<td>マネージドログイン、グループ <code>learner</code>・<code>course_admin</code>・<code>system_admin</code></td>
-</tr>
-<tr>
-<td>API Gateway（HTTP API）</td>
-<td>APIの受付</td>
-<td>Cognitoで発行したJWTで認証</td>
-</tr>
-<tr>
-<td>Lambda（Node.js 22）</td>
-<td>業務処理</td>
-<td>4つの関数（2.4参照）</td>
-</tr>
-<tr>
-<td>SQS</td>
-<td>問題取り込みの順番待ち</td>
-<td>失敗時はデッドレターキューへ</td>
-</tr>
-<tr>
-<td>Aurora PostgreSQL Serverless v2</td>
+<td>データベースアプライアンス</td>
 <td>業務データ</td>
-<td>0〜4 ACU（prod）、自動停止を有効化（無操作5分で停止）、Data APIを有効化</td>
+<td>PostgreSQL。自動バックアップを有効にする。サーバーとはローカル接続（スイッチ）でつなぎ、インターネットには出さない</td>
 </tr>
 <tr>
-<td>Secrets Manager</td>
-<td>DBの認証情報</td>
-<td>Data APIから参照</td>
+<td>オブジェクトストレージ</td>
+<td>ファイル</td>
+<td>S3 互換。バケットは取り込み原本（90日で削除）・キャラクター画像・通知の送信リスト（7日で削除）の3つ。すべて非公開。アップロードは署名付きURL</td>
 </tr>
 <tr>
-<td>Amazon Bedrock</td>
+<td>さくらのAI Engine</td>
 <td>抽出・採点・コメント生成</td>
-<td>Claude Sonnet 5.5、Claude Haiku 5.5。モデルは既定で使える状態。Anthropic のモデルは初回だけ利用目的を申請する。モデル呼び出しログは記録しない</td>
+<td>OpenAI 互換の API。モデルは gpt-oss-120b。アカウントトークンで認証する</td>
 </tr>
 <tr>
-<td>EventBridge Scheduler</td>
-<td>定期処理の起動</td>
-<td>タイムゾーン Asia/Tokyo</td>
+<td>メール送信（SMTP）</td>
+<td>通知・招待・パスワード再設定・監視のお知らせ</td>
+<td>社内の SMTP サーバー、またはさくらのメールボックスなど。送信ドメインの認証（SPF・DKIM）を設定する</td>
 </tr>
 <tr>
-<td>Amazon SES</td>
-<td>通知メール・招待メール</td>
-<td>送信ドメインの認証（DKIM）</td>
+<td>コンテナレジストリ</td>
+<td>アプリのコンテナの置き場所</td>
+<td>GitHub Actions が置き、サーバーが取りに行く。非公開</td>
 </tr>
 <tr>
-<td>CloudWatch／CloudTrail</td>
-<td>ログ・監視・操作記録</td>
-<td>エラー率と採点時間のアラーム</td>
+<td>シンプル監視</td>
+<td>死活監視</td>
+<td><code>/api/health</code> を5分ごとに見て、応答がなければ管理者にメール</td>
 </tr>
 <tr>
-<td>IAM（OIDC IDプロバイダー）</td>
-<td>GitHub Actions からの配置の認証</td>
-<td>GitHub が発行するトークンで環境ごとの配置用ロール <code>rpg-{env}-deploy-role</code> を引き受ける。長期のアクセスキーは作らない</td>
+<td>DNS</td>
+<td>独自ドメイン</td>
+<td>ドメインが決まるまでは、さくらのクラウドのサーバーに付く名前で動かす</td>
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.4 Lambda関数の分担</h3>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.4 コンテナの役割の分担</h3>
+<p>AWS 版の Lambda 4関数は、2つのコンテナにまとめた。中の処理（ルーティング・採点・抽出・日次処理）は AWS 版と同じものを使う。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>関数</th>
+<th>コンテナ</th>
 <th>起動のきっかけ</th>
 <th>処理</th>
-<th>タイムアウト</th>
+<th>AWS 版での担当</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>api-handler</code></td>
-<td>API Gateway</td>
-<td>画面からのAPI全般。四肢択一の正誤判定、軽量モデルでのひとこと生成</td>
-<td>29秒</td>
+<td><code>api</code>（<code>ROLE=api</code>）</td>
+<td>画面からのリクエスト</td>
+<td>画面の配信、API 全般、ログイン（4.11）。四肢択一の正誤判定、軽量モデルでのひとこと生成。採点・取り込みはジョブキューに入れる</td>
+<td>CloudFront・API Gateway・<code>api-handler</code>・Cognito</td>
 </tr>
 <tr>
-<td><code>grading-worker</code></td>
-<td><code>api-handler</code> からの非同期起動</td>
-<td>キーワード説明の採点（高精度モデル）</td>
-<td>60秒</td>
-</tr>
-<tr>
-<td><code>import-worker</code></td>
-<td>SQS</td>
-<td>PDF・画像・テキストから問題とキーワードを抽出（高精度モデル）</td>
-<td>15分</td>
-</tr>
-<tr>
-<td><code>batch-runner</code></td>
-<td>EventBridge Scheduler</td>
-<td>日次処理（クエスト更新・ランキング締め・物理削除・通知リスト作成）と30分ごとのメール送信（DBを使わない）</td>
-<td>15分</td>
+<td><code>worker</code>（<code>ROLE=worker</code>）</td>
+<td>ジョブキュー（DB）と時刻</td>
+<td>キーワード説明の採点、PDF・画像・テキストからの問題の抽出、日次処理、30分ごとのメール送信</td>
+<td><code>grading-worker</code>・<code>import-worker</code>・<code>batch-runner</code>・SQS・EventBridge Scheduler</td>
 </tr>
 </tbody>
 </table></div>
+<ul>
+<li>1台で足りる間は、<code>api</code> と <code>worker</code> を同じサーバーで動かす。どちらも同じコンテナ（イメージ）で、環境変数 <code>ROLE</code> で役割を変える</li>
+<li>採点は同時に2件、取り込みは同時に1件まで処理する（AI の使いすぎを防ぐ）</li>
+</ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.5 説明採点の非同期方式</h3>
-<p>API Gatewayは約30秒で応答を打ち切るため、採点は受付と処理を分ける。画面は2秒ごとに結果を確認し、その間AIパートナーの待機演出を表示する。</p>
+<p>採点は30秒近くかかることがあるため、受付と処理を分ける。画面は2秒ごとに結果を確認し、その間AIパートナーの待機演出を表示する（AWS 版と同じ）。</p>
 <figure class="diagram"><div class="mermaid">sequenceDiagram
   participant U as 学習者（ブラウザ）
-  participant API as API Gateway＋Lambda
-  participant G as 採点Lambda
-  participant BR as Bedrock（Sonnet 5.5）
-  participant DB as Aurora
+  participant API as api コンテナ
+  participant Q as DB（ジョブキュー）
+  participant W as worker コンテナ
+  participant AI as さくらのAI Engine
+  participant DB as DB（業務データ）
   U-&gt;&gt;API: POST /api/gradings（説明文）
-  API-&gt;&gt;DB: 採点ジョブを登録（状態：採点中）
-  API-&gt;&gt;G: 非同期で起動
+  API-&gt;&gt;DB: 採点を登録（状態：採点中）
+  API-&gt;&gt;Q: 採点のジョブを入れる
   API--&gt;&gt;U: 202 受付（ジョブID）
   Note over U: パートナーの待機演出を表示
-  G-&gt;&gt;BR: 採点を依頼（パートナーの性格を含む）
-  BR--&gt;&gt;G: 点数・模範説明・不足観点・コメント
-  G-&gt;&gt;DB: 結果保存・復習段階更新・EXP加算
+  W-&gt;&gt;Q: ジョブを取り出す（1秒ごとに確認）
+  W-&gt;&gt;AI: 採点を依頼（パートナーの性格を含む）
+  AI--&gt;&gt;W: 点数・模範説明・不足観点・コメント
+  W-&gt;&gt;DB: 結果保存・復習段階更新・EXP加算
   loop 2秒ごと（最大30秒）
     U-&gt;&gt;API: GET /api/gradings/{id}
     API--&gt;&gt;U: 状態（採点中 または 完了）
@@ -940,11 +917,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>ログイン</td>
-<td>Cognitoのマネージドログイン画面へ移動し、認可コード＋PKCEでトークンを取得</td>
+<td>アプリのログイン画面（S-01）でメールアドレスとパスワードを入れ、API（A-30）でトークンを受け取る。仮パスワードのときは、続けて新しいパスワードを決める</td>
 </tr>
 <tr>
 <td>トークン保管</td>
-<td>メモリとsessionStorage。画面を閉じたら破棄</td>
+<td>メモリとsessionStorage。画面を閉じたら破棄。アクセストークンは60分、リフレッシュトークンは7日（1回使うたびに新しいものに替わる）</td>
 </tr>
 <tr>
 <td>PWA</td>
@@ -963,7 +940,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <th>環境</th>
 <th>用途</th>
 <th>利用者</th>
-<th>DB容量</th>
+<th>サーバー・DB</th>
 </tr>
 </thead>
 <tbody>
@@ -971,187 +948,175 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>dev</td>
 <td>開発・動作確認、システムテスト・受け入れ確認</td>
 <td>開発者・コース管理者（受け入れ確認）</td>
-<td>0〜1 ACU（自動停止）</td>
+<td>サーバー1台・データベースアプライアンス1台（最小のプラン）</td>
 </tr>
 <tr>
 <td>prod</td>
 <td>本番（パイロット→全社）</td>
 <td>全利用者</td>
-<td>0〜4 ACU（自動停止。Phase 3で見直し）</td>
+<td>サーバー1台・データベースアプライアンス1台（Phase 3で見直し）</td>
 </tr>
 </tbody>
 </table></div>
-<p>1つのAWSアカウントの中で、リソース名の接頭辞とタグで環境を分ける。</p>
+<p>1つのさくらのクラウドのアカウントの中で、リソース名の接頭辞とタグで環境を分ける。</p>
 <ul>
-<li>コストを抑えるため、検証用の stg 環境は作らない（2026-10-21 決定）。stg で行う予定だったシステムテストとコース管理者の受け入れ確認は dev で行う</li>
-<li>受け入れ確認の間は、dev への自動配置（<code>main</code> への push）を止めて dev を「凍結」する。確かめた版にタグを付けて prod に配置する（詳細設計書 11.1）</li>
-<li>dev は DB の容量（0〜1 ACU）とバックアップの設定が prod と違うため、本番と同じ条件での最終確認はできない。代わりに prod への配置の直前に必ず DB のスナップショット（控え）を取り、問題があれば戻せるようにする</li>
+<li>コストを抑えるため、検証用の stg 環境は作らない（2026-10-21 決定）。システムテストとコース管理者の受け入れ確認は dev で行う</li>
+<li>受け入れ確認の間は dev に新しい版を入れず「凍結」する。確かめた版にタグを付けて prod に配置する（詳細設計書 11.1）</li>
+<li>prod への配置の直前に、必ず DB のバックアップ（控え）を取り、問題があれば戻せるようにする</li>
 <li>全社展開（Phase 3）の前に、stg を作り直すかを見直す（10 未決事項 No.11）</li>
 </ul>
 <figure class="diagram"><div class="mermaid">flowchart TB
-  subgraph ACC["AWSアカウント（1つ）"]
+  subgraph ACC["さくらのクラウドのアカウント（1つ）"]
     subgraph DEV["dev 環境"]
-      D1["rpg-dev-* のリソース一式"]
+      D1["rpg-dev-* のサーバー・DB・バケット"]
     end
     subgraph PRD["prod 環境"]
-      P1["rpg-prod-* のリソース一式"]
+      P1["rpg-prod-* のサーバー・DB・バケット"]
     end
-    IAM["IAM・CloudTrail・請求&lt;br&gt;OIDC IDプロバイダー（共通）"]
+    CR["コンテナレジストリ（共通）"]
   end
   subgraph GH["GitHub"]
-    REPO["リポジトリ&lt;br&gt;rpg-learning-app"]
+    REPO["リポジトリ&lt;br&gt;pocarialice/rpglearning"]
     GA["GitHub Actions"]
   end
-  IAM --- DEV
-  IAM --- PRD
   REPO --&gt; GA
-  GA --&gt;|"main への push"| DEV
-  GA --&gt;|"タグ release-*・承認後"| PRD</div></figure>
+  GA --&gt;|"手動実行（main）"| CR
+  GA --&gt;|"タグ release-*・承認後"| CR
+  CR --&gt;|"docker compose pull"| DEV
+  CR --&gt;|"docker compose pull"| PRD
+</div></figure>
 <ul>
-<li>命名規則：<code>rpg-{env}-{用途}</code>（例：<code>rpg-prod-api-handler</code>）</li>
-<li>タグ：<code>Project=rpg-learning</code>、<code>Environment=dev|prod</code>。請求はタグで環境ごとに集計する</li>
-<li>IAMの権限は環境ごとに、リソース名の接頭辞で範囲を絞る</li>
-<li>AWSのリソースは構築手順書に沿ってマネジメントコンソールで dev → prod の順に作る。アプリ（Lambda のコード・画面・DBのテーブル）は GitHub Actions が配置する</li>
-<li>配置のきっかけ：dev は <code>main</code> への push、prod は dev での受け入れ確認のあとタグ <code>release-YYYYMMDD-NN</code> を付け、承認者が GitHub で承認したとき（詳細設計書 第11章）</li>
+<li>命名規則：<code>rpg-{env}-{用途}</code>（例：<code>rpg-prod-db</code>）</li>
+<li>タグ：<code>rpg-learning</code>、<code>dev</code> または <code>prod</code>。請求はタグで環境ごとに集計する</li>
+<li>サーバーの API キーなどの秘密の値は、各サーバーの <code>.env</code> に置き、Git に入れない</li>
+<li>さくらのクラウドのリソースは構築手順書に沿ってコントロールパネルで dev → prod の順に作る。アプリ（コンテナ）は GitHub Actions が作ってレジストリに置き、サーバーで入れ替える。DB のテーブルはコンテナの起動時に自動で作る（マイグレーション）</li>
+<li>配置のきっかけ：dev は GitHub Actions を <code>main</code> で手動実行したとき、prod は dev での受け入れ確認のあとタグ <code>release-YYYYMMDD-NN</code> を付け、承認者が GitHub で承認したとき（詳細設計書 第11章）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.8 AIモデルの使い分け</h3>
+<p>AI の呼び出しは「差し替え口」（詳細設計書 3.6）を通し、環境変数 <code>AI_PROVIDER</code> で呼び出し先を切り替える。当面はさくらのAI Engine を使い、Amazon Bedrock が使えるようになりしだい Bedrock に戻す。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>用途</th>
-<th>モデル</th>
+<th>さくらのAI Engine（当面）</th>
+<th>Amazon Bedrock（戻したあと）</th>
 <th>呼び出し元</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>問題・キーワードの抽出</td>
-<td>Claude Sonnet 5.5</td>
-<td><code>import-worker</code></td>
+<td>gpt-oss-120b</td>
+<td>Claude Sonnet</td>
+<td>worker（取り込み）</td>
 </tr>
 <tr>
 <td>キーワード説明の採点</td>
-<td>Claude Sonnet 5.5</td>
-<td><code>grading-worker</code></td>
+<td>gpt-oss-120b</td>
+<td>Claude Sonnet</td>
+<td>worker（採点）</td>
 </tr>
 <tr>
 <td>四肢択一の解説コメント・パートナーのひとこと</td>
-<td>Claude Haiku 5.5</td>
-<td><code>api-handler</code></td>
+<td>gpt-oss-120b</td>
+<td>Claude Haiku</td>
+<td>api</td>
 </tr>
 <tr>
 <td>四肢択一の正誤判定</td>
 <td>AI不使用</td>
-<td><code>api-handler</code></td>
+<td>AI不使用</td>
+<td>api</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li>Bedrockに送ったデータはモデルの学習に使われない（Bedrockの標準の扱い）。構築時に利用規約を確認し、記録を残す</li>
-<li>具体的なモデルIDは構築時にBedrockコンソールで確認する。Sonnet 5.5が東京リージョンで使えない場合は、東京リージョンで使える別バージョンのSonnetを使う。Haiku 5.5も同じく、使えない場合は東京リージョンで使える別バージョンのHaikuを使う（データを東京リージョンの外に出さない）</li>
-<li>Haiku 5.5 は既定で思考（adaptive thinking）が動き、effort の既定は medium。5秒で打ち切る呼び出しのため effort は low を基本にし、dev で応答時間を確かめる。思考トークンを固定で指定する設定（budget_tokens）はエラーになるため使わない</li>
+<li>さくらのAI Engine は国内のデータセンターで推論する（さくらインターネットの説明）。送ったデータの扱い（学習に使われないこと）は構築時に利用規約で確認し、記録を残す</li>
+<li>gpt-oss-120b は PDF・画像をそのまま読めない。そのため当面は、<strong>PDF は文字を取り出してから渡し、画像の取り込みは使えない</strong>（管理者には「テキストかPDFで取り込んでください」と出す）。文字のない（スキャンした）PDF も取り込めない。Bedrock に戻すと、PDF・画像をそのまま読めるようになる</li>
+<li>採点の質は Claude より下がる可能性がある。パイロットの前に、過去問を使って採点の結果を Claude（AWS 版の試験の結果）と見比べ、合格の基準（60点）や指示文を見直すかを決める（10 未決事項 No.12）</li>
+<li>Bedrock に戻すときのモデルIDは、そのときに東京リージョンで使えるものを確かめる（AWS 版の外部設計書 2.8 の方針。推論プロファイルを使うかは未決事項 No.2）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.9 月額コスト試算（パイロット10名）</h3>
-<p>パイロット期間はコストを最小にする構成とする（Aurora は全環境で自動停止。CloudFront は定額の Free プランで、配信と AWS WAF の料金はかからない）。</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>環境</th>
-<th>月額（目安）</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>prod</td>
-<td>約5,200円（$35）</td>
-</tr>
-<tr>
-<td>dev</td>
-<td>約1,700円（$11）</td>
-</tr>
-<tr>
-<td><strong>合計</strong></td>
-<td><strong>約6,900円（$46）</strong></td>
-</tr>
-</tbody>
-</table></div>
-<figure class="diagram"><div class="mermaid">pie showData
-  title prod の月額内訳（円）
-  "Bedrock 説明採点 Sonnet 5.5" : 2310
-  "Bedrock 解説・ひとこと Haiku 5.5" : 198
-  "Bedrock 問題取り込み Sonnet 5.5" : 247
-  "Aurora 自動停止" : 1822
-  "Aurora ストレージ・I/O" : 108
-  "CloudWatch・Secrets Manager" : 360
-  "その他サービス" : 150
-</div></figure>
+<p>さくらのクラウドの料金は、構築するときに公式の料金ページで確かめて本表を埋める。AI の料金は公表単価で試算した。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>項目</th>
+<th>prod</th>
+<th>dev</th>
+<th>前提</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>サーバー（2仮想コア・4GB程度）</td>
+<td>構築時に確認</td>
+<td>構築時に確認</td>
+<td>Docker Compose で3コンテナ。dev は1コア・2GBも検討</td>
+</tr>
+<tr>
+<td>データベースアプライアンス（PostgreSQL・最小のプラン）</td>
+<td>構築時に確認</td>
+<td>構築時に確認</td>
+<td>自動バックアップあり</td>
+</tr>
+<tr>
+<td>オブジェクトストレージ</td>
+<td>構築時に確認</td>
+<td>構築時に確認</td>
+<td>数GB。取り込み原本は90日で削除</td>
+</tr>
+<tr>
+<td>さくらのAI Engine</td>
+<td>約400円</td>
+<td>約50円</td>
+<td>下の内訳。dev は確認のときだけ</td>
+</tr>
+<tr>
+<td>コンテナレジストリ・シンプル監視・DNS</td>
+<td>構築時に確認</td>
+<td>（prod と共用）</td>
+<td></td>
+</tr>
+<tr>
+<td>メール送信（SMTP）</td>
+<td>0円〜</td>
+<td>0円〜</td>
+<td>社内の SMTP サーバーを使うなら0円</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>さくらのAI Engine の内訳（prod）</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>用途</th>
 <th>月額</th>
 <th>前提</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Bedrock 説明採点（Sonnet 5.5）</td>
-<td>約2,300円</td>
-<td>1人1日5回 × 22日。1回あたり入力3,000・出力800トークン</td>
+<td>説明採点</td>
+<td>約120円</td>
+<td>1人1日5回 × 22日 × 10名。1回あたり入力3,000・出力800トークン</td>
 </tr>
 <tr>
-<td>Bedrock 解説・ひとこと（Haiku 5.5）</td>
+<td>解説・ひとこと</td>
 <td>約200円</td>
-<td>1人1日20回 × 22日。1回あたり入力1,500・出力300トークン</td>
+<td>1人1日20回 × 22日 × 10名。1回あたり入力1,500・出力300トークン</td>
 </tr>
 <tr>
-<td>Bedrock 問題取り込み（Sonnet 5.5）</td>
-<td>約200円</td>
-<td>月150ページ、300問</td>
-</tr>
-<tr>
-<td>Aurora（自動停止）</td>
-<td>約1,800円</td>
-<td>0.5 ACUで月約160時間動作</td>
-</tr>
-<tr>
-<td>Aurora ストレージ・I/O</td>
-<td>約100円</td>
-<td>2GB</td>
-</tr>
-<tr>
-<td>CloudWatch・Secrets Manager</td>
-<td>約400円</td>
-<td></td>
-</tr>
-<tr>
-<td>その他（S3・API Gateway・Lambda・SQS・SES・Cognito・EventBridge）</td>
-<td>約150円</td>
-<td>10名ならほぼ無料枠に収まる</td>
-</tr>
-<tr>
-<td>CloudFront・AWS WAF</td>
-<td>0円</td>
-<td>定額の Free プラン。月100万リクエスト・100GBまで追加料金なし（超えても課金されず、速度が落とされることがある）</td>
+<td>問題取り込み</td>
+<td>約50円</td>
+<td>月150ページ・300問</td>
 </tr>
 </tbody>
 </table></div>
-<p><strong>試算の前提</strong></p>
 <ul>
-<li>stg をなくしたことで、月 約1,600円（年 約1.9万円）を減らせる見込み（以前の試算は dev＋stg で 約3,300円。dev と stg をほぼ同じ規模とみて半分ずつに分けた目安）</li>
-<li>為替は1ドル＝150円</li>
-<li>Aurora は東京リージョンで 0.15ドル／ACU時間</li>
-<li>Sonnet 5.5 は入力2ドル・出力10ドル／100万トークン（以前の Sonnet 4.6 の入力3ドル・出力15ドルより3分の1安い）</li>
-<li>Claude の単価は Anthropic の公表単価で試算した。Bedrock の単価は AWS が別に決めるため、構築時に Bedrock の料金ページで確かめる。東京リージョン内での推論は、海外リージョンをまたぐ推論より1割ほど高い場合がある</li>
-<li>Haiku 5.5 は入力0.1ドル・出力0.5ドル／100万トークン（1回のプロンプトが10万トークン以下の場合。超えると入力0.5ドル・出力2.5ドル）。以前の Haiku 4.5（入力1ドル・出力5ドル）の約10分の1</li>
-<li>利用回数は仮置き。説明問題を多く解くほど Bedrock の費用は増える</li>
-<li>CloudFront の Free プランはアカウントあたり3つまで。dev・prod で2つを使う（1つは空き）。アクセスログ、独自のキャッシュポリシー・レスポンスヘッダーポリシーは使えない（必要になれば Pro プラン、月15ドル）</li>
-</ul>
-<p><strong>自動停止による制約</strong></p>
-<ul>
-<li>止まっているDBを起こすのに約15秒かかる。24時間以上止まっていた場合は30秒以上かかることがある</li>
-<li>そのため、その日最初の操作では画面の表示が遅れる。読み込み中の表示を出し、APIはDBの起動中を示すエラーを受けたら再試行する（詳細は第3章以降で定める）</li>
-<li>体験に問題があれば、prod だけ平日の日中は最小0.5 ACUにする（月額は約16,000円前後に増える）</li>
+<li>gpt-oss-120b の単価は、入力1万トークンあたり0.15円・出力1万トークンあたり0.75円（税込、従量課金プラン）。月3,000回までの無料枠があるが、無料のプランは上限を超えると遅くなり自動で従量課金に切り替わらないため、prod は従量課金のプランにする</li>
+<li>AWS 版（2026-10-21 試算）は合計 約6,900円／月（Bedrock の Claude と Aurora の自動停止が中心）。さくら版は AI がほぼ無料に近くなる代わりに、サーバーと DB が固定費になる</li>
+<li>利用回数は仮置き。説明問題を多く解くほど AI の費用は増える（それでも月数百円の規模）</li>
 </ul>
 </section><section class="chapter" id="ch3"><h2><i class="fa-solid fa-display h-ico" aria-hidden="true"></i>3. 画面設計</h2>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 画面一覧</h3>
@@ -1169,9 +1134,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>S-01</td>
-<td>ログイン</td>
+<td>ログイン（パスワードの設定・再設定を含む）</td>
 <td>全員</td>
-<td>Cognito マネージドログイン</td>
+<td>ログインしていないとき（再設定は <code>#/reset?token=</code>）</td>
 <td>共通</td>
 </tr>
 <tr>
@@ -1270,7 +1235,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 画面構成図</h3>
 <figure class="diagram"><div class="mermaid">flowchart TB
   ROOT["RPG学習アプリ&lt;br&gt;app.example.co.jp"]
-  ROOT --&gt; AUTH["S-01 ログイン&lt;br&gt;Cognito マネージドログイン"]
+  ROOT --&gt; AUTH["S-01 ログイン&lt;br&gt;パスワードの設定・再設定"]
   ROOT --&gt; L["学習者エリア #/&lt;br&gt;下部ナビ：ホーム・ランキング・プロフィール"]
   ROOT --&gt; A["ギルド管理局エリア #/admin&lt;br&gt;左サイドメニュー"]
   subgraph LEARN["学習者エリア"]
@@ -1408,7 +1373,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </thead>
 <tbody>
 <tr>
-<td>DBの起動待ち（自動停止からの復帰）</td>
+<td>DBに接続できない（DBの再起動・メンテナンス中）</td>
 <td>「ギルドの扉を開けています…」と <code>gd-dots</code> の待機演出。APIは最大3回まで再試行（2秒・4秒・8秒の間隔）。それでも失敗したらエラー表示</td>
 </tr>
 <tr>
@@ -1556,6 +1521,34 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.7 学習者画面</h3>
+<h4>S-01 ログイン</h4>
+<p>AWS 版では Cognito のログイン画面を使っていた。さくら版ではアプリが同じ羊皮紙の見た目でログイン画面を出す。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>場面</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ログイン</td>
+<td>メールアドレスとパスワード。間違えたときは「メールアドレスかパスワードが正しくありません」（どちらが違うかは言わない）。5回続けて間違えると15分ログインできない</td>
+</tr>
+<tr>
+<td>初回（仮パスワード）</td>
+<td>招待メールの仮パスワードでログインすると、続けて「新しいパスワード」を2回入れる画面になる。決まり（8文字以上・数字・大文字・小文字）を満たして2回が一致するまでボタンを押せない。仮パスワードの期限は7日（切れたら管理者が S-13 で「招待を送り直す」）</td>
+</tr>
+<tr>
+<td>パスワードを忘れたとき</td>
+<td>メールアドレスを入れると、登録されていれば再設定のリンクをメールで送る（登録の有無は画面に出さない）。リンクは1時間・1回だけ使える。再設定すると、ほかの端末のログインも切れる</td>
+</tr>
+<tr>
+<td>ログイン後</td>
+<td>画面を読み込み直してホーム（管理者は管理局）を開く。ログアウトは S-08 から</td>
+</tr>
+</tbody>
+</table></div>
 <h4>S-02 ホーム</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -2175,7 +2168,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <figure class="diagram"><div class="mermaid">flowchart TD
   A["解答を送信"] --&gt; B{形式}
   B --&gt;|"四肢択一"| C["正解データと照合"]
-  B --&gt;|"キーワード説明"| D["Bedrock Sonnet 5.5 で採点"]
+  B --&gt;|"キーワード説明"| D["AI（高精度モデル）で採点"]
   C --&gt; E{正解}
   D --&gt; F{60点以上}
   E --&gt;|"はい"| G["復習段階を1つ進める"]
@@ -2553,21 +2546,22 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.10 問題取り込み（F-01、F-02）</h3>
 <figure class="diagram"><div class="mermaid">sequenceDiagram
   participant CM as コース管理者
-  participant API as api-handler
-  participant S3 as S3 取り込み原本
-  participant Q as SQS
-  participant W as import-worker
-  participant BR as Bedrock Sonnet 5.5
-  participant DB as Aurora
+  participant API as api コンテナ
+  participant OBJ as オブジェクトストレージ 取り込み原本
+  participant Q as DB ジョブキュー
+  participant W as worker コンテナ
+  participant AI as AI 高精度モデル
+  participant DB as DB 業務データ
   CM-&gt;&gt;API: POST /api/admin/imports
   API-&gt;&gt;DB: 取り込みを登録 状態 待機中
   API--&gt;&gt;CM: 署名付きURL
-  CM-&gt;&gt;S3: ファイルをアップロード
-  S3-&gt;&gt;Q: アップロード通知
-  Q-&gt;&gt;W: 起動
+  CM-&gt;&gt;OBJ: ファイルをアップロード
+  CM-&gt;&gt;API: POST /api/admin/imports/{id}/uploaded
+  API-&gt;&gt;Q: 取り込みのジョブを入れる
+  W-&gt;&gt;Q: ジョブを取り出す
   W-&gt;&gt;DB: 状態 抽出中
-  W-&gt;&gt;BR: 問題・キーワードの抽出を依頼
-  BR--&gt;&gt;W: JSONで抽出結果
+  W-&gt;&gt;AI: 問題・キーワードの抽出を依頼
+  AI--&gt;&gt;W: JSONで抽出結果
   W-&gt;&gt;DB: 下書きとして保存 状態 完了
   CM-&gt;&gt;API: GET /api/admin/imports/{id}
   API--&gt;&gt;CM: 下書き一覧
@@ -2584,7 +2578,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>入力</td>
-<td>PDF（50ページ・20MBまで）、画像（PNG・JPEG、20MBまで）、テキスト（2万文字まで）</td>
+<td>PDF（50ページ・20MBまで）、画像（PNG・JPEG、20MBまで）、テキスト（2万文字まで）。さくらのAI Engine の間は、PDF は文字を取り出して渡し、画像と文字のないPDFは取り込めない（2.8）</td>
 </tr>
 <tr>
 <td>抽出項目</td>
@@ -2604,7 +2598,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>失敗時</td>
-<td>SQSで最大3回やり直し、それでも失敗したら状態を「失敗」にして理由を表示</td>
+<td>1分おいて最大3回やり直し、それでも失敗したら状態を「失敗」にして理由を表示（ファイルが壊れているなど、やり直しても変わらない失敗はすぐ「失敗」にする）</td>
 </tr>
 </tbody>
 </table></div>
@@ -2621,30 +2615,35 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <thead>
 <tr>
 <th>操作</th>
-<th>アプリの処理</th>
-<th>Cognitoの処理</th>
+<th>利用者の状態・学習履歴</th>
+<th>ログインまわり（AWS 版では Cognito が行っていたこと）</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>登録</td>
 <td>利用者を「招待中」で登録</td>
-<td>ユーザーを作成し、招待メール（仮パスワード）を送る</td>
+<td>仮パスワード（12文字・7日有効）を作り、招待メールで送る。メールを送れなければ登録しない</td>
+</tr>
+<tr>
+<td>再招待</td>
+<td>「招待中」のまま</td>
+<td>仮パスワードを作り直して、招待メールを送り直す（期限切れ・メールの紛失のとき）</td>
 </tr>
 <tr>
 <td>削除</td>
 <td>状態を「論理削除」、削除予定日＝30日後</td>
-<td>ユーザーを無効化（ログインできなくする）</td>
+<td>ログインできなくし、ログイン中の端末も次のトークン更新で切る</td>
 </tr>
 <tr>
 <td>復活</td>
 <td>状態を「有効」に戻す。学習履歴はそのまま</td>
-<td>ユーザーを有効化</td>
+<td>もとのパスワードでログインできる</td>
 </tr>
 <tr>
 <td>物理削除</td>
 <td>学習履歴を含めて削除</td>
-<td>ユーザーを削除</td>
+<td>ログインの記録（トークン・再設定リンク）も一緒に消える</td>
 </tr>
 </tbody>
 </table></div>
@@ -2660,7 +2659,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>ベースURL</td>
-<td><code>https://app.example.co.jp/api</code>（CloudFront経由）</td>
+<td><code>https://app.example.co.jp/api</code>（画面と同じドメイン）</td>
 </tr>
 <tr>
 <td>形式</td>
@@ -2668,19 +2667,19 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>認証</td>
-<td><code>Authorization: Bearer &lt;IDトークン&gt;</code>。API Gateway の JWT オーソライザーで検証</td>
+<td><code>Authorization: Bearer &lt;アクセストークン&gt;</code>。api コンテナが署名と期限を確かめる（ログイン A-30〜A-35 とヘルスチェックはトークンなし）</td>
 </tr>
 <tr>
 <td>権限</td>
-<td>トークンの <code>cognito:groups</code> で判定。コース管理者は担当コースのデータだけ扱える</td>
+<td>DB のロール（トークンの <code>groups</code> にも入れる）で判定。コース管理者は担当コースのデータだけ扱える</td>
 </tr>
 <tr>
 <td>日時</td>
 <td>ISO 8601、タイムゾーン付き（<code>+09:00</code>）</td>
 </tr>
 <tr>
-<td>DB起動中</td>
-<td><code>503</code> とコード <code>DB_RESUMING</code> を返す。画面は 3.5 のとおり再試行する</td>
+<td>DB接続不可</td>
+<td><code>503</code> とコード <code>DB_RESUMING</code> を返す（DBの再起動中など）。画面は 3.5 のとおり再試行する</td>
 </tr>
 </tbody>
 </table></div>
@@ -2707,6 +2706,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>トークンがない・期限切れ</td>
 </tr>
 <tr>
+<td>401</td>
+<td><code>LOGIN_FAILED</code>・<code>PASSWORD_EXPIRED</code></td>
+<td>ログインの失敗・仮パスワードの期限切れ</td>
+</tr>
+<tr>
+<td>423</td>
+<td><code>ACCOUNT_LOCKED</code></td>
+<td>ログインに5回続けて失敗した（15分）</td>
+</tr>
+<tr>
 <td>403</td>
 <td><code>FORBIDDEN</code></td>
 <td>権限がない（担当外のコースなど）</td>
@@ -2724,7 +2733,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>503</td>
 <td><code>DB_RESUMING</code></td>
-<td>DBの起動中</td>
+<td>DBに接続できない</td>
 </tr>
 <tr>
 <td>504</td>
@@ -2837,6 +2846,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>コース管理者</td>
 </tr>
 <tr>
+<td>A-13b</td>
+<td>POST</td>
+<td><code>/admin/imports/{id}/uploaded</code></td>
+<td>ファイルを置き終えたことを伝え、抽出を始める</td>
+<td>コース管理者</td>
+</tr>
+<tr>
 <td>A-14</td>
 <td>GET</td>
 <td><code>/admin/imports/{id}</code></td>
@@ -2893,11 +2909,60 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>システム管理者</td>
 </tr>
 <tr>
+<td>A-21b</td>
+<td>POST</td>
+<td><code>/admin/users/{id}/reinvite</code></td>
+<td>招待（仮パスワード）の送り直し</td>
+<td>システム管理者</td>
+</tr>
+<tr>
 <td>A-22</td>
 <td>GET／PUT／DELETE</td>
 <td><code>/admin/partners/{persona}/image</code></td>
 <td>キャラクター画像の取得・差し替え・削除</td>
 <td>システム管理者</td>
+</tr>
+<tr>
+<td>A-30</td>
+<td>POST</td>
+<td><code>/auth/login</code></td>
+<td>ログイン（仮パスワードのときは新しいパスワードを求める）</td>
+<td>全員（トークン不要）</td>
+</tr>
+<tr>
+<td>A-31</td>
+<td>POST</td>
+<td><code>/auth/new-password</code></td>
+<td>初回の新しいパスワード</td>
+<td>全員（トークン不要）</td>
+</tr>
+<tr>
+<td>A-32</td>
+<td>POST</td>
+<td><code>/auth/refresh</code></td>
+<td>トークンの更新（リフレッシュトークンは使い捨て）</td>
+<td>全員（トークン不要）</td>
+</tr>
+<tr>
+<td>A-33</td>
+<td>POST</td>
+<td><code>/auth/logout</code></td>
+<td>ログアウト</td>
+<td>全員（トークン不要）</td>
+</tr>
+<tr>
+<td>A-34</td>
+<td>POST</td>
+<td><code>/auth/forgot</code></td>
+<td>パスワードの再設定メールを送る</td>
+<td>全員（トークン不要）</td>
+</tr>
+<tr>
+<td>A-35</td>
+<td>POST</td>
+<td><code>/auth/reset</code></td>
+<td>再設定リンクからの新しいパスワード</td>
+<td>全員（トークン不要）</td>
 </tr>
 </tbody>
 </table></div>
@@ -2952,12 +3017,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 Bedrock連携</h3>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 AI連携（さくらのAI Engine／Amazon Bedrock）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>用途</th>
-<th>モデル</th>
+<th>モデル（2.8）</th>
 <th>呼び出し元</th>
 <th>出力形式</th>
 <th>上限</th>
@@ -2966,22 +3031,22 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>問題・キーワードの抽出</td>
-<td>Sonnet 5.5</td>
-<td><code>import-worker</code></td>
+<td>高精度</td>
+<td>worker（取り込み）</td>
 <td>JSON（問題の配列）</td>
-<td>1回あたり10ページずつ分けて送る</td>
+<td>1回あたり10ページずつ分けて送る（さくらのAI Engine では取り出した文字を送る）</td>
 </tr>
 <tr>
 <td>説明の採点</td>
-<td>Sonnet 5.5</td>
-<td><code>grading-worker</code></td>
+<td>高精度</td>
+<td>worker（採点）</td>
 <td>JSON（点数・模範説明・不足観点・コメント）</td>
 <td>25秒で打ち切り</td>
 </tr>
 <tr>
 <td>ひとこと・択一の解説コメント</td>
-<td>Haiku 5.5</td>
-<td><code>api-handler</code></td>
+<td>軽量</td>
+<td>api</td>
 <td>テキスト（2〜3文）</td>
 <td>5秒で打ち切り。失敗したら定型文を表示</td>
 </tr>
@@ -3021,8 +3086,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <ul>
 <li>学習者の説明文は「採点対象のデータ」として渡し、その中の指示には従わないよう指示文に書く（指示の乗っ取り対策）</li>
 <li>ひとことは、ログイン時に1日1回だけ生成して保存し、同じ日は使い回す（コストを抑えるため）</li>
+<li>指示文と出力の形は、さくらのAI Engine と Bedrock で同じものを使う。切り替えたときは dev で採点の結果と応答時間を確かめる</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.6 メール（Amazon SES）</h3>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.6 メール（SMTP）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3035,9 +3101,15 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>招待</td>
-<td>利用者の登録時（Cognitoから送信）</td>
+<td>利用者の登録時・再招待のとき</td>
 <td>【RPG学習アプリ】ギルドへの招待</td>
-<td>ログインURL、仮パスワード</td>
+<td>ログインURL、メールアドレス、仮パスワード、期限（7日）</td>
+</tr>
+<tr>
+<td>パスワードの再設定</td>
+<td>S-01 で「パスワードを忘れたとき」を使ったとき</td>
+<td>【RPG学習アプリ】パスワードの再設定</td>
+<td>再設定のリンク（1時間・1回だけ）、心当たりがないときの案内</td>
 </tr>
 <tr>
 <td>学習のお知らせ</td>
@@ -3051,12 +3123,19 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>【RPG学習アプリ】アカウント停止のお知らせ</td>
 <td>30日後に完全に削除されること、問い合わせ先</td>
 </tr>
+<tr>
+<td>監視のお知らせ</td>
+<td>定期処理・取り込みの失敗、APIのエラーが続いたとき（管理者宛。同じ内容は1時間に1通）</td>
+<td>[環境名]【RPG学習アプリ 監視】…</td>
+<td>何が起きたか（個人情報は入れない）</td>
+</tr>
 </tbody>
 </table></div>
 <ul>
 <li>送信元：<code>no-reply@app.example.co.jp</code>（ドメイン決定後に確定）</li>
 <li>配信停止：本文末尾に通知設定画面（S-10）へのリンクを入れる</li>
-<li>SESは最初「サンドボックス」状態のため、本番利用前に上限解除を申請する（手順書に記載）</li>
+<li>送信は SMTP サーバー（社内のもの、またはさくらのメールボックスなど）を使う。送信ドメインの SPF・DKIM を設定し、迷惑メールに入らないようにする（手順書に記載）</li>
+<li>dev では件名の先頭に <code>[dev]</code> を付ける</li>
 </ul>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-clock h-ico" aria-hidden="true"></i>6. 定期処理設計</h2>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.1 一覧</h3>
@@ -3090,7 +3169,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>メール送信</td>
 <td>毎日 6:00〜22:00 の30分ごと</td>
 <td><strong>使わない</strong></td>
-<td>その時刻の送信リストをS3から読み、SESで送る</td>
+<td>その時刻の送信リストをオブジェクトストレージから読み、SMTPで送る</td>
 </tr>
 </tbody>
 </table></div>
@@ -3105,16 +3184,17 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   section 毎日 DBを使わない
   メール送信 30分ごとの送信枠 :c1, 06:00, 16h
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 メール送信の方式（DBの自動停止との両立）</h3>
-<p>学習者が送信時刻を選べるため、メールは1日に何度も送る。そのたびにDBを起こすと自動停止の効果がなくなるため、次の方式にする。</p>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 メール送信の方式</h3>
+<p>学習者が送信時刻を選べるため、メールは1日に何度も送る。送信の処理を軽く・やり直しやすくするため、次の方式にする（AWS 版で DB の自動停止と両立させるために決めた方式を、そのまま使う）。</p>
 <ol>
 <li>B-01（0:00）で、通知オンの学習者ごとに「送信時刻・宛先・復習数・クエスト」を作る</li>
-<li>送信時刻ごとのファイル（例：<code>notify/2026-10-20/0730.json</code>）にしてS3に置く</li>
-<li>B-03（30分ごと）は、その時刻のファイルだけを読んでSESで送る。DBにはアクセスしない</li>
+<li>送信時刻ごとのファイル（例：<code>notify/2026-10-20/0730.json</code>）にしてオブジェクトストレージに置く</li>
+<li>B-03（30分ごと）は、その時刻のファイルだけを読んで SMTP で送る。DBにはアクセスしない</li>
 </ol>
 <ul>
 <li>0:00より後に通知設定を変えた場合は、翌日の送信から反映する（S-10に注記を表示）</li>
-<li>送信に失敗した宛先は1回だけやり直し、結果をCloudWatchに記録する</li>
+<li>送信に失敗した宛先は1回だけやり直し、結果をログに記録する</li>
+<li>定期処理は worker コンテナが時刻（Asia/Tokyo）を見て動かす。同じ枠を二重に動かさないよう、動かした枠を DB に記録する。worker が止まっていた日は、起動したときにその日の日次処理を動かす</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.3 処理ごとのルール</h3>
 <div class="table-wrap"><table>
@@ -3135,7 +3215,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>物理削除</td>
-<td>削除予定日を過ぎた利用者の学習履歴をすべて削除し、Cognitoのユーザーも削除する</td>
+<td>削除予定日を過ぎた利用者の学習履歴をすべて削除する（ログインの記録も一緒に消える）。期限の切れたトークン・再設定リンクも消す</td>
 </tr>
 <tr>
 <td>ランキング締め</td>
@@ -3143,7 +3223,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>失敗時</td>
-<td>最大2回やり直す。それでも失敗したらCloudWatchのアラームでシステム管理者にメール</td>
+<td>30秒ごとに最大3回まで試す。それでも失敗したらシステム管理者に監視のお知らせメールを送る（5.6）</td>
 </tr>
 </tbody>
 </table></div>
@@ -3185,7 +3265,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td><code>USERS</code></td>
-<td>利用者ID、Cognitoのsub、氏名、ニックネーム、メール、状態（招待中・有効・論理削除）、削除予定日、パートナー種別、パートナー名、累計EXP、レベル、連続学習日数、最終ログイン日時</td>
+<td>利用者ID、ログイン用の識別子（sub）、パスワードのハッシュ、仮パスワードの期限、ログイン失敗の回数、氏名、ニックネーム、メール、状態（招待中・有効・論理削除）、削除予定日、パートナー種別、パートナー名、累計EXP、レベル、連続学習日数、最終ログイン日時</td>
 </tr>
 <tr>
 <td><code>COURSES</code></td>
@@ -3225,11 +3305,19 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td><code>PARTNERS</code></td>
-<td>性格（encourage・logic・rival）、初期名、画像のS3キー（なければ空）</td>
+<td>性格（encourage・logic・rival）、初期名、画像のオブジェクトストレージのキー（なければ空）</td>
 </tr>
 <tr>
 <td><code>NOTIFY_SETTINGS</code></td>
 <td>利用者ID、メール通知オン／オフ、送信時刻、プッシュ通知オン／オフ（Phase 2）</td>
+</tr>
+<tr>
+<td><code>AUTH_REFRESH_TOKENS</code>・<code>PASSWORD_RESETS</code></td>
+<td>リフレッシュトークン・再設定リンクのハッシュ、利用者ID、期限、使った日時（値そのものは保存しない）</td>
+</tr>
+<tr>
+<td><code>JOBS</code>・<code>SCHEDULE_RUNS</code></td>
+<td>採点・取り込みのジョブキュー（状態・回数・やり直しの時刻）、定期処理を動かした枠</td>
 </tr>
 </tbody>
 </table></div>
@@ -3251,7 +3339,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>永続（論理削除・物理削除された利用者の行は表示しない／削除する）</td>
 </tr>
 <tr>
-<td>取り込み原本（S3）</td>
+<td>取り込み原本（オブジェクトストレージ）</td>
 <td>90日で自動削除</td>
 </tr>
 <tr>
@@ -3259,12 +3347,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>30日で削除（結果は <code>ANSWER_LOGS</code> に残る）</td>
 </tr>
 <tr>
-<td>通知の送信リスト（S3）</td>
+<td>通知の送信リスト（オブジェクトストレージ）</td>
 <td>7日で自動削除</td>
 </tr>
 <tr>
-<td>ログ（CloudWatch）</td>
-<td>90日</td>
+<td>ジョブキュー・トークン</td>
+<td>終わったジョブは30日、期限の切れたトークン・再設定リンクは1日で削除</td>
+</tr>
+<tr>
+<td>ログ（コンテナのログ）</td>
+<td>サーバーの中に1コンテナ200MBまで（古いものから消える）。長く残す必要が出たら Phase 2 でログの置き場所を決める</td>
 </tr>
 </tbody>
 </table></div>
@@ -3280,15 +3372,15 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>認証</td>
-<td>Cognitoのマネージドログイン。パスワードは8文字以上・英大小文字と数字を含む</td>
+<td>アプリのログイン（S-01）。パスワードは8文字以上・英大小文字と数字を含む。パスワードは scrypt のハッシュだけを保存する。5回続けて失敗したら15分ロック</td>
 </tr>
 <tr>
 <td>トークン</td>
-<td>IDトークン1時間、リフレッシュトークン7日</td>
+<td>アクセストークン（署名つき JWT）1時間、リフレッシュトークン7日（使うたびに替わる。ログアウト・削除・パスワード再設定で無効にする）</td>
 </tr>
 <tr>
 <td>権限</td>
-<td>Cognitoのグループで判定。画面の出し分けだけでなく、APIでも必ず確認する</td>
+<td>DB のロール（learner・course_admin・system_admin）で判定。画面の出し分けだけでなく、APIでも必ず確認する</td>
 </tr>
 <tr>
 <td>コース管理者</td>
@@ -3300,7 +3392,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>将来のSSO</td>
-<td>Cognitoに社内のIDプロバイダー（SAML／OIDC）を追加する形で対応（Phase 3）</td>
+<td>社内のIDプロバイダー（OIDC）でのログインを追加する形で対応（Phase 3）</td>
 </tr>
 </tbody>
 </table></div>
@@ -3315,19 +3407,19 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>通信</td>
-<td>すべてHTTPS（TLS 1.2以上）。CloudFrontでHTTPをHTTPSに転送</td>
+<td>すべてHTTPS（TLS 1.2以上）。Caddy で HTTP を HTTPS に転送し、HSTS を付ける。DB とはローカル接続（インターネットを通らない）</td>
 </tr>
 <tr>
 <td>保存</td>
-<td>Aurora・S3とも暗号化を有効化</td>
+<td>DB・オブジェクトストレージの暗号化の扱いは構築時に確認する（手順書）。パスワード・トークンはハッシュで保存</td>
 </tr>
 <tr>
-<td>S3</td>
-<td>すべて非公開。CloudFront経由または署名付きURLでのみ読み書き</td>
+<td>オブジェクトストレージ</td>
+<td>すべて非公開。api コンテナ経由または署名付きURLでのみ読み書き</td>
 </tr>
 <tr>
-<td>Bedrock</td>
-<td>送ったデータはモデルの学習に使われない。構築時に確認して記録を残す。モデル呼び出しログは記録しない（学習者の説明文をログに残さないため）</td>
+<td>AI</td>
+<td>送ったデータがモデルの学習に使われないことを、さくらのAI Engine・Bedrock とも構築時に確認して記録を残す。アプリのログに説明文・プロンプトは出さない</td>
 </tr>
 <tr>
 <td>学習者どうし</td>
@@ -3350,7 +3442,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>画面表示</td>
-<td>通常2秒以内。DB起動中は最大30秒程度（3.5の待機表示）</td>
+<td>通常2秒以内（DBの自動停止がないため、その日最初の操作も待たない）</td>
 </tr>
 <tr>
 <td>択一の判定</td>
@@ -3366,11 +3458,15 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>バックアップ</td>
-<td>Auroraの自動バックアップ7日分</td>
+<td>データベースアプライアンスの自動バックアップ（世代数は構築時に決める。prod は7日分以上）</td>
 </tr>
 <tr>
 <td>全社展開</td>
-<td>Phase 3でAuroraの最小容量、WAFのルール、CloudFrontの料金プラン（利用量が Free プランの上限を超える場合）、Lambdaの同時実行数を見直す</td>
+<td>Phase 3 でサーバー・DBのプラン、API のコンテナの数（ロードバランサーを置くか）、WAF の要否、ワーカーの同時処理数を見直す</td>
+</tr>
+<tr>
+<td>サーバーの更新</td>
+<td>OS のセキュリティ更新を毎月行う（手順書）。更新のあとは /api/health と画面を確かめる</td>
 </tr>
 </tbody>
 </table></div>
@@ -3385,24 +3481,34 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </thead>
 <tbody>
 <tr>
-<td>APIのエラー</td>
-<td>5分間で5xxが5件以上</td>
+<td>死活</td>
+<td><code>/api/health</code> が応答しない（シンプル監視、5分ごと）</td>
 <td>システム管理者のメール</td>
 </tr>
 <tr>
-<td>採点</td>
-<td>採点の失敗・30秒超えが1時間で3件以上</td>
+<td>APIのエラー</td>
+<td>5分間で5xxが5件以上（アプリが数える）</td>
+<td>同上（監視のお知らせメール。同じ内容は1時間に1通）</td>
+</tr>
+<tr>
+<td>取り込み</td>
+<td>やり直しても失敗した</td>
 <td>同上</td>
 </tr>
 <tr>
 <td>定期処理</td>
-<td>失敗</td>
+<td>3回試して失敗</td>
 <td>同上</td>
 </tr>
 <tr>
+<td>採点</td>
+<td>採点の失敗・30秒超え（ログで確認。件数のお知らせは Phase 2）</td>
+<td>-</td>
+</tr>
+<tr>
 <td>コスト</td>
-<td>月の予測額が15,000円を超える（AWS Budgets）</td>
-<td>同上</td>
+<td>月の請求額（さくらのクラウドの請求の画面で月1回確認）</td>
+<td>システム管理者</td>
 </tr>
 </tbody>
 </table></div>
@@ -3425,7 +3531,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>M-01</td>
-<td>DBの起動中</td>
+<td>DBに接続できない（再起動中など）</td>
 <td>ギルドの扉を開けています…</td>
 </tr>
 <tr>
@@ -3499,7 +3605,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>1</td>
 <td>独自ドメイン</td>
-<td><code>app.example.co.jp</code>。決まるまではCloudFrontの既定ドメイン</td>
+<td><code>app.example.co.jp</code>。決まるまではさくらのクラウドのサーバーに付く名前</td>
 <td>本番構築前</td>
 </tr>
 <tr>
@@ -3510,9 +3616,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>3</td>
-<td>Sonnet 5.5・Haiku 5.5 の東京リージョンでの提供状況と単価</td>
-<td>提供されていなければ東京で使える別バージョン</td>
-<td>構築時</td>
+<td>Bedrock に戻す時期とモデル</td>
+<td>AWS アカウントの制限が解けたら、東京リージョンで使える Claude のモデルIDを確かめて <code>AI_PROVIDER=bedrock</code> にする</td>
+<td>制限の解除後</td>
 </tr>
 <tr>
 <td>4</td>
@@ -3528,9 +3634,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>6</td>
-<td>パイロット後のDB常時起動の要否</td>
-<td>全環境で自動停止</td>
-<td>パイロット1か月後</td>
+<td>dev の DB の持ち方</td>
+<td>データベースアプライアンスを1台（prod と同じ）。費用を抑えるなら、dev はサーバーの中の PostgreSQL のコンテナにする案もある</td>
+<td>構築時</td>
 </tr>
 <tr>
 <td>7</td>
@@ -3540,14 +3646,14 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>8</td>
-<td>CloudFront の料金プラン</td>
-<td><strong>決定（2026-10-19）</strong>：全環境で定額の Free プラン（月0ドル、AWS WAF 付き）を使う。WAF は Phase 1 から付く</td>
+<td>クラウドの切り替え</td>
+<td><strong>決定（2026-10-27）</strong>：AWS からさくらのクラウドへ切り替える。AWS 版のコードと文書は <code>aws/</code> に退避（CloudFront の料金プランの決定（2026-10-19）は AWS 版の決定）</td>
 <td>決定済み</td>
 </tr>
 <tr>
 <td>9</td>
 <td>リリースの方式</td>
-<td><strong>決定（2026-10-20）</strong>：GitHub Actions で配置する（2.7）。AWSリソースの定義（IaC）は Phase 2 以降に検討</td>
+<td><strong>決定（2026-10-27 見直し）</strong>：GitHub Actions でコンテナを作ってレジストリに置き、サーバーで <code>docker compose</code> で入れ替える（2.7）。サーバーへの反映の自動化は Phase 2 以降に検討</td>
 <td>決定済み</td>
 </tr>
 <tr>
@@ -3559,11 +3665,24 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>11</td>
 <td>stg 環境の要否</td>
-<td><strong>決定（2026-10-21）</strong>：コスト削減のため Phase 1 では作らない。受け入れ確認は dev で行う（2.7）。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める（CloudFront の Free プランの枠は1つ空けてある）</td>
+<td><strong>決定（2026-10-21）</strong>：コスト削減のため Phase 1 では作らない。受け入れ確認は dev で行う（2.7）。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める</td>
 <td>Phase 3 の計画時</td>
 </tr>
+<tr>
+<td>12</td>
+<td>さくらのAI Engine での採点の質</td>
+<td>gpt-oss-120b で採点する。パイロット前に過去問で Claude の結果と見比べ、合格の基準（60点）と指示文を見直すかを決める（2.8）</td>
+<td>パイロット開始前</td>
+</tr>
+<tr>
+<td>13</td>
+<td>メールの送信に使う SMTP サーバー</td>
+<td>社内の SMTP サーバーを使えるか確認する。使えなければさくらのメールボックスなどを契約する</td>
+<td>構築時</td>
+</tr>
 </tbody>
-</table></div></section>
+</table></div>
+</section>
   </main>
 </div>
 <footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.0版（ドラフト：第1〜10章、HTML版あり。説明文の小見出しのルールをなくし、模範説明のルールに移す）</div></footer>

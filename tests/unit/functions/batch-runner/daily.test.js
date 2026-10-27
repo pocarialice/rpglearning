@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
-import { AdminDeleteUserCommand } from '@aws-sdk/client-cognito-identity-provider'
 vi.mock('../../../../functions/shared/db/repositories/courses.js')
 vi.mock('../../../../functions/shared/db/repositories/exp.js')
 vi.mock('../../../../functions/shared/db/repositories/rankings.js')
@@ -10,6 +9,8 @@ vi.mock('../../../../functions/shared/db/repositories/quests.js')
 vi.mock('../../../../functions/shared/db/repositories/audit.js')
 vi.mock('../../../../functions/shared/db/repositories/gradings.js')
 vi.mock('../../../../functions/shared/db/repositories/notify.js')
+vi.mock('../../../../functions/shared/db/repositories/jobs.js')
+vi.mock('../../../../functions/shared/db/repositories/auth.js')
 import * as courses from '../../../../functions/shared/db/repositories/courses.js'
 import * as exp from '../../../../functions/shared/db/repositories/exp.js'
 import * as rankings from '../../../../functions/shared/db/repositories/rankings.js'
@@ -19,12 +20,13 @@ import * as quests from '../../../../functions/shared/db/repositories/quests.js'
 import * as audit from '../../../../functions/shared/db/repositories/audit.js'
 import * as gradings from '../../../../functions/shared/db/repositories/gradings.js'
 import * as notify from '../../../../functions/shared/db/repositories/notify.js'
-import { main, handler } from '../../../../functions/batch-runner/index.mjs'
+import * as jobs from '../../../../functions/shared/db/repositories/jobs.js'
+import * as auth from '../../../../functions/shared/db/repositories/auth.js'
+import { main } from '../../../../functions/batch-runner/index.mjs'
 import * as assignQuests from '../../../../functions/batch-runner/steps/assign-quests.js'
 import { memoryLogger } from '../../../helpers/logger.js'
-import { s3Mock, cognitoMock, awsError } from '../../../helpers/aws-mocks.js'
+import { s3Mock, awsError } from '../../../helpers/mocks.js'
 const s3 = s3Mock()
-const cognito = cognitoMock()
 const MON = new Date('2026-10-25T15:00:00Z') // 2026-10-26（月）0:00 JST
 const TUE = new Date('2026-10-19T15:00:00Z') // 2026-10-20（火）0:00 JST
 let log
@@ -38,12 +40,9 @@ beforeEach(() => {
   log = memoryLogger()
   order.length = 0
   s3.reset()
-  cognito.reset()
   s3.on(PutObjectCommand).resolves({})
-  cognito.on(AdminDeleteUserCommand).callsFake(() => {
-    order.push('AdminDeleteUser')
-    return {}
-  })
+  jobs.deleteFinishedBefore.mockResolvedValue(0)
+  auth.deleteExpired.mockResolvedValue(0)
   track('close-ranking', courses.listIds, [3])
   exp.weeklyTotals.mockResolvedValue([])
   track('update-streak', users.listForStreak, [])
@@ -115,23 +114,25 @@ describe('M-W03 batch-runner daily', () => {
     expect(quests.insertAssignments.mock.calls[0][0]).toBe(16)
   })
   it('MT-W03-09 物理削除', async () => {
-    users.listPurgeTargets.mockResolvedValue([{ userId: 20, cognitoSub: 'sub-20' }])
-    await daily()
+    users.listPurgeTargets.mockResolvedValue([{ userId: 20, authSub: 'sub-20' }])
+    auth.deleteExpired.mockResolvedValue(4)
+    const res = await daily()
     expect(users.listPurgeTargets).toHaveBeenCalledWith('2026-10-20')
-    expect(order.indexOf('AdminDeleteUser')).toBeLessThan(order.indexOf('users.purge'))
-    expect(cognito.commandCalls(AdminDeleteUserCommand)[0].args[0].input).toEqual({ UserPoolId: 'ap-northeast-1_TEST', Username: 'sub-20' })
     expect(users.purge).toHaveBeenCalledWith(20)
     expect(audit.write).toHaveBeenCalledWith(null, 'user.purge', { type: 'user', id: 20 }, {})
+    expect(res.steps).toContain('purge-users')
+    expect(log.lines.find((l) => l.msg === 'step.end' && l.step === 'purge-users')).toMatchObject({ purged: 1, expiredTokens: 4 })
   })
-  it('MT-W03-10 Cognito に利用者がいない', async () => {
-    users.listPurgeTargets.mockResolvedValue([{ userId: 20, cognitoSub: 'sub-20' }])
-    cognito.on(AdminDeleteUserCommand).rejects(awsError('UserNotFoundException'))
+  it('MT-W03-10 期限切れのトークンの掃除', async () => {
     await daily()
-    expect(users.purge).toHaveBeenCalledWith(20)
+    expect(auth.deleteExpired).toHaveBeenCalledTimes(1)
   })
-  it('MT-W03-11 採点ジョブの掃除', async () => {
+  it('MT-W03-11 採点とジョブの掃除', async () => {
+    jobs.deleteFinishedBefore.mockResolvedValue(7)
     await daily()
     expect(gradings.deleteOlderThan).toHaveBeenCalledWith('2026-09-20T00:00:00+09:00')
+    expect(jobs.deleteFinishedBefore).toHaveBeenCalledWith('2026-09-20T00:00:00+09:00')
+    expect(log.lines.find((l) => l.msg === 'step.end' && l.step === 'cleanup-gradings')).toMatchObject({ jobsDeleted: 7 })
   })
   it('MT-W03-12 送信リスト', async () => {
     const r = (userId, slot, patch = {}) => ({ userId, email: `u${userId}@example.co.jp`, nickname: `n${userId}`, partnerPersona: 'encourage', partnerName: 'ミナ', status: 'active', emailEnabled: true, slot, reviewCount: 2, quests: '["択一を5問解く"]', ...patch })
@@ -160,17 +161,12 @@ describe('M-W03 batch-runner daily', () => {
     await expect(main({ job: 'weekly' }, { log, now: TUE })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
     await expect(main(undefined, { log })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
   })
-  it('MT-W03-15 Cognito のほかのエラー・削除できなかった利用者・入口（handler）', async () => {
-    users.listPurgeTargets.mockResolvedValue([{ userId: 20, cognitoSub: 'sub-20' }])
+  it('MT-W03-15 削除できなかった利用者・削除の失敗', async () => {
+    users.listPurgeTargets.mockResolvedValue([{ userId: 20, authSub: 'sub-20' }])
     users.purge.mockResolvedValue(false)
     await daily()
     expect(audit.write).not.toHaveBeenCalled()
-    cognito.on(AdminDeleteUserCommand).rejects(awsError('TooManyRequestsException'))
-    await expect(daily()).rejects.toMatchObject({ name: 'TooManyRequestsException' })
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    await expect(handler({ job: 'weekly' }, { awsRequestId: 'r' })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
-    users.listPurgeTargets.mockResolvedValue([])
-    expect((await handler({ job: 'daily' }, {})).job).toBe('daily')
-    expect(spy.mock.calls.map((c) => JSON.parse(c[0])).some((l) => l.fn === 'batch-runner' && l.level === 'ERROR')).toBe(true)
+    users.purge.mockRejectedValue(Object.assign(new Error('fk'), { code: '23503' }))
+    await expect(daily()).rejects.toMatchObject({ code: '23503' })
   })
 })

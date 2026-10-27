@@ -18,7 +18,7 @@ import { FALLBACK_MESSAGES } from '../../../../../functions/shared/ai/prompts/da
 import { main } from '../../../../../functions/api-handler/index.mjs'
 import { httpEvent, parse } from '../../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../../helpers/logger.js'
-import { bedrockMock, awsError } from '../../../../helpers/aws-mocks.js'
+import { bedrockMock, awsError } from '../../../../helpers/mocks.js'
 import { converseOutput } from '../../../../fixtures/bedrock/grading.js'
 import { NOW } from '../../../../helpers/clock.js'
 import { learner } from '../../../../fixtures/users.js'

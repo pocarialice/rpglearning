@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ExecuteStatementCommand } from '@aws-sdk/client-rds-data'
 vi.mock('../../../../functions/shared/db/repositories/users.js')
 vi.mock('../../../../functions/shared/db/repositories/courses.js')
 vi.mock('../../../../functions/api-handler/routes/home.js')
@@ -8,21 +7,21 @@ import * as users from '../../../../functions/shared/db/repositories/users.js'
 import * as courses from '../../../../functions/shared/db/repositories/courses.js'
 import * as home from '../../../../functions/api-handler/routes/home.js'
 import * as gradings from '../../../../functions/api-handler/routes/gradings.js'
-import { main, handler } from '../../../../functions/api-handler/index.mjs'
+import { main } from '../../../../functions/api-handler/index.mjs'
 import { match } from '../../../../functions/api-handler/router.js'
 import { httpEvent, parse } from '../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../helpers/logger.js'
-import { rdsMock, awsError } from '../../../helpers/aws-mocks.js'
+import { dbMock, pgError } from '../../../helpers/mocks.js'
 import { NOW } from '../../../helpers/clock.js'
 import { learner, systemAdmin } from '../../../fixtures/users.js'
 import { ok } from '../../../../functions/shared/util/http.js'
-const rds = rdsMock()
+const db = dbMock()
 let log
 const call = (opts) => main(httpEvent(opts), { log, now: NOW })
 describe('M-H01 router・入口', () => {
   beforeEach(() => {
     log = memoryLogger()
-    rds.reset()
+    db.reset()
     users.findBySub.mockResolvedValue({ ...learner })
     home.get.mockResolvedValue(ok({ page: 'home' }))
     gradings.get.mockImplementation(async (ctx) => ok({ id: ctx.params.id }))
@@ -50,15 +49,15 @@ describe('M-H01 router・入口', () => {
     expect(home.get).not.toHaveBeenCalled()
   })
   it('MT-H01-05 ヘルスチェック', async () => {
-    rds.on(ExecuteStatementCommand).resolves({ formattedRecords: '[{"ok":1}]' })
+    db.resolves({ rows: [{ ok: 1 }] })
     const okRes = await call({ path: '/api/health', auth: false })
     expect(okRes.statusCode).toBe(200)
     expect(parse(okRes)).toEqual({ status: 'ok' })
-    rds.on(ExecuteStatementCommand).rejects(awsError('DatabaseResumingException'))
+    db.rejects(pgError('57P03'))
     const resuming = await call({ path: '/api/health', auth: false })
     expect(resuming.statusCode).toBe(503)
     expect(parse(resuming).error.code).toBe('DB_RESUMING')
-    expect(rds.commandCalls(ExecuteStatementCommand)).toHaveLength(2)
+    expect(db.calls()).toHaveLength(2)
   })
   it('MT-H01-06 ロール不足', async () => {
     const res = await call({ path: '/api/admin/dashboard', query: { course: 'c_3' }, groups: ['learner'] })
@@ -68,7 +67,6 @@ describe('M-H01 router・入口', () => {
   })
   it('MT-H01-07 上位ロール', async () => {
     users.findBySub.mockResolvedValue({ ...systemAdmin, nickname: null, fullName: '管理' })
-    rds.on(ExecuteStatementCommand).resolves({ formattedRecords: '[]' })
     courses.dashboardRows.mockResolvedValue([])
     const res = await call({ path: '/api/admin/dashboard', query: { course: 'c_3' }, groups: ['system_admin', 'learner'], sub: 'sub-1' })
     expect(res.statusCode).toBe(200)
@@ -104,12 +102,7 @@ describe('M-H01 router・入口', () => {
     expect(match('GET', '/api/admin/dashboard.csv').route.path).toBe('/api/admin/dashboard.csv')
     expect(match('GET', '/api/admin/dashboardXcsv')).toBeNull()
   })
-  it('MT-H01-12 Lambda の入口（handler）', async () => {
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    const res = await handler(httpEvent({ path: '/api/unknown' }), { awsRequestId: 'r-1' })
-    expect(res.statusCode).toBe(404)
-    const lines = spy.mock.calls.map((c) => JSON.parse(c[0]))
-    expect(lines.some((l) => l.fn === 'api-handler' && l.requestId === 'r-1' && typeof l.durationMs === 'number')).toBe(true)
+  it('MT-H01-12 event がないときの既定', async () => {
     const noCtx = await main({}, { log })
     expect(noCtx.statusCode).toBe(404)
   })

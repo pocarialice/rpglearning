@@ -1,11 +1,10 @@
 // A-22 キャラクター画像の取得・差し替え・削除
-import { DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { PERSONAS } from '../../shared/ai/persona.js'
 import * as partners from '../../shared/db/repositories/partners.js'
 import * as audit from '../../shared/db/repositories/audit.js'
-import { s3Client, presignPut } from '../lib/aws.js'
+import { deleteObject, presignPut } from '../../shared/storage/object-storage.js'
 import { imageUrl } from './me.js'
 export const IMAGE_MAX_BYTES = 2 * 1024 * 1024
 export const IMAGE_TYPES = { 'image/png': 'png', 'image/webp': 'webp' }
@@ -17,7 +16,7 @@ function personaOf(ctx) {
 }
 // yyyyMMddHHmmss（JST）
 const stamp = (now) => new Date(now.getTime() + 9 * 3600 * 1000).toISOString().replace(/[-:T]/g, '').slice(0, 14)
-const deleteImage = (key) => s3Client().send(new DeleteObjectCommand({ Bucket: process.env.ASSETS_BUCKET, Key: key }))
+const deleteImage = (key) => deleteObject(process.env.ASSETS_BUCKET, key)
 export async function get(ctx) {
   const persona = personaOf(ctx)
   const p = await partners.get(persona)
