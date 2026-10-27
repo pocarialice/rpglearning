@@ -1,0 +1,47 @@
+# プルリクエストごとのテストとビルド（詳細設計書 11.2）。AWS には接続しない
+name: ci
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: テスト（カバレッジの基準を下回ったら失敗）
+        run: npm test -- --coverage
+      - name: カバレッジの要約をジョブの概要に書く
+        if: always()
+        run: |
+          node -e "
+          const fs = require('fs')
+          if (!fs.existsSync('coverage/coverage-summary.json')) process.exit(0)
+          const t = require('./coverage/coverage-summary.json').total
+          const row = (k, label) => '| ' + label + ' | ' + t[k].pct + '% | ' + t[k].covered + ' / ' + t[k].total + ' |'
+          const lines = ['### カバレッジ（全体）', '', '| 指標 | 割合 | 件数 |', '| --- | --- | --- |', row('statements', '命令網羅（C0）'), row('branches', '分岐網羅（C1）'), row('functions', '関数'), row('lines', '行'), '']
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n')
+          "
+      - name: カバレッジの結果を保管する
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.run_number }}
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Lambda のビルド（4関数の zip・読み込みの確認）
+        run: npm run build:functions -- --verify
+      - name: 画面のビルド（dev・prod の2環境。config の差し込みとキャッシュ名の確認）
+        run: npm run build:web -- --release=ci-${{ github.run_number }}
