@@ -2,8 +2,5 @@
 export const CONFIG = {
   env: 'local',
   apiBase: '/api',
-  cognitoDomain: 'https://rpg-dev-xxxx.auth.ap-northeast-1.amazoncognito.com',
-  clientId: 'xxxxxxxxxxxxxxxxxxxxxxxxxx',
-  redirectUri: 'http://localhost:8080/',
   release: 'local'
 }

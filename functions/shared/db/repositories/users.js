@@ -1,7 +1,7 @@
 // users（T-02）・user_roles（T-03）・login_logs（T-05）
 import { AppError } from '../../util/errors.js'
 import { defaultDb, camelRow, camelRows, date } from './_base.js'
-const USER_COLS = `u.user_id, u.cognito_sub, u.email, u.full_name, u.nickname, u.status, u.partner_persona, u.partner_name,
+const USER_COLS = `u.user_id, u.auth_sub, u.email, u.full_name, u.nickname, u.status, u.partner_persona, u.partner_name,
   u.current_course_id, u.total_exp, u.level, u.streak_days, u.streak_checked_on, u.last_active_on, u.last_login_at,
   u.daily_message, u.daily_message_on, u.delete_scheduled_on,
   COALESCE((SELECT json_agg(r.role ORDER BY r.role) FROM user_roles r WHERE r.user_id = u.user_id), '[]') AS roles`
@@ -11,7 +11,7 @@ function withRoles(row) {
   return u
 }
 export async function findBySub(sub, db = defaultDb) {
-  const rows = await db.query(`SELECT ${USER_COLS} FROM users u WHERE u.cognito_sub = :sub`, { sub })
+  const rows = await db.query(`SELECT ${USER_COLS} FROM users u WHERE u.auth_sub = :sub`, { sub })
   return withRoles(rows[0])
 }
 export async function findById(userId, db = defaultDb) {
@@ -63,7 +63,7 @@ export async function listForAdmin({ q = '', status = null, sort = 'id', order =
   return rows.map(withRoles)
 }
 export async function create({ sub, email, fullName, roles }, db = defaultDb) {
-  const rows = await db.query(`INSERT INTO users (cognito_sub, email, full_name) VALUES (:sub, :email, :fullName) RETURNING user_id`,
+  const rows = await db.query(`INSERT INTO users (auth_sub, email, full_name) VALUES (:sub, :email, :fullName) RETURNING user_id`,
     { sub, email, fullName })
   const userId = rows[0].user_id
   await setRoles(userId, roles, db)
@@ -87,7 +87,7 @@ export async function restore(userId, db = defaultDb) {
   return r.numberOfRecordsUpdated === 1
 }
 export async function listPurgeTargets(today, db = defaultDb) {
-  return camelRows(await db.query(`SELECT user_id, cognito_sub FROM users
+  return camelRows(await db.query(`SELECT user_id, auth_sub FROM users
     WHERE status = 'deleted' AND delete_scheduled_on <= :today ORDER BY user_id LIMIT 100`, { today: date(today) }))
 }
 export async function purge(userId, db = defaultDb) {

@@ -1,0 +1,43 @@
+# さくらのクラウドのサーバー1台で動かすときの構成（構築手順書 3.6）。DB はデータベースアプライアンス、ファイルはオブジェクトストレージ
+# 使い方：.env を置いて docker compose up -d（イメージは さくらのクラウド コンテナレジストリから取る）
+services:
+  api:
+    image: ${IMAGE:?IMAGE を .env に書いてください}
+    env_file: .env
+    environment:
+      ROLE: api
+      MIGRATE_ON_START: "true"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "10" }
+  worker:
+    image: ${IMAGE}
+    env_file: .env
+    environment:
+      ROLE: worker
+    restart: unless-stopped
+    stop_grace_period: 2m
+    depends_on:
+      api:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "10" }
+  caddy:
+    image: caddy:2.10
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?SITE_ADDRESS を .env に書いてください}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    restart: unless-stopped
+    depends_on: [api]
+volumes:
+  caddy_data:

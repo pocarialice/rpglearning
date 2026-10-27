@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { InvokeCommand } from '@aws-sdk/client-lambda'
 vi.mock('../../../../../functions/shared/db/repositories/users.js')
 vi.mock('../../../../../functions/shared/db/repositories/questions.js')
 vi.mock('../../../../../functions/shared/db/repositories/gradings.js')
@@ -8,6 +7,7 @@ vi.mock('../../../../../functions/shared/db/repositories/enrollments.js')
 vi.mock('../../../../../functions/shared/db/repositories/exp.js')
 vi.mock('../../../../../functions/shared/db/repositories/rankings.js')
 vi.mock('../../../../../functions/shared/db/repositories/courses.js')
+vi.mock('../../../../../functions/shared/db/repositories/jobs.js')
 import * as users from '../../../../../functions/shared/db/repositories/users.js'
 import * as questions from '../../../../../functions/shared/db/repositories/questions.js'
 import * as gradings from '../../../../../functions/shared/db/repositories/gradings.js'
@@ -16,13 +16,12 @@ import * as enrollments from '../../../../../functions/shared/db/repositories/en
 import * as exp from '../../../../../functions/shared/db/repositories/exp.js'
 import * as rankings from '../../../../../functions/shared/db/repositories/rankings.js'
 import * as courses from '../../../../../functions/shared/db/repositories/courses.js'
+import * as jobs from '../../../../../functions/shared/db/repositories/jobs.js'
 import { main } from '../../../../../functions/api-handler/index.mjs'
 import { httpEvent, parse } from '../../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../../helpers/logger.js'
-import { lambdaMock, awsError } from '../../../../helpers/aws-mocks.js'
 import { NOW } from '../../../../helpers/clock.js'
 import { learner } from '../../../../fixtures/users.js'
-const lambda = lambdaMock()
 let log
 const call = (opts) => main(httpEvent(opts), { log, now: NOW })
 const X = (n) => 'あ'.repeat(n)
@@ -30,8 +29,7 @@ const secondsAgo = (s) => new Date(NOW.getTime() - s * 1000).toISOString().repla
 describe('M-H07 gradings（A-09・A-10）', () => {
   beforeEach(() => {
     log = memoryLogger()
-    lambda.reset()
-    lambda.on(InvokeCommand).resolves({ StatusCode: 202 })
+    jobs.enqueue.mockReset().mockResolvedValue(1)
     users.findBySub.mockResolvedValue({ ...learner })
     questions.findKeyword.mockImplementation(async (id) => ({ keywordId: id, keyword: 'DNS', questionId: 42, courseId: id === 999 ? 9 : 3, status: 'published' }))
     gradings.create.mockResolvedValue({ gradingId: 456, createdAt: secondsAgo(0) })
@@ -43,17 +41,15 @@ describe('M-H07 gradings（A-09・A-10）', () => {
     expect(res.statusCode).toBe(202)
     expect(parse(res)).toEqual({ gradingId: 'gr_456', status: 'processing' })
     expect(gradings.create).toHaveBeenCalledWith({ userId: 15, courseId: 3, keywordId: 123, adventureId: 90, explanationText: X(120) })
-    const input = lambda.commandCalls(InvokeCommand)[0].args[0].input
-    expect(input.InvocationType).toBe('Event')
-    expect(input.FunctionName).toBe('rpg-test-grading-worker')
-    expect(JSON.parse(new TextDecoder().decode(input.Payload))).toEqual({ gradingId: 456 })
+    // ワーカーへはジョブキューで渡す
+    expect(jobs.enqueue).toHaveBeenCalledWith('grading', { gradingId: 456 })
   })
   it('MT-H07-02 説明文が短い', async () => {
     const res = await create(X(49))
     expect(res.statusCode).toBe(400)
     expect(parse(res).error.details[0]).toMatchObject({ field: 'text', code: 'M-03' })
     expect(gradings.create).not.toHaveBeenCalled()
-    expect(lambda.commandCalls(InvokeCommand)).toHaveLength(0)
+    expect(jobs.enqueue).not.toHaveBeenCalled()
   })
   it('MT-H07-03 他コースのキーワード', async () => {
     expect((await create(X(120), 'kw_999')).statusCode).toBe(404)
@@ -63,8 +59,8 @@ describe('M-H07 gradings（A-09・A-10）', () => {
     expect((await create(X(120))).statusCode).toBe(404)
     expect(gradings.create).not.toHaveBeenCalled()
   })
-  it('MT-H07-04 起動の失敗', async () => {
-    lambda.on(InvokeCommand).rejects(awsError('ServiceException'))
+  it('MT-H07-04 キューに入れられない', async () => {
+    jobs.enqueue.mockRejectedValue(Object.assign(new Error('db down'), { code: '57P01' }))
     const res = await create(X(120))
     expect(res.statusCode).toBe(500)
     expect(gradings.fail).toHaveBeenCalledWith(456, 'ai_error')

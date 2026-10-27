@@ -1,5 +1,6 @@
 // パスとメソッドからハンドラを選ぶ（詳細設計書 4.2.2）
 import * as health from './routes/health.js'
+import * as authRoutes from './routes/auth.js'
 import * as me from './routes/me.js'
 import * as home from './routes/home.js'
 import * as courses from './routes/courses.js'
@@ -21,6 +22,12 @@ const SYSTEM_ADMIN = ['system_admin']
 const r = (method, path, handler, roles, gate = null) => ({ method, path, handler, roles, gate })
 export const ROUTES = [
   r('GET', '/api/health', health.get, null),
+  r('POST', '/api/auth/login', authRoutes.login, null),
+  r('POST', '/api/auth/new-password', authRoutes.newPassword, null),
+  r('POST', '/api/auth/refresh', authRoutes.refresh, null),
+  r('POST', '/api/auth/logout', authRoutes.logout, null),
+  r('POST', '/api/auth/forgot', authRoutes.forgot, null),
+  r('POST', '/api/auth/reset', authRoutes.reset, null),
   r('GET', '/api/me', me.get, ALL),
   r('PUT', '/api/me/profile', me.putProfile, LEARNER),
   r('PUT', '/api/me/partner', me.putPartner, LEARNER),
@@ -39,6 +46,7 @@ export const ROUTES = [
   r('POST', '/api/admin/imports', adminImports.create, COURSE_ADMIN),
   r('GET', '/api/admin/imports', adminImports.list, COURSE_ADMIN),
   r('GET', '/api/admin/imports/{id}', adminImports.get, COURSE_ADMIN),
+  r('POST', '/api/admin/imports/{id}/uploaded', adminImports.uploaded, COURSE_ADMIN),
   r('PUT', '/api/admin/questions/{id}', adminQuestions.put, COURSE_ADMIN),
   r('DELETE', '/api/admin/questions/{id}', adminQuestions.remove, COURSE_ADMIN),
   r('POST', '/api/admin/questions/{id}/publish', adminQuestions.publish, COURSE_ADMIN),
@@ -49,6 +57,7 @@ export const ROUTES = [
   r('PUT', '/api/admin/users/{id}', adminUsers.update, SYSTEM_ADMIN),
   r('POST', '/api/admin/users/{id}/delete', adminUsers.remove, SYSTEM_ADMIN),
   r('POST', '/api/admin/users/{id}/restore', adminUsers.restore, SYSTEM_ADMIN),
+  r('POST', '/api/admin/users/{id}/reinvite', adminUsers.reinvite, SYSTEM_ADMIN),
   r('GET', '/api/admin/courses', adminCourses.list, SYSTEM_ADMIN),
   r('POST', '/api/admin/courses', adminCourses.create, SYSTEM_ADMIN),
   r('PUT', '/api/admin/courses/{id}', adminCourses.update, SYSTEM_ADMIN),

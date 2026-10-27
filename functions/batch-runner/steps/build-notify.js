@@ -1,7 +1,6 @@
-// 送信時刻ごとの送信リストを S3 notify/{今日}/{HHMM}.json に置く（冪等：同じキーに上書き）
-import { PutObjectCommand } from '@aws-sdk/client-s3'
+// 送信時刻ごとの送信リストをオブジェクトストレージの notify/{今日}/{HHMM}.json に置く（冪等：同じキーに上書き）
 import * as notify from '../../shared/db/repositories/notify.js'
-import { s3Client } from '../lib/s3.js'
+import { putObject } from '../../shared/storage/object-storage.js'
 export async function run({ today }) {
   const bySlot = new Map()
   for (const r of await notify.listForSlotBuild(today)) {
@@ -12,10 +11,7 @@ export async function run({ today }) {
     bySlot.get(r.slot).push(item)
   }
   for (const [slot, items] of bySlot) {
-    await s3Client().send(new PutObjectCommand({
-      Bucket: process.env.NOTIFY_BUCKET, Key: `notify/${today}/${slot}.json`, ContentType: 'application/json',
-      Body: JSON.stringify({ date: today, slot, items })
-    }))
+    await putObject(process.env.NOTIFY_BUCKET, `notify/${today}/${slot}.json`, JSON.stringify({ date: today, slot, items }), 'application/json')
   }
   return { files: bySlot.size, items: [...bySlot.values()].reduce((s, l) => s + l.length, 0) }
 }

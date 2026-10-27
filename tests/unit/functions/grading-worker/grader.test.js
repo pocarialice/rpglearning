@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ConverseCommand } from '@aws-sdk/client-bedrock-runtime'
-import { CommitTransactionCommand, RollbackTransactionCommand } from '@aws-sdk/client-rds-data'
 vi.mock('../../../../functions/shared/db/repositories/gradings.js')
 vi.mock('../../../../functions/shared/db/repositories/questions.js')
 vi.mock('../../../../functions/shared/db/repositories/users.js')
@@ -17,19 +16,20 @@ import * as answers from '../../../../functions/shared/db/repositories/answers.j
 import * as exp from '../../../../functions/shared/db/repositories/exp.js'
 import * as quests from '../../../../functions/shared/db/repositories/quests.js'
 import * as badges from '../../../../functions/shared/db/repositories/badges.js'
-import { main, handler } from '../../../../functions/grading-worker/index.mjs'
+import { gradeJob } from '../../../../functions/grading-worker/grader.js'
+import { runGradingJob } from '../../../../functions/grading-worker/index.mjs'
 import { memoryLogger } from '../../../helpers/logger.js'
-import { bedrockMock, rdsMock, routeSql, awsError } from '../../../helpers/aws-mocks.js'
+import { bedrockMock, dbMock, awsError } from '../../../helpers/mocks.js'
 import { converseOutput } from '../../../fixtures/bedrock/grading.js'
 import { NOW } from '../../../helpers/clock.js'
 import { learner } from '../../../fixtures/users.js'
 const br = bedrockMock()
-const rds = rdsMock()
+const db = dbMock()
 const grading = (a, c, k, extra = {}) => JSON.stringify({ accuracy: a, coverage: c, concreteness: k, score: a + c + k, modelAnswer: '模範解答', missingPoints: ['キャッシュ'], comment: 'よく書けてるね！', ...extra })
 let t
 let log
 const now = () => new Date(t)
-const run = () => main({ gradingId: 456 }, { log, now })
+const run = () => gradeJob(456, { log, now })
 // Bedrock の応答を順に返し、そのたびに時計を進める
 function replies(...list) {
   let i = 0
@@ -44,8 +44,7 @@ describe('M-W01 grading-worker', () => {
     t = NOW.getTime()
     log = memoryLogger()
     br.reset()
-    rds.reset()
-    routeSql(rds, [])
+    db.reset()
     replies([grading(40, 20, 12)])
     gradings.find.mockResolvedValue({ gradingId: 456, userId: 15, courseId: 3, keywordId: 123, adventureId: 90, status: 'processing', explanationText: '【定義】DNSは…' })
     gradings.complete.mockResolvedValue(true)
@@ -63,7 +62,7 @@ describe('M-W01 grading-worker', () => {
     expect(gradings.complete).toHaveBeenCalledTimes(1)
     const [id, result, tx] = gradings.complete.mock.calls[0]
     expect(id).toBe(456)
-    expect(tx.transactionId).toBe('tx-1')
+    expect(typeof tx.query).toBe('function')
     expect(result).toMatchObject({
       status: 'done', score: 72, passed: true, modelAnswer: '模範解答', missingPoints: ['キャッシュ'],
       comment: { partnerName: 'ミナ', persona: 'encourage', text: 'よく書けてるね！' },
@@ -72,7 +71,7 @@ describe('M-W01 grading-worker', () => {
     })
     expect(answers.insert.mock.calls[0][0]).toMatchObject({ kind: 'explain', score: 72, isCorrect: true, keywordId: 123, questionId: 42, explanationText: '【定義】DNSは…', adventureId: 90 })
     expect(users.addExp.mock.calls[0][1]).toEqual({ exp: 60, level: 3, today: '2026-10-20' })
-    expect(rds.commandCalls(CommitTransactionCommand)).toHaveLength(1)
+    expect(db.commits()).toBe(1)
     const input = br.commandCalls(ConverseCommand)[0].args[0].input
     expect(input).toMatchObject({ modelId: 'model-high', inferenceConfig: { maxTokens: 1500, temperature: 0 } })
   })
@@ -116,7 +115,7 @@ describe('M-W01 grading-worker', () => {
   it('MT-W01-07 Bedrock の時間切れ', async () => {
     vi.useFakeTimers({ now: NOW })
     br.on(ConverseCommand).callsFake(() => new Promise(() => {}))
-    const p = main({ gradingId: 456 }, { log })
+    const p = gradeJob(456, { log })
     await vi.advanceTimersByTimeAsync(25000)
     expect(await p).toEqual({ status: 'failed', reason: 'ai_timeout' })
     expect(gradings.fail).toHaveBeenCalledWith(456, 'ai_timeout')
@@ -135,8 +134,8 @@ describe('M-W01 grading-worker', () => {
     gradings.complete.mockResolvedValue(false)
     const res = await run()
     expect(res).toEqual({ status: 'superseded' })
-    expect(rds.commandCalls(RollbackTransactionCommand)).toHaveLength(1)
-    expect(rds.commandCalls(CommitTransactionCommand)).toHaveLength(0)
+    expect(db.rollbacks()).toBe(1)
+    expect(db.commits()).toBe(0)
     for (const fn of [answers.insert, reviews.upsertItem, exp.insertLog, users.addExp, quests.saveProgress]) expect(fn).not.toHaveBeenCalled()
   })
   it('MT-W01-10 パートナーの口調', async () => {
@@ -148,15 +147,20 @@ describe('M-W01 grading-worker', () => {
     expect(system).toContain('少し強気')
     expect(res.result.comment).toMatchObject({ partnerName: 'レン', persona: 'rival' })
   })
-  it('MT-W01-12 パートナー未設定・書き込み中の例外・入口（handler）', async () => {
+  it('MT-W01-12 パートナー未設定・書き込み中の例外・ジョブの入口', async () => {
     users.findById.mockResolvedValue({ ...learner, partnerPersona: null, partnerName: null })
     expect((await run()).result.comment).toMatchObject({ partnerName: null, persona: 'encourage' })
-    answers.insert.mockRejectedValue(awsError('BadRequestException'))
-    await expect(run()).rejects.toMatchObject({ name: 'BadRequestException' })
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    await expect(handler({ gradingId: 456 }, { awsRequestId: 'r' })).rejects.toMatchObject({ name: 'BadRequestException' })
+    const boom = Object.assign(new Error('deadlock'), { code: '40P01' })
+    answers.insert.mockRejectedValue(boom)
+    await expect(run()).rejects.toBe(boom)
+    // ジョブの入口は例外を投げず、採点を失敗にしてワーカーに failed を返す（やり直しはしない）
+    gradings.fail.mockClear()
+    expect(await runGradingJob({ payload: { gradingId: 456 } }, { log, now })).toEqual({ outcome: 'failed', error: 'deadlock' })
+    expect(gradings.fail).toHaveBeenCalledWith(456, 'ai_error')
+    expect(log.lines.some((l) => l.msg === 'grading.error' && l.code === '40P01')).toBe(true)
+    gradings.fail.mockRejectedValueOnce(new Error('db down'))
+    expect((await runGradingJob({ payload: { gradingId: 456 } }, { log, now })).outcome).toBe('failed')
     answers.insert.mockResolvedValue(1)
-    expect((await handler({ gradingId: '456' }, {})).status).toBe('done')
-    expect(spy.mock.calls.some((c) => JSON.parse(c[0]).fn === 'grading-worker')).toBe(true)
+    expect(await runGradingJob({ payload: { gradingId: '456' } }, { log, now })).toMatchObject({ outcome: 'done', status: 'done' })
   })
 })

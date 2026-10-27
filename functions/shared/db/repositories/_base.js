@@ -1,5 +1,5 @@
 // リポジトリ共通：列名の変換と既定の実行先
-import { query, execute } from '../data-api.js'
+import { query, execute } from '../client.js'
 export const defaultDb = { query, execute }
 export function camel(key) {
   return key.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase())

@@ -1,22 +1,27 @@
 // トランザクション（詳細設計書 3.3 M-D02）
-import { BeginTransactionCommand, CommitTransactionCommand, RollbackTransactionCommand } from '@aws-sdk/client-rds-data'
-import { dataClient, query, execute } from './data-api.js'
-export async function withTx(fn, opts = {}) {
-  const base = { resourceArn: process.env.DB_CLUSTER_ARN, secretArn: process.env.DB_SECRET_ARN }
-  const { transactionId } = await dataClient().send(new BeginTransactionCommand({ ...base, database: process.env.DB_NAME }))
-  const txOpts = { ...opts, transactionId }
+import { getPool, query, execute } from './client.js'
+export async function withTx(fn) {
+  const client = await getPool().connect()
+  // 1つの接続では1つずつしか実行できないため、Promise.all で並べて呼ばれても順番に流す
+  let chain = Promise.resolve()
+  const serial = (fn) => {
+    const p = chain.then(fn)
+    chain = p.catch(() => {})
+    return p
+  }
   const tx = {
-    transactionId,
-    query: (sql, params) => query(sql, params, txOpts),
-    execute: (sql, params) => execute(sql, params, txOpts)
+    query: (sql, params) => serial(() => query(sql, params, { client })),
+    execute: (sql, params) => serial(() => execute(sql, params, { client }))
   }
-  let result
   try {
-    result = await fn(tx)
+    await client.query('BEGIN')
+    const result = await fn(tx)
+    await client.query('COMMIT')
+    return result
   } catch (err) {
-    await dataClient().send(new RollbackTransactionCommand({ ...base, transactionId })).catch(() => {})
+    await client.query('ROLLBACK').catch(() => {})
     throw err
+  } finally {
+    client.release()
   }
-  await dataClient().send(new CommitTransactionCommand({ ...base, transactionId }))
-  return result
 }

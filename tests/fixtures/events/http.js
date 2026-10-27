@@ -6,7 +6,7 @@ export function httpEvent({ method = 'GET', path, body, query, groups = ['learne
     queryStringParameters: query
   }
   if (body !== undefined) ev.body = typeof body === 'string' ? body : JSON.stringify(body)
-  if (auth) ev.requestContext.authorizer = { jwt: { claims: { sub, 'cognito:groups': `[${groups.join(' ')}]` } } }
+  if (auth) ev.requestContext.authorizer = { jwt: { claims: { sub, groups } } }
   return ev
 }
 export const parse = (res) => JSON.parse(res.body)

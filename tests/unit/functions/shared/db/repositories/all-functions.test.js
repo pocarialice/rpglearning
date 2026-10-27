@@ -1,6 +1,6 @@
 // M-D03（MT-D03-10〜33）：代表ケース以外のリポジトリ関数について、SQLとパラメータの組み立てと戻り値の変換を確かめる
 import { describe, it, expect } from 'vitest'
-import { fakeDb } from '../../../../../helpers/aws-mocks.js'
+import { fakeDb } from '../../../../../helpers/mocks.js'
 import * as users from '../../../../../../functions/shared/db/repositories/users.js'
 import * as courses from '../../../../../../functions/shared/db/repositories/courses.js'
 import * as enrollments from '../../../../../../functions/shared/db/repositories/enrollments.js'
@@ -60,10 +60,10 @@ describe('M-D03 users', () => {
     expect(await users.purge(20, db)).toBe(true)
   })
   it('MT-D03-14 listPurgeTargets・listForStreak', async () => {
-    const db = fakeDb({ rows: [{ user_id: 20, cognito_sub: 's' }] })
-    expect(await users.listPurgeTargets('2026-10-20', db)).toEqual([{ userId: 20, cognitoSub: 's' }])
+    const db = fakeDb({ rows: [{ user_id: 20, auth_sub: 's' }] })
+    expect(await users.listPurgeTargets('2026-10-20', db)).toEqual([{ userId: 20, authSub: 's' }])
     expect(db.query.mock.calls[0][0]).toContain('LIMIT')
-    expect(await users.listForStreak('2026-10-20', db)).toEqual([{ userId: 20, cognitoSub: 's' }])
+    expect(await users.listForStreak('2026-10-20', db)).toEqual([{ userId: 20, authSub: 's' }])
   })
 })
 describe('M-D03 courses・enrollments', () => {

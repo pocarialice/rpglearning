@@ -163,6 +163,8 @@ describe('M-F19 S-11 問題取り込み・レビュー', () => {
     await flush()
     expect(api.apiPost).toHaveBeenCalledWith('/admin/imports', { courseId: 'c_3', sourceType: 'pdf', fileName: 'kakomon.pdf', contentType: 'application/pdf', size: 4 })
     expect(globalThis.fetch).toHaveBeenCalledWith('https://s3.example/put', { method: 'PUT', headers: { 'Content-Type': 'application/pdf' }, body: pdf })
+    // 置き終えたら抽出を始めてもらう（A-13b）
+    expect(api.apiPost).toHaveBeenLastCalledWith('/admin/imports/imp_9/uploaded')
     expect(root.textContent).toContain('受け付けた')
   })
   it('MT-F19-06 アップロードに失敗したら責めない文言', async () => {
@@ -177,6 +179,7 @@ describe('M-F19 S-11 問題取り込み・レビュー', () => {
     await flush()
     await flush()
     expect(q('[role="alert"]').textContent).toBe(importPage.M_UPLOAD_ERROR)
+    expect(api.apiPost).toHaveBeenCalledTimes(1)
   })
   it('MT-F19-07 下書きを修正して保存する（空の選択肢は送らず、正解の番号を詰める）', async () => {
     routeGet(() => IMPORTS())

@@ -186,3 +186,4 @@ select.app-input:disabled { opacity: .5; }
 .app-partner-sample { background: var(--parchment); border: 1px dashed var(--line-strong); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
 .app-partner-sample .caption { margin: 0; color: var(--ink-muted); }
 .app-card-result:empty { display: none; }
+.app-login { max-width: 420px; margin: var(--space-6) auto; }

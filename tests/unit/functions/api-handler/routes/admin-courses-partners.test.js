@@ -11,15 +11,14 @@ import * as audit from '../../../../../functions/shared/db/repositories/audit.js
 import { main } from '../../../../../functions/api-handler/index.mjs'
 import { httpEvent, parse } from '../../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../../helpers/logger.js'
-import { s3Mock, rdsMock, routeSql } from '../../../../helpers/aws-mocks.js'
+import { s3Mock, dbMock } from '../../../../helpers/mocks.js'
 import { NOW } from '../../../../helpers/clock.js'
 import { systemAdmin } from '../../../../fixtures/users.js'
 const s3 = s3Mock()
-const rds = rdsMock()
+const db = dbMock()
 const call = (opts) => main(httpEvent({ groups: ['system_admin'], sub: 'sub-1', ...opts }), { log: memoryLogger(), now: NOW })
 beforeEach(() => {
-  rds.reset()
-  routeSql(rds, [])
+  db.reset()
   users.findBySub.mockResolvedValue({ ...systemAdmin })
   users.findById.mockImplementation(async (id) => ({ 2: { userId: 2, roles: ['course_admin', 'learner'], status: 'active' }, 7: { userId: 7, roles: ['learner'], status: 'active' } }[id] ?? null))
   courses.create.mockResolvedValue(5)
@@ -72,8 +71,8 @@ describe('M-H14 admin-partners（A-22）', () => {
     const body = parse(await put({ action: 'prepare', contentType: 'image/png', size: 2097152 }))
     expect(body.imageKey).toBe('partners/encourage-20261020100000.png')
     const url = new URL(body.uploadUrl)
-    expect(url.pathname).toBe('/partners/encourage-20261020100000.png')
-    expect(url.hostname.startsWith('rpg-test-assets.')).toBe(true)
+    expect(url.pathname).toBe('/rpg-test-assets/partners/encourage-20261020100000.png')
+    expect(url.hostname).toBe('s3.test.example')
     expect(url.searchParams.get('X-Amz-Expires')).toBe('900')
   })
   it('MT-H14-02 画像の準備（範囲外）', async () => {

@@ -7,14 +7,14 @@ const db = (user, isAdmin = false) => ({
 })
 describe('M-U04 authz', () => {
   it('MT-U04-01 グループ（文字列）', () => {
-    expect(getAuth(ev({ sub: 's', 'cognito:groups': '[learner course_admin]' })).groups).toEqual(['learner', 'course_admin'])
+    expect(getAuth(ev({ sub: 's', groups: '[learner course_admin]' })).groups).toEqual(['learner', 'course_admin'])
   })
   it('MT-U04-02 グループ（配列）・なし', () => {
-    expect(getAuth(ev({ sub: 's', 'cognito:groups': ['learner'] })).groups).toEqual(['learner'])
+    expect(getAuth(ev({ sub: 's', groups: ['learner'] })).groups).toEqual(['learner'])
     expect(getAuth(ev({ sub: 's' })).groups).toEqual([])
   })
   it('MT-U04-03 sub がない', () => {
-    expect(() => getAuth(ev({ 'cognito:groups': ['learner'] }))).toThrow(expect.objectContaining({ code: 'UNAUTHORIZED' }))
+    expect(() => getAuth(ev({ groups: ['learner'] }))).toThrow(expect.objectContaining({ code: 'UNAUTHORIZED' }))
     expect(() => getAuth({ requestContext: {} })).toThrow(expect.objectContaining({ code: 'UNAUTHORIZED' }))
     expect(() => getAuth(undefined)).toThrow(expect.objectContaining({ code: 'UNAUTHORIZED' }))
   })

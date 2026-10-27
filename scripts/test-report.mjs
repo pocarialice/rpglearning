@@ -77,7 +77,7 @@ for (const r of rows) {
   m.cases++; m.its += r.its
   if (r.status === '合格') m.pass++; else if (r.status === '不合格') m.fail++; else m.missing++
 }
-const LAYERS = { U: 'util', D: 'db', G: 'domain', A: 'ai', M: 'mail', H: 'api-handler', W: 'ワーカー・バッチ', F: '画面（web/js）' }
+const LAYERS = { U: 'util', D: 'db', G: 'domain', A: 'ai', M: 'mail', K: 'auth（ログイン）', O: 'storage', H: 'api-handler', W: 'ワーカー・バッチ', S: 'server（HTTP・ワーカーの入口）', F: '画面（web/js）' }
 const layerCounts = scope.map((g) => ({ g, name: LAYERS[g], n: rows.filter((r) => r.group === g).length }))
 const stable = runs.length >= 3 && runs.every((r) => r.passed === runs[0].passed && r.failed === runs[0].failed && r.total === runs[0].total)
 const maxMs = Math.max(...runs.map((r) => r.durationMs))
@@ -111,7 +111,7 @@ p()
 p('```mermaid')
 p('flowchart LR')
 const groupCount = (gs) => spec.filter((c) => gs.includes(c.group)).length
-p(`  A["共通モジュール<br>util・db・domain・ai・mail<br>${groupCount('UDGAM')}ケース"]:::${scope.includes('U') ? 'done' : 'todo'} --> B["Lambda関数<br>api-handler・worker・batch<br>${groupCount('HW')}ケース"]:::${scope.includes('H') ? 'done' : 'todo'}`)
+p(`  A["共通モジュール<br>util・db・domain・ai・mail・auth・storage<br>${groupCount('UDGAMKO')}ケース"]:::${scope.includes('U') ? 'done' : 'todo'} --> B["API・ワーカー<br>api-handler・worker・batch・server<br>${groupCount('HWS')}ケース"]:::${scope.includes('H') ? 'done' : 'todo'}`)
 p(`  B --> C["画面<br>web/js（core・logic・pages・部品）<br>${groupCount('F')}ケース"]:::${scope.includes('F') ? 'done' : 'todo'}`)
 p('  classDef done fill:#0017C1,color:#fff,stroke:#0017C1')
 p('  classDef todo fill:#fff,color:#414141,stroke:#B4B4B4,stroke-dasharray:4 3')
@@ -303,8 +303,8 @@ H('</ol></nav>\n<main>')
 // 1
 H(`<section class="chapter" id="s1"><h2>${icon('fa-circle-info')}1. 概要</h2>`)
 H(`<div class="vis"><p class="vis-label">今回の範囲（全${spec.length}ケースのうち${rows.length}ケース）</p><ol class="flow">`)
-H(`<li class="${scope.includes('U') ? 'hl' : ''}"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail　${spec.filter((c) => 'UDGAM'.includes(c.group)).length}ケース</li>`)
-H(`<li class="${scope.includes('H') ? 'hl' : 'gate'}"><b><i class="fa-solid fa-bolt fi"></i>Lambda関数</b>api-handler・worker・batch　${spec.filter((c) => 'HW'.includes(c.group)).length}ケース</li>`)
+H(`<li class="${scope.includes('U') ? 'hl' : ''}"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail・auth・storage　${spec.filter((c) => 'UDGAMKO'.includes(c.group)).length}ケース</li>`)
+H(`<li class="${scope.includes('H') ? 'hl' : 'gate'}"><b><i class="fa-solid fa-bolt fi"></i>API・ワーカー</b>api-handler・worker・batch・server　${spec.filter((c) => 'HWS'.includes(c.group)).length}ケース</li>`)
 H(`<li class="${scope.includes('F') ? 'hl' : 'gate'}"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js（core・logic・pages・部品）　${spec.filter((c) => c.group === 'F').length}ケース</li></ol>`)
 H(`<p class="vis-cap">塗りつぶし＝今回テストした範囲、点線＝次回</p></div>`)
 H(`<h3>${icon('fa-caret-right')}1.1 目的</h3><p>${inline(`モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。${meta.purposeNote}`)}</p>`)

@@ -1,0 +1,9 @@
+# HTTPS の終端（Let's Encrypt の証明書を自動で取る）と、HSTS などのヘッダー。中身はすべて api コンテナへ
+{$SITE_ADDRESS} {
+	encode gzip
+	header Strict-Transport-Security "max-age=31536000"
+	request_body {
+		max_size 2MB
+	}
+	reverse_proxy api:8080
+}

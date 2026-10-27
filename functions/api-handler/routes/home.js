@@ -2,7 +2,7 @@
 import { ok } from '../../shared/util/http.js'
 import { addDays } from '../../shared/util/date-jst.js'
 import { levelInfo } from '../../shared/domain/exp.js'
-import { converse } from '../../shared/ai/bedrock.js'
+import { converse } from '../../shared/ai/client.js'
 import { buildDailyMessagePrompt, fallbackMessage } from '../../shared/ai/prompts/daily-message.js'
 import * as users from '../../shared/db/repositories/users.js'
 import * as quests from '../../shared/db/repositories/quests.js'

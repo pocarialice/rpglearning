@@ -162,6 +162,8 @@ export async function render(root, params = {}) {
       try {
         const put = await globalThis.fetch(res.uploadUrl, { method: 'PUT', headers: { 'Content-Type': req.contentType }, body: file })
         if (!put.ok) throw new Error(`upload ${put.status}`)
+        // 置き終えたことを伝えて、抽出を始めてもらう（A-13b）
+        await api.apiPost(`/admin/imports/${encodeURIComponent(res.importId)}/uploaded`)
       } catch {
         result.innerHTML = errorBand(M_UPLOAD_ERROR)
         return update()

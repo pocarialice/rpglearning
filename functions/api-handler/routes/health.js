@@ -1,7 +1,7 @@
-// A-00 ヘルスチェック（配置時に Lambda を直接呼び出して使う）
-import { query } from '../../shared/db/data-api.js'
+// A-00 ヘルスチェック（AppRun・コンテナのヘルスチェックと、配置後の確認に使う。認証なし）
+import { query } from '../../shared/db/client.js'
 import { ok } from '../../shared/util/http.js'
 export async function get() {
-  await query('SELECT 1 AS ok', {}, { resumeRetries: 0 })
+  await query('SELECT 1 AS ok')
   return ok({ status: 'ok' })
 }

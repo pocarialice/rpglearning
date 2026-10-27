@@ -1,0 +1,40 @@
+# リリース（詳細設計書 11.6）。コンテナを作り、さくらのクラウド コンテナレジストリへ押し出す
+# dev：main で手動実行（workflow_dispatch）。prod：release-* のタグを付けると動き、Environment prod の承認を待つ
+# サーバーへの反映は、構築手順書 3.11 のとおりサーバーで docker compose pull → up -d を行う
+name: release
+on:
+  workflow_dispatch:
+  push:
+    tags: ['release-*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ startsWith(github.ref, 'refs/tags/release-') && 'prod' || 'dev' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: テスト
+        run: npm test
+      - name: リリース番号を決める
+        id: rel
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/release-* ]]; then echo "no=${GITHUB_REF#refs/tags/release-}" >> "$GITHUB_OUTPUT"; else echo "no=dev-$(date -u +%Y%m%d)-${{ github.run_number }}" >> "$GITHUB_OUTPUT"; fi
+      - name: レジストリにログイン
+        run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login "${{ vars.REGISTRY }}" -u "${{ secrets.REGISTRY_USER }}" --password-stdin
+      - name: コンテナを作って押し出す
+        env:
+          IMAGE: ${{ vars.REGISTRY }}/rpg-app:${{ steps.rel.outputs.no }}
+        run: |
+          docker build --build-arg APP_ENV=${{ vars.APP_ENV }} --build-arg RELEASE_NO=${{ steps.rel.outputs.no }} -t "$IMAGE" .
+          docker push "$IMAGE"
+          { echo '### リリース'; echo ''; echo "| 環境 | イメージ |"; echo '| --- | --- |'; echo "| ${{ vars.APP_ENV }} | \`$IMAGE\` |"; } >> "$GITHUB_STEP_SUMMARY"

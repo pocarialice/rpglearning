@@ -1,7 +1,7 @@
-// 説明の採点（詳細設計書 4.3）。例外は投げず、失敗は grading_jobs を failed にする（非同期の再試行は0回）
+// 説明の採点（詳細設計書 4.3）。ワーカーがジョブキュー（kind=grading）から取り出して呼ぶ。例外は投げず、失敗は grading_jobs を failed にする（やり直しは0回）
 import { AppError } from '../shared/util/errors.js'
 import { todayJst, weekStartJst } from '../shared/util/date-jst.js'
-import { converse } from '../shared/ai/bedrock.js'
+import { converse } from '../shared/ai/client.js'
 import { extractJson, validateShape, GRADING_SCHEMA } from '../shared/ai/json-guard.js'
 import { buildGradingPrompt, RETRY_NOTE } from '../shared/ai/prompts/grading.js'
 import { withTx } from '../shared/db/tx.js'

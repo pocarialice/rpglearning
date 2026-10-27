@@ -1,17 +1,11 @@
 // B-03 メール送信（詳細設計書 4.5.2）。DBを使わない。例外は投げない（二重送信を避けるため）
-import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { todayJst, jstSlot } from '../../shared/util/date-jst.js'
-import { sendMail } from '../../shared/mail/ses.js'
+import { sendMail } from '../../shared/mail/smtp.js'
 import { notifyMail } from '../../shared/mail/templates.js'
-import { s3Client } from '../lib/s3.js'
+import { getText } from '../../shared/storage/object-storage.js'
 async function readList(today, slot) {
-  try {
-    const res = await s3Client().send(new GetObjectCommand({ Bucket: process.env.NOTIFY_BUCKET, Key: `notify/${today}/${slot}.json` }))
-    return JSON.parse(await res.Body.transformToString())
-  } catch (err) {
-    if (err?.name === 'NoSuchKey') return { items: [] }
-    throw err
-  }
+  const text = await getText(process.env.NOTIFY_BUCKET, `notify/${today}/${slot}.json`)
+  return text === null ? { items: [] } : JSON.parse(text)
 }
 export async function runMail({ log, now }) {
   const today = todayJst(now)
