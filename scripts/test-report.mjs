@@ -66,6 +66,7 @@ const covGroups = [
   { name: 'functions/shared/domain/**', f: (p) => p.startsWith('functions/shared/domain/'), th: [100, 100] },
   { name: 'web/js/logic/validators.js', f: (p) => p === 'web/js/logic/validators.js', th: [100, 100] },
   { name: 'functions/**', f: (p) => p.startsWith('functions/'), th: [90, 80] },
+  { name: 'server/**', f: (p) => p.startsWith('server/'), th: [90, 80] },
   { name: 'web/js/**', f: (p) => p.startsWith('web/js/'), th: [90, 80] }
 ].map((g) => ({ ...g, ...sum(g.f) })).filter((g) => g.files > 0)
 const covOk = covGroups.every((g) => !g.th || (g.statements >= g.th[0] && g.branches >= g.th[1]))
@@ -130,7 +131,7 @@ p('| 項目 | 内容 |')
 p('| --- | --- |')
 for (const [k, v] of meta.env) p(`| ${k} | ${v} |`)
 p()
-p('- 外部サービス（Aurora・Bedrock・SES・S3・Lambda・Cognito）には接続せず、`aws-sdk-client-mock` で応答を差し替えた（仕様書 2.3）')
+p('- 外部サービス（DB・さくらのAI Engine・Bedrock・オブジェクトストレージ・SMTP）には接続せず、`dbMock`・`mailMock`・`aws-sdk-client-mock`・`fetch` の差し替えで応答を決めた（仕様書 2.3）')
 p('- `tests/helpers/vitest.setup.js` で `fetch` の既定をエラーにし、ネットワークへ出たテストは失敗する')
 p()
 p('## 3. 結果の要約')
@@ -320,7 +321,7 @@ H('<div class="card em"><h5><i class="fa-solid fa-check"></i>本物のまま動�
 H('<div class="card dash"><h5><i class="fa-solid fa-masks-theater"></i>モックに差し替える</h5><div class="chips"><span class="chip">RDS Data API</span><span class="chip">Bedrock Runtime</span><span class="chip">SES</span><span class="chip">S3</span><span class="chip">Lambda</span><span class="chip">Cognito</span><span class="chip">リポジトリ（vi.mock）</span><span class="chip">時計（偽の時計）</span><span class="chip">乱数</span><span class="chip">fetch</span></div><p class="note">aws-sdk-client-mock・vi.useFakeTimers</p></div>')
 H('</div></div>')
 H(table(['項目', '内容'], meta.env.map(([k, v]) => [esc(k), inline(v)])))
-H('<ul><li>外部サービス（Aurora・Bedrock・SES・S3・Lambda・Cognito）には接続せず、<code>aws-sdk-client-mock</code> で応答を差し替えた（仕様書 2.3）</li><li><code>tests/helpers/vitest.setup.js</code> で <code>fetch</code> の既定をエラーにし、ネットワークへ出たテストは失敗する</li></ul></section>')
+H('<ul><li>外部サービス（DB・さくらのAI Engine・Bedrock・オブジェクトストレージ・SMTP）には接続せず、<code>dbMock</code>・<code>mailMock</code>・<code>aws-sdk-client-mock</code>・<code>fetch</code> の差し替えで応答を決めた（仕様書 2.3）</li><li><code>tests/helpers/vitest.setup.js</code> で <code>fetch</code> の既定をエラーにし、ネットワークへ出たテストは失敗する</li></ul></section>')
 // 3
 const passDeg = (360 * total.pass) / total.cases
 H(`<section class="chapter" id="s3"><h2>${icon('fa-square-poll-vertical')}3. 結果の要約</h2>`)
