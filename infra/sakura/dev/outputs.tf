@@ -15,3 +15,7 @@ output "auth_secret" {
   value       = random_password.auth_secret.result
   sensitive   = true
 }
+output "fqdn" {
+  description = "V-01 の候補（アプリを起動するときに site_address に入れる）"
+  value       = "${sakuracloud_dns_record.app.name}.${local.shared.domain}"
+}

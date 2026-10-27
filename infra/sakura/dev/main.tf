@@ -180,6 +180,14 @@ resource "sakuracloud_server" "app" {
   }
   depends_on = [sakuracloud_database.main]
 }
+# --- DNS の A レコード（3.8 の 2.） ---
+resource "sakuracloud_dns_record" "app" {
+  dns_id = local.shared.dns_id
+  name   = var.host_name
+  type   = "A"
+  value  = sakuracloud_server.app.ip_address
+  ttl    = 300
+}
 # --- シンプル監視（3.12）。通知はさくらのクラウドの会員のメールアドレスに届く ---
 resource "sakuracloud_simple_monitor" "ping" {
   target     = sakuracloud_server.app.ip_address

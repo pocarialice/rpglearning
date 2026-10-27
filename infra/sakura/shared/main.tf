@@ -26,6 +26,19 @@ variable "registry_name" {
   type        = string
   default     = "rpglearning"
 }
+variable "domain" {
+  description = "使うドメイン（さくらのドメインで取得）。dev・prod のレコードはこのゾーンに作る"
+  type        = string
+  default     = "rpglearning.net"
+}
+# DNS ゾーン（構築手順書 2.2）。レコードは dev・prod の側で sakuracloud_dns_record として作る
+resource "sakuracloud_dns" "main" {
+  zone = var.domain
+  tags = ["rpg"]
+  lifecycle {
+    ignore_changes = [record]
+  }
+}
 resource "random_password" "registry" {
   for_each = toset(["push", "pull"])
   length   = 32
@@ -49,6 +62,16 @@ resource "sakuracloud_container_registry" "main" {
 output "registry" {
   description = "V-20 コンテナレジストリのドメイン"
   value       = sakuracloud_container_registry.main.fqdn
+}
+output "dns_id" {
+  value = sakuracloud_dns.main.id
+}
+output "domain" {
+  value = sakuracloud_dns.main.zone
+}
+output "name_servers" {
+  description = "さくらのドメインの「ネームサーバ」に登録する2つ"
+  value       = sakuracloud_dns.main.dns_servers
 }
 output "registry_push_user" {
   value = "rpg-push"

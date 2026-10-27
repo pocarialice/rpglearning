@@ -4,10 +4,10 @@
 
 | ディレクトリ | 作るもの | 手順書 |
 | --- | --- | --- |
-| `shared/` | コンテナレジストリ、push 用・pull 用のユーザー（dev・prod で共用） | 3.7 |
-| `dev/` | スイッチ、パケットフィルタ、データベースアプライアンス、サーバー（初回の起動で Docker・`/opt/rpg`・DB `rpg` の作成・`docker compose up -d` まで行う）、シンプル監視 | 3.2・3.3・3.8・3.9・3.12 |
+| `shared/` | コンテナレジストリ、push 用・pull 用のユーザー、DNS ゾーン `rpglearning.net`（dev・prod で共用） | 2.2・3.7 |
+| `dev/` | スイッチ、パケットフィルタ、データベースアプライアンス、A レコード `rpg-dev`、サーバー（初回の起動で Docker・`/opt/rpg`・DB `rpg` の作成・`docker compose up -d` まで行う）、シンプル監視 | 3.2・3.3・3.8・3.9・3.12 |
 
-画面で作るもの（Terraform では作れない）：プロジェクト、オブジェクトストレージのバケットとアクセスキー（3.4）、さくらのAI Engine のトークン（3.5）、SMTP（3.6）、DNS の A レコード（2.2）、GitHub の Environment（2.3・3.7）。
+画面で作るもの（Terraform では作れない）：プロジェクト、オブジェクトストレージのバケットとアクセスキー（3.4）、さくらのAI Engine のトークン（3.5）、SMTP（3.6）、GitHub の Environment（2.3・3.7）。
 
 ## 最初に1回だけ
 
@@ -30,7 +30,7 @@ infra/sakura/tf.sh shared apply
 infra/sakura/tf.sh shared output -raw registry_push_password   # GitHub の Environment dev の REGISTRY_PASSWORD へ
 # GitHub で release を手動実行し、イメージ名を dev/dev.auto.tfvars の image に書く
 infra/sakura/tf.sh dev apply
-infra/sakura/tf.sh dev output server_ip                         # DNS の A レコードへ
+infra/sakura/tf.sh shared output name_servers                  # さくらのドメインの「ネームサーバ」へ（最初の1回だけ）
 ```
 
 - `dev/dev.auto.tfvars` の `image` と `site_address` が両方入っているときだけ、サーバーの初回の起動でアプリを起動する。空なら Docker と `/opt/rpg` の用意までで止まる

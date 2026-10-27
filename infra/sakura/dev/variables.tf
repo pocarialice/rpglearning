@@ -17,6 +17,11 @@ variable "ssh_allowed_cidrs" {
   type        = list(string)
   default     = []
 }
+variable "host_name" {
+  description = "A レコードの名前（<host_name>.<ドメイン> になる）"
+  type        = string
+  default     = "rpg-dev"
+}
 variable "site_address" {
   description = "V-01 サイトのドメイン名。空なら HTTPS の監視を作らない"
   type        = string
