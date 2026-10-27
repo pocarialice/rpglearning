@@ -27,7 +27,7 @@ resource "sakuracloud_packet_filter" "main" {
     for_each = var.ssh_allowed_cidrs
     content {
       protocol         = "tcp"
-      source_network   = expression.value
+      source_network   = trimsuffix(expression.value, "/32") # さくらのクラウドは /32 を受け付けない（1台なら IP アドレスだけ）
       destination_port = "22"
       description      = "SSH（作業者だけ）"
     }

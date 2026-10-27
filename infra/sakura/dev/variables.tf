@@ -13,7 +13,7 @@ variable "ssh_public_key" {
   type        = string
 }
 variable "ssh_allowed_cidrs" {
-  description = "SSH を許可する作業場所のIPアドレス（例 203.0.113.10/32）。空なら SSH を開けない"
+  description = "SSH を許可する作業場所のIPアドレス（例 203.0.113.10 か 203.0.113.0/24）。空なら SSH を開けない"
   type        = list(string)
   default     = []
 }
