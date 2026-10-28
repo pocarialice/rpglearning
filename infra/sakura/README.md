@@ -7,7 +7,9 @@
 | `shared/` | コンテナレジストリ、push 用・pull 用のユーザー、DNS ゾーン `rpglearning.net`（dev・prod で共用） | 2.2・3.7 |
 | `dev/` | スイッチ、パケットフィルタ、データベースアプライアンス、A レコード `rpg-dev`、サーバー（初回の起動で Docker・`/opt/rpg`・DB `rpg` の作成・`docker compose up -d` まで行う）、シンプル監視 | 3.2・3.3・3.8・3.9・3.12 |
 
-画面で作るもの（Terraform では作れない）：プロジェクト、オブジェクトストレージのバケットとアクセスキー（3.4）、さくらのAI Engine のトークン（3.5）、SMTP（3.6）、GitHub の Environment（2.3・3.7）。
+`dev/` はアプリ用のキー（`TF_VAR_s3_access_key_id`）が入っているときだけ、バケットの CORS と古いファイルの削除（3.4 の 5〜7）も設定する。
+
+画面で作るもの（Terraform では作れない）：プロジェクト、オブジェクトストレージのバケットとアクセスキー（3.4 の 1〜4。バケット名を変えたら `dev/` の変数 `buckets` を直す）、さくらのAI Engine のトークン（3.5）、SMTP（3.6）、GitHub の Environment（2.3・3.7）。
 
 ## 最初に1回だけ
 

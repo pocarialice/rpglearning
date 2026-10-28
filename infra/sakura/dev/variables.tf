@@ -32,6 +32,19 @@ variable "image" {
   type        = string
   default     = ""
 }
+variable "buckets" {
+  description = "V-09 バケット名（画面で作る。名前が使われていて末尾を変えたときはここを直す）"
+  type = object({
+    import = string
+    assets = string
+    notify = string
+  })
+  default = {
+    import = "rpg-dev-import"
+    assets = "rpg-dev-assets"
+    notify = "rpg-dev-notify"
+  }
+}
 variable "s3_access_key_id" {
   description = "V-10 アプリ用のオブジェクトストレージのアクセスキー"
   type        = string

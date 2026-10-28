@@ -9,6 +9,8 @@ stack=${1:?shared か dev を指定してください}; shift
 : "${TFSTATE_SECRET_KEY:?tfstate 用のオブジェクトストレージのシークレットキーを環境変数に入れてください}"
 export AWS_ACCESS_KEY_ID=$TFSTATE_ACCESS_KEY AWS_SECRET_ACCESS_KEY=$TFSTATE_SECRET_KEY
 unset AWS_SESSION_TOKEN AWS_PROFILE
+# S3 互換のストレージは、AWS SDK が既定で付けるチェックサムのヘッダーを受け付けないことがある
+export AWS_REQUEST_CHECKSUM_CALCULATION=when_required AWS_RESPONSE_CHECKSUM_VALIDATION=when_required
 cd "$(dirname "$0")/$stack"
 [ -d .terraform ] || terraform init -input=false
 exec terraform "$@"
