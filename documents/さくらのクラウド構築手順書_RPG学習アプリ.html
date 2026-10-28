@@ -1621,8 +1621,8 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <tr>
 <td>1</td>
 <td>オブジェクトストレージの CORS</td>
-<td>S3 互換 API の <code>put-bucket-cors</code> で設定する想定。使えなければ、画面のアップロードを api 経由にするかを相談する</td>
-<td>dev 構築時</td>
+<td><strong>2026-10-28 に dev で設定できた</strong>：S3 互換 API の <code>put-bucket-cors</code> で <code>rpg-dev-import</code>・<code>rpg-dev-assets</code> に 3.4 の <code>cors.json</code>（<code>AllowedOrigins</code> は <code>https://rpg-dev.rpglearning.net</code>）を入れ、<code>get-bucket-cors</code> で読み戻せた。プリフライト（<code>OPTIONS</code>）は画面のドメインからは 200、ほかのドメインからは 403 になった。prod も同じ手順で設定する</td>
+<td>prod 構築時</td>
 </tr>
 <tr>
 <td>2</td>
