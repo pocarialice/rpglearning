@@ -34,6 +34,7 @@ infra/sakura/tf.sh dev output server_ip                         # DNS の A レ�
 ```
 
 - `dev/dev.auto.tfvars` の `image` と `site_address` が両方入っているときだけ、サーバーの初回の起動でアプリを起動する。空なら Docker と `/opt/rpg` の用意までで止まる
+- api は起動するときに `.env` の値を確かめ、`MAIL_FROM`・`SMTP_HOST`・`AI_API_KEY`・`S3_ACCESS_KEY_ID`・`S3_SECRET_ACCESS_KEY` などが空だと止まる（`server/main.mjs` の `checkEnv`）。`TF_VAR_*` と `mail_from`・`smtp` を入れてから apply する
 - スタートアップスクリプトはサーバーを作ったときに1回だけ動く。動いた記録はサーバーの `/var/log/rpg-setup.log`
 - スタートアップスクリプトには `.env` の中身（パスワード・キー）が入る。コントロールパネルの「スタートアップスクリプト」で見えるため、dev だけで使う。prod は別に考える
 - 2回目からのリリースの反映は手順書 3.11 のとおりサーバーで行う。`image` を変えて apply してもサーバーは変わらない

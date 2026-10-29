@@ -1363,6 +1363,7 @@ MAIL_SCHEDULE_ENABLED=false
 <ul>
 <li>DB のパスワードに <code>@</code>・<code>/</code>・<code>:</code> が入っているときは URL エンコードする（例：<code>@</code> → <code>%40</code>）</li>
 <li><code>.env</code> は Git に入れない。変えたら <code>docker compose up -d</code> で反映する</li>
+<li>api は起動するときに値を確かめ、<code>MAIL_FROM</code>・<code>SMTP_HOST</code>・<code>AI_API_KEY</code>・S3 のキーなどが空だと止まる（ログに <code>環境変数がありません</code> と出る）。SMTP や AI がまだのときは仮の値を入れれば起動はできる（メールと AI の採点は失敗する）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.9 初回の起動と確認</h3>
 <ol>
@@ -1621,7 +1622,7 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <tr>
 <td>1</td>
 <td>オブジェクトストレージの CORS</td>
-<td><strong>2026-10-28 に dev で設定できた</strong>：S3 互換 API の <code>put-bucket-cors</code> で <code>rpg-dev-import</code>・<code>rpg-dev-assets</code> に 3.4 の <code>cors.json</code>（<code>AllowedOrigins</code> は <code>https://rpg-dev.rpglearning.net</code>）を入れ、<code>get-bucket-cors</code> で読み戻せた。プリフライト（<code>OPTIONS</code>）は画面のドメインからは 200、ほかのドメインからは 403 になった。prod も同じ手順で設定する</td>
+<td><strong>2026-10-28 に dev で設定できた</strong>：S3 互換 API の <code>put-bucket-cors</code> で <code>rpg-dev-import</code>・<code>rpg-dev-assets</code> に 3.4 の <code>cors.json</code>（<code>AllowedOrigins</code> は <code>https://rpg-dev.rpglearning.net</code>）を入れ、<code>get-bucket-cors</code> で読み戻せた。プリフライト（<code>OPTIONS</code>）は画面のドメインからは 200、ほかのドメインからは 403 になった。2026-10-29 に dev の画面から PDF（<code>rpg-dev-import</code>）と画像（<code>rpg-dev-assets</code>）をアップロードできることも確かめた。prod も同じ手順で設定する</td>
 <td>prod 構築時</td>
 </tr>
 <tr>

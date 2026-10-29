@@ -425,6 +425,7 @@ chmod 600 /opt/rpg/.env
 
 - DB のパスワードに `@`・`/`・`:` が入っているときは URL エンコードする（例：`@` → `%40`）
 - `.env` は Git に入れない。変えたら `docker compose up -d` で反映する
+- api は起動するときに値を確かめ、`MAIL_FROM`・`SMTP_HOST`・`AI_API_KEY`・S3 のキーなどが空だと止まる（ログに `環境変数がありません` と出る）。SMTP や AI がまだのときは仮の値を入れれば起動はできる（メールと AI の採点は失敗する）
 
 ### 3.9 初回の起動と確認
 
@@ -588,7 +589,7 @@ MODEL_LIGHT=<Haiku のモデルID>
 
 | No | 項目 | いまの仮置き | 決める時期 |
 | --- | --- | --- | --- |
-| 1 | オブジェクトストレージの CORS | **2026-10-28 に dev で設定できた**：S3 互換 API の `put-bucket-cors` で `rpg-dev-import`・`rpg-dev-assets` に 3.4 の `cors.json`（`AllowedOrigins` は `https://rpg-dev.rpglearning.net`）を入れ、`get-bucket-cors` で読み戻せた。プリフライト（`OPTIONS`）は画面のドメインからは 200、ほかのドメインからは 403 になった。prod も同じ手順で設定する | prod 構築時 |
+| 1 | オブジェクトストレージの CORS | **2026-10-28 に dev で設定できた**：S3 互換 API の `put-bucket-cors` で `rpg-dev-import`・`rpg-dev-assets` に 3.4 の `cors.json`（`AllowedOrigins` は `https://rpg-dev.rpglearning.net`）を入れ、`get-bucket-cors` で読み戻せた。プリフライト（`OPTIONS`）は画面のドメインからは 200、ほかのドメインからは 403 になった。2026-10-29 に dev の画面から PDF（`rpg-dev-import`）と画像（`rpg-dev-assets`）をアップロードできることも確かめた。prod も同じ手順で設定する | prod 構築時 |
 | 2 | 使うドメインと SMTP のサービス | さくらのドメイン・さくらのメールボックスを例にした。会社のドメイン・メールを使うかを決める | dev 構築前 |
 | 3 | 月額の料金 | 1.7 の大きさで料金表から計算し、外部設計書に書く | dev 構築時 |
 | 4 | サーバーの冗長化 | Phase 1 は1台（止まると数分〜数十分使えない）。全社展開の前に2台とロードバランサにするかを決める | Phase 3 の計画時 |
