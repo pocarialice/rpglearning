@@ -1,4 +1,4 @@
-// A-15 問題の修正・削除、A-16 問題の公開、A-15b 登録済みの問題の一覧
+// A-15 問題の修正・削除、A-16 問題の公開、A-15b 登録済みの問題の一覧、A-16b まとめて公開・削除
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
@@ -30,7 +30,8 @@ export async function list(ctx) {
   await requireCourseAdmin(ctx, courseId)
   const status = ctx.query.status || null
   if (status !== null && !LIST_STATUSES.includes(status)) throw invalid('status')
-  const rows = await questions.listByCourse(courseId, status)
+  const importId = ctx.query.import ? decodeId(PREFIX.import, ctx.query.import) : null
+  const rows = await questions.listByCourse(courseId, { status, importId })
   return ok({ courseId: encodeId(PREFIX.course, courseId), questions: rows.map(questionView) })
 }
 export async function put(ctx) {
@@ -72,4 +73,33 @@ export async function publish(ctx) {
     await audit.write(ctx.user.userId, 'question.publish', { type: 'question', id: q.questionId }, {}, tx)
   })
   return ok({ id: encodeId(PREFIX.question, q.questionId), status: 'published' })
+}
+export const BULK_ACTIONS = ['publish', 'delete']
+export const BULK_MAX = 500
+// A-16b 選んだ問題をまとめて公開・削除する。1つのトランザクションで処理し、できなかった問題は飛ばして数を返す
+// 公開：公開できる形の下書き・要確認だけ。削除：A-15 の DELETE と同じ（下書き・要確認は削除、公開済みは archived）
+export async function bulk(ctx) {
+  const b = ctx.body()
+  if (!BULK_ACTIONS.includes(b.action)) throw invalid('action')
+  if (!Array.isArray(b.ids) || b.ids.length < 1 || b.ids.length > BULK_MAX) throw invalid('ids')
+  const ids = [...new Set(b.ids.map((s) => decodeId(PREFIX.question, s)))]
+  const rows = (await questions.findByIds(ids)).filter((q) => q.status !== 'archived')
+  for (const courseId of new Set(rows.map((q) => q.courseId))) await requireCourseAdmin(ctx, courseId)
+  const done = await withTx(async (tx) => {
+    const out = []
+    for (const q of rows) {
+      if (b.action === 'publish') {
+        if (q.status === 'published' || !checkPublishable(q).ok) continue
+        // 別の画面で先に公開・削除されたものは飛ばす
+        if (!(await questions.publish(q.questionId, ctx.user.userId, tx))) continue
+        await audit.write(ctx.user.userId, 'question.publish', { type: 'question', id: q.questionId }, { bulk: true }, tx)
+      } else {
+        const r = await questions.deleteOrArchive(q.questionId, q.status, ctx.user.userId, tx)
+        await audit.write(ctx.user.userId, 'question.delete', { type: 'question', id: q.questionId }, { result: r, bulk: true }, tx)
+      }
+      out.push(q.questionId)
+    }
+    return out
+  })
+  return ok({ action: b.action, done: done.length, skipped: ids.length - done.length, ids: done.map((id) => encodeId(PREFIX.question, id)) })
 }

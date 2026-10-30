@@ -136,7 +136,7 @@ select.app-input:disabled { opacity: .5; }
 .app-admin-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
 .app-admin .app-stat { background: var(--parchment-raised); border: 1px solid var(--line); }
 @media (max-width: 900px) { .app-admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.app-table-wrap, .app-imports, .app-drafts { overflow-x: auto; }
+.app-table-wrap, .app-imports, .app-questions { overflow-x: auto; }
 .app-table { width: 100%; border-collapse: collapse; background: var(--parchment-raised); border: 1px solid var(--line); font-size: 14px; line-height: 22px; }
 .app-table th, .app-table td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--line); vertical-align: top; }
 .app-table th { background: var(--parchment-sunk); font-weight: 700; white-space: nowrap; }
@@ -180,6 +180,17 @@ select.app-input:disabled { opacity: .5; }
 .app-row-ops { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .app-dialog-form { display: flex; flex-direction: column; gap: var(--space-3); }
 .app-dialog-msg:empty { display: none; }
+.app-dialog-wide { width: min(1040px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+.app-editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: var(--space-4); align-items: start; }
+.app-preview { position: sticky; top: 0; background: var(--parchment-sunk); border: 1px solid var(--line); border-radius: var(--radius-md); padding: var(--space-3); }
+.app-preview h3 { margin: 0 0 var(--space-2); }
+.app-preview-body { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
+.app-preview-body .app-section { margin: 0; }
+.app-editor-actions { flex-wrap: wrap; align-items: center; position: sticky; bottom: calc(var(--space-4) * -1); margin: var(--space-4) calc(var(--space-4) * -1) calc(var(--space-4) * -1); padding: var(--space-3) var(--space-4); background: var(--parchment-raised); border-top: 1px solid var(--line); z-index: 1; }
+.app-toolbar-gap { flex: 1; }
+.app-import-filter { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.app-bulk { align-items: center; }
+@media (max-width: 800px) { .app-editor-grid { grid-template-columns: 1fr; } .app-preview { position: static; } }
 /* AIパートナー設定（S-14） */
 .app-partner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
 .app-partner-card h2 { display: flex; align-items: baseline; gap: var(--space-2); }

@@ -416,7 +416,7 @@ rpglearning/
 | `users.js` | `findBySub`（`auth_sub`）、`findById`、`activate`、`touchLogin`、`lastLoginLogAt`（A-01 のログイン記録の間隔）、`updateNickname`、`updatePartner`、`setCurrentCourse`、`addExp`、`setDailyMessage`、`updateStreak`、`listForStreak`、`listForAdmin`、`create`、`setRoles`、`markDeleted`、`restore`、`listPurgeTargets`、`purge` |
 | `courses.js` | `listWithProgress`、`listAll`（担当者つき）、`listIds`、`findById`、`create`、`update`、`assignAdmins`、`listAdminCourses`、`isAdmin`（担当コースの確認）、`dashboardRows`（8.6 のダッシュボードの一覧） |
 | `enrollments.js` | `enroll`、`isEnrolled`、`listCourseIds`、`nicknameTaken(courseIds, nickname, exceptUserId)` |
-| `questions.js` | `findForLearner`、`findById`、`findKeyword`、`findDraftsByImport`、`listByCourse(courseId, status)`（archived を除き新しい順に最大500件。5.3 A-15b）、`update`（選択肢・キーワードは番号ごとに更新。5.3 A-15）、`publish`、`deleteOrArchive(questionId, status, …)`（下書き・要確認は削除、公開済みは archived） |
+| `questions.js` | `findForLearner`、`findById`、`findKeyword`、`findDraftsByImport`、`listByCourse(courseId, {status, importId})`（archived を除き新しい順に最大500件。5.3 A-15b）、`findByIds(ids)`（5.3 A-16b）、`update`（選択肢・キーワードは番号ごとに更新。5.3 A-15）、`publish`、`deleteOrArchive(questionId, status, …)`（下書き・要確認は削除、公開済みは archived） |
 | `reviews.js` | `findItem`、`upsertItem`、`countDue`、`countDueByKind`（形式ごとの今日の復習数）、`listDue`、`listUnlearned`、`listLearned` |
 | `answers.js` | `insert`、`statsForUser`、`countOnDate`、`masteredCount` |
 | `exp.js` | `insertLog`、`weeklyTotals(courseId, weekStart)`（利用者の状態 `status` も返す）、`weeklyTotalForUser` |
@@ -670,9 +670,9 @@ flowchart TD
 | A-13b | `POST /api/admin/imports/{id}/uploaded`    | `adminImports.uploaded`        | course_admin   |
 | A-14 | `GET /api/admin/imports/{id}`、`GET /api/admin/imports?course=` | `adminImports.get`・`adminImports.list` | course_admin   |
 | A-15 | `PUT・DELETE /api/admin/questions/{id}`      | `adminQuestions.put`・`.delete` | course_admin   |
-| A-15b | `GET /api/admin/questions?course=&status=` | `adminQuestions.list`          | course_admin   |
+| A-15b | `GET /api/admin/questions?course=&status=&import=` | `adminQuestions.list`          | course_admin   |
 | A-16 | `POST /api/admin/questions/{id}/publish`    | `adminQuestions.publish`       | course_admin   |
-| A-16b | `POST /api/admin/imports/{id}/publish`     | `adminImports.publishAll`      | course_admin   |
+| A-16b | `POST /api/admin/questions/bulk`           | `adminQuestions.bulk`          | course_admin   |
 | A-17 | `GET /api/admin/dashboard?course=`          | `adminDashboard.get`           | course_admin   |
 | A-18 | `GET /api/admin/dashboard.csv?course=`      | `adminDashboard.csv`           | course_admin   |
 | A-19 | `GET・POST /api/admin/users`、`PUT /api/admin/users/{id}` | `adminUsers.list`・`.create`・`.update` | system_admin   |
@@ -948,21 +948,25 @@ AWS 版の「S3 のイベント通知 → SQS」の代わり。画面が署名�
 - PUT の入力と状態：下書き・要確認の問題は、選択肢2〜10個（各1〜1,000文字）、正解は空または1〜4、キーワード0〜3個を受け付ける。保存後の状態は自動で決める：公開できる形（`validateQuestionDraft` が ok）なら `draft`、そうでなければ `needs_review`。公開済みの問題は、公開できる形を崩す修正を `400`（M-12）で受け付けず、状態は `published` のまま
 - DELETE：下書き・要確認は行ごと削除。公開済みは `status='archived'` にして出題対象から外す（解答履歴を残す）
 
-#### A-15b `GET /api/admin/questions?course=&status=`
+#### A-15b `GET /api/admin/questions?course=&status=&import=`
 
 - コースに登録されている問題（`archived` を除く）を新しい順に最大500件。`status` は省略（すべて）か `draft`・`needs_review`・`published`。それ以外は `400`（field `status`）
+- `import`（`imp_8` の形）を付けると、その取り込みで作った問題だけ。形が正しくなければ `400`
 - 応答：`{ courseId, questions }`。`questions` の1問は A-14 の `drafts` と同じ形（`id`・`bodyHead`・`body`・`choiceCount`・`choices`・`correctChoice`・`explanation`・`keywordCount`・`keywords`・`status`）
-- S-11 の「登録済みの問題」で参照し、削除は A-15 の DELETE を使う
+- S-11 の「登録済みの問題」で参照する。まとめての公開・削除は A-16b を使う
 
 #### A-16 `POST /api/admin/questions/{id}/publish`
 
 `validateQuestionDraft` → NGなら `400`（M-12）→ `status='published'`、`published_at` → 操作記録。
 
-#### A-16b `POST /api/admin/imports/{id}/publish`
+#### A-16b `POST /api/admin/questions/bulk`
 
-- 取り込みの下書き（`draft`・`needs_review`）のうち、`validateQuestionDraft` が ok のものを1つのトランザクションでまとめて公開し、1問ごとに操作記録 `question.publish`（detail に `{ bulk: true, importId }`）を書く
-- 足りないところがある下書きはそのまま残す。別の画面で先に公開・削除された問題（更新0件）は数えない
-- 応答：`{ importId, published, skipped }`（`skipped` は公開しなかった下書きの数）。取り込みがなければ `404`、担当外は `403`
+- 入力：`{ action: 'publish' | 'delete', ids: ['q_1', …] }`。`ids` は1〜500個（重複は1つにまとめる）。それ以外は `400`（field `action`・`ids`）
+- `findByIds` で読み、`archived`・見つからない問題は飛ばす。問題のコースのうち1つでも担当外なら `403`（何も更新しない）
+- 1つのトランザクションで1問ずつ処理し、処理した問題ごとに操作記録を書く（detail に `bulk: true`）
+  - `publish`：下書き・要確認のうち `validateQuestionDraft` が ok のものだけ公開（`question.publish`）。公開済み・足りないところがある問題・別の画面で先に公開・削除された問題（更新0件）は飛ばす
+  - `delete`：A-15 の DELETE と同じ（下書き・要確認は削除、公開済みは `archived`。`question.delete`）
+- 応答：`{ action, done, skipped, ids }`（`ids` は処理した問題、`skipped` は指定した数から処理した数を引いたもの）
 
 #### A-17・A-18 ダッシュボードとCSV
 
@@ -1067,7 +1071,7 @@ sequenceDiagram
 | S-08 | `learner/s08-profile.js`      | A-12、A-02                | ニックネーム編集ダイアログ                                              |
 | S-09 | `learner/s09-partner.js`      | A-03                     | `validatePartnerName`                                      |
 | S-10 | `learner/s10-notify.js`       | A-04                     | 6:00〜22:00 の30分刻みの選択肢、M-09 の注記                            |
-| S-11 | `admin/s11-import.js`         | A-13、A-13b、A-14、A-15、A-15b、A-16、A-16b | 署名付きURLへ `PUT` でアップロードし、終わったら A-13b。取り込み状況は5秒ごとに再取得（完了・失敗で止める）。下書きの一括公開と、登録済みの問題の一覧（状態で絞り込み）・削除             |
+| S-11 | `admin/s11-import.js`         | A-13、A-13b、A-14、A-15、A-15b、A-16、A-16b | 署名付きURLへ `PUT` でアップロードし、終わったら A-13b。取り込み状況は5秒ごとに再取得（完了・失敗で止める）。登録済みの問題（下書きも含む）を A-15b で一覧にし、チェックした問題を A-16b でまとめて公開・削除。修正はダイアログで行い、学習者の見え方（`choiceOption` と S-04・S-06 と同じ組み方）を横に出し、保存・公開・削除のあとは次の下書き・要確認へ進む             |
 | S-12 | `admin/s12-dashboard.js`      | A-17、A-18                | 並べ替えは画面で行う。CSVは `Blob` にしてダウンロード                            |
 | S-13 | `admin/s13-users.js`          | A-19、A-20、A-21、A-21b     | 削除の確認ダイアログ（M-10）。招待中の利用者に「招待メールを送り直す」                                           |
 | S-14 | `admin/s14-partners.js`       | A-22                     | `prepare` → オブジェクトストレージへ `PUT` → `commit` の3段階                       |
@@ -1176,6 +1180,7 @@ export const PERSONAS = {
 各問題について、問題文・選択肢（資料の順番どおり）・正解の番号（1始まり。分からなければ null）・解説（なければ空文字）・
 キーワード（試験で説明できるべき用語を最大3つ）を返してください。
 選択肢には、先頭の項番や記号（A. B) (C) ア イ ① 1. など）を含めず、選択肢の本文だけを入れてください。
+問題文・選択肢・解説の中にHTMLやプログラムのコード（<div> や &lt; などのタグ・記号を含む）があれば、資料の区切りとみなさず、タグ・記号・改行を含めて一文字も変えずにそのまま入れてください。
 出力は次のJSONだけにしてください。
 {"questions":[{"body":"...","choices":["...","...","...","..."],"correct":1,"explanation":"...","keywords":["...","..."]}]}
 ```

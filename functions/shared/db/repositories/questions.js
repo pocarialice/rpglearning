@@ -28,11 +28,19 @@ export async function findDraftsByImport(importId, db = defaultDb) {
     WHERE q.import_id = :importId AND q.status IN ('draft', 'needs_review') ORDER BY q.question_id LIMIT 500`, { importId })
   return camelRows(rows).map(parseJsonCols)
 }
-// コースに登録されている問題（削除して archived にしたものは除く）。status を渡せばその状態だけ。新しい順
-export async function listByCourse(courseId, status = null, db = defaultDb) {
+// コースに登録されている問題（削除して archived にしたものは除く）。status・importId を渡せばそれだけ。新しい順
+export async function listByCourse(courseId, { status = null, importId = null } = {}, db = defaultDb) {
   const rows = await db.query(`SELECT ${DETAIL_COLS} FROM questions q
     WHERE q.course_id = :courseId AND q.status <> 'archived' AND (CAST(:status AS text) IS NULL OR q.status = :status)
-    ORDER BY q.question_id DESC LIMIT 500`, { courseId, status })
+      AND (CAST(:importId AS bigint) IS NULL OR q.import_id = :importId)
+    ORDER BY q.question_id DESC LIMIT 500`, { courseId, status, importId })
+  return camelRows(rows).map(parseJsonCols)
+}
+// まとめて処理する問題（A-16b）。ids の順は問わない
+export async function findByIds(ids, db = defaultDb) {
+  if (ids.length === 0) return []
+  const rows = await db.query(`SELECT ${DETAIL_COLS} FROM questions q
+    WHERE q.question_id = ANY(string_to_array(:ids, ',')::bigint[]) ORDER BY q.question_id`, { ids: ids.join(',') })
   return camelRows(rows).map(parseJsonCols)
 }
 // 選択肢・キーワードは番号（choice_no・sort_order）ごとに更新し、行を作り直さない（詳細設計書 5.3 A-15）

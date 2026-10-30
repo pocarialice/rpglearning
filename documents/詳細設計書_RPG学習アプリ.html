@@ -1605,7 +1605,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td><code>questions.js</code></td>
-<td><code>findForLearner</code>、<code>findById</code>、<code>findKeyword</code>、<code>findDraftsByImport</code>、<code>listByCourse(courseId, status)</code>（archived を除き新しい順に最大500件。5.3 A-15b）、<code>update</code>（選択肢・キーワードは番号ごとに更新。5.3 A-15）、<code>publish</code>、<code>deleteOrArchive(questionId, status, …)</code>（下書き・要確認は削除、公開済みは archived）</td>
+<td><code>findForLearner</code>、<code>findById</code>、<code>findKeyword</code>、<code>findDraftsByImport</code>、<code>listByCourse(courseId, {status, importId})</code>（archived を除き新しい順に最大500件。5.3 A-15b）、<code>findByIds(ids)</code>（5.3 A-16b）、<code>update</code>（選択肢・キーワードは番号ごとに更新。5.3 A-15）、<code>publish</code>、<code>deleteOrArchive(questionId, status, …)</code>（下書き・要確認は削除、公開済みは archived）</td>
 </tr>
 <tr>
 <td><code>reviews.js</code></td>
@@ -2299,7 +2299,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>A-15b</td>
-<td><code>GET /api/admin/questions?course=&amp;status=</code></td>
+<td><code>GET /api/admin/questions?course=&amp;status=&amp;import=</code></td>
 <td><code>adminQuestions.list</code></td>
 <td>course_admin</td>
 </tr>
@@ -2311,8 +2311,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>A-16b</td>
-<td><code>POST /api/admin/imports/{id}/publish</code></td>
-<td><code>adminImports.publishAll</code></td>
+<td><code>POST /api/admin/questions/bulk</code></td>
+<td><code>adminQuestions.bulk</code></td>
 <td>course_admin</td>
 </tr>
 <tr>
@@ -2804,19 +2804,26 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>PUT の入力と状態：下書き・要確認の問題は、選択肢2〜10個（各1〜1,000文字）、正解は空または1〜4、キーワード0〜3個を受け付ける。保存後の状態は自動で決める：公開できる形（<code>validateQuestionDraft</code> が ok）なら <code>draft</code>、そうでなければ <code>needs_review</code>。公開済みの問題は、公開できる形を崩す修正を <code>400</code>（M-12）で受け付けず、状態は <code>published</code> のまま</li>
 <li>DELETE：下書き・要確認は行ごと削除。公開済みは <code>status='archived'</code> にして出題対象から外す（解答履歴を残す）</li>
 </ul>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-15b <code>GET /api/admin/questions?course=&amp;status=</code></h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-15b <code>GET /api/admin/questions?course=&amp;status=&amp;import=</code></h4>
 <ul>
 <li>コースに登録されている問題（<code>archived</code> を除く）を新しい順に最大500件。<code>status</code> は省略（すべて）か <code>draft</code>・<code>needs_review</code>・<code>published</code>。それ以外は <code>400</code>（field <code>status</code>）</li>
+<li><code>import</code>（<code>imp_8</code> の形）を付けると、その取り込みで作った問題だけ。形が正しくなければ <code>400</code></li>
 <li>応答：<code>{ courseId, questions }</code>。<code>questions</code> の1問は A-14 の <code>drafts</code> と同じ形（<code>id</code>・<code>bodyHead</code>・<code>body</code>・<code>choiceCount</code>・<code>choices</code>・<code>correctChoice</code>・<code>explanation</code>・<code>keywordCount</code>・<code>keywords</code>・<code>status</code>）</li>
-<li>S-11 の「登録済みの問題」で参照し、削除は A-15 の DELETE を使う</li>
+<li>S-11 の「登録済みの問題」で参照する。まとめての公開・削除は A-16b を使う</li>
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-16 <code>POST /api/admin/questions/{id}/publish</code></h4>
 <p><code>validateQuestionDraft</code> → NGなら <code>400</code>（M-12）→ <code>status='published'</code>、<code>published_at</code> → 操作記録。</p>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-16b <code>POST /api/admin/imports/{id}/publish</code></h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-16b <code>POST /api/admin/questions/bulk</code></h4>
 <ul>
-<li>取り込みの下書き（<code>draft</code>・<code>needs_review</code>）のうち、<code>validateQuestionDraft</code> が ok のものを1つのトランザクションでまとめて公開し、1問ごとに操作記録 <code>question.publish</code>（detail に <code>{ bulk: true, importId }</code>）を書く</li>
-<li>足りないところがある下書きはそのまま残す。別の画面で先に公開・削除された問題（更新0件）は数えない</li>
-<li>応答：<code>{ importId, published, skipped }</code>（<code>skipped</code> は公開しなかった下書きの数）。取り込みがなければ <code>404</code>、担当外は <code>403</code></li>
+<li>入力：<code>{ action: 'publish' | 'delete', ids: ['q_1', …] }</code>。<code>ids</code> は1〜500個（重複は1つにまとめる）。それ以外は <code>400</code>（field <code>action</code>・<code>ids</code>）</li>
+<li><code>findByIds</code> で読み、<code>archived</code>・見つからない問題は飛ばす。問題のコースのうち1つでも担当外なら <code>403</code>（何も更新しない）</li>
+<li>1つのトランザクションで1問ずつ処理し、処理した問題ごとに操作記録を書く（detail に <code>bulk: true</code>）
+<ul>
+<li><code>publish</code>：下書き・要確認のうち <code>validateQuestionDraft</code> が ok のものだけ公開（<code>question.publish</code>）。公開済み・足りないところがある問題・別の画面で先に公開・削除された問題（更新0件）は飛ばす</li>
+<li><code>delete</code>：A-15 の DELETE と同じ（下書き・要確認は削除、公開済みは <code>archived</code>。<code>question.delete</code>）</li>
+</ul>
+</li>
+<li>応答：<code>{ action, done, skipped, ids }</code>（<code>ids</code> は処理した問題、<code>skipped</code> は指定した数から処理した数を引いたもの）</li>
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-17・A-18 ダッシュボードとCSV</h4>
 <ul>
@@ -3105,7 +3112,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>S-11</td>
 <td><code>admin/s11-import.js</code></td>
 <td>A-13、A-13b、A-14、A-15、A-15b、A-16、A-16b</td>
-<td>署名付きURLへ <code>PUT</code> でアップロードし、終わったら A-13b。取り込み状況は5秒ごとに再取得（完了・失敗で止める）。下書きの一括公開と、登録済みの問題の一覧（状態で絞り込み）・削除</td>
+<td>署名付きURLへ <code>PUT</code> でアップロードし、終わったら A-13b。取り込み状況は5秒ごとに再取得（完了・失敗で止める）。登録済みの問題（下書きも含む）を A-15b で一覧にし、チェックした問題を A-16b でまとめて公開・削除。修正はダイアログで行い、学習者の見え方（<code>choiceOption</code> と S-04・S-06 と同じ組み方）を横に出し、保存・公開・削除のあとは次の下書き・要確認へ進む</td>
 </tr>
 <tr>
 <td>S-12</td>
@@ -3315,6 +3322,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 各問題について、問題文・選択肢（資料の順番どおり）・正解の番号（1始まり。分からなければ null）・解説（なければ空文字）・
 キーワード（試験で説明できるべき用語を最大3つ）を返してください。
 選択肢には、先頭の項番や記号（A. B) (C) ア イ ① 1. など）を含めず、選択肢の本文だけを入れてください。
+問題文・選択肢・解説の中にHTMLやプログラムのコード（&lt;div&gt; や &amp;lt; などのタグ・記号を含む）があれば、資料の区切りとみなさず、タグ・記号・改行を含めて一文字も変えずにそのまま入れてください。
 出力は次のJSONだけにしてください。
 {&quot;questions&quot;:[{&quot;body&quot;:&quot;...&quot;,&quot;choices&quot;:[&quot;...&quot;,&quot;...&quot;,&quot;...&quot;,&quot;...&quot;],&quot;correct&quot;:1,&quot;explanation&quot;:&quot;...&quot;,&quot;keywords&quot;:[&quot;...&quot;,&quot;...&quot;]}]}
 </code></pre>

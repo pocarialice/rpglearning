@@ -1953,20 +1953,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>取り込みごとの状態（待機中・抽出中・完了・失敗）と抽出件数</td>
 </tr>
 <tr>
-<td>下書き一覧</td>
-<td>問題文の先頭、形式、キーワード数、状態（下書き・公開済み）。公開できる下書きの数と「まとめて公開する」（確認ダイアログあり。足りないところがある下書きは残す）</td>
-</tr>
-<tr>
-<td>編集</td>
-<td>問題文・選択肢4つ・正解・解説・キーワード（最大3つ）を修正</td>
-</tr>
-<tr>
-<td>操作</td>
-<td>「公開する」（primary）、「保存する」、「削除する」（確認ダイアログあり）</td>
+<td>取り込み状況の操作</td>
+<td>完了した取り込みの「問題を見る」で、登録済みの問題をその取り込みの分だけに絞り込む（「すべての取り込みを見る」で戻す）</td>
 </tr>
 <tr>
 <td>登録済みの問題</td>
-<td>コースに登録されている問題（削除したものを除く）を新しい順に表示。状態（すべて・公開済み・下書き・要確認）で絞り込み、「中身を見る」で問題文・選択肢・正解・解説・キーワードを確認し、「削除する」（確認ダイアログあり。公開済みは出題から外し、解答の履歴は残す）</td>
+<td>コースに登録されている問題（下書き・要確認・公開済み。削除したものを除く）を新しい順に表示。問題文の先頭、形式、キーワード数、状態。状態（すべて・公開済み・下書き・要確認）で絞り込み、「中身を見る」で問題文・選択肢・正解・解説・キーワードを確認する</td>
+</tr>
+<tr>
+<td>まとめて処理</td>
+<td>各行のチェックボックスと、見出しの「表示している問題をすべて選ぶ」で問題を選び、「選んだ問題を公開する」（primary。公開できる形の下書き・要確認だけ公開し、ほかはそのまま）・「選んだ問題を削除する」（下書き・要確認は削除、公開済みは出題から外し解答の履歴は残す）。どちらも確認ダイアログあり。一覧を読み直したら選択は外れる</td>
+</tr>
+<tr>
+<td>修正（ダイアログ）</td>
+<td>下書き・要確認の行だけ「修正する」を出す。ダイアログで問題文・選択肢4つ・正解・解説・キーワード（最大3つ）を修正し、横に学習者エリアでの見え方（答える前／答えたあと）を入力に合わせて出す。「保存して次へ」「公開して次へ」（primary）「削除する」（確認ダイアログあり）のあと、一覧の次の下書き・要確認へ進み、最後まで見たら閉じる。「前へ」「次へ」で移れる（保存していない修正があるときは、もう一度押したら移る）</td>
 </tr>
 </tbody>
 </table></div>
@@ -2086,14 +2086,14 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>F-02</td>
 <td>問題レビュー・公開</td>
 <td>S-11</td>
-<td><code>PUT /api/admin/questions/{id}</code>、<code>POST /api/admin/questions/{id}/publish</code>、<code>POST /api/admin/imports/{id}/publish</code>（一括公開）</td>
+<td><code>PUT /api/admin/questions/{id}</code>、<code>POST /api/admin/questions/{id}/publish</code></td>
 <td>○</td>
 </tr>
 <tr>
 <td>F-02b</td>
-<td>登録済みの問題の参照・削除</td>
+<td>登録済みの問題の参照・まとめて公開・削除</td>
 <td>S-11</td>
-<td><code>GET /api/admin/questions?course=&amp;status=</code>、<code>DELETE /api/admin/questions/{id}</code></td>
+<td><code>GET /api/admin/questions?course=&amp;status=&amp;import=</code>、<code>POST /api/admin/questions/bulk</code>、<code>DELETE /api/admin/questions/{id}</code></td>
 <td>○</td>
 </tr>
 <tr>
@@ -2880,7 +2880,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>A-15b</td>
 <td>GET</td>
-<td><code>/admin/questions?course=&amp;status=</code></td>
+<td><code>/admin/questions?course=&amp;status=&amp;import=</code></td>
 <td>コースに登録されている問題の一覧</td>
 <td>コース管理者</td>
 </tr>
@@ -2894,8 +2894,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>A-16b</td>
 <td>POST</td>
-<td><code>/admin/imports/{id}/publish</code></td>
-<td>取り込みの下書きの一括公開</td>
+<td><code>/admin/questions/bulk</code></td>
+<td>選んだ問題のまとめて公開・削除</td>
 <td>コース管理者</td>
 </tr>
 <tr>

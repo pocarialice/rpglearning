@@ -238,9 +238,9 @@ describe('M-H10 admin-questions（A-15・A-16）', () => {
     expect(body.courseId).toBe('c_3')
     expect(body.questions.map((x) => [x.id, x.status])).toEqual([['q_42', 'published'], ['q_43', 'draft']])
     expect(body.questions[0]).toMatchObject({ bodyHead: '問題文', choiceCount: 4, correctChoice: 2, keywords: ['DNS', 'TTL', 'A'], keywordCount: 3 })
-    expect(executed(db)[0].values).toEqual([3, null])
-    await call({ path: '/api/admin/questions', query: { course: 'c_3', status: 'published' } })
-    expect(executed(db)[1].values).toEqual([3, 'published'])
+    expect(executed(db)[0].values).toEqual([3, null, null])
+    await call({ path: '/api/admin/questions', query: { course: 'c_3', status: 'published', import: 'imp_8' } })
+    expect(executed(db)[1].values).toEqual([3, 'published', 8])
   })
   it('MT-H10-11 一覧の状態の指定が正しくない・担当外', async () => {
     db.reset()
@@ -249,45 +249,50 @@ describe('M-H10 admin-questions（A-15・A-16）', () => {
     expect(bad.statusCode).toBe(400)
     expect(parse(bad).error.details[0]).toMatchObject({ field: 'status' })
     expect((await call({ path: '/api/admin/questions', query: { course: 'c_4' } })).statusCode).toBe(403)
+    expect((await call({ path: '/api/admin/questions', query: { course: 'c_3', import: '8' } })).statusCode).toBe(400)
     expect(executed(db)).toHaveLength(0)
   })
-})
-describe('M-H09 admin-imports（A-16b 下書きの一括公開）', () => {
-  const draft = (id, patch = {}) => ({
-    question_id: id, course_id: 3, import_id: 8, body: `問${id}`, correct_choice: 1, explanation: '解説', status: 'draft',
-    choices: JSON.stringify(['ア', 'イ', 'ウ', 'エ']), keywords: JSON.stringify([{ keywordId: id, keyword: 'DNS' }]), ...patch
-  })
-  const publishAll = () => call({ method: 'POST', path: '/api/admin/imports/imp_8/publish' })
-  const publishes = () => executed(db).filter((i) => i.sql.includes("SET status = 'published'"))
-  const audits = () => executed(db).filter((i) => i.sql.includes('INSERT INTO audit_logs'))
-  beforeEach(() => imports.find.mockResolvedValue({ importId: 8, courseId: 3, sourceType: 'pdf', status: 'done' }))
-  it('MT-H09-10 公開できる下書きだけ公開し、残りの数を返す', async () => {
-    db.reset()
-    routeSql(db, [[/FROM questions q\s+WHERE q.import_id/, records([
-      draft(100), draft(101, { status: 'needs_review', choices: JSON.stringify(['ア', 'イ', 'ウ']) }), draft(102, { explanation: '' }), draft(103, { status: 'needs_review' })
-    ])]])
-    const res = await publishAll()
-    expect(res.statusCode).toBe(200)
-    expect(parse(res)).toEqual({ importId: 'imp_8', published: 2, skipped: 2 })
-    expect(publishes().map((i) => i.values[1])).toEqual([100, 103])
-    expect(audits().map((i) => i.values[1])).toEqual(['question.publish', 'question.publish'])
-    expect(db.commits()).toBe(1)
-  })
-  it('MT-H09-11 先に公開・削除された下書きは数えない', async () => {
-    db.reset()
-    routeSql(db, [
-      [/FROM questions q\s+WHERE q.import_id/, records([draft(100), draft(101)])],
-      [/^UPDATE questions/, { updated: 0 }]
-    ])
-    expect(parse(await publishAll())).toEqual({ importId: 'imp_8', published: 0, skipped: 2 })
-    expect(audits()).toHaveLength(0)
-  })
-  it('MT-H09-12 取り込みがない・担当外', async () => {
-    db.reset()
-    imports.find.mockResolvedValue(null)
-    expect((await publishAll()).statusCode).toBe(404)
-    imports.find.mockResolvedValue({ importId: 8, courseId: 4 })
-    expect((await publishAll()).statusCode).toBe(403)
-    expect(executed(db)).toHaveLength(0)
+  describe('A-16b まとめて公開・削除', () => {
+    const row = (id, patch = {}) => question({ question_id: id, status: 'draft', keywords: JSON.stringify([{ keywordId: id, keyword: 'DNS' }]), ...patch })
+    const bulk = (body) => call({ method: 'POST', path: '/api/admin/questions/bulk', body })
+    const setRows = (rows, extra = []) => {
+      db.reset()
+      routeSql(db, [[/FROM questions q\s+WHERE q.question_id = ANY/, records(rows)], ...extra])
+    }
+    const publishes = () => executed(db).filter((i) => i.sql.includes("SET status = 'published'"))
+    const audits = () => executed(db).filter((i) => i.sql.includes('INSERT INTO audit_logs'))
+    it('MT-H10-12 まとめて公開：公開できる下書き・要確認だけ公開し、残りの数を返す', async () => {
+      setRows([row(100), row(101, { status: 'needs_review', choices: JSON.stringify(['ア', 'イ', 'ウ']) }), row(102, { explanation: '' }), row(103, { status: 'needs_review' }), row(104, { status: 'published' }), row(105, { status: 'archived' })])
+      const res = await bulk({ action: 'publish', ids: ['q_100', 'q_101', 'q_102', 'q_103', 'q_104', 'q_105', 'q_106', 'q_100'] })
+      expect(res.statusCode).toBe(200)
+      expect(parse(res)).toEqual({ action: 'publish', done: 2, skipped: 5, ids: ['q_100', 'q_103'] })
+      expect(publishes().map((i) => i.values[1])).toEqual([100, 103])
+      expect(audits().map((i) => i.values[1])).toEqual(['question.publish', 'question.publish'])
+      expect(executed(db)[0].values).toEqual(['100,101,102,103,104,105,106'])
+      expect(db.commits()).toBe(1)
+      // 先に公開・削除されていた（更新0件）は数えない
+      setRows([row(100)], [[/^UPDATE questions/, { updated: 0 }]])
+      expect(parse(await bulk({ action: 'publish', ids: ['q_100'] }))).toMatchObject({ done: 0, skipped: 1 })
+      expect(audits()).toHaveLength(0)
+    })
+    it('MT-H10-13 まとめて削除：下書き・要確認は削除、公開済みは archived', async () => {
+      setRows([row(100), row(101, { status: 'needs_review' }), row(102, { status: 'published' })])
+      const res = await bulk({ action: 'delete', ids: ['q_100', 'q_101', 'q_102'] })
+      expect(parse(res)).toEqual({ action: 'delete', done: 3, skipped: 0, ids: ['q_100', 'q_101', 'q_102'] })
+      const sql = executed(db).map((i) => i.sql.replace(/\s+/g, ' '))
+      expect(sql.filter((x) => x.startsWith('DELETE FROM questions'))).toHaveLength(2)
+      expect(sql.filter((x) => x.startsWith("UPDATE questions SET status = 'archived'"))).toHaveLength(1)
+      expect(audits().map((i) => i.values[1])).toEqual(['question.delete', 'question.delete', 'question.delete'])
+      expect(db.commits()).toBe(1)
+    })
+    it('MT-H10-14 入力の検証・担当外のコースが混ざる', async () => {
+      setRows([])
+      for (const bad of [{ action: 'archive', ids: ['q_1'] }, { action: 'publish', ids: [] }, { action: 'delete' }, { action: 'delete', ids: Array.from({ length: 501 }, (_, i) => `q_${i + 1}`) }, { action: 'delete', ids: ['42'] }]) {
+        expect((await bulk(bad)).statusCode).toBe(400)
+      }
+      setRows([row(100), row(101, { course_id: 4 })])
+      expect((await bulk({ action: 'delete', ids: ['q_100', 'q_101'] })).statusCode).toBe(403)
+      expect(executed(db).some((i) => /^(DELETE|UPDATE)/.test(i.sql))).toBe(false)
+    })
   })
 })
