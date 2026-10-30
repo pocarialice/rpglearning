@@ -9,6 +9,7 @@
     "start": "node server/main.mjs",
     "migrate": "node scripts/migrate.mjs",
     "create-admin": "node scripts/create-admin.mjs",
+    "check-ai": "node scripts/check-ai.mjs",
     "build:web": "node scripts/build-web.mjs"
   },
   "devDependencies": {

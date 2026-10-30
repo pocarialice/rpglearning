@@ -37,6 +37,7 @@ beforeEach(() => {
   Object.assign(process.env, ENV)
   delete process.env.ALERT_EMAIL
   delete process.env.MAIL_SCHEDULE_ENABLED
+  delete process.env.AI_REASONING_EFFORT
   setPool(refusingPool)
   setTransport(refusingTransport)
   globalThis.fetch = vi.fn(async () => {

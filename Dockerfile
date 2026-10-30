@@ -16,7 +16,7 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY functions ./functions
 COPY server ./server
 COPY db ./db
-COPY scripts/migrate.mjs scripts/create-admin.mjs ./scripts/
+COPY scripts/migrate.mjs scripts/create-admin.mjs scripts/check-ai.mjs ./scripts/
 COPY --from=web /app/dist/web ./web
 ARG RELEASE_NO=local
 ENV WEB_ROOT=/app/web RELEASE_NO=${RELEASE_NO} PORT=8080

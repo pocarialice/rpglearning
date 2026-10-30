@@ -8,6 +8,8 @@ import { buildCommentPrompt } from '../../shared/ai/prompts/comment.js'
 import * as questions from '../../shared/db/repositories/questions.js'
 import * as adventures from '../../shared/db/repositories/adventures.js'
 import { loadAnswerContext, computeOutcome, writeOutcome, outcomeView } from '../../shared/services/answer-recorder.js'
+// 解説コメントの AI の設定（scripts/check-ai.mjs も同じ値で確かめる）。上限は推論モデルの考える分も含む
+export const COMMENT_AI = { maxTokens: 1000, temperature: 0.7, timeoutMs: 5000 }
 export async function choice(ctx) {
   const { user, today, weekStart, log } = ctx
   const body = ctx.body()
@@ -39,7 +41,7 @@ export async function choice(ctx) {
     })
     const res = await converse({
       modelId: process.env.MODEL_LIGHT, system: p.system, messages: [{ role: 'user', content: [{ text: p.user }] }],
-      maxTokens: 300, temperature: 0.7, timeoutMs: 5000, purpose: 'comment', logger: log
+      ...COMMENT_AI, purpose: 'comment', logger: log
     })
     if (res.text.trim()) text = res.text.trim()
   } catch (err) {

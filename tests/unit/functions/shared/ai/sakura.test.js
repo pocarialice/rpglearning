@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { converse, toChatMessages, DEFAULT_BASE_URL } from '../../../../../functions/shared/ai/sakura.js'
+import { converse, toChatMessages, requestBody, reasoningEffort, DEFAULT_BASE_URL, DEFAULT_REASONING_EFFORT } from '../../../../../functions/shared/ai/sakura.js'
 import * as client from '../../../../../functions/shared/ai/client.js'
 const messages = [{ role: 'user', content: [{ text: '秘密の説明文' }, { text: '2行目' }] }]
 const args = { modelId: 'gpt-oss-120b', system: 's-秘密の指示', messages, maxTokens: 300, temperature: 0.7, timeoutMs: 5000, purpose: 'comment' }
@@ -18,7 +18,7 @@ describe('M-A05 sakura', () => {
     expect(init.method).toBe('POST')
     expect(init.headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer test-ai-key' })
     expect(JSON.parse(init.body)).toEqual({
-      model: 'gpt-oss-120b', max_tokens: 300, temperature: 0.7,
+      model: 'gpt-oss-120b', max_tokens: 300, temperature: 0.7, reasoning_effort: 'low',
       messages: [{ role: 'system', content: 's-秘密の指示' }, { role: 'user', content: '秘密の説明文\n2行目' }]
     })
     delete process.env.AI_BASE_URL
@@ -63,6 +63,26 @@ describe('M-A05 sakura', () => {
   it('MT-A05-07 既定の fetch を使う', async () => {
     globalThis.fetch = vi.fn(async () => answer('ok'))
     expect((await converse(args)).text).toBe('ok')
+  })
+  it('MT-A05-08 考える深さ（reasoning_effort）を変える・送らない', async () => {
+    expect(reasoningEffort({})).toBe(DEFAULT_REASONING_EFFORT)
+    expect(requestBody(args, { AI_REASONING_EFFORT: 'medium' }).reasoning_effort).toBe('medium')
+    expect(requestBody(args, { AI_REASONING_EFFORT: '' })).not.toHaveProperty('reasoning_effort')
+    process.env.AI_REASONING_EFFORT = ''
+    const fetchFn = vi.fn(async () => answer('ok'))
+    await converse({ ...args, fetchFn })
+    expect(JSON.parse(fetchFn.mock.calls[0][1].body)).not.toHaveProperty('reasoning_effort')
+  })
+  it('MT-A05-09 考えた分のトークン数と、上限で答えが空になったことをログに出す', async () => {
+    const usage = { prompt_tokens: 12, completion_tokens: 300, completion_tokens_details: { reasoning_tokens: 300 } }
+    const res = await converse({ ...args, fetchFn: async () => reply({ choices: [{ message: { content: '' }, finish_reason: 'length' }], usage }) })
+    expect(res).toEqual({ text: '', usage: { inputTokens: 12, outputTokens: 300 }, stopReason: 'max_tokens' })
+    const lines = logSpy.mock.calls.map((c) => JSON.parse(c[0]))
+    expect(lines.find((l) => l.msg === 'ai.converse')).toMatchObject({ reasoningTokens: 300 })
+    expect(lines.find((l) => l.msg === 'ai.empty_answer')).toMatchObject({ level: 'WARN', purpose: 'comment', maxTokens: 300, reasoningTokens: 300 })
+    logSpy.mockClear()
+    await converse({ ...args, fetchFn: async () => answer('途中まで', { finish_reason: 'length' }) })
+    expect(logSpy.mock.calls.map((c) => c[0]).join('\n')).not.toContain('ai.empty_answer')
   })
 })
 describe('M-A06 ai/client（差し替え口）', () => {

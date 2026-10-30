@@ -735,6 +735,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 │  ├─ build-web.mjs               # dist/web-{env}/ を作る（config差し込み・キャッシュ名更新）
 │  ├─ migrate.mjs                 # マイグレーションを流す（手動で使うとき）
 │  ├─ create-admin.mjs            # 最初のシステム管理者を作る（構築手順書）
+│  ├─ check-ai.mjs                # AI の4つの用途を本番と同じ設定で呼んで確かめる（構築手順書 3.9）
 │  └─ test-report.mjs             # モジュールテスト結果報告書を作る
 └─ aws/                           # AWS 版（退避。aws/README.md）
 </code></pre>
@@ -1163,6 +1164,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>AI_BASE_URL</code>・<code>AI_API_KEY</code></td>
 <td>すべて（sakura のとき）</td>
 <td>さくらのAI Engine の URL（既定 <code>https://api.ai.sakura.ad.jp/v1</code>）とアカウントトークン</td>
+</tr>
+<tr>
+<td><code>AI_REASONING_EFFORT</code></td>
+<td>すべて（sakura のとき・任意）</td>
+<td>推論モデルの考える深さ（<code>low</code>＝既定・<code>medium</code>・<code>high</code>）。空にすると送らない（M-A05）</td>
 </tr>
 <tr>
 <td><code>AWS_REGION</code>・<code>AWS_ACCESS_KEY_ID</code>・<code>AWS_SECRET_ACCESS_KEY</code></td>
@@ -1880,7 +1886,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>API</td>
-<td><code>POST {AI_BASE_URL}/chat/completions</code>（OpenAI 互換）。<code>Authorization: Bearer {AI_API_KEY}</code>。本文は <code>{ model, messages, max_tokens, temperature }</code></td>
+<td><code>POST {AI_BASE_URL}/chat/completions</code>（OpenAI 互換）。<code>Authorization: Bearer {AI_API_KEY}</code>。本文は <code>{ model, messages, max_tokens, temperature, reasoning_effort }</code></td>
+</tr>
+<tr>
+<td>考える深さ</td>
+<td><code>gpt-oss-120b</code> は答える前に考える（推論）モデルで、考えた分も <code>max_tokens</code> に入る。短い用途でも答えが残るよう、<code>reasoning_effort</code> を既定 <code>low</code> で送る（<code>AI_REASONING_EFFORT</code> で変える。空なら送らない。受け付けない API のとき用）</td>
 </tr>
 <tr>
 <td>メッセージの変換</td>
@@ -1900,7 +1910,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>ログ</td>
-<td><code>ai.converse</code>（<code>provider: sakura</code>、用途、モデル、トークン数、所要時間）。本文・API キーは出さない</td>
+<td><code>ai.converse</code>（<code>provider: sakura</code>、用途、モデル、トークン数、考えた分のトークン数 <code>reasoningTokens</code>（<code>usage.completion_tokens_details.reasoning_tokens</code>。なければ null）、所要時間）。答えが空で <code>max_tokens</code> で止まったときは、あわせて <code>ai.empty_answer</code>（WARN）を出す。本文・API キーは出さない</td>
 </tr>
 </tbody>
 </table></div>
@@ -3178,7 +3188,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>grading.js</code></td>
 <td><code>MODEL_HIGH</code></td>
 <td>0</td>
-<td>1,500</td>
+<td>3,000</td>
 <td>25秒</td>
 <td>採点を <code>failed</code>（4.3）</td>
 </tr>
@@ -3187,7 +3197,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>comment.js</code></td>
 <td><code>MODEL_LIGHT</code></td>
 <td>0.7</td>
-<td>300</td>
+<td>1,000</td>
 <td>5秒</td>
 <td>問題の解説文をそのまま表示</td>
 </tr>
@@ -3196,12 +3206,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>daily-message.js</code></td>
 <td><code>MODEL_LIGHT</code></td>
 <td>0.8</td>
-<td>200</td>
+<td>800</td>
 <td>5秒</td>
 <td>定型文を表示（保存しない）</td>
 </tr>
 </tbody>
 </table></div>
+<ul>
+<li>maxTokens は推論モデル（<code>gpt-oss-120b</code>）の考える分を含む上限。払うのは実際に出したトークンだけなので、Bedrock でも大きくして困らない</li>
+<li>temperature・maxTokens・打ち切りは、呼び出し側のモジュールが定数（<code>EXTRACTION_AI</code>・<code>GRADING_AI</code>・<code>COMMENT_AI</code>・<code>DAILY_MESSAGE_AI</code>）として持つ。<code>scripts/check-ai.mjs</code> も同じ定数を使い、本番と同じ設定で確かめる（構築手順書 3.9 No.5）</li>
+</ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 パートナーの指示（<code>ai/persona.js</code>）</h3>
 <p>外部設計書 3.6.1 をそのまま定数にする。指示文の「役割」の部分に差し込む。</p>
 <pre><code class="language-js">export const PERSONAS = {
@@ -4876,7 +4890,7 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 <tr>
 <td>3</td>
 <td>AI の打ち切り時間（抽出120秒）</td>
-<td>10ページのPDFで実測して調整（さくらのAI Engine と Bedrock の両方）</td>
+<td>10ページのPDFで実測して調整（さくらのAI Engine と Bedrock の両方）。<code>scripts/check-ai.mjs --long --repeat=3</code> で用途ごとの時間・考えた分のトークン数を測る（構築手順書 3.9 No.5）</td>
 <td>dev での試行時</td>
 </tr>
 <tr>

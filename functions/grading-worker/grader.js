@@ -14,6 +14,8 @@ export const AI_TIMEOUT_MS = 25000
 // 採点全体の持ち時間（A-10 が30秒で打ち切るため）。やり直しは残りが10秒以上のときだけ
 export const BUDGET_MS = 25000
 export const RETRY_MIN_REMAINING_MS = 10000
+// 採点の AI の設定（scripts/check-ai.mjs も同じ値で確かめる）。上限は推論モデルの考える分も含む
+export const GRADING_AI = { maxTokens: 3000, temperature: 0, timeoutMs: AI_TIMEOUT_MS }
 class Superseded extends Error {}
 export async function gradeJob(gradingId, { log, now = () => new Date() }) {
   const started = now().getTime()
@@ -70,8 +72,7 @@ async function askWithRetry(prompt, { log, started, now }) {
   const messages = [{ role: 'user', content: [{ text: prompt.user }] }]
   for (let attempt = 1; ; attempt++) {
     const res = await converse({
-      modelId: process.env.MODEL_HIGH, system: prompt.system, messages, maxTokens: 1500, temperature: 0,
-      timeoutMs: AI_TIMEOUT_MS, purpose: 'grading', logger: log
+      modelId: process.env.MODEL_HIGH, system: prompt.system, messages, ...GRADING_AI, purpose: 'grading', logger: log
     })
     const obj = extractJson(res.text)
     const shape = validateShape(obj, GRADING_SCHEMA)

@@ -1129,10 +1129,13 @@ done
 </ol>
 <pre><code class="language-bash">curl -s https://api.ai.sakura.ad.jp/v1/chat/completions \
   -H &quot;Authorization: Bearer &lt;V-11&gt;&quot; -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;model&quot;:&quot;gpt-oss-120b&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;こんにちは&quot;}],&quot;max_tokens&quot;:50}'
+  -d '{&quot;model&quot;:&quot;gpt-oss-120b&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;こんにちは&quot;}],&quot;max_tokens&quot;:300,&quot;reasoning_effort&quot;:&quot;low&quot;}'
 </code></pre>
 <ul>
 <li>応答の <code>choices[0].message.content</code> に文章が入っていれば OK</li>
+<li><code>gpt-oss-120b</code> は答える前に考える（推論）モデルで、考えた分も <code>max_tokens</code> に入る。<code>content</code> が空で <code>finish_reason</code> が <code>length</code> なら、<code>max_tokens</code> を増やして試す</li>
+<li><code>reasoning_effort</code> で <code>400</code> が返るときは、<code>reasoning_effort</code> を外して試す。外して通るなら、3.8 の <code>.env</code> に <code>AI_REASONING_EFFORT=</code>（空）を足す（詳細設計書 M-A05）</li>
+<li>指示文・速さ・答えの形は、アプリを起動したあとに 3.9 の No.5 で確かめる</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 メール（SMTP）</h3>
 <p>ここでは、さくらのメールボックスで送る例を書く。ほかの SMTP サービスでも、ホスト・ポート・ユーザー・パスワードがあれば同じように使える。</p>
@@ -1455,16 +1458,25 @@ docker compose logs --since 5m api | grep -E 'migrate|ERROR'
 </tr>
 <tr>
 <td>3</td>
-<td>`docker compose logs api</td>
-<td>grep migrate.done`</td>
+<td><code>docker compose logs api | grep migrate.done</code></td>
+<td>適用したマイグレーション <code>V001</code>・<code>V002</code>・<code>V003</code></td>
 </tr>
 <tr>
 <td>4</td>
-<td>`docker compose logs worker</td>
-<td>grep schedule`</td>
+<td><code>docker compose logs worker | grep schedule</code></td>
+<td>エラーが出ていない</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>docker compose exec api node scripts/check-ai.mjs</code></td>
+<td>AI の4つの用途（解説コメント・ひとこと・採点・抽出）がすべて <code>OK</code>。表を構築の記録に貼る</td>
 </tr>
 </tbody>
 </table></div>
+<ul>
+<li>No.5 は、本番と同じ指示文・モデル・設定で、見本の問題（個人情報なし）を AI に送る。DB・メールにはつながない。<code>NG</code> のときは表の下の「見るところ」を見る</li>
+<li>打ち切り時間を決めるため（詳細設計書 12 No.3）、<code>--long --repeat=3</code> を付けて本当にかかる時間を測り、時間の列に <code>⚠</code>（本番の打ち切りを超えた）が出ないかを見る。用途を絞るときは <code>--only=grading,extraction</code></li>
+</ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.10 最初のシステム管理者</h3>
 <p>画面から利用者を登録できる人がまだいないため、1人目だけをコマンドで作る（詳細設計書 8.5）。</p>
 <pre><code class="language-bash">cd /opt/rpg
@@ -1652,8 +1664,8 @@ MODEL_HIGH=&lt;Sonnet のモデルID&gt;
 MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 </code></pre>
 <ol start="4">
-<li><code>docker compose up -d</code> で反映し、採点・取り込み（PDF・画像）・ひとことを試す</li>
-<li>さくらのAI Engine と採点の質・速さ・費用を比べ、よければ prod も同じように替える</li>
+<li><code>docker compose up -d</code> で反映し、<code>docker compose exec api node scripts/check-ai.mjs --long --repeat=3</code> で4つの用途が <code>OK</code> になることを確かめてから、採点・取り込み（PDF・画像）・ひとことを画面で試す</li>
+<li>さくらのAI Engine と採点の質・速さ・費用を比べ（check-ai.mjs の表を並べる）、よければ prod も同じように替える</li>
 <li>戻すときは <code>AI_PROVIDER=sakura</code> と <code>MODEL_*</code> を戻して <code>docker compose up -d</code></li>
 </ol>
 <ul>

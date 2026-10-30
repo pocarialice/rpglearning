@@ -4,7 +4,7 @@ export default defineConfig({
     setupFiles: ['tests/helpers/vitest.setup.js'],
     restoreMocks: true,
     projects: [
-      { extends: true, test: { name: 'functions', include: ['tests/unit/functions/**/*.test.js', 'tests/unit/server/**/*.test.js'], environment: 'node' } },
+      { extends: true, test: { name: 'functions', include: ['tests/unit/functions/**/*.test.js', 'tests/unit/server/**/*.test.js', 'tests/unit/scripts/**/*.test.js'], environment: 'node' } },
       { extends: true, test: { name: 'web', include: ['tests/unit/web/**/*.test.js'], environment: 'jsdom' } }
     ],
     coverage: {
