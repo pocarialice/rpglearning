@@ -1,4 +1,4 @@
-// A-15 問題の修正・削除、A-16 問題の公開
+// A-15 問題の修正・削除、A-16 問題の公開、A-15b 登録済みの問題の一覧
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
@@ -16,7 +16,23 @@ async function loadOwned(ctx) {
   await requireCourseAdmin(ctx, q.courseId)
   return q
 }
-const asDraft = (q) => ({ body: q.body, choices: q.choices, correct: q.correctChoice, explanation: q.explanation, keywords: q.keywords })
+// 公開できる形か（選択肢4つ・正解・解説がそろっているか）を確かめる
+export const checkPublishable = (q) => validateQuestionDraft({ body: q.body, choices: q.choices, correct: q.correctChoice, explanation: q.explanation, keywords: q.keywords.map((k) => k.keyword) })
+// 一覧に返す1問の形（A-14 の下書き・A-15b で共通）
+export const questionView = (q) => ({
+  id: encodeId(PREFIX.question, q.questionId), bodyHead: [...q.body].slice(0, 40).join(''), body: q.body,
+  choiceCount: q.choices.length, choices: q.choices, correctChoice: q.correctChoice, explanation: q.explanation,
+  keywordCount: q.keywords.length, keywords: q.keywords.map((k) => k.keyword), status: q.status
+})
+export const LIST_STATUSES = ['draft', 'needs_review', 'published']
+export async function list(ctx) {
+  const courseId = decodeId(PREFIX.course, ctx.query.course)
+  await requireCourseAdmin(ctx, courseId)
+  const status = ctx.query.status || null
+  if (status !== null && !LIST_STATUSES.includes(status)) throw invalid('status')
+  const rows = await questions.listByCourse(courseId, status)
+  return ok({ courseId: encodeId(PREFIX.course, courseId), questions: rows.map(questionView) })
+}
 export async function put(ctx) {
   const q = await loadOwned(ctx)
   const b = ctx.body()
@@ -49,9 +65,7 @@ export async function remove(ctx) {
 export async function publish(ctx) {
   const q = await loadOwned(ctx)
   if (q.status === 'published') return ok({ id: encodeId(PREFIX.question, q.questionId), status: 'published' })
-  const draft = asDraft(q)
-  draft.keywords = q.keywords.map((k) => k.keyword)
-  const v = validateQuestionDraft(draft)
+  const v = checkPublishable(q)
   if (!v.ok) throw new AppError('VALIDATION_ERROR', '選択肢を4つそろえてから公開してください', { details: [{ field: v.field, code: 'M-12' }] })
   await withTx(async (tx) => {
     if (!(await questions.publish(q.questionId, ctx.user.userId, tx))) throw new AppError('CONFLICT', '問題の状態が変わりました')

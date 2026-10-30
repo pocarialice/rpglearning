@@ -565,9 +565,10 @@ AWS 版では Cognito のログイン画面を使っていた。さくら版で�
 | ------ | ------------------------------------------ |
 | 取り込み   | コースを選び、PDF・画像（各20MBまで）をアップロード、またはテキストを貼り付け |
 | 取り込み状況 | 取り込みごとの状態（待機中・抽出中・完了・失敗）と抽出件数              |
-| 下書き一覧  | 問題文の先頭、形式、キーワード数、状態（下書き・公開済み）              |
+| 下書き一覧  | 問題文の先頭、形式、キーワード数、状態（下書き・公開済み）。公開できる下書きの数と「まとめて公開する」（確認ダイアログあり。足りないところがある下書きは残す） |
 | 編集     | 問題文・選択肢4つ・正解・解説・キーワード（最大3つ）を修正             |
 | 操作     | 「公開する」（primary）、「保存する」、「削除する」（確認ダイアログあり）   |
+| 登録済みの問題 | コースに登録されている問題（削除したものを除く）を新しい順に表示。状態（すべて・公開済み・下書き・要確認）で絞り込み、「中身を見る」で問題文・選択肢・正解・解説・キーワードを確認し、「削除する」（確認ダイアログあり。公開済みは出題から外し、解答の履歴は残す） |
 
 #### S-12 学習状況ダッシュボード
 
@@ -605,7 +606,8 @@ AWS 版では Cognito のログイン画面を使っていた。さくら版で�
 | ID   | 機能          | 画面             | 主なAPI                                                                    | Phase 1     |
 | ---- | ----------- | -------------- | ------------------------------------------------------------------------ | ----------- |
 | F-01 | 問題取り込み      | S-11           | `POST /api/admin/imports`                                                | ○           |
-| F-02 | 問題レビュー・公開   | S-11           | `PUT /api/admin/questions/{id}`、`POST /api/admin/questions/{id}/publish` | ○           |
+| F-02 | 問題レビュー・公開   | S-11           | `PUT /api/admin/questions/{id}`、`POST /api/admin/questions/{id}/publish`、`POST /api/admin/imports/{id}/publish`（一括公開） | ○           |
+| F-02b | 登録済みの問題の参照・削除 | S-11        | `GET /api/admin/questions?course=&status=`、`DELETE /api/admin/questions/{id}` | ○           |
 | F-03 | 四肢択一演習      | S-04、S-06      | `GET /api/quests/next`、`POST /api/answers/choice`                        | ○           |
 | F-04 | キーワード説明     | S-05、S-06      | `POST /api/gradings`、`GET /api/gradings/{id}`                            | ○           |
 | F-05 | 忘却曲線復習      | S-02、S-04、S-05 | `GET /api/home`、`GET /api/quests/next`                                   | ○           |
@@ -873,7 +875,9 @@ stateDiagram-v2
 | A-13b | POST          | `/admin/imports/{id}/uploaded`        | ファイルを置き終えたことを伝え、抽出を始める     | コース管理者  |
 | A-14 | GET            | `/admin/imports/{id}`                 | 取り込み状況と下書き                    | コース管理者  |
 | A-15 | PUT／DELETE     | `/admin/questions/{id}`               | 問題の修正・削除                      | コース管理者  |
+| A-15b | GET           | `/admin/questions?course=&status=`    | コースに登録されている問題の一覧          | コース管理者  |
 | A-16 | POST           | `/admin/questions/{id}/publish`       | 問題の公開                         | コース管理者  |
+| A-16b | POST          | `/admin/imports/{id}/publish`         | 取り込みの下書きの一括公開               | コース管理者  |
 | A-17 | GET            | `/admin/dashboard?course=`            | ダッシュボードの集計と受講者一覧              | コース管理者  |
 | A-18 | GET            | `/admin/dashboard.csv?course=`        | 受講者一覧のCSV                     | コース管理者  |
 | A-19 | GET／POST／PUT   | `/admin/users`                        | 利用者の一覧・登録・ロール変更               | システム管理者 |

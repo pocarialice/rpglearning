@@ -130,6 +130,17 @@ describe('M-D03 questions', () => {
     expect(await questions.deleteOrArchive(42, 'published', 2, db)).toBe('archived')
     expect(db.execute.mock.calls[2][0]).toContain("SET status = 'archived'")
   })
+  it('MT-D03-34 listByCourse（archived を除き、状態で絞り込める）', async () => {
+    const db = fakeDb({ rows: [{ question_id: 43, choices: '["ア"]', keywords: '[]' }] })
+    const list = await questions.listByCourse(3, null, db)
+    expect(list).toEqual([{ questionId: 43, choices: ['ア'], keywords: [] }])
+    expect(db.query.mock.calls[0][0]).toContain("q.status <> 'archived'")
+    expect(db.query.mock.calls[0][0]).toContain('ORDER BY q.question_id DESC LIMIT 500')
+    expect(db.query.mock.calls[0][1]).toEqual({ courseId: 3, status: null })
+    await questions.listByCourse(3, 'published', db)
+    expect(db.query.mock.calls[1][1]).toEqual({ courseId: 3, status: 'published' })
+    expect(await questions.listByCourse(3, undefined, fakeDb())).toEqual([])
+  })
 })
 describe('M-D03 reviews・answers・exp', () => {
   it('MT-D03-20 reviews の各関数', async () => {
