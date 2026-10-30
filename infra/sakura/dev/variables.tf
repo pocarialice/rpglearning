@@ -8,9 +8,13 @@ variable "network_prefix" {
   type        = string
   default     = "192.168.10"
 }
-variable "ssh_public_key" {
-  description = "作業PCの公開鍵（~/.ssh/id_ed25519.pub の中身）"
-  type        = string
+variable "ssh_public_keys" {
+  description = "作業PCの公開鍵（~/.ssh/id_ed25519.pub の中身）。PC ごとに1行。足しても、いまのサーバーには入らない（README）"
+  type        = list(string)
+  validation {
+    condition     = length(var.ssh_public_keys) > 0
+    error_message = "公開鍵を1つ以上入れてください"
+  }
 }
 variable "ssh_allowed_cidrs" {
   description = "SSH を許可する作業場所のIPアドレス（例 203.0.113.10 か 203.0.113.0/24）。空なら SSH を開けない"

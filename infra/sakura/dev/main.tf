@@ -94,9 +94,15 @@ resource "random_password" "auth_secret" {
 data "sakuracloud_archive" "ubuntu" {
   os_type = "ubuntu2404"
 }
+# 1つ目は名前を変えない（前は1つだけだったため）
 resource "sakuracloud_ssh_key" "admin" {
-  name       = "${local.prefix}-admin"
-  public_key = var.ssh_public_key
+  count      = length(var.ssh_public_keys)
+  name       = count.index == 0 ? "${local.prefix}-admin" : "${local.prefix}-admin-${count.index + 1}"
+  public_key = var.ssh_public_keys[count.index]
+}
+moved {
+  from = sakuracloud_ssh_key.admin
+  to   = sakuracloud_ssh_key.admin[0]
 }
 locals {
   dotenv = join("\n", [
@@ -172,11 +178,15 @@ resource "sakuracloud_server" "app" {
   }
   disk_edit_parameter {
     hostname        = "${local.prefix}-app"
-    ssh_key_ids     = [sakuracloud_ssh_key.admin.id]
+    ssh_key_ids     = sakuracloud_ssh_key.admin[*].id
     disable_pw_auth = true
     note {
       id = sakuracloud_note.setup.id
     }
+  }
+  # ディスクの修正は作ったときに1回だけ。鍵を足しても、いまのサーバーを止めたり作り直したりしない
+  lifecycle {
+    ignore_changes = [disk_edit_parameter]
   }
   depends_on = [sakuracloud_database.main]
 }
