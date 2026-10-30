@@ -566,7 +566,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>ゾーン</td>
-<td>石狩第1ゾーン（<code>is1b</code>）。サーバー・スイッチ・データベースアプライアンスは同じゾーンに作る。オブジェクトストレージも石狩のサイト（<code>isk01</code>）を使う</td>
+<td>石狩第2ゾーン（<code>is1b</code>）。サーバー・スイッチ・データベースアプライアンスは同じゾーンに作る。オブジェクトストレージも石狩のサイト（<code>isk01</code>）を使う</td>
 </tr>
 <tr>
 <td>ドメイン</td>
@@ -853,7 +853,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>Variables・Secrets は 3.7 で入れる</li>
 </ol>
 </section><section class="chapter" id="ch3"><h2><i aria-hidden="true" class="fa-solid fa-flask h-ico"></i>3. dev 環境の構築<span class="env-badge env-dev">dev・開発</span></h2>
-<p>右上のプロジェクトで <code>rpg-dev</code> を選び、ゾーンを「石狩第1」にしてから始める。</p>
+<p>右上のプロジェクトで <code>rpg-dev</code> を選び、ゾーンを「石狩第2」にしてから始める。</p>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 準備</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -865,7 +865,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>プロジェクト・ゾーン</td>
-<td><code>rpg-dev</code>・石狩第1</td>
+<td><code>rpg-dev</code>・石狩第2</td>
 </tr>
 <tr>
 <td>控える値の表</td>
@@ -1500,6 +1500,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 <ul>
 <li>切り戻しは、<code>.env</code> の <code>IMAGE=</code> を前回の値に戻して <code>docker compose up -d</code>（詳細設計書 11.6）</li>
 <li><code>compose.yaml</code>・<code>Caddyfile</code> を変えたリリースのときだけ、8. のファイルも置き直す</li>
+<li>api が <code>connect EHOSTUNREACH &lt;V-05&gt;:5432</code> で起動しなおしを繰り返し、サーバーから DB へ ping は届くのに 5432 だけ届かないときは、DB の中で通信がはじかれている。コントロールパネルで DB を「再起動」すると直る（2026-10-30 に dev で発生）。再起動のあいだのエラーは、api が自動で起動しなおすため気にしなくてよい</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.12 シンプル監視とバックアップ</h3>
 <p><strong>シンプル監視</strong></p>
