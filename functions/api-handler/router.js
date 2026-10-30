@@ -47,6 +47,8 @@ export const ROUTES = [
   r('GET', '/api/admin/imports', adminImports.list, COURSE_ADMIN),
   r('GET', '/api/admin/imports/{id}', adminImports.get, COURSE_ADMIN),
   r('POST', '/api/admin/imports/{id}/uploaded', adminImports.uploaded, COURSE_ADMIN),
+  r('POST', '/api/admin/imports/{id}/publish', adminImports.publishAll, COURSE_ADMIN),
+  r('GET', '/api/admin/questions', adminQuestions.list, COURSE_ADMIN),
   r('PUT', '/api/admin/questions/{id}', adminQuestions.put, COURSE_ADMIN),
   r('DELETE', '/api/admin/questions/{id}', adminQuestions.remove, COURSE_ADMIN),
   r('POST', '/api/admin/questions/{id}/publish', adminQuestions.publish, COURSE_ADMIN),

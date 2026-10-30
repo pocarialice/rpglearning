@@ -229,4 +229,65 @@ describe('M-H10 admin-questions（A-15・A-16）', () => {
     expect((await call({ method: 'POST', path: '/api/admin/questions/q_42/publish' })).statusCode).toBe(409)
     expect((await put({})).statusCode).toBe(409)
   })
+  it('MT-H10-10 登録済みの問題の一覧（A-15b）', async () => {
+    db.reset()
+    routeSql(db, [[/FROM questions q\s+WHERE q.course_id/, records([question(), question({ question_id: 43, status: 'draft' })])]])
+    const res = await call({ path: '/api/admin/questions', query: { course: 'c_3' } })
+    expect(res.statusCode).toBe(200)
+    const body = parse(res)
+    expect(body.courseId).toBe('c_3')
+    expect(body.questions.map((x) => [x.id, x.status])).toEqual([['q_42', 'published'], ['q_43', 'draft']])
+    expect(body.questions[0]).toMatchObject({ bodyHead: '問題文', choiceCount: 4, correctChoice: 2, keywords: ['DNS', 'TTL', 'A'], keywordCount: 3 })
+    expect(executed(db)[0].values).toEqual([3, null])
+    await call({ path: '/api/admin/questions', query: { course: 'c_3', status: 'published' } })
+    expect(executed(db)[1].values).toEqual([3, 'published'])
+  })
+  it('MT-H10-11 一覧の状態の指定が正しくない・担当外', async () => {
+    db.reset()
+    routeSql(db, [[/FROM questions q\s+WHERE q.course_id/, records([])]])
+    const bad = await call({ path: '/api/admin/questions', query: { course: 'c_3', status: 'archived' } })
+    expect(bad.statusCode).toBe(400)
+    expect(parse(bad).error.details[0]).toMatchObject({ field: 'status' })
+    expect((await call({ path: '/api/admin/questions', query: { course: 'c_4' } })).statusCode).toBe(403)
+    expect(executed(db)).toHaveLength(0)
+  })
+})
+describe('M-H09 admin-imports（A-16b 下書きの一括公開）', () => {
+  const draft = (id, patch = {}) => ({
+    question_id: id, course_id: 3, import_id: 8, body: `問${id}`, correct_choice: 1, explanation: '解説', status: 'draft',
+    choices: JSON.stringify(['ア', 'イ', 'ウ', 'エ']), keywords: JSON.stringify([{ keywordId: id, keyword: 'DNS' }]), ...patch
+  })
+  const publishAll = () => call({ method: 'POST', path: '/api/admin/imports/imp_8/publish' })
+  const publishes = () => executed(db).filter((i) => i.sql.includes("SET status = 'published'"))
+  const audits = () => executed(db).filter((i) => i.sql.includes('INSERT INTO audit_logs'))
+  beforeEach(() => imports.find.mockResolvedValue({ importId: 8, courseId: 3, sourceType: 'pdf', status: 'done' }))
+  it('MT-H09-10 公開できる下書きだけ公開し、残りの数を返す', async () => {
+    db.reset()
+    routeSql(db, [[/FROM questions q\s+WHERE q.import_id/, records([
+      draft(100), draft(101, { status: 'needs_review', choices: JSON.stringify(['ア', 'イ', 'ウ']) }), draft(102, { explanation: '' }), draft(103, { status: 'needs_review' })
+    ])]])
+    const res = await publishAll()
+    expect(res.statusCode).toBe(200)
+    expect(parse(res)).toEqual({ importId: 'imp_8', published: 2, skipped: 2 })
+    expect(publishes().map((i) => i.values[1])).toEqual([100, 103])
+    expect(audits().map((i) => i.values[1])).toEqual(['question.publish', 'question.publish'])
+    expect(db.commits()).toBe(1)
+  })
+  it('MT-H09-11 先に公開・削除された下書きは数えない', async () => {
+    db.reset()
+    routeSql(db, [
+      [/FROM questions q\s+WHERE q.import_id/, records([draft(100), draft(101)])],
+      [/^UPDATE questions/, { updated: 0 }]
+    ])
+    expect(parse(await publishAll())).toEqual({ importId: 'imp_8', published: 0, skipped: 2 })
+    expect(audits()).toHaveLength(0)
+  })
+  it('MT-H09-12 取り込みがない・担当外', async () => {
+    db.reset()
+    imports.find.mockResolvedValue(null)
+    expect((await publishAll()).statusCode).toBe(404)
+    imports.find.mockResolvedValue({ importId: 8, courseId: 4 })
+    expect((await publishAll()).statusCode).toBe(403)
+    expect(executed(db)).toHaveLength(0)
+  })
 })

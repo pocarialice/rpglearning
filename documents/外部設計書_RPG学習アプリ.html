@@ -1954,7 +1954,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>下書き一覧</td>
-<td>問題文の先頭、形式、キーワード数、状態（下書き・公開済み）</td>
+<td>問題文の先頭、形式、キーワード数、状態（下書き・公開済み）。公開できる下書きの数と「まとめて公開する」（確認ダイアログあり。足りないところがある下書きは残す）</td>
 </tr>
 <tr>
 <td>編集</td>
@@ -1963,6 +1963,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>操作</td>
 <td>「公開する」（primary）、「保存する」、「削除する」（確認ダイアログあり）</td>
+</tr>
+<tr>
+<td>登録済みの問題</td>
+<td>コースに登録されている問題（削除したものを除く）を新しい順に表示。状態（すべて・公開済み・下書き・要確認）で絞り込み、「中身を見る」で問題文・選択肢・正解・解説・キーワードを確認し、「削除する」（確認ダイアログあり。公開済みは出題から外し、解答の履歴は残す）</td>
 </tr>
 </tbody>
 </table></div>
@@ -2082,7 +2086,14 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>F-02</td>
 <td>問題レビュー・公開</td>
 <td>S-11</td>
-<td><code>PUT /api/admin/questions/{id}</code>、<code>POST /api/admin/questions/{id}/publish</code></td>
+<td><code>PUT /api/admin/questions/{id}</code>、<code>POST /api/admin/questions/{id}/publish</code>、<code>POST /api/admin/imports/{id}/publish</code>（一括公開）</td>
+<td>○</td>
+</tr>
+<tr>
+<td>F-02b</td>
+<td>登録済みの問題の参照・削除</td>
+<td>S-11</td>
+<td><code>GET /api/admin/questions?course=&amp;status=</code>、<code>DELETE /api/admin/questions/{id}</code></td>
 <td>○</td>
 </tr>
 <tr>
@@ -2867,10 +2878,24 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>コース管理者</td>
 </tr>
 <tr>
+<td>A-15b</td>
+<td>GET</td>
+<td><code>/admin/questions?course=&amp;status=</code></td>
+<td>コースに登録されている問題の一覧</td>
+<td>コース管理者</td>
+</tr>
+<tr>
 <td>A-16</td>
 <td>POST</td>
 <td><code>/admin/questions/{id}/publish</code></td>
 <td>問題の公開</td>
+<td>コース管理者</td>
+</tr>
+<tr>
+<td>A-16b</td>
+<td>POST</td>
+<td><code>/admin/imports/{id}/publish</code></td>
+<td>取り込みの下書きの一括公開</td>
 <td>コース管理者</td>
 </tr>
 <tr>
