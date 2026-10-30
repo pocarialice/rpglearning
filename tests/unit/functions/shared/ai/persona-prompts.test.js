@@ -44,6 +44,8 @@ describe('M-A04 prompts', () => {
     expect(pdf.system).toContain('資料にない内容を作らないでください')
     // 選択肢に A./ア/① などの項番を入れない
     expect(pdf.system).toContain('選択肢には、先頭の項番や記号（A. B) (C) ア イ ① 1. など）を含めず、選択肢の本文だけを入れてください')
+    // 問題文の HTML・コードを落とさない
+    expect(pdf.system).toContain('タグ・記号・改行を含めて一文字も変えずにそのまま入れてください')
     expect(pdf.system).toContain('{"questions":[{"body":"...","choices":')
     expect(pdf.messages[0].content[0]).toEqual({ document: { format: 'pdf', name: 'p1-10', source: { bytes } } })
     expect(pdf.messages[0].content[1]).toEqual({ text: 'この資料から問題を抽出してください' })

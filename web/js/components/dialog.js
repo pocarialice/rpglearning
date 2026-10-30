@@ -1,11 +1,11 @@
 // 確認・編集用のダイアログ（外部設計書 3.5）。<dialog> の showModal でフォーカスを閉じ込め、Esc で閉じる
 import { escapeHtml } from './_util.js'
 let seq = 0
-// mount(body, close) で中身を組み立てる。close() で閉じて要素を取り除く
-export function openDialog({ title, mount, doc = document }) {
+// mount(body, close) で中身を組み立てる。close() で閉じて要素を取り除く。className で幅などを変える
+export function openDialog({ title, mount, className = '', doc = document }) {
   const id = `dialog-title-${++seq}`
   const d = doc.createElement('dialog')
-  d.className = 'gd-card app-dialog'
+  d.className = `gd-card app-dialog${className ? ` ${className}` : ''}`
   d.setAttribute('aria-labelledby', id)
   d.innerHTML = `<h2 id="${id}" class="title">${escapeHtml(title)}</h2><div class="app-dialog-body"></div>`
   doc.body.append(d)
