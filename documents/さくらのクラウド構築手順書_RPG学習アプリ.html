@@ -749,7 +749,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>V-13</td>
 <td>送信元のメールアドレス（<code>MAIL_FROM</code>）</td>
-<td><code>no-reply@&lt;ドメイン&gt;</code></td>
+<td><code>no-reply@mail.&lt;ドメイン&gt;</code></td>
 <td>同じ</td>
 <td>3.6</td>
 </tr>
@@ -1139,9 +1139,24 @@ done
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 メール（SMTP）</h3>
 <p>ここでは、さくらのメールボックスで送る例を書く。ほかの SMTP サービスでも、ホスト・ポート・ユーザー・パスワードがあれば同じように使える。</p>
+<p><strong>ドメインを足す</strong></p>
 <ol>
-<li>送信用のメールアドレス <code>no-reply@&lt;ドメイン&gt;</code> を作る（V-13）。パスワードを V-12 に控える</li>
-<li>SMTP の設定を V-12 に控える</li>
+<li>サーバーコントロールパネルの「ドメイン/SSL」→「ドメイン新規追加」→「他社で取得したドメインを移管せずに使う」で、「サブドメインを指定する」にチェックして <code>mail.&lt;ドメイン&gt;</code> を足す</li>
+</ol>
+<ul>
+<li><code>&lt;ドメイン&gt;</code> のゾーンはさくらのクラウドの DNS にあるため、<code>&lt;ドメイン&gt;</code> そのものを足すと「DNSゾーンが既に登録されています」で止まる。サブドメインなら DNS にさわらずに足せる</li>
+<li>「ネームサーバーを <code>ns1.dns.ne.jp</code>・<code>ns2.dns.ne.jp</code> に変えてください」と出ても変えない（変えると <code>&lt;V-01&gt;</code> が引けなくなる）</li>
+</ul>
+<p><strong>送信用のアドレス</strong></p>
+<ol start="2">
+<li>「メール」→「メール一覧」→「新規追加」で、ユーザー名 <code>no-reply</code>（<code>@</code> より左だけ）を作る。送信元は <code>no-reply@mail.&lt;ドメイン&gt;</code>（V-13）。パスワード（12〜50文字）を V-12 に控える</li>
+</ol>
+<ul>
+<li>ユーザーは足したドメインのどれでも使える（<code>no-reply@mail.&lt;ドメイン&gt;</code> でも <code>no-reply@&lt;初期ドメイン&gt;</code> でも同じ）</li>
+<li>パスワードに <code>$</code>・<code>#</code>・<code>"</code>・<code>'</code>・スペースを使わない（<code>.env</code> で別の意味になる）</li>
+</ul>
+<ol start="3">
+<li>「サーバー情報」のホスト名（例 <code>www2160.sakura.ne.jp</code>）を V-12 に控える</li>
 </ol>
 <div class="table-wrap"><table>
 <thead>
@@ -1153,7 +1168,7 @@ done
 <tbody>
 <tr>
 <td>ホスト（<code>SMTP_HOST</code>）</td>
-<td><code>&lt;初期ドメイン&gt;.sakura.ne.jp</code> など、サービスの案内のとおり</td>
+<td>サーバーのホスト名 <code>www〇〇〇〇.sakura.ne.jp</code>（作ったばかりの初期ドメイン <code>〇〇.sakura.ne.jp</code> は、しばらく DNS で引けないことがある）</td>
 </tr>
 <tr>
 <td>ポート・暗号化（<code>SMTP_PORT</code>・<code>SMTP_SECURE</code>）</td>
@@ -1161,17 +1176,53 @@ done
 </tr>
 <tr>
 <td>ユーザー（<code>SMTP_USER</code>）</td>
-<td><code>no-reply@&lt;ドメイン&gt;</code></td>
+<td><code>no-reply@mail.&lt;ドメイン&gt;</code>（<code>EAUTH</code> になるときは <code>no-reply@&lt;初期ドメイン&gt;</code>）</td>
 </tr>
 </tbody>
 </table></div>
-<ol start="3">
-<li>送信元のドメインの DNS に、サービスの案内どおりの SPF（TXT レコード、例 <code>v=spf1 include:&lt;サービスの指定&gt; ~all</code>）と DKIM を登録する</li>
-<li>監視のお知らせの宛先を決めて V-14 に書く</li>
-<li>作業PCから自分あてに1通送り、迷惑メールにならずに届くことを確かめる（3.9 でアプリからも確かめる）</li>
+<p><strong>DNS</strong></p>
+<ol start="4">
+<li>さくらのクラウドの「グローバル」→「DNS」→ <code>&lt;ドメイン&gt;</code> を開き（「追加」はゾーンを作るボタンなので押さない）、「リソースレコード」に次の2つを足して「反映」を押す</li>
 </ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>名前</th>
+<th>タイプ</th>
+<th>値</th>
+<th>TTL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mail</code></td>
+<td>MX</td>
+<td>優先度 <code>10</code>、<code>www〇〇〇〇.sakura.ne.jp.</code>（最後の <code>.</code> も入れる）</td>
+<td>300</td>
+</tr>
+<tr>
+<td><code>mail</code></td>
+<td>TXT</td>
+<td><code>v=spf1 a:www〇〇〇〇.sakura.ne.jp ~all</code>（SPF）</td>
+<td>300</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>MX がないと、送るときに <code>553 5.1.8 ... Domain of sender address ... does not exist</code> で止まる（メールサーバーが送信元のドメインの MX か A を確かめるため）</li>
+<li>「反映」を押すまで保存されない。押したあと、外から見えることを確かめる</li>
+</ul>
+<pre><code class="language-bash">nslookup -type=MX mail.&lt;ドメイン&gt; 8.8.8.8
+nslookup -type=TXT mail.&lt;ドメイン&gt; 8.8.8.8</code></pre>
+<ol start="5">
+<li>監視のお知らせの宛先を決めて V-14 に書く</li>
+<li>3.8 で <code>.env</code> に入れたあと、サーバーで自分あてに1通送り、迷惑メールにならずに届くことを確かめる（3.10 でアプリからも確かめる）</li>
+</ol>
+<pre><code class="language-bash">cd /opt/rpg
+docker compose exec api node -e "import('./functions/shared/mail/smtp.js').then((m) =&gt; m.sendMail({ to: process.argv[1], subject: 'RPG学習アプリ SMTP のテスト', text: '届いたら OK' })).then((id) =&gt; console.log('sent', id)).catch((e) =&gt; { console.error('NG', e.code, e.message); process.exit(1) })" &lt;自分のアドレス&gt;</code></pre>
 <ul>
 <li>サーバーから外への 25番ポートは使わない（587・465 で送る）</li>
+<li>DKIM はまだ入れていない。迷惑メールに入るようなら、メールボックスの案内どおりに <code>mail</code> の TXT を足す</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.7 コンテナレジストリと GitHub</h3>
 <p>レジストリは dev・prod で1つを共用する（dev のときだけ作る。prod では作らない）。</p>
@@ -1366,6 +1417,7 @@ MAIL_SCHEDULE_ENABLED=false
 <ul>
 <li>DB のパスワードに <code>@</code>・<code>/</code>・<code>:</code> が入っているときは URL エンコードする（例：<code>@</code> → <code>%40</code>）</li>
 <li><code>.env</code> は Git に入れない。変えたら <code>docker compose up -d</code> で反映する</li>
+<li>api は起動するときに値を確かめ、<code>MAIL_FROM</code>・<code>SMTP_HOST</code>・<code>AI_API_KEY</code>・S3 のキーなどが空だと止まる（ログに <code>環境変数がありません</code> と出る）。SMTP や AI がまだのときは仮の値を入れれば起動はできる（メールと AI の採点は失敗する）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.9 初回の起動と確認</h3>
 <ol>
@@ -1633,14 +1685,14 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <tr>
 <td>1</td>
 <td>オブジェクトストレージの CORS</td>
-<td>S3 互換 API の <code>put-bucket-cors</code> で設定する想定。使えなければ、画面のアップロードを api 経由にするかを相談する</td>
-<td>dev 構築時</td>
+<td><strong>2026-10-28 に dev で設定できた</strong>：S3 互換 API の <code>put-bucket-cors</code> で <code>rpg-dev-import</code>・<code>rpg-dev-assets</code> に 3.4 の <code>cors.json</code>（<code>AllowedOrigins</code> は <code>https://rpg-dev.rpglearning.net</code>）を入れ、<code>get-bucket-cors</code> で読み戻せた。プリフライト（<code>OPTIONS</code>）は画面のドメインからは 200、ほかのドメインからは 403 になった。2026-10-29 に dev の画面から PDF（<code>rpg-dev-import</code>）と画像（<code>rpg-dev-assets</code>）をアップロードできることも確かめた。prod も同じ手順で設定する</td>
+<td>prod 構築時</td>
 </tr>
 <tr>
 <td>2</td>
 <td>使うドメインと SMTP のサービス</td>
-<td>さくらのドメイン・さくらのメールボックスを例にした。会社のドメイン・メールを使うかを決める</td>
-<td>dev 構築前</td>
+<td><strong>2026-10-30 に dev で送れることを確かめた</strong>：ドメインは <code>rpglearning.net</code>（さくらのドメイン、DNS はさくらのクラウド）、SMTP はさくらのメールボックス（<code>www2160.sakura.ne.jp</code>・587）、送信元は <code>no-reply@mail.rpglearning.net</code>。テストメールとパスワードの再設定のメールが届いた。会社のドメイン・メールに替えるかは prod の前に決める</td>
+<td>prod 構築前</td>
 </tr>
 <tr>
 <td>3</td>
