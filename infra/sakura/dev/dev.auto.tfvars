@@ -5,6 +5,12 @@ ssh_public_keys = [
 ]
 ssh_allowed_cidrs = ["112.70.171.129", "203.140.83.25"]
 site_address      = "rpg-dev.rpglearning.net"
-image             = "rpglearning.sakuracr.jp/rpg-app:dev-20261027-1"
-mail_from         = ""
-alert_email       = ""
+image             = "rpglearning.sakuracr.jp/rpg-app:dev-20261030-3"
+mail_from         = "no-reply@mail.rpglearning.net"
+# alert_email は個人のアドレスのため、ここに書かず環境変数 TF_VAR_alert_email で渡す（リポジトリが公開のため）
+smtp = {
+  host   = "www2160.sakura.ne.jp"
+  port   = 587
+  secure = false
+  user   = "no-reply@mail.rpglearning.net"
+}

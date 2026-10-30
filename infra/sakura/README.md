@@ -22,6 +22,7 @@
 | `TF_VAR_s3_access_key_id`・`TF_VAR_s3_secret_access_key` | V-10 アプリ用のオブジェクトストレージのキー |
 | `TF_VAR_ai_api_key` | V-11 さくらのAI Engine のトークン |
 | `TF_VAR_smtp_password` | V-12 SMTP のパスワード |
+| `TF_VAR_alert_email` | V-14 監視のお知らせの宛先（個人のアドレスのため `dev.auto.tfvars` に書かない） |
 
 ## 作る順番
 
