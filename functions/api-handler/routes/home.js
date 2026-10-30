@@ -9,6 +9,8 @@ import * as quests from '../../shared/db/repositories/quests.js'
 import * as reviews from '../../shared/db/repositories/reviews.js'
 import * as answers from '../../shared/db/repositories/answers.js'
 import * as exp from '../../shared/db/repositories/exp.js'
+// ひとことの AI の設定（scripts/check-ai.mjs も同じ値で確かめる）。上限は推論モデルの考える分も含む
+export const DAILY_MESSAGE_AI = { maxTokens: 800, temperature: 0.8, timeoutMs: 5000 }
 export async function get(ctx) {
   const { user, today } = ctx
   const persona = user.partnerPersona ?? 'encourage'
@@ -40,7 +42,7 @@ async function dailyMessage(ctx, persona, reviewCount) {
     })
     const res = await converse({
       modelId: process.env.MODEL_LIGHT, system: prompt.system, messages: [{ role: 'user', content: [{ text: prompt.user }] }],
-      maxTokens: 200, temperature: 0.8, timeoutMs: 5000, purpose: 'daily-message', logger: log
+      ...DAILY_MESSAGE_AI, purpose: 'daily-message', logger: log
     })
     const text = res.text.trim()
     if (!text) throw new Error('empty')

@@ -269,10 +269,13 @@ done
 ```bash
 curl -s https://api.ai.sakura.ad.jp/v1/chat/completions \
   -H "Authorization: Bearer <V-11>" -H "Content-Type: application/json" \
-  -d '{"model":"gpt-oss-120b","messages":[{"role":"user","content":"こんにちは"}],"max_tokens":50}'
+  -d '{"model":"gpt-oss-120b","messages":[{"role":"user","content":"こんにちは"}],"max_tokens":300,"reasoning_effort":"low"}'
 ```
 
 - 応答の `choices[0].message.content` に文章が入っていれば OK
+- `gpt-oss-120b` は答える前に考える（推論）モデルで、考えた分も `max_tokens` に入る。`content` が空で `finish_reason` が `length` なら、`max_tokens` を増やして試す
+- `reasoning_effort` で `400` が返るときは、`reasoning_effort` を外して試す。外して通るなら、3.8 の `.env` に `AI_REASONING_EFFORT=`（空）を足す（詳細設計書 M-A05）
+- 指示文・速さ・答えの形は、アプリを起動したあとに 3.9 の No.5 で確かめる
 
 ### 3.6 メール（SMTP）
 
@@ -450,8 +453,12 @@ docker compose logs --since 5m api | grep -E 'migrate|ERROR'
 | --- | --- | --- |
 | 1 | ブラウザで `https://<V-01>/api/health` | `{"status":"ok"}`（証明書のエラーが出ない） |
 | 2 | `https://<V-01>/` | ログイン画面（S-01）が出る |
-| 3 | `docker compose logs api | grep migrate.done` | 適用したマイグレーション `V001`・`V002`・`V003` |
-| 4 | `docker compose logs worker | grep schedule` | エラーが出ていない |
+| 3 | `docker compose logs api \| grep migrate.done` | 適用したマイグレーション `V001`・`V002`・`V003` |
+| 4 | `docker compose logs worker \| grep schedule` | エラーが出ていない |
+| 5 | `docker compose exec api node scripts/check-ai.mjs` | AI の4つの用途（解説コメント・ひとこと・採点・抽出）がすべて `OK`。表を構築の記録に貼る |
+
+- No.5 は、本番と同じ指示文・モデル・設定で、見本の問題（個人情報なし）を AI に送る。DB・メールにはつながない。`NG` のときは表の下の「見るところ」を見る
+- 打ち切り時間を決めるため（詳細設計書 12 No.3）、`--long --repeat=3` を付けて本当にかかる時間を測り、時間の列に `⚠`（本番の打ち切りを超えた）が出ないかを見る。用途を絞るときは `--only=grading,extraction`
 
 ### 3.10 最初のシステム管理者
 
@@ -576,8 +583,8 @@ MODEL_HIGH=<Sonnet のモデルID>
 MODEL_LIGHT=<Haiku のモデルID>
 ```
 
-4. `docker compose up -d` で反映し、採点・取り込み（PDF・画像）・ひとことを試す
-5. さくらのAI Engine と採点の質・速さ・費用を比べ、よければ prod も同じように替える
+4. `docker compose up -d` で反映し、`docker compose exec api node scripts/check-ai.mjs --long --repeat=3` で4つの用途が `OK` になることを確かめてから、採点・取り込み（PDF・画像）・ひとことを画面で試す
+5. さくらのAI Engine と採点の質・速さ・費用を比べ（check-ai.mjs の表を並べる）、よければ prod も同じように替える
 6. 戻すときは `AI_PROVIDER=sakura` と `MODEL_*` を戻して `docker compose up -d`
 
 - 切り替えでコードは変えない（詳細設計書 7章）。画像の取り込みは Bedrock のときだけ使える

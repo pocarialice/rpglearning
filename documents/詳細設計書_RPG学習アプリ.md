@@ -176,6 +176,7 @@ rpglearning/
 │  ├─ build-web.mjs               # dist/web-{env}/ を作る（config差し込み・キャッシュ名更新）
 │  ├─ migrate.mjs                 # マイグレーションを流す（手動で使うとき）
 │  ├─ create-admin.mjs            # 最初のシステム管理者を作る（構築手順書）
+│  ├─ check-ai.mjs                # AI の4つの用途を本番と同じ設定で呼んで確かめる（構築手順書 3.9）
 │  └─ test-report.mjs             # モジュールテスト結果報告書を作る
 └─ aws/                           # AWS 版（退避。aws/README.md）
 ```
@@ -299,6 +300,7 @@ rpglearning/
 | `AUTH_SECRET`      | api                           | アクセストークンの署名の鍵（32文字以上。漏れたら作り直す＝全員がログインし直す）     |
 | `AI_PROVIDER`      | すべて                           | `sakura`（既定）・`bedrock`                 |
 | `AI_BASE_URL`・`AI_API_KEY` | すべて（sakura のとき）       | さくらのAI Engine の URL（既定 `https://api.ai.sakura.ad.jp/v1`）とアカウントトークン |
+| `AI_REASONING_EFFORT` | すべて（sakura のとき・任意） | 推論モデルの考える深さ（`low`＝既定・`medium`・`high`）。空にすると送らない（M-A05） |
 | `AWS_REGION`・`AWS_ACCESS_KEY_ID`・`AWS_SECRET_ACCESS_KEY` | すべて（bedrock のとき） | Bedrock の呼び出し（`bedrock:InvokeModel` だけを許した IAM ユーザー） |
 | `MODEL_HIGH`       | worker                        | 高精度モデル（`gpt-oss-120b`／Sonnet のモデルID）                          |
 | `MODEL_LIGHT`      | api                           | 軽量モデル（`gpt-oss-120b`／Haiku のモデルID）                           |
@@ -530,12 +532,13 @@ AI の呼び出しは、必ず差し替え口 `ai/client.js` を通す（`gradin
 
 | 項目 | 設計 |
 | --- | --- |
-| API | `POST {AI_BASE_URL}/chat/completions`（OpenAI 互換）。`Authorization: Bearer {AI_API_KEY}`。本文は `{ model, messages, max_tokens, temperature }` |
+| API | `POST {AI_BASE_URL}/chat/completions`（OpenAI 互換）。`Authorization: Bearer {AI_API_KEY}`。本文は `{ model, messages, max_tokens, temperature, reasoning_effort }` |
+| 考える深さ | `gpt-oss-120b` は答える前に考える（推論）モデルで、考えた分も `max_tokens` に入る。短い用途でも答えが残るよう、`reasoning_effort` を既定 `low` で送る（`AI_REASONING_EFFORT` で変える。空なら送らない。受け付けない API のとき用） |
 | メッセージの変換 | `system` を先頭の `role: system` にし、Converse の形（`content` がブロックの配列）を文字列にする（`text` のブロックを改行でつなぐ）。文書・画像のブロックがあれば送らずに `AI_ERROR`（「このAIは文書・画像を読めません」） |
 | 打ち切り | `AbortController` で `timeoutMs` 後に中止し、`AI_TIMEOUT` |
 | 失敗 | HTTP の 4xx・5xx、通信の失敗は `AI_ERROR`（`cause` に `HTTP_429` など）。やり直しは呼び出し側（採点の JSON のやり直し・取り込みのジョブのやり直し）に任せる |
 | 戻り値 | `choices[0].message.content` を `text`、`usage.prompt_tokens`・`completion_tokens` をトークン数、`finish_reason` の `stop`・`length` を `end_turn`・`max_tokens` にする |
-| ログ | `ai.converse`（`provider: sakura`、用途、モデル、トークン数、所要時間）。本文・API キーは出さない |
+| ログ | `ai.converse`（`provider: sakura`、用途、モデル、トークン数、考えた分のトークン数 `reasoningTokens`（`usage.completion_tokens_details.reasoning_tokens`。なければ null）、所要時間）。答えが空で `max_tokens` で止まったときは、あわせて `ai.empty_answer`（WARN）を出す。本文・API キーは出さない |
 
 #### M-A01 `ai/bedrock.js`
 
@@ -1088,9 +1091,12 @@ AI はすべて差し替え口 `ai/client.js`（M-A06）から呼ぶ。呼び出
 | 用途           | モジュール（prompts/）       | モデル            | temperature | maxTokens | 打ち切り | 失敗時                    |
 | ------------ | -------------------- | -------------- | ----------- | --------- | ---- | ---------------------- |
 | 問題・キーワードの抽出  | `extraction.js`      | `MODEL_HIGH`   | 0           | 8,000     | 120秒 | ジョブを再試行（4.4）           |
-| 説明の採点        | `grading.js`         | `MODEL_HIGH`   | 0           | 1,500     | 25秒  | 採点を `failed`（4.3）      |
-| 択一の解説コメント    | `comment.js`         | `MODEL_LIGHT`  | 0.7         | 300       | 5秒   | 問題の解説文をそのまま表示          |
-| ホームのひとこと     | `daily-message.js`   | `MODEL_LIGHT`  | 0.8         | 200       | 5秒   | 定型文を表示（保存しない）          |
+| 説明の採点        | `grading.js`         | `MODEL_HIGH`   | 0           | 3,000     | 25秒  | 採点を `failed`（4.3）      |
+| 択一の解説コメント    | `comment.js`         | `MODEL_LIGHT`  | 0.7         | 1,000     | 5秒   | 問題の解説文をそのまま表示          |
+| ホームのひとこと     | `daily-message.js`   | `MODEL_LIGHT`  | 0.8         | 800       | 5秒   | 定型文を表示（保存しない）          |
+
+- maxTokens は推論モデル（`gpt-oss-120b`）の考える分を含む上限。払うのは実際に出したトークンだけなので、Bedrock でも大きくして困らない
+- temperature・maxTokens・打ち切りは、呼び出し側のモジュールが定数（`EXTRACTION_AI`・`GRADING_AI`・`COMMENT_AI`・`DAILY_MESSAGE_AI`）として持つ。`scripts/check-ai.mjs` も同じ定数を使い、本番と同じ設定で確かめる（構築手順書 3.9 No.5）
 
 ### 7.2 パートナーの指示（`ai/persona.js`）
 
@@ -2033,7 +2039,7 @@ flowchart LR
 | -- | ------------------------------- | --------------------------------------------------------- | --------------- |
 | 1  | ニックネームの重複確認の同時登録                | アプリで確認するだけのため、同じ瞬間の登録で重複する可能性がわずかに残る。見つかったら管理者が片方を変更してもらう | パイロット1か月後       |
 | 2  | 取り込みのテキスト分割の長さ                  | 8,000文字ずつ。抽出の精度を見て調整                                       | dev での試行時       |
-| 3  | AI の打ち切り時間（抽出120秒）          | 10ページのPDFで実測して調整（さくらのAI Engine と Bedrock の両方）                                           | dev での試行時       |
+| 3  | AI の打ち切り時間（抽出120秒）          | 10ページのPDFで実測して調整（さくらのAI Engine と Bedrock の両方）。`scripts/check-ai.mjs --long --repeat=3` で用途ごとの時間・考えた分のトークン数を測る（構築手順書 3.9 No.5）                                           | dev での試行時       |
 | 4  | `login_logs` の保持期間              | 永続（1年で約30万行）。Phase 3 で1年より古い行の削除を検討                         | Phase 3         |
 | 5  | prod の確認用テストコース                 | `[確認用]` コースを作り、ランキング・ダッシュボードの集計から除く設定は設けない（受講者が確認用の利用者だけのため） | パイロット開始前        |
 | 6  | リリースの自動化                        | **決定（2026-10-27）**：イメージの作成は GitHub Actions、サーバーへの反映は人が SSH で行う（第11章）。サーバーへの反映の自動化（サーバーで定期的に pull するなど）は、リリースの頻度が増えたら検討 | Phase 2 の計画時     |

@@ -169,7 +169,7 @@ describe('M-H06 answers（A-08）', () => {
       badges: []
     })
     const input = br.commandCalls(ConverseCommand)[0].args[0].input
-    expect(input).toMatchObject({ modelId: 'model-light', inferenceConfig: { maxTokens: 300, temperature: 0.7 } })
+    expect(input).toMatchObject({ modelId: 'model-light', inferenceConfig: { maxTokens: 1000, temperature: 0.7 } })
   })
   it('MT-H06-08 冒険IDなし・クエスト達成・バッジ・コメントが空', async () => {
     br.on(ConverseCommand).resolves(converseOutput(''))

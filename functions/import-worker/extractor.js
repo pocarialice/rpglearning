@@ -6,6 +6,8 @@ import { buildExtractionPrompt } from '../shared/ai/prompts/extraction.js'
 export const TEXT_CHUNK_CHARS = 8000
 export const MAX_CHOICES = 10
 export const MAX_KEYWORDS = 3
+// 抽出の AI の設定（scripts/check-ai.mjs も同じ値で確かめる）
+export const EXTRACTION_AI = { maxTokens: 8000, temperature: 0, timeoutMs: 120000 }
 // テキストを段落（空行）の切れ目で、max 文字以下のかたまりに分ける。1段落が max を超えるときだけ途中で切る
 export function splitText(text, max = TEXT_CHUNK_CHARS) {
   const paragraphs = String(text).split(/\n{2,}/).filter((p) => p.trim() !== '')
@@ -56,8 +58,7 @@ export function normalizeDraft(q) {
 export async function extractChunk(chunk, { log }) {
   const prompt = buildExtractionPrompt(chunk)
   const res = await converse({
-    modelId: process.env.MODEL_HIGH, system: prompt.system, messages: prompt.messages, maxTokens: 8000, temperature: 0,
-    timeoutMs: 120000, purpose: 'extraction', logger: log
+    modelId: process.env.MODEL_HIGH, system: prompt.system, messages: prompt.messages, ...EXTRACTION_AI, purpose: 'extraction', logger: log
   })
   const obj = extractJson(res.text)
   const shape = validateShape(obj, EXTRACTION_SCHEMA)

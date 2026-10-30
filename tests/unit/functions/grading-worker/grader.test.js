@@ -73,7 +73,7 @@ describe('M-W01 grading-worker', () => {
     expect(users.addExp.mock.calls[0][1]).toEqual({ exp: 60, level: 3, today: '2026-10-20' })
     expect(db.commits()).toBe(1)
     const input = br.commandCalls(ConverseCommand)[0].args[0].input
-    expect(input).toMatchObject({ modelId: 'model-high', inferenceConfig: { maxTokens: 1500, temperature: 0 } })
+    expect(input).toMatchObject({ modelId: 'model-high', inferenceConfig: { maxTokens: 3000, temperature: 0 } })
   })
   it('MT-W01-02 合格ライン', async () => {
     replies([grading(30, 20, 10)])
