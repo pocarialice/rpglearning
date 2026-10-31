@@ -191,3 +191,37 @@ describe('M-H06 answers（A-08）', () => {
     expect(quests.saveProgress.mock.calls[0][0].map((q) => q.code)).toEqual(['Q-01'])
   })
 })
+describe('M-H05 quests（A-07b キーワード説明の問いかけ）', () => {
+  const ASK = { question: 'ドメイン名からIPアドレスを調べるとき、どのサーバーにどの順で聞くの？', angles: ['しくみ', '流れ'] }
+  const ask = (keywordId = 'kw_123') => call({ method: 'POST', path: '/api/quests/explain-question', body: { keywordId } })
+  beforeEach(() => {
+    br.reset()
+    br.on(ConverseCommand).resolves(converseOutput(`はい。${JSON.stringify(ASK)}`))
+    users.findBySub.mockResolvedValue({ ...learner })
+    questions.findKeyword.mockImplementation(async (id) => (id === 123 ? { keywordId: 123, keyword: 'DNS', questionId: 42, courseId: 3, body: 'DNSの役割は？', explanation: '名前解決の解説', status: 'published' } : null))
+  })
+  it('MT-H05-09 パートナーが観点を選んで質問する', async () => {
+    const res = await ask()
+    expect(res.statusCode).toBe(200)
+    expect(parse(res)).toEqual({ partnerName: 'ミナ', persona: 'encourage', prompt: { text: ASK.question, angles: ASK.angles }, fallback: false })
+    const input = br.commandCalls(ConverseCommand)[0].args[0].input
+    expect(input.modelId).toBe('model-light')
+    expect(input.system[0].text).toContain('ミナ（励まし型')
+    expect(input.messages[0].content[0].text).toContain('<keyword>DNS</keyword>')
+  })
+  it('MT-H05-10 AI の失敗・形の崩れは定型文で返す', async () => {
+    const fallback = { partnerName: 'ミナ', persona: 'encourage', prompt: { text: '「DNS」とは何か、定義としくみを自分の言葉で説明してください。', angles: ['定義', 'しくみ'] }, fallback: true }
+    br.on(ConverseCommand).rejects(awsError('InternalServerException'))
+    expect(parse(await ask())).toEqual(fallback)
+    br.on(ConverseCommand).resolves(converseOutput('{"question":"なぜ？なぜ？","angles":[]}'))
+    expect(parse(await ask())).toEqual(fallback)
+  })
+  it('MT-H05-11 他コース・非公開・ないキーワード', async () => {
+    expect((await ask('kw_999')).statusCode).toBe(404)
+    questions.findKeyword.mockResolvedValue({ keywordId: 123, keyword: 'DNS', courseId: 9, status: 'published' })
+    expect((await ask()).statusCode).toBe(404)
+    questions.findKeyword.mockResolvedValue({ keywordId: 123, keyword: 'DNS', courseId: 3, status: 'draft' })
+    expect((await ask()).statusCode).toBe(404)
+    expect(br.commandCalls(ConverseCommand)).toHaveLength(0)
+  })
+})

@@ -130,7 +130,7 @@ describe('M-F13 S-05 キーワード説明', () => {
     api.apiGet.mockReturnValueOnce(new Promise((r) => { resolve = r }))
     click('[data-action="submit"]')
     await flush()
-    expect(api.apiPost).toHaveBeenCalledWith('/gradings', { keywordId: 'kw_123', text: 'あ'.repeat(60), isReview: false, adventureId: 'adv_1' })
+    expect(api.apiPost).toHaveBeenCalledWith('/gradings', { keywordId: 'kw_123', text: 'あ'.repeat(60), isReview: false, adventureId: 'adv_1', prompt: explain.fallbackPrompt('VPC') })
     expect(root.querySelector('.app-waiting .gd-dots')).not.toBeNull()
     expect(root.querySelector('.app-waiting').textContent).toContain('セージが採点しています')
     resolve({ status: 'done', score: 72, passed: true, ...OUTCOME })
@@ -164,6 +164,49 @@ describe('M-F13 S-05 キーワード説明', () => {
     expect(root.querySelector('[data-action="submit"]').disabled).toBe(false)
   })
 })
+describe('M-F13 S-05 パートナーの問いかけ（A-07b）', () => {
+  const PROMPT = { text: 'VPCの中を<public>と<private>に分けるのはなぜ？', angles: ['目的', 'しくみ'] }
+  it('MT-F13-05 質問を考えている間は入力欄を出さず、届いたら質問と観点を出して採点に添える', async () => {
+    setup({ quest: EXPLAIN_Q, adventureId: 'adv_1' })
+    let resolve
+    api.apiPost.mockReturnValueOnce(new Promise((r) => { resolve = r }))
+    const done = explain.render(root)
+    await flush()
+    expect(api.apiPost).toHaveBeenCalledWith('/quests/explain-question', { keywordId: 'kw_123' })
+    expect(root.querySelector('.app-ask .gd-dots')).not.toBeNull()
+    expect(root.querySelector('.app-ask').textContent).toContain('セージが質問を考えています')
+    expect(root.querySelector('.app-explain-form').hidden).toBe(true)
+    resolve({ partnerName: 'セージ', persona: 'logic', prompt: PROMPT, fallback: false })
+    await done
+    expect(root.querySelector('.app-ask .gd-bubble').textContent).toContain(PROMPT.text)
+    expect(root.querySelector('.app-ask .gd-bubble').innerHTML).toContain('&lt;public&gt;')
+    expect([...root.querySelectorAll('.app-ask .app-angle')].map((e) => e.textContent)).toEqual(['#目的', '#しくみ'])
+    expect(root.querySelector('.app-explain-form').hidden).toBe(false)
+    expect(root.querySelector('label[for="explain-text"]').textContent).toBe('あなたの回答（50〜400文字）')
+    expect(store.getState().quest.prompt).toEqual(PROMPT)
+    const ta = root.querySelector('#explain-text')
+    ta.value = 'あ'.repeat(60)
+    ta.dispatchEvent(new Event('input'))
+    api.apiPost.mockResolvedValue({ gradingId: 'gr_456' })
+    api.apiGet.mockResolvedValue({ status: 'done', score: 72, passed: true, ...OUTCOME })
+    click('[data-action="submit"]')
+    await flush()
+    await flush()
+    expect(api.apiPost).toHaveBeenLastCalledWith('/gradings', { keywordId: 'kw_123', text: 'あ'.repeat(60), isReview: false, adventureId: 'adv_1', prompt: PROMPT })
+    expect(store.getState().result.quest.prompt).toEqual(PROMPT)
+  })
+  it('MT-F13-06 読み込めないときは定型の質問、開き直したときは同じ質問を使い回す', async () => {
+    setup({ quest: EXPLAIN_Q })
+    api.apiPost.mockRejectedValue(new ApiError('NETWORK', 0))
+    await explain.render(root)
+    expect(root.querySelector('.app-ask .gd-bubble').textContent).toContain('「VPC」とは何か、定義としくみを自分の言葉で説明してください。')
+    expect(root.querySelector('.app-explain-form').hidden).toBe(false)
+    setup({ quest: { ...EXPLAIN_Q, prompt: PROMPT } })
+    await explain.render(root)
+    expect(api.apiPost).not.toHaveBeenCalled()
+    expect(root.querySelector('.app-ask .gd-bubble').textContent).toContain(PROMPT.text)
+  })
+})
 describe('M-F14 S-06 結果・フィードバック', () => {
   it('MT-F14-01 択一：正解・選んだ選択肢・EXP・復習段階・達成を表示する', async () => {
     const res = { correct: false, correctChoice: 3, explanation: '正解はウ', comment: { partnerName: 'セージ', persona: 'logic', text: '次はここを押さえましょう' }, ...OUTCOME }
@@ -190,6 +233,30 @@ describe('M-F14 S-06 結果・フィードバック', () => {
     expect(root.querySelector('.gd-bubble').textContent).toContain('VPCは<論理的に>分離された')
     expect(root.querySelector('.gd-review-kind').textContent).toBe('説明')
     expect(root.textContent).not.toContain('達成')
+  })
+  it('MT-F14-06 説明：パートナーの質問と観点ごとの答え方', async () => {
+    const prompt = { text: 'なぜ<分ける>の？', angles: [{ label: '目的', status: 'full' }, { label: 'しくみ', status: 'partial' }, { label: '違い', status: 'none' }, { label: '例', status: 'unknown' }] }
+    const res = { status: 'done', score: 80, passed: true, modelAnswer: '模範', missingPoints: [], comment: { partnerName: null, persona: 'rival', text: 'やるな' }, prompt, ...OUTCOME, quests: [], badges: [] }
+    setup({ result: { kind: 'explain', quest: EXPLAIN_Q, res } })
+    await result.render(root)
+    expect(root.textContent).toContain('レンの質問')
+    expect(root.textContent).toContain('なぜ<分ける>の？')
+    const items = [...root.querySelectorAll('.app-angle-results li')].map((e) => e.textContent)
+    expect(items).toEqual(['#目的○答えられた', '#しくみ△一部', '#違い×まだ', '#例'])
+    setup({ result: { kind: 'explain', quest: EXPLAIN_Q, res: { ...res, prompt: undefined } } })
+    await result.render(root)
+    expect(root.textContent).not.toContain('の質問')
+  })
+  it('MT-F14-07 AI の文章は【】を太字にして改行する', async () => {
+    const res = { status: 'done', score: 80, passed: true, modelAnswer: '【定義】論理的に分離された網。【しくみ】サブネットに分ける。', missingPoints: ['【しくみ】ルート'], comment: { persona: 'logic', text: '<i>よい</i>説明です。' }, prompt: { text: '【目的】を教えて', angles: [] }, ...OUTCOME, quests: [], badges: [] }
+    setup({ result: { kind: 'explain', quest: EXPLAIN_Q, res } })
+    await result.render(root)
+    const bubble = root.querySelector('.gd-bubble')
+    expect([...bubble.querySelectorAll('strong')].map((e) => e.textContent)).toEqual(['【定義】', '【しくみ】'])
+    expect(bubble.innerHTML).toContain('網。<br><strong>【しくみ】</strong>')
+    expect(bubble.querySelector('i')).toBeNull()
+    expect(root.querySelector('.app-list strong').textContent).toBe('【しくみ】')
+    expect(root.querySelector('.gd-card .body strong').textContent).toBe('【目的】')
   })
   it('MT-F14-03 「次の問題へ」は同じ冒険で A-07 を呼ぶ', async () => {
     const res = { correct: true, correctChoice: 1, explanation: '', comment: { text: 'いいね' }, ...OUTCOME }

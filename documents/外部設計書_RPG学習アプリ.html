@@ -1396,6 +1396,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>正誤の表示</td>
 <td>色だけでなく ○×と文字を必ず付ける</td>
 </tr>
+<tr>
+<td>AIの文章</td>
+<td>パートナーのひとこと・コメント・問いかけ・模範説明・足りない観点は、<code>【しくみ】</code> のような【】の小見出しを太字にし、文の切れ目にある小見出しの前で改行する。60文字以上の段落は「。」ごとに改行する（かぎかっこの中の「。」では改行しない）。【】以外は強調しない</td>
+</tr>
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 AIパートナー設計</h3>
@@ -1668,8 +1672,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>title</code> 書体</td>
 </tr>
 <tr>
+<td>問いかけ</td>
+<td>パートナーが「どの観点で説明してほしいか」を質問する（例：「なんで3回もやりとりが必要なの？」）。下に観点のタグ（<code>#しくみ</code> <code>#目的</code>）と「この観点で答えてね」。質問を考えている間は「〇〇が質問を考えています」と待機演出を出し、入力欄は出さない</td>
+<td><code>PartnerBubble</code>（考え中は <code>thinking</code>）</td>
+</tr>
+<tr>
 <td>入力欄</td>
-<td>説明文（50〜400文字）と文字数（下記）</td>
+<td>「あなたの回答」（50〜400文字）と文字数（下記）</td>
 <td>テキストエリア</td>
 </tr>
 <tr>
@@ -1711,7 +1720,34 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>採点への反映</td>
-<td>説明文はそのまま採点AIに渡す。書き方（見出しの有無など）で点数を変えない</td>
+<td>説明文はそのまま採点AIに渡す。書き方（見出しの有無など）で点数を変えない。パートナーの質問もいっしょに渡し、質問の観点に答えられているかで「重要な観点の網羅」を付ける</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>パートナーの問いかけのルール</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>作るタイミング</td>
+<td>説明問題が出るたびに AI（軽量）が作る。復習のたびに別の観点から問われる。同じ出題の画面を開き直したときは同じ質問を出す</td>
+</tr>
+<tr>
+<td>観点</td>
+<td>出典の問題と解説から、試験で問われやすい観点（定義・しくみ・目的・違い・使いどころ・具体例など）を1〜2つ選ぶ</td>
+</tr>
+<tr>
+<td>口調</td>
+<td>選ばれたパートナーの性格・口調（3.6.1）で質問する。答えやヒントになる用語は質問に書かない</td>
+</tr>
+<tr>
+<td>失敗したとき</td>
+<td>学習者を待たせないよう、定型の質問「「{キーワード}」とは何か、定義としくみを自分の言葉で説明してください。」（観点：定義・しくみ）を出す</td>
 </tr>
 </tbody>
 </table></div>
@@ -1720,6 +1756,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <div class="mk-body">
 <p class="mk-meta">4 / 10問　<span class="mk-tag">復習</span></p>
 <div class="gd-card"><p class="mk-meta" style="margin:0">次のキーワードを説明してください</p><p class="gd-serif mk-title">公開鍵暗号方式</p><p class="mk-meta mk-fold"><i class="fa-solid fa-chevron-down"></i> 出典の問題文を見る</p></div>
+<div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ<span>励まし型</span></div>鍵を2つに分けると、どんないいことがあるの？HTTPSでの使われ方も教えてほしいな！</div></div>
+<p class="mk-meta"><span class="mk-tag">#目的</span> <span class="mk-tag">#使いどころ</span> この観点で答えてね</p>
+<p class="mk-meta" style="margin:0"><b>あなたの回答</b>（50〜400文字）</p>
 <div class="mk-ta">暗号化と復号に別々の鍵を使う方式。公開鍵で暗号化したデータは、対になる秘密鍵でしか復号できない。HTTPSの鍵交換や電子署名で使われている…</div>
 <div class="mk-count"><span><b>212</b> / 400文字</span></div>
 <button class="gd-btn gd-btn-primary gd-btn-block" type="button">採点してもらう</button>
@@ -1732,7 +1771,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ<span>採点しています</span></div><span class="gd-dots"><i></i><i></i><i></i></span></div></div>
 <p class="mk-meta" style="text-align:center">最大30秒ほどかかります</p>
 </div>
-</div><p class="mk-cap">採点待ち（2秒ごとに結果を確認）</p></div></div><p class=mock-note>演習中は下部ナビを隠し、操作を「採点してもらう」1つに絞る。</p></div>
+</div><p class="mk-cap">採点待ち（2秒ごとに結果を確認）</p></div></div><p class=mock-note>演習中は下部ナビを隠し、操作を「採点してもらう」1つに絞る。パートナーの質問が届くまでは「ミナが質問を考えています」と待機演出を出し、入力欄は出さない。</p></div>
 <h4>S-06 結果・フィードバック</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -1745,7 +1784,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>結果</td>
-<td>択一：○×と正解。説明：点数と合格ライン</td>
+<td>択一：○×と正解。説明：パートナーの質問、観点ごとの答え方（○ 答えられた・△ 一部・× まだ）、点数と合格ライン</td>
 <td><code>ChoiceOption</code> の判定状態 / <code>ScoreMeter</code></td>
 </tr>
 <tr>
@@ -2107,7 +2146,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>F-04</td>
 <td>キーワード説明</td>
 <td>S-05、S-06</td>
-<td><code>POST /api/gradings</code>、<code>GET /api/gradings/{id}</code></td>
+<td><code>POST /api/quests/explain-question</code>、<code>POST /api/gradings</code>、<code>GET /api/gradings/{id}</code></td>
 <td>○</td>
 </tr>
 <tr>
@@ -2815,6 +2854,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>学習者</td>
 </tr>
 <tr>
+<td>A-07b</td>
+<td>POST</td>
+<td><code>/quests/explain-question</code></td>
+<td>説明問題のパートナーの問いかけ（観点を選んだ質問）</td>
+<td>学習者</td>
+</tr>
+<tr>
 <td>A-08</td>
 <td>POST</td>
 <td><code>/answers/choice</code></td>
@@ -2992,21 +3038,34 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 主なAPIの入出力</h3>
-<p><strong>A-09 採点依頼</strong></p>
+<p><strong>A-07b 説明問題の問いかけ</strong></p>
 <pre><code class="language-json">// リクエスト
-{&quot;keywordId&quot;: &quot;kw_123&quot;, &quot;text&quot;: &quot;【定義】...\n【しくみ】...&quot;, &quot;isReview&quot;: true}
+{&quot;keywordId&quot;: &quot;kw_123&quot;}
+// レスポンス 200（AI が失敗したときは定型の質問で fallback: true）
+{&quot;partnerName&quot;: &quot;ミナ&quot;, &quot;persona&quot;: &quot;encourage&quot;,
+ &quot;prompt&quot;: {&quot;text&quot;: &quot;TCPの接続を始めるとき、なんで3回もやりとりが必要なの？&quot;, &quot;angles&quot;: [&quot;しくみ&quot;, &quot;目的&quot;]},
+ &quot;fallback&quot;: false}
+</code></pre>
+<p><strong>A-09 採点依頼</strong></p>
+<pre><code class="language-json">// リクエスト（prompt は A-07b の問いかけ。省略したときはキーワード全体の説明として採点する）
+{&quot;keywordId&quot;: &quot;kw_123&quot;, &quot;text&quot;: &quot;【定義】...\n【しくみ】...&quot;, &quot;isReview&quot;: true,
+ &quot;prompt&quot;: {&quot;text&quot;: &quot;TCPの接続を始めるとき、なんで3回もやりとりが必要なの？&quot;, &quot;angles&quot;: [&quot;しくみ&quot;, &quot;目的&quot;]}}
 // レスポンス 202
 {&quot;gradingId&quot;: &quot;gr_456&quot;, &quot;status&quot;: &quot;processing&quot;}
 </code></pre>
 <p><strong>A-10 採点結果</strong></p>
 <pre><code class="language-json">{&quot;status&quot;: &quot;done&quot;, &quot;score&quot;: 72, &quot;passed&quot;: true,
  &quot;modelAnswer&quot;: &quot;...&quot;, &quot;missingPoints&quot;: [&quot;...&quot;],
+ &quot;prompt&quot;: {&quot;text&quot;: &quot;...&quot;, &quot;angles&quot;: [{&quot;label&quot;: &quot;しくみ&quot;, &quot;status&quot;: &quot;full&quot;}, {&quot;label&quot;: &quot;目的&quot;, &quot;status&quot;: &quot;partial&quot;}]},
  &quot;comment&quot;: {&quot;partnerName&quot;: &quot;ミナ&quot;, &quot;persona&quot;: &quot;encourage&quot;, &quot;text&quot;: &quot;...&quot;},
  &quot;exp&quot;: {&quot;gained&quot;: 45, &quot;reviewBonus&quot;: true, &quot;level&quot;: 5, &quot;levelUp&quot;: false, &quot;expInLevel&quot;: 410, &quot;next&quot;: 690},
  &quot;review&quot;: {&quot;stage&quot;: 3, &quot;nextDate&quot;: &quot;2026-11-02&quot;},
  &quot;quests&quot;: [{&quot;id&quot;: &quot;Q-03&quot;, &quot;done&quot;: true, &quot;reward&quot;: 30}],
  &quot;badges&quot;: []}
 </code></pre>
+<ul>
+<li><code>prompt</code> は問いかけつきで採点したときだけ入る。<code>status</code> は <code>full</code>（答えられた）・<code>partial</code>（一部）・<code>none</code>（まだ）・<code>unknown</code>（AI が判定を返さなかった。印を出さない）</li>
+</ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 CSV出力（S-12）</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -3062,10 +3121,17 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>1回あたり10ページずつ分けて送る（さくらのAI Engine では取り出した文字を送る）</td>
 </tr>
 <tr>
+<td>説明問題の問いかけ</td>
+<td>軽量</td>
+<td>api</td>
+<td>JSON（質問・観点）</td>
+<td>8秒で打ち切り。失敗したら定型の質問を表示</td>
+</tr>
+<tr>
 <td>説明の採点</td>
 <td>高精度</td>
 <td>worker（採点）</td>
-<td>JSON（点数・模範説明・不足観点・コメント）</td>
+<td>JSON（点数・模範説明・不足観点・コメント・観点ごとの答え方）</td>
 <td>25秒で打ち切り</td>
 </tr>
 <tr>
@@ -3100,7 +3166,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>入力</td>
-<td>キーワード、出典の問題と解説、学習者の説明文</td>
+<td>キーワード、出典の問題と解説、パートナーの質問と観点、学習者の説明文</td>
 </tr>
 <tr>
 <td>出力</td>

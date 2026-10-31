@@ -5,7 +5,7 @@ import { partnerBubble, imageFor } from '../../components/partner-bubble.js'
 import { questCard } from '../../components/quest-card.js'
 import { button } from '../../components/button.js'
 import { loading, errorBand, errorMessage } from '../../components/status.js'
-import { escapeHtml, formatExp } from '../../logic/format.js'
+import { escapeHtml, formatExp, aiText } from '../../logic/format.js'
 import { goNextQuest } from './adventure.js'
 export const M_HOME_ERROR = 'ホームを読み込めませんでした。もう一度お試しください'
 export const M_START_ERROR = '冒険を始められませんでした。もう一度お試しください'
@@ -37,7 +37,7 @@ export async function render(root) {
 <h1 class="app-sr-only">ホーム</h1>
 ${expBar({ level: home.level, exp: home.expInLevel, next: home.next, title: home.streakDays ? `連続 ${home.streakDays}日` : '' })}
 <p class="meta app-total">累計 ${formatExp(home.totalExp)} EXP</p>
-${partnerBubble({ name: home.message?.partnerName, persona: home.message?.persona, text: home.message?.text ?? '', imageUrl: imageFor(getState().user?.partner, home.message?.persona) })}
+${partnerBubble({ name: home.message?.partnerName, persona: home.message?.persona, html: aiText(home.message?.text), imageUrl: imageFor(getState().user?.partner, home.message?.persona) })}
 <section class="app-section" aria-labelledby="quest-h"><h2 id="quest-h" class="title">本日の依頼</h2>
 <div class="app-stack">${quests.map((q) => questCard({ title: q.title, reward: q.reward, current: q.progress, target: q.target, done: q.done })).join('') || '<p class="meta">今日の依頼はまだ届いていない</p>'}</div></section>
 ${reviewCard(home.review)}${release}`

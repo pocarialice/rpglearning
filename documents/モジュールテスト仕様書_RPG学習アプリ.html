@@ -1981,8 +1981,8 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-D03-29</td>
 <td>gradings の各関数</td>
-<td><code>create</code>・<code>find</code>（自分／利用者指定なし／行なし）・<code>fail</code>・<code>deleteOlderThan</code></td>
-<td>結果のJSONを直す、<code>fail</code> は <code>status='processing'</code> の条件、削除は日時の境目を渡す</td>
+<td><code>create</code>（問いかけなし／あり）・<code>find</code>（自分／利用者指定なし／行なし／問いかけあり）・<code>fail</code>・<code>deleteOlderThan</code></td>
+<td>問いかけなしは <code>prompt</code> null、ありは JSON で渡す。結果・問いかけのJSONを直す、<code>fail</code> は <code>status='processing'</code> の条件、削除は日時の境目を渡す</td>
 <td>同</td>
 </tr>
 <tr>
@@ -2115,7 +2115,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-D05-01</td>
 <td>ファイルの並べ方</td>
 <td>テスト用のフォルダ（<code>V002</code>・<code>V001</code>・<code>.down.sql</code>・ほかのファイル）、リポジトリの <code>db/migrations</code></td>
-<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V003</code></td>
+<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V004</code></td>
 <td>同</td>
 </tr>
 <tr>
@@ -2961,6 +2961,27 @@ describe('M-D01 client', () =&gt; {
 <td>system に「空白・改行を除いて50〜400文字」「200文字を超えるときは行の先頭に【】の小見出し」、JSONの形に <code>&quot;modelAnswer&quot;:&quot;50〜400文字&quot;</code></td>
 <td>同</td>
 </tr>
+<tr>
+<td>MT-A04-08</td>
+<td>問いかけへの答えとして採点する指示文</td>
+<td><code>buildGradingPrompt({..., prompt})</code>（質問に閉じタグ）／観点なし／問いかけなし</td>
+<td>coverage を観点で付ける指示と <code>angleResults</code>、<code>&lt;\/prompt&gt;</code> に置換、<code>&lt;prompt&gt;</code> は <code>&lt;answer&gt;</code> の前／観点なしは <code>angleResults</code> なし／問いかけなしは <code>&lt;prompt&gt;</code> なし</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-A04-09</td>
+<td>説明問題の問いかけの指示文</td>
+<td><code>buildExplainQuestionPrompt</code>（ライバル型、解説に閉じタグ）／知らない性格</td>
+<td>system に名前と性格・観点を1〜2つ選ぶ指示・JSONの形、user に <code>&lt;keyword&gt;</code>、閉じタグを置換／例外</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-A04-10</td>
+<td>問いかけの定型文と長さの切り詰め</td>
+<td><code>fallbackQuestion('DNS')</code>、<code>normalizePrompt</code>（前後の空白・空・重複・4つ以上・null）</td>
+<td>定義としくみを聞く定型文、空白を除き重複と空を除いて3つまで、null は空</td>
+<td>境</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A05 <code>ai/sakura.js</code>（さくらのAI Engine）</h4>
@@ -3647,7 +3668,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H05 <code>routes/quests.js</code>（A-07）</h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H05 <code>routes/quests.js</code>（A-07・A-07b）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3713,6 +3734,27 @@ describe('M-D01 client', () =&gt; {
 <td>問題が取得できない・キーワードの文言がない</td>
 <td><code>findForLearner</code> が null／問題のキーワードが空</td>
 <td>404／<code>keyword.text=''</code></td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H05-09</td>
+<td>説明問題の問いかけ（A-07b）</td>
+<td>AI が前置きつきで <code>{"question","angles"}</code> を返す</td>
+<td>200 <code>{partnerName, persona, prompt:{text, angles}, fallback:false}</code>。<code>MODEL_LIGHT</code> で呼び、system にパートナーの名前と性格、user に <code>&lt;keyword&gt;</code></td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-H05-10</td>
+<td>問いかけの失敗</td>
+<td>AI が例外／<code>angles</code> が空</td>
+<td>200、定型の質問（定義・しくみ）で <code>fallback:true</code></td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H05-11</td>
+<td>問いかけできないキーワード</td>
+<td>他コース・非公開・ないキーワード</td>
+<td>404、AI を呼ばない</td>
 <td>異</td>
 </tr>
 </tbody>
@@ -3868,6 +3910,13 @@ describe('M-D01 client', () =&gt; {
 <td><code>adventureId</code> なし／他人の冒険</td>
 <td>202（<code>adventure_id</code> null）／404</td>
 <td>異</td>
+</tr>
+<tr>
+<td>MT-H07-11</td>
+<td>問いかけつきの採点依頼</td>
+<td><code>prompt</code> の質問210文字・観点の重複／数値／20文字／4つ以上、形の正しくない <code>prompt</code>（空・数値・文字列・観点が配列でない）</td>
+<td>質問200文字・観点3つ（各12文字）に切り詰めて保存／400（<code>field:'prompt'</code>, <code>code:'INVALID'</code>）で採点を作らない。MT-H07-01 の問いかけなしは <code>prompt:null</code></td>
+<td>境</td>
 </tr>
 </tbody>
 </table></div>
@@ -4568,6 +4617,20 @@ describe('M-D01 client', () =&gt; {
 <td>パートナー未設定・書き込み中の例外・ジョブの入口</td>
 <td>persona なし、<code>answers.insert</code> が例外、<code>runGradingJob</code></td>
 <td>励まし型で採点、例外は投げ直す（ERROR ログ）、ジョブの payload の gradingId を使う</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-W01-13</td>
+<td>問いかけへの答えとして採点</td>
+<td>ジョブに <code>prompt</code>（観点3つ）、AI の <code>angleResults</code> は2つ</td>
+<td>user に <code>&lt;prompt&gt;</code>・<code>&lt;angles&gt;</code>、system に「観点の順に3つ」。result の <code>prompt.angles</code> は full・partial・unknown</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-W01-14</td>
+<td>問いかけのない採点</td>
+<td>ジョブの <code>prompt</code> なし</td>
+<td>result に <code>prompt</code> を入れず、user に <code>&lt;prompt&gt;</code> を入れない</td>
 <td>異</td>
 </tr>
 </tbody>
@@ -5382,6 +5445,13 @@ describe('M-D01 client', () =&gt; {
 <td>境</td>
 </tr>
 <tr>
+<td>MT-F05-04</td>
+<td>AI の文章の整形</td>
+<td>【】の小見出しが続く文／文の途中の【】／21文字以上・空の【】／タグを含む文と改行／60文字以上と59文字の段落／null</td>
+<td>小見出しを太字にして前で改行／太字だけ／そのまま／エスケープしてから太字、改行は <code>&lt;br&gt;</code>／「。」ごとに改行（かぎかっこの中と最後は除く）・改行しない／空文字</td>
+<td>境</td>
+</tr>
+<tr>
 <td>MT-F06-01</td>
 <td>採点結果が返る</td>
 <td>1・2回目 processing、3回目 done</td>
@@ -5774,6 +5844,20 @@ describe('M-D01 client', () =&gt; {
 <td>文言を出し、もう一度押せる</td>
 <td>異</td>
 </tr>
+<tr>
+<td>MT-F13-05</td>
+<td>パートナーの問いかけ</td>
+<td>A-07b の応答を待つ → 届く → 説明して送る</td>
+<td>待つ間は「〇〇が質問を考えています」と待機演出で入力欄を出さない。届いたら質問・観点のタグ・「あなたの回答」の入力欄、<code>store.quest.prompt</code> に覚え、A-09 に <code>prompt</code> を添える</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F13-06</td>
+<td>問いかけを読み込めない・開き直し</td>
+<td>A-07b が通信エラー／<code>quest.prompt</code> あり</td>
+<td>定型の質問を出して入力できる／A-07b を呼ばずに同じ質問を出す</td>
+<td>異</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F14 <code>pages/learner/s06-result.js</code>（S-06 結果・フィードバック）</h4>
@@ -5822,6 +5906,20 @@ describe('M-D01 client', () =&gt; {
 <td>10 / 10問</td>
 <td>「ホームへ」だけ。押すと冒険IDを空にしてホームへ</td>
 <td>境</td>
+</tr>
+<tr>
+<td>MT-F14-06</td>
+<td>説明の結果（問いかけつき）</td>
+<td><code>prompt</code>（観点が full・partial・none・unknown）、パートナー名なしのライバル型／<code>prompt</code> なし</td>
+<td>「レンの質問」と質問文（エスケープ）、観点ごとに ○ 答えられた・△ 一部・× まだ、unknown は印なし／質問を出さない</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F14-07</td>
+<td>AI の文章の太字と改行</td>
+<td>模範説明・足りない観点・質問に【】、コメントにタグ</td>
+<td>【】を <code>strong</code> で太字、小見出しの前で改行、タグはエスケープして要素にしない</td>
+<td>同</td>
 </tr>
 </tbody>
 </table></div>
@@ -6435,7 +6533,7 @@ describe('M-D01 client', () =&gt; {
 <td>4.3 出題ルール</td>
 <td>3.5 M-G06、5.2 A-07</td>
 <td>picker、quests</td>
-<td>MT-G06-01〜09、MT-H05-01〜08</td>
+<td>MT-G06-01〜09、MT-H05-01〜11</td>
 </tr>
 <tr>
 <td>4.4 忘却曲線</td>
@@ -6469,9 +6567,9 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>4.9 説明の採点、2.5 非同期方式</td>
-<td>3.7、4.3、4.7、5.2 A-09・A-10、7.3</td>
+<td>3.7、4.3、4.7、5.2 A-07b・A-09・A-10、7.3・7.6</td>
 <td>grading-worker、gradings、prompts、jobs、server/worker</td>
-<td>MT-W01-01〜12、MT-H07-01〜10、MT-A02、MT-A04、MT-D04-01〜03、MT-S02-01〜06</td>
+<td>MT-W01-01〜14、MT-H07-01〜11、MT-A02、MT-A04、MT-D04-01〜03、MT-S02-01〜06</td>
 </tr>
 <tr>
 <td>4.10 問題取り込み</td>

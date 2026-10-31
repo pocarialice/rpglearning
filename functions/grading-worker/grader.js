@@ -27,7 +27,7 @@ export async function gradeJob(gradingId, { log, now = () => new Date() }) {
   const [kw, user] = await Promise.all([questions.findKeyword(job.keywordId), users.findById(job.userId)])
   const persona = user.partnerPersona ?? 'encourage'
   const name = user.partnerName ?? ''
-  const prompt = buildGradingPrompt({ keyword: kw.keyword, question: kw.body, explanation: kw.explanation, answer: job.explanationText, persona, name })
+  const prompt = buildGradingPrompt({ keyword: kw.keyword, question: kw.body, explanation: kw.explanation, answer: job.explanationText, persona, name, prompt: job.prompt ?? null })
   let graded
   try {
     graded = await askWithRetry(prompt, { log, started, now })
@@ -51,6 +51,7 @@ export async function gradeJob(gradingId, { log, now = () => new Date() }) {
       const o = computeOutcome(c, a)
       const result = {
         status: 'done', score, passed, modelAnswer: graded.modelAnswer, missingPoints: graded.missingPoints,
+        ...(job.prompt?.text ? { prompt: promptView(job.prompt, graded.angleResults) } : {}),
         comment: { partnerName: user.partnerName ?? null, persona, text: graded.comment }, ...outcomeView(o)
       }
       // A-10 が先に時間切れにしていたら（更新0件）、ロールバックしてEXP・段階を変えない
@@ -66,6 +67,15 @@ export async function gradeJob(gradingId, { log, now = () => new Date() }) {
       return { status: 'superseded' }
     }
     throw err
+  }
+}
+// 問いかけと観点ごとの答え方。AI が返さなかった・決まった値でない観点は none にしない（unknown）
+export const ANGLE_STATUSES = ['full', 'partial', 'none']
+export function promptView(prompt, angleResults = []) {
+  const results = Array.isArray(angleResults) ? angleResults : []
+  return {
+    text: prompt.text,
+    angles: (prompt.angles ?? []).map((label, i) => ({ label, status: ANGLE_STATUSES.includes(results[i]) ? results[i] : 'unknown' }))
   }
 }
 async function askWithRetry(prompt, { log, started, now }) {

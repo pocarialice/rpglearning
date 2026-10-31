@@ -23,3 +23,14 @@ export function formatExp(n) {
 export function formatPct(n) {
   return n === null || n === undefined ? '-' : `${Number(n).toFixed(1)}%`
 }
+// AI の文章を読みやすくする（詳細設計書 6.1）。エスケープしたうえで、【】の小見出しを太字にして文の切れ目なら前で改行し、
+// 長い段落（SENTENCE_BREAK_MIN 文字以上）は「。」ごとに改行する。【】以外の強調はしない
+export const SENTENCE_BREAK_MIN = 60
+const HEADING = /【[^【】\n]{1,20}】/
+export function aiText(value) {
+  const text = String(value ?? '').replace(/\r\n?/g, '\n').replace(new RegExp(`([。！？!?])[ \\t　]*(?=${HEADING.source})`, 'g'), '$1\n')
+  return text.split('\n').map((line) => {
+    const sentences = [...line].length >= SENTENCE_BREAK_MIN ? line.split(/(?<=。)(?![」』）)】]|$)/) : [line]
+    return sentences.map((s) => escapeHtml(s).replace(new RegExp(HEADING.source, 'g'), (h) => `<strong>${h}</strong>`)).join('<br>')
+  }).join('<br>')
+}

@@ -40,7 +40,7 @@ describe('M-H07 gradings（A-09・A-10）', () => {
     const res = await create(X(120))
     expect(res.statusCode).toBe(202)
     expect(parse(res)).toEqual({ gradingId: 'gr_456', status: 'processing' })
-    expect(gradings.create).toHaveBeenCalledWith({ userId: 15, courseId: 3, keywordId: 123, adventureId: 90, explanationText: X(120) })
+    expect(gradings.create).toHaveBeenCalledWith({ userId: 15, courseId: 3, keywordId: 123, adventureId: 90, explanationText: X(120), prompt: null })
     // ワーカーへはジョブキューで渡す
     expect(jobs.enqueue).toHaveBeenCalledWith('grading', { gradingId: 456 })
   })
@@ -70,6 +70,17 @@ describe('M-H07 gradings（A-09・A-10）', () => {
     expect(gradings.create.mock.calls[0][0].adventureId).toBeNull()
     adventures.find.mockResolvedValue(null)
     expect((await create(X(120))).statusCode).toBe(404)
+  })
+  it('MT-H07-11 問いかけ（A-07b）をいっしょに受け付けて長さを切り詰める', async () => {
+    const prompt = { text: ` ${'質'.repeat(210)} `, angles: ['しくみ', 'しくみ', 7, '目'.repeat(20), '違い', '例'] }
+    expect((await create(X(120), 'kw_123', { prompt })).statusCode).toBe(202)
+    expect(gradings.create.mock.calls[0][0].prompt).toEqual({ text: '質'.repeat(200), angles: ['しくみ', '目'.repeat(12), '違い'] })
+    for (const bad of [{ text: '' }, { text: 1 }, 'なぜ？', { text: 'なぜ？', angles: 'しくみ' }]) {
+      const res = await create(X(120), 'kw_123', { prompt: bad })
+      expect(res.statusCode).toBe(400)
+      expect(parse(res).error.details[0]).toMatchObject({ field: 'prompt', code: 'INVALID' })
+    }
+    expect(gradings.create).toHaveBeenCalledTimes(1)
   })
   it('MT-H07-05 結果（完了）', async () => {
     const result = { status: 'done', score: 72, passed: true }

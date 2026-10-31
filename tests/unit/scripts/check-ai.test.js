@@ -3,33 +3,35 @@ import { runChecks, formatTable, parseArgs, missingEnv, CHECKS, HINTS, LONG_TIME
 import { AppError } from '../../../functions/shared/util/errors.js'
 const GRADED = JSON.stringify({ accuracy: 40, coverage: 20, concreteness: 10, score: 70, modelAnswer: 'DNS はドメイン名と IP アドレスを対応づける。', missingPoints: ['逆引き'], comment: '次は PTR も説明してみよう。' })
 const EXTRACTED = JSON.stringify({ questions: [{ body: '問1' }, { body: '問2' }] })
+const ASKED = JSON.stringify({ question: 'ドメイン名から IP アドレスを調べるとき、何がどう動くの？', angles: ['しくみ'] })
 // 用途ごとに、それらしい答えを返す。ログには考えた分のトークン数を出す
 function fakeConverse(texts = {}, { stopReason = 'end_turn' } = {}) {
   return vi.fn(async ({ purpose, logger }) => {
     logger.info({ msg: 'ai.converse', reasoningTokens: 42 })
     const name = purpose.replace('check-', '')
-    return { text: texts[name] ?? { grading: GRADED, extraction: EXTRACTED }[name] ?? 'がんばろう！', usage: { inputTokens: 100, outputTokens: 50 }, stopReason }
+    return { text: texts[name] ?? { grading: GRADED, extraction: EXTRACTED, 'explain-question': ASKED }[name] ?? 'がんばろう！', usage: { inputTokens: 100, outputTokens: 50 }, stopReason }
   })
 }
 const env = { MODEL_HIGH: 'gpt-oss-120b', MODEL_LIGHT: 'gpt-oss-120b-light' }
 describe('scripts/check-ai（AI の確認）', () => {
-  it('MT-S01-01 4つの用途を本番と同じ設定で呼び、使える答えなら OK', async () => {
+  it('MT-S01-01 5つの用途を本番と同じ設定で呼び、使える答えなら OK', async () => {
     const converse = fakeConverse()
     let t = 0
     const rows = await runChecks({ env, converse, now: () => (t += 1000) })
     expect(rows.map((r) => [r.name, r.ok, r.note])).toEqual([
-      ['comment', true, '6文字'], ['daily-message', true, '6文字'], ['grading', true, 'JSON OK'], ['extraction', true, '2問 OK']
+      ['comment', true, '6文字'], ['daily-message', true, '6文字'], ['explain-question', true, 'JSON OK'], ['grading', true, 'JSON OK'], ['extraction', true, '2問 OK']
     ])
     expect(rows[0]).toMatchObject({ modelId: 'gpt-oss-120b-light', inputTokens: 100, outputTokens: 50, reasoningTokens: 42, stopReason: 'end_turn', durationMs: 1000, overProd: false })
-    const grading = converse.mock.calls[2][0]
+    expect(converse.mock.calls[2][0]).toMatchObject({ modelId: 'gpt-oss-120b-light', ...CHECKS['explain-question'].ai, purpose: 'check-explain-question' })
+    const grading = converse.mock.calls[3][0]
     expect(grading).toMatchObject({ modelId: 'gpt-oss-120b', ...CHECKS.grading.ai, purpose: 'check-grading' })
     expect(grading.messages[0].content[0].text).toContain('<answer>')
-    expect(converse.mock.calls[3][0].messages[0].content[0].text).toContain('<source>')
+    expect(converse.mock.calls[4][0].messages[0].content[0].text).toContain('<source>')
   })
   it('MT-S01-02 答えが使えないときは NG と見るところ', async () => {
-    const converse = fakeConverse({ comment: ' ', grading: '{"accuracy":99}', extraction: '{"questions":[{"body":"1"}]}', 'daily-message': 'x' }, { stopReason: 'max_tokens' })
+    const converse = fakeConverse({ comment: ' ', grading: '{"accuracy":99}', extraction: '{"questions":[{"body":"1"}]}', 'daily-message': 'x', 'explain-question': '{"question":"なに？"}' }, { stopReason: 'max_tokens' })
     const rows = await runChecks({ env, converse, now: () => 0 })
-    expect(rows.map((r) => [r.ok, r.note])).toEqual([[false, '答えが空'], [true, '1文字'], [false, 'JSON NG（accuracy,coverage,concreteness,modelAnswer,missingPoints,comment）'], [false, '1問（2問のはず）']])
+    expect(rows.map((r) => [r.ok, r.note])).toEqual([[false, '答えが空'], [true, '1文字'], [false, 'JSON NG（question,angles）'], [false, 'JSON NG（accuracy,coverage,concreteness,modelAnswer,missingPoints,comment）'], [false, '1問（2問のはず）']])
     expect(rows[0].hint).toBe(HINTS.max_tokens)
     expect(rows[1].hint).toBeNull()
     const bad = await runChecks({ names: ['extraction'], env, converse: fakeConverse({ extraction: 'すみません' }), now: () => 0 })
