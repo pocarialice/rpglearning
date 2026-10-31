@@ -37,7 +37,7 @@ function importForm() {
 <div data-file><input type="file" class="body" accept="${IMPORT_CONTENT_TYPES.pdf.join(',')}" aria-label="取り込むファイル"></div>
 <div data-text hidden><textarea class="app-textarea body" rows="8" aria-label="取り込むテキスト" placeholder="問題文・選択肢・正解・解説を貼り付ける"></textarea></div>
 <p class="meta app-hint" data-import-msg></p><div class="app-import-result"></div>
-<div class="app-toolbar app-toolbar-end">${button({ label: '取り込む', attrs: 'data-action="import" disabled' })}</div></section>`
+<div class="app-toolbar app-toolbar-end">${button({ label: '取り込む', attrs: 'data-action="import" data-ctrl-enter disabled' })}</div></section>`
 }
 function importsTable(list, selected) {
   if (list.length === 0) return '<p class="body">まだ取り込みがない</p>'
@@ -127,7 +127,7 @@ function editorShell(d, pos, total) {
 <div class="app-tabs" role="tablist" aria-label="学習者の見え方">${tabs}</div><div class="app-preview-body" inert></div></section></div>
 <div class="app-editor-msg"></div>
 <div class="app-toolbar app-editor-actions">${button({ label: '← 前へ', variant: 'quiet', size: 'sm', attrs: `data-action="prev"${pos === 1 ? ' disabled' : ''}` })}${button({ label: '次へ →', variant: 'quiet', size: 'sm', attrs: `data-action="next"${pos === total ? ' disabled' : ''}` })}
-<span class="app-toolbar-gap"></span>${button({ label: '削除する', variant: 'quiet', attrs: 'data-action="delete"' })}${button({ label: '保存して次へ', attrs: 'data-action="save"' })}${button({ label: '公開して次へ', variant: 'primary', attrs: 'data-action="publish"' })}</div>`
+<span class="app-toolbar-gap"></span>${button({ label: '削除する', variant: 'quiet', attrs: 'data-action="delete"' })}${button({ label: '保存して次へ', attrs: 'data-action="save" data-ctrl-enter' })}${button({ label: '公開して次へ', variant: 'primary', attrs: 'data-action="publish"' })}</div>`
 }
 // 入力欄から A-15 に送る形を作る。空の選択肢・キーワードは送らない（正解が空の選択肢を指していたら未設定にする）
 export function readEditor(el) {

@@ -242,3 +242,7 @@ select.app-input:disabled { opacity: .5; }
 .app-partner-sample .caption { margin: 0; color: var(--ink-muted); }
 .app-card-result:empty { display: none; }
 .app-login { max-width: 420px; margin: var(--space-6) auto; }
+/* スマホ（指で操作する端末）では入力欄の文字を 16px にして、フォーカス時に iOS が自動で拡大しないようにする（.body などのクラス指定より優先させる） */
+@media (pointer: coarse) { input, textarea, select { font-size: 16px !important; } }
+/* ダブルタップでの拡大も止める（スクロールはそのまま） */
+html { touch-action: manipulation; }
