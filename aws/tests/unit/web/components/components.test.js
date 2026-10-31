@@ -8,7 +8,7 @@ import { scoreMeter } from '../../../../web/js/components/score-meter.js'
 import { reviewStage } from '../../../../web/js/components/review-stage.js'
 import { guildBadge, badgeFromCode } from '../../../../web/js/components/guild-badge.js'
 import { errorMessage, M02 } from '../../../../web/js/components/status.js'
-import { showLevelUp, CONFETTI_COUNT } from '../../../../web/js/components/level-up.js'
+import { showCelebration, CONFETTI_COUNT } from '../../../../web/js/components/celebration.js'
 const el = (html) => {
   const d = document.createElement('div')
   d.innerHTML = html
@@ -87,9 +87,9 @@ describe('M-F07 components', () => {
     expect(imageFor({ persona: 'logic', imageUrl: 'u' }, 'rival')).toBeNull()
     expect(imageFor(null, 'rival')).toBeNull()
   })
-  it('MT-F07-11 LevelUp：新しいレベルと紙吹雪を出し、タップ・Esc で閉じる', () => {
+  it('MT-F07-11 Celebration：新しいレベルと紙吹雪を出し、タップ・Esc で閉じる', () => {
     const onClose = vi.fn()
-    const { el: d } = showLevelUp({ level: '<6>', random: () => 0, onClose })
+    const { el: d } = showCelebration({ items: [{ kind: 'level', level: '<6>' }], random: () => 0, onClose })
     expect(d.isConnected).toBe(true)
     expect(d.dataset.theme).toBe('dark')
     expect(d.querySelector('.app-levelup-no').textContent).toBe('<6>')
@@ -100,18 +100,18 @@ describe('M-F07 components', () => {
     d.querySelector('.app-levelup-close').dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(d.isConnected).toBe(false)
     expect(onClose).toHaveBeenCalledTimes(1)
-    const esc = showLevelUp({ level: 2 })
+    const esc = showCelebration({ items: [{ kind: 'level', level: 2 }] })
     const cancel = new Event('cancel', { cancelable: true })
     esc.el.dispatchEvent(cancel)
     expect(cancel.defaultPrevented).toBe(true)
     expect(esc.el.isConnected).toBe(false)
     esc.close()
   })
-  it('MT-F07-12 LevelUp：紙吹雪は下から上へ舞い上がり続ける', () => {
+  it('MT-F07-12 Celebration：紙吹雪は下から上へ舞い上がり続ける', () => {
     const animate = vi.fn()
     HTMLElement.prototype.animate = animate
     try {
-      const { close } = showLevelUp({ level: 3, random: () => 0.5 })
+      const { close } = showCelebration({ items: [{ kind: 'level', level: 3 }], random: () => 0.5 })
       expect(animate).toHaveBeenCalledTimes(CONFETTI_COUNT)
       const [frames, opts] = animate.mock.calls[0]
       expect(frames[0].transform).toBe('translate(0, 0) rotate(0deg)')
@@ -121,5 +121,31 @@ describe('M-F07 components', () => {
     } finally {
       delete HTMLElement.prototype.animate
     }
+  })
+  it('MT-F07-13 Celebration：クエストは判子で出し、タップで次の1枚へ進む', () => {
+    const onClose = vi.fn()
+    const { el: d } = showCelebration({ items: [{ kind: 'quest', title: '<復習>を終える', reward: 30 }, { kind: 'quest', title: '説明に合格', reward: 20 }, { kind: 'level', level: 6 }], onClose })
+    const tap = () => d.dispatchEvent(new MouseEvent('click'))
+    expect(d.querySelector('.app-celebrate-stamp').textContent).toBe('達成')
+    expect(d.querySelector('.app-celebrate-quest').textContent).toBe('<復習>を終える')
+    expect(d.querySelector('.app-celebrate-reward').textContent).toBe('報酬 +30 EXP')
+    expect(d.querySelector('.app-celebrate-step').textContent).toBe('1 / 3')
+    expect(d.querySelector('.app-levelup-close').textContent).toBe('タップしてつぎへ')
+    tap()
+    expect(d.querySelector('.app-celebrate-quest').textContent).toBe('説明に合格')
+    expect(d.querySelector('.app-celebrate-step').textContent).toBe('2 / 3')
+    tap()
+    expect(d.querySelector('.app-celebrate-stamp')).toBeNull()
+    expect(d.querySelector('.app-levelup-no').textContent).toBe('6')
+    expect(d.getAttribute('aria-labelledby')).toBe(d.querySelector('h2').id)
+    expect(d.querySelector('.app-levelup-close').textContent).toBe('タップしてとじる')
+    expect(onClose).not.toHaveBeenCalled()
+    tap()
+    expect(d.isConnected).toBe(false)
+    expect(onClose).toHaveBeenCalledTimes(1)
+    const one = showCelebration({ items: [{ kind: 'quest', title: 'a', reward: 30 }] })
+    expect(one.el.querySelector('.app-celebrate-step').textContent).toBe('')
+    expect(one.el.querySelector('.app-levelup-close').textContent).toBe('タップしてとじる')
+    one.close()
   })
 })

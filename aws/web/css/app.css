@@ -81,15 +81,15 @@ body { background: var(--parchment); color: var(--ink); }
 .app-dialog::backdrop { background: rgba(46, 34, 25, 0.45); }
 .app-dialog h2 { margin: 0 0 var(--space-3); }
 .app-dialog .app-section { margin-top: 0; }
-/* レベルアップのお祝い（S-06）。data-theme="dark" で囲み、暗い背景の上でもトークンの色が見えるようにする */
-.app-levelup-overlay { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; box-sizing: border-box; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--gold-ink); cursor: pointer; background: radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--gold) 55%, transparent), color-mix(in srgb, var(--parchment) 90%, transparent) 70%); }
+/* クエスト達成・レベルアップのお祝い（S-06）。data-theme="dark" で囲み、暗い背景の上でもトークンの色が見えるようにする */
+.app-levelup-overlay { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; box-sizing: border-box; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--gold-ink); cursor: pointer; background: radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--gold) 55%, transparent), transparent 70%), color-mix(in srgb, var(--parchment) 92%, transparent); }
 .app-levelup-overlay::backdrop { background: transparent; }
 .app-levelup-beam { position: absolute; left: 50%; bottom: 0; width: 120px; height: 100%; transform: translateX(-50%); transform-origin: bottom; background: linear-gradient(to top, color-mix(in srgb, var(--gold-ink) 70%, transparent), transparent); filter: blur(8px); animation: app-levelup-beam 1.2s ease-out both; }
 .app-levelup-fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .app-confetti { position: absolute; bottom: -20px; width: 8px; height: 12px; border-radius: 2px; will-change: transform; }
 .app-confetti-dot { width: 9px; height: 9px; border-radius: var(--radius-pill); }
 .app-confetti-strip { width: 5px; height: 14px; }
-.app-levelup-text { position: relative; text-align: center; font-family: var(--font-serif); animation: app-levelup-pop .6s ease-out both .4s; }
+.app-levelup-text { position: relative; z-index: 1; text-align: center; font-family: var(--font-serif); animation: app-levelup-pop .6s ease-out both .4s; }
 .app-levelup-text p, .app-levelup-text h2 { margin: 0; }
 .app-levelup-lv { font-size: 14px; line-height: 20px; letter-spacing: .2em; }
 .app-levelup-no { font-size: 64px; line-height: 72px; font-weight: 800; }
@@ -97,6 +97,11 @@ body { background: var(--parchment); color: var(--ink); }
 .app-levelup-close { position: absolute; left: 0; right: 0; bottom: calc(var(--space-6) + env(safe-area-inset-bottom)); margin: 0 auto; width: max-content; min-height: 44px; padding: 0 var(--space-4); background: color-mix(in srgb, var(--parchment) 75%, transparent); border: 0; border-radius: var(--radius-pill); font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; }
 .app-levelup-overlay:focus { outline: none; }
 .app-levelup-close:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app-celebrate-step { position: absolute; top: calc(var(--space-3) + env(safe-area-inset-top)); right: var(--space-4); margin: 0; font-size: 12px; line-height: 16px; color: var(--ink-muted); }
+.app-levelup-text .app-celebrate-stamp { display: inline-block; margin: var(--space-2) 0 var(--space-3); padding: 0 14px; font-size: 44px; line-height: 56px; font-weight: 800; color: var(--crimson); border: 4px solid var(--crimson); border-radius: var(--radius-md); transform: rotate(-8deg); animation: app-celebrate-stamp .5s cubic-bezier(.2, 1.6, .4, 1) both .5s; }
+.app-celebrate-quest { font-family: var(--font-sans); font-size: 15px; line-height: 24px; font-weight: 700; color: var(--ink); }
+.app-levelup-text .app-celebrate-reward { margin: 2px 0 0; font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 700; }
+@keyframes app-celebrate-stamp { from { transform: rotate(-8deg) scale(2.4); opacity: 0; } to { transform: rotate(-8deg) scale(1); opacity: 1; } }
 @keyframes app-levelup-beam { from { transform: translateX(-50%) scaleY(0); } to { transform: translateX(-50%) scaleY(1); } }
 @keyframes app-levelup-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
 .app-guide-slot:not(:empty) { display: flex; flex-direction: column; gap: var(--space-3); }
