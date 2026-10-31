@@ -392,7 +392,7 @@ h2 code, h3 code, h4 code { overflow-wrap: anywhere; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第1.3版（ドラフト：第1〜6章、HTML版あり。レベルアップのお祝い（LevelUp）のテスト MT-F07-11・12、MT-F14-06 を追加する）</b></li>
+      <li>版数<b>第1.4版（ドラフト：第1〜6章、HTML版あり。お祝いの部品を Celebration にまとめ、クエスト達成のお祝いのテスト MT-F07-13・MT-F14-07 を追加する）</b></li>
       <li>作成日<b>2026-10-20</b></li>
       <li>入力文書<b>詳細設計書 第1.1版、外部設計書 第1.0版</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
@@ -1333,8 +1333,9 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-F07-08</td><td>GuildBadge</td><td>コード <code>streak_silver</code></td><td>継続の証（銀）、紋章は「継」</td><td>同</td></tr>
 <tr><td>MT-F07-09</td><td>エラーの文言</td><td><code>NETWORK</code>／500／404（API の文言あり）</td><td>M-02／画面ごとの「〜できませんでした」／API の文言</td><td>DT</td></tr>
 <tr><td>MT-F07-10</td><td>紋章の画像</td><td><code>imageUrl</code> あり（記号を含むURL）／なし。<code>imageFor</code> に自分の仲間・別の仲間・なし</td><td>円の中に <code>&lt;img&gt;</code>（URLはエスケープ）／頭文字。自分の仲間のときだけ画像のURL</td><td>同</td></tr>
-<tr><td>MT-F07-11</td><td>LevelUp の表示と閉じ方</td><td>レベル（記号を含む）、<code>random</code> を固定。とじるを押す／Esc</td><td>暗い配色で新しいレベルをエスケープして表示、見出しと名前を結ぶ、紙吹雪55個（色はトークン）。押すと消えて <code>onClose</code> を1回、Esc は既定の動きを止めて消す</td><td>同</td></tr>
-<tr><td>MT-F07-12</td><td>LevelUp の紙吹雪の動き</td><td><code>animate</code> が使える環境</td><td>55個すべてを動かす。下から始まり画面の上の外へ抜ける。くり返しは無限</td><td>同</td></tr>
+<tr><td>MT-F07-11</td><td>Celebration の表示と閉じ方</td><td>レベル（記号を含む）、<code>random</code> を固定。とじるを押す／Esc</td><td>暗い配色で新しいレベルをエスケープして表示、見出しと名前を結ぶ、紙吹雪55個（色はトークン）。押すと消えて <code>onClose</code> を1回、Esc は既定の動きを止めて消す</td><td>同</td></tr>
+<tr><td>MT-F07-12</td><td>Celebration の紙吹雪の動き</td><td><code>animate</code> が使える環境</td><td>55個すべてを動かす。下から始まり画面の上の外へ抜ける。くり返しは無限</td><td>同</td></tr>
+<tr><td>MT-F07-13</td><td>Celebration のクエストと順送り</td><td>クエスト2件（記号を含む名前）とレベルアップの3枚／クエスト1件だけ</td><td>1枚目に「達成」の判子・名前（エスケープ）・<code>報酬 +30 EXP</code>、「1 / 3」「タップしてつぎへ」。タップで2枚目・3枚目（レベル6、「タップしてとじる」）へ進み、最後のタップで消えて <code>onClose</code> を1回。1件だけなら枚数を出さず「タップしてとじる」</td><td>状</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F08 <code>shell.js</code></h4>
 <div class="table-wrap"><table>
@@ -1403,6 +1404,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-F14-04</td><td>冒険の終わり</td><td>A-07 が <code>done</code></td><td>お知らせを入れ、冒険IDを空にしてホームへ</td><td>状</td></tr>
 <tr><td>MT-F14-05</td><td>10問目のあと</td><td>10 / 10問</td><td>「ホームへ」だけ。押すと冒険IDを空にしてホームへ</td><td>境</td></tr>
 <tr><td>MT-F14-06</td><td>レベルアップのお祝い</td><td><code>levelUp</code> true（Lv6）／もう一度表示／<code>levelUp</code> false</td><td>お祝いに6を出し、タップで消える。同じ結果をもう一度出しても出さない。上がらないときは出さない</td><td>状</td></tr>
+<tr><td>MT-F14-07</td><td>クエスト達成のお祝い</td><td>今回達成したクエスト2件（名前あり・なし）と達成済みの1件、レベルアップあり／レベルアップなし</td><td>今回達成した2件だけを名前（なければ「本日の依頼」）と報酬で出し、そのあとレベルアップ。「1 / 3」。レベルアップがなければクエストだけの「1 / 2」</td><td>状</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F15 <code>pages/learner/s07-ranking.js</code>（S-07 週間ランキング）</h4>
 <div class="table-wrap"><table>
@@ -1532,7 +1534,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>8.1 認証・権限</td><td>3.2 M-U04、6.1</td><td>authz、router、auth.js</td><td>MT-U04-01〜10、MT-H01-06〜07、MT-F01-01〜10</td></tr>
 <tr><td>8.2 データ保護</td><td>2.4.5、9.1</td><td>logger、format、prompts</td><td>MT-U05-04、MT-F05-01、MT-A04-02</td></tr>
 <tr><td>3.3 画面遷移、3.4 画面レイアウトの基本</td><td>6.1、6.2</td><td>shell、router</td><td>MT-F08-01〜06、MT-F03-06</td></tr>
-<tr><td>3.5 共通の表示ルール、9章 メッセージ</td><td>6.1</td><td>components、status</td><td>MT-F07-01〜12</td></tr>
+<tr><td>3.5 共通の表示ルール、9章 メッセージ</td><td>6.1</td><td>components、status</td><td>MT-F07-01〜13</td></tr>
 <tr><td>3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-10）</td><td>6.2</td><td>pages/learner、parts</td><td>MT-F09〜MT-F18</td></tr>
 <tr><td>3.8 管理画面（S-11〜S-14）</td><td>6.2</td><td>pages/admin</td><td>MT-F19〜MT-F22</td></tr>
 </tbody></table></div>
@@ -1584,6 +1586,6 @@ describe('M-D01 data-api', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.3版（ドラフト：第1〜6章、HTML版あり。レベルアップのお祝い（LevelUp）のテスト MT-F07-11・12、MT-F14-06 を追加する）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.4版（ドラフト：第1〜6章、HTML版あり。お祝いの部品を Celebration にまとめ、クエスト達成のお祝いのテスト MT-F07-13・MT-F14-07 を追加する）</div></footer>
 </body>
 </html>
