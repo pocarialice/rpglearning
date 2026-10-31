@@ -8,7 +8,6 @@ import { partnerBubble, imageFor } from '../../components/partner-bubble.js'
 import { questCard } from '../../components/quest-card.js'
 import { guildBadge, badgeFromCode } from '../../components/guild-badge.js'
 import { button } from '../../components/button.js'
-import { showCelebration } from '../../components/celebration.js'
 import { errorBand, errorMessage } from '../../components/status.js'
 import { escapeHtml, formatDate, formatExp } from '../../logic/format.js'
 import { goNextQuest } from './adventure.js'
@@ -56,11 +55,6 @@ function achievements(res, titles = {}) {
   const bs = badges.length ? `<div class="app-badges">${badges.map((code) => guildBadge(badgeFromCode(code))).join('')}</div>` : ''
   return `<section class="app-section" aria-labelledby="achieve-h"><h2 id="achieve-h" class="title">達成</h2><div class="app-stack">${qs}${bs}</div></section>`
 }
-// お祝いの順番：達成したクエスト → レベルアップ
-function celebrations(res, titles = {}) {
-  const quests = (res.quests ?? []).filter((q) => q.achievedNow).map((q) => ({ kind: 'quest', title: titles[q.id] ?? '本日の依頼', reward: q.reward }))
-  return res.exp?.levelUp ? [...quests, { kind: 'level', level: Number(res.exp.level) }] : quests
-}
 export async function render(root) {
   const { api, getState, setState, go } = getContext()
   const { result, questTitles } = getState()
@@ -74,12 +68,6 @@ export async function render(root) {
 ${kind === 'choice' ? choiceSection(result, getState().user?.partner) : explainSection(result, getState().user?.partner)}
 ${expSection(res.exp)}${reviewSection(kind, res.review)}${achievements(res, questTitles)}
 <div class="app-error-slot"></div><div class="app-actions">${actions}</div>`
-  // クエスト達成・レベルアップのお祝いは1つの結果につき1回だけ出す
-  const items = celebrations(res, questTitles)
-  if (items.length && !result.celebrated) {
-    setState({ result: { ...result, celebrated: true } })
-    showCelebration({ items, doc: root.ownerDocument })
-  }
   root.querySelector('[data-action="home"]').addEventListener('click', () => {
     setState({ result: null, quest: null, ...(last ? { adventureId: null } : {}) })
     go('/home')

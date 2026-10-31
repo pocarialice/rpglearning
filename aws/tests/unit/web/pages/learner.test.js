@@ -18,7 +18,6 @@ const EXPLAIN_Q = { adventureId: 'adv_1', index: 4, total: 10, kind: 'explain', 
 const OUTCOME = { exp: { gained: 15, reviewBonus: true, questExp: 0, level: 5, levelUp: false, expInLevel: 425, next: 690 }, review: { stage: 2, nextDate: '2026-10-24' }, quests: [{ id: 'Q-01', progress: 5, target: 5, done: true, achievedNow: true, reward: 30 }], badges: ['mastery_bronze'] }
 let root, store, api, go
 function setup(state = {}) {
-  document.body.innerHTML = ''
   root = document.createElement('div')
   store = createStore({ user: { roles: ['learner'], partner: { persona: 'logic', name: 'セージ' } }, adventureId: null, ...state })
   api = { apiGet: vi.fn(), apiPost: vi.fn() }
@@ -212,42 +211,6 @@ describe('M-F14 S-06 結果・フィードバック', () => {
     expect(store.getState().notice).toBe(NOTICE_DONE)
     expect(store.getState().adventureId).toBeNull()
     expect(go).toHaveBeenCalledWith('/home')
-  })
-  it('MT-F14-06 レベルアップしたときだけお祝いを1回出す', async () => {
-    const up = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME, quests: [], exp: { ...OUTCOME.exp, level: 6, levelUp: true } }
-    setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res: up } })
-    await result.render(root)
-    const overlay = document.querySelector('.app-levelup-overlay')
-    expect(overlay.querySelector('.app-levelup-no').textContent).toBe('6')
-    expect(root.querySelector('.app-levelup').textContent).toContain('Lv.6')
-    overlay.dispatchEvent(new MouseEvent('click'))
-    expect(document.querySelector('.app-levelup-overlay')).toBeNull()
-    await result.render(root)
-    expect(document.querySelector('.app-levelup-overlay')).toBeNull()
-    setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res: { ...up, ...OUTCOME, quests: [] } } })
-    await result.render(root)
-    expect(document.querySelector('.app-levelup-overlay')).toBeNull()
-  })
-  it('MT-F14-07 達成したクエスト → レベルアップの順にお祝いを出す', async () => {
-    const quests = [{ id: 'Q-01', progress: 5, target: 5, done: true, achievedNow: true, reward: 30 }, { id: 'Q-02', progress: 3, target: 3, done: true, achievedNow: false, reward: 20 }, { id: 'Q-09', progress: 1, target: 1, done: true, achievedNow: true, reward: 10 }]
-    const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME, quests, exp: { ...OUTCOME.exp, level: 6, levelUp: true } }
-    setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res }, questTitles: { 'Q-01': '今日の復習をすべて終える' } })
-    await result.render(root)
-    const overlay = document.querySelector('.app-levelup-overlay')
-    const tap = () => overlay.dispatchEvent(new MouseEvent('click'))
-    expect(overlay.querySelector('.app-celebrate-quest').textContent).toBe('今日の復習をすべて終える')
-    expect(overlay.querySelector('.app-celebrate-step').textContent).toBe('1 / 3')
-    tap()
-    expect(overlay.querySelector('.app-celebrate-quest').textContent).toBe('本日の依頼')
-    expect(overlay.querySelector('.app-celebrate-reward').textContent).toBe('報酬 +10 EXP')
-    tap()
-    expect(overlay.querySelector('.app-levelup-no').textContent).toBe('6')
-    tap()
-    expect(document.querySelector('.app-levelup-overlay')).toBeNull()
-    setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res: { ...res, exp: OUTCOME.exp } } })
-    await result.render(root)
-    expect(document.querySelectorAll('.app-levelup-overlay .app-celebrate-stamp')).toHaveLength(1)
-    expect(document.querySelector('.app-celebrate-step').textContent).toBe('1 / 2')
   })
   it('MT-F14-05 10問目のあとは「ホームへ」だけ', async () => {
     const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
