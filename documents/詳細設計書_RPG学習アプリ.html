@@ -3061,6 +3061,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>A-10 を2秒ごとに呼ぶ。<code>done</code> で結果を返す。30秒または <code>504</code> で <code>GRADING_TIMEOUT</code> を投げる</td>
 </tr>
 <tr>
+<td><code>components/celebration.js</code></td>
+<td><code>showCelebration({ items, onClose })</code></td>
+<td>S-06 のクエスト達成・レベルアップのお祝い。<code>&lt;dialog&gt;</code> を <code>data-theme="dark"</code> で全画面に出し、光の柱と紙吹雪55個（色はトークン、<code>animate</code> で下から上へ無限にくり返す）を出す。<code>items</code>（<code>{kind:'quest', title, reward}</code> または <code>{kind:'level', level}</code>）を1枚ずつ見せ、タップで次へ、最後のタップか Esc で閉じる。S-06 は今回達成したクエスト → レベルアップの順に渡し、<code>result.celebrated</code> で1つの結果につき1回にする</td>
+</tr>
+<tr>
 <td><code>sw.js</code></td>
 <td>-</td>
 <td>キャッシュ名 <code>rpg-shell-{リリース番号}</code>。画面の資材はキャッシュ優先、<code>/api/*</code> はキャッシュしない。新しい版が入ったら古いキャッシュを削除</td>

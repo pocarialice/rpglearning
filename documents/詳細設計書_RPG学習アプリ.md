@@ -1082,6 +1082,7 @@ sequenceDiagram
 | `core/store.js`     | `getState`、`setState`、`subscribe`                      | 利用者・現在のコース・冒険ID などを持つ                                                                              |
 | `logic/format.js`   | `escapeHtml`、`formatDate`、`formatExp`、`aiText` | 画面に出す文字はすべて `escapeHtml` を通す（AIの出力・利用者の入力を含む）。AIの文章は `aiText` でエスケープしたうえで、【】の小見出し（20文字まで）を `<strong>` で太字にし、「。！？」のあとの小見出しの前と、60文字以上の段落の「。」のあと（かぎかっこの中と段落の最後は除く）に `<br>` を入れる |
 | `logic/grading-poller.js` | `pollGrading(id, {intervalMs:2000, limitMs:30000})` | A-10 を2秒ごとに呼ぶ。`done` で結果を返す。30秒または `504` で `GRADING_TIMEOUT` を投げる                                      |
+| `components/celebration.js` | `showCelebration({ items, onClose })` | S-06 のクエスト達成・レベルアップのお祝い。`<dialog>` を `data-theme="dark"` で全画面に出し、光の柱と紙吹雪55個（色はトークン、`animate` で下から上へ無限にくり返す）を出す。`items`（`{kind:'quest', title, reward}` または `{kind:'level', level}`）を1枚ずつ見せ、タップで次へ、最後のタップか Esc で閉じる。S-06 は今回達成したクエスト → レベルアップの順に渡し、`result.celebrated` で1つの結果につき1回にする |
 | `sw.js`             | -                                                      | キャッシュ名 `rpg-shell-{リリース番号}`。画面の資材はキャッシュ優先、`/api/*` はキャッシュしない。新しい版が入ったら古いキャッシュを削除                         |
 
 ### 6.2 画面モジュール一覧
