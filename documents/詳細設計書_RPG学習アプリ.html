@@ -3068,7 +3068,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td><code>sw.js</code></td>
 <td>-</td>
-<td>キャッシュ名 <code>rpg-shell-{リリース番号}</code>。画面の資材はキャッシュ優先、<code>/api/*</code> はキャッシュしない。新しい版が入ったら古いキャッシュを削除</td>
+<td>キャッシュ名 <code>rpg-shell-{リリース番号}</code>。画面の資材はキャッシュ優先、<code>/api/*</code> はキャッシュしない。新しい版が入ったら古いキャッシュを削除。キャッシュにないファイルは <code>fetch(request, { cache: 'no-cache' })</code> でサーバーに確かめて取る（ブラウザの HTTP キャッシュ（1日）に残る前の版を新しいキャッシュに入れないため）</td>
 </tr>
 </tbody>
 </table></div>
