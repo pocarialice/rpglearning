@@ -11,6 +11,7 @@ const HOME = {
   level: 5, expInLevel: 410, next: 690, totalExp: 1232, streakDays: 3,
   message: { partnerName: 'ミナ', persona: 'encourage', text: '昨日より3問多く解けてるよ' },
   quests: [{ id: 'Q-01', title: '今日の復習をすべて終える', progress: 1, target: 5, done: false, reward: 30 }, { id: 'Q-03', title: 'キーワード説明を1問合格する', progress: 0, target: 1, done: false, reward: 30 }],
+  course: { id: 'c_3', name: 'ネットワーク応用', certification: 'ネットワークスペシャリスト', questionCount: 120, coveragePct: 35 },
   review: { choice: 3, explain: 2, total: 5 }
 }
 const CHOICE_Q = { adventureId: 'adv_1', index: 3, total: 10, kind: 'choice', isReview: true, question: { id: 'q_9', body: '最も適切なものはどれか', choices: [1, 2, 3, 4].map((no) => ({ no, body: `選択肢${no}` })) } }
@@ -33,8 +34,9 @@ describe('M-F10 S-02 ホーム', () => {
     api.apiGet.mockResolvedValue(HOME)
     await home.render(root)
     expect(api.apiGet).toHaveBeenCalledWith('/home')
-    const order = [...root.querySelectorAll('.gd-exp, .gd-partner, .gd-quest, [aria-labelledby="review-h"]')].map((e) => e.className.split(' ')[0] || 'review')
-    expect(order).toEqual(['gd-exp', 'gd-partner', 'gd-card', 'gd-card', 'gd-card'])
+    const order = [...root.querySelectorAll('.gd-exp, .gd-partner, [aria-labelledby="course-h"], .gd-quest, [aria-labelledby="review-h"]')]
+      .map((e) => e.getAttribute('aria-labelledby') ?? e.className.split(' ')[0])
+    expect(order).toEqual(['gd-exp', 'gd-partner', 'course-h', 'gd-card', 'gd-card', 'review-h'])
     expect(root.querySelectorAll('.gd-quest')).toHaveLength(2)
     expect(root.textContent).toContain('択一 3・説明 2')
     expect(root.textContent).toContain('リリース 20261105-01')
@@ -64,6 +66,19 @@ describe('M-F10 S-02 ホーム', () => {
     click('[data-action="reload"]')
     await flush()
     expect(root.querySelector('.gd-exp')).not.toBeNull()
+  })
+  it('MT-F10-05 受講中のコースを出し、「コースを変える」でコース選択へ', async () => {
+    api.apiGet.mockResolvedValue(HOME)
+    await home.render(root)
+    const card = root.querySelector('[aria-labelledby="course-h"]')
+    expect(card.textContent).toContain('ネットワーク応用')
+    expect(card.textContent).toContain('ネットワークスペシャリスト・問題 120問・網羅率 35.0%')
+    expect(card.querySelector('.gd-fill').style.width).toBe('35%')
+    click('[data-action="courses"]')
+    expect(go).toHaveBeenCalledWith('/courses')
+    api.apiGet.mockResolvedValue({ ...HOME, course: null })
+    await home.render(root)
+    expect(root.querySelector('[aria-labelledby="course-h"]')).toBeNull()
   })
 })
 describe('M-F12 S-04 演習（四肢択一）', () => {

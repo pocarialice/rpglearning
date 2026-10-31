@@ -1,4 +1,4 @@
-// A-05 ホーム（レベル・ひとこと・クエスト・今日の復習数）
+// A-05 ホーム（レベル・ひとこと・受講中のコース・クエスト・今日の復習数）
 import { ok } from '../../shared/util/http.js'
 import { addDays } from '../../shared/util/date-jst.js'
 import { levelInfo } from '../../shared/domain/exp.js'
@@ -9,14 +9,18 @@ import * as quests from '../../shared/db/repositories/quests.js'
 import * as reviews from '../../shared/db/repositories/reviews.js'
 import * as answers from '../../shared/db/repositories/answers.js'
 import * as exp from '../../shared/db/repositories/exp.js'
+import * as courses from '../../shared/db/repositories/courses.js'
+import { encodeId, PREFIX } from '../../shared/util/ids.js'
+import { coveragePct } from './courses.js'
 // ひとことの AI の設定（scripts/check-ai.mjs も同じ値で確かめる）。上限は推論モデルの考える分も含む
 export const DAILY_MESSAGE_AI = { maxTokens: 800, temperature: 0.8, timeoutMs: 5000 }
 export async function get(ctx) {
   const { user, today } = ctx
   const persona = user.partnerPersona ?? 'encourage'
-  const [todayQuests, review] = await Promise.all([
+  const [todayQuests, review, course] = await Promise.all([
     quests.listToday(user.userId, today),
-    reviews.countDueByKind(user.userId, user.currentCourseId, today)
+    reviews.countDueByKind(user.userId, user.currentCourseId, today),
+    courses.findProgress(user.currentCourseId, user.userId)
   ])
   const text = await dailyMessage(ctx, persona, review.total)
   return ok({
@@ -24,6 +28,10 @@ export async function get(ctx) {
     totalExp: user.totalExp,
     streakDays: user.streakDays ?? 0,
     message: { partnerName: user.partnerName ?? null, persona, text },
+    course: course ? {
+      id: encodeId(PREFIX.course, course.courseId), name: course.name, certification: course.certification,
+      questionCount: course.questionCount, coveragePct: coveragePct(course.learnedCount, course.questionCount)
+    } : null,
     quests: todayQuests.map((q) => ({ id: q.questCode, title: q.title, progress: q.progress, target: q.target, done: !!q.achieved, reward: q.rewardExp })),
     review
   })

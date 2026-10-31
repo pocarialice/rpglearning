@@ -875,7 +875,7 @@ stateDiagram-v2
 | A-02 | PUT            | `/me/profile`                         | ニックネームの登録・変更                  | 学習者     |
 | A-03 | PUT            | `/me/partner`                         | パートナーと名前の設定                   | 学習者     |
 | A-04 | GET／PUT        | `/me/notify`                          | 通知設定の取得・変更（送信時刻を含む）           | 学習者     |
-| A-05 | GET            | `/home`                               | ホームの表示内容（レベル、ひとこと、クエスト、復習数）   | 学習者     |
+| A-05 | GET            | `/home`                               | ホームの表示内容（レベル、ひとこと、受講中のコース、クエスト、復習数）   | 学習者     |
 | A-06 | GET／POST       | `/courses`、`/enrollments`             | コース一覧、受講の開始                   | 学習者     |
 | A-07 | GET            | `/quests/next`                        | 次の問題（10問の冒険の中の1問）             | 学習者     |
 | A-07b | POST          | `/quests/explain-question`            | 説明問題のパートナーの問いかけ（観点を選んだ質問）  | 学習者     |

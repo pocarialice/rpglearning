@@ -7,6 +7,14 @@ export async function listWithProgress(userId, db = defaultDb) {
       EXISTS (SELECT 1 FROM enrollments e WHERE e.course_id = c.course_id AND e.user_id = :userId) AS enrolled
     FROM courses c ORDER BY c.course_id LIMIT 100`, { userId }))
 }
+// ホームに出す受講中のコース（公開済みの問題数と、学んだ択一の数）
+export async function findProgress(courseId, userId, db = defaultDb) {
+  const rows = await db.query(`SELECT c.course_id, c.name, c.certification,
+      (SELECT count(*) FROM questions q WHERE q.course_id = c.course_id AND q.status = 'published')::int AS question_count,
+      (SELECT count(*) FROM review_items r WHERE r.course_id = c.course_id AND r.user_id = :userId AND r.kind = 'choice')::int AS learned_count
+    FROM courses c WHERE c.course_id = :courseId`, { courseId, userId })
+  return camelRow(rows[0])
+}
 export async function listAll(db = defaultDb) {
   const rows = camelRows(await db.query(`SELECT c.course_id, c.name, c.certification, c.description,
       COALESCE((SELECT json_agg(a.user_id ORDER BY a.user_id) FROM course_admins a WHERE a.course_id = c.course_id), '[]') AS admin_user_ids
