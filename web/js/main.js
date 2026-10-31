@@ -9,6 +9,7 @@ import { setContext } from './core/context.js'
 import { registerPages, PAGES } from './pages/index.js'
 import { renderShell, updateShell, startPath } from './shell.js'
 import { errorBand, M02 } from './components/status.js'
+import { installCtrlEnter } from './core/keys.js'
 export const M01 = 'ギルドの扉を開けています…'
 function applyTheme(win) {
   const mq = win.matchMedia?.('(prefers-color-scheme: dark)')
@@ -21,6 +22,7 @@ export async function boot({ win = window, config = CONFIG } = {}) {
   const root = doc.getElementById('app')
   const resuming = doc.getElementById('app-resuming')
   applyTheme(win)
+  installCtrlEnter(doc)
   const auth = createAuth({
     config, storage: win.sessionStorage, reload: () => win.location.reload(),
     showLogin: () => renderLogin(root, { auth, win })
