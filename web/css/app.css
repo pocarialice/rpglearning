@@ -48,6 +48,17 @@ body { background: var(--parchment); color: var(--ink); }
 .app-verdict-correct { color: var(--correct); }
 .app-verdict-wrong { color: var(--wrong); }
 .app-levelup { font-family: var(--font-serif); font-weight: 700; color: var(--gold-ink); }
+/* 獲得EXPの演出（S-06）。視差効果を減らす設定でも動かす（利用者の希望） */
+.app-exp-card { gap: var(--space-2); }
+.app-exp-card [hidden] { display: none; }
+.app-exp-card .gd-fill { position: relative; overflow: hidden; }
+.app-exp-card .gd-fill.is-glint::after { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--parchment-raised) 90%, transparent), transparent); animation: app-exp-glint .6s ease-out forwards; }
+.app-exp-card .gd-exp-gain.is-pending { opacity: 0; }
+.app-exp-card .gd-exp-gain.is-in, .app-exp-card .app-levelup.is-in { animation: app-exp-in .4s ease-out both; }
+.app-exp-card .gd-crest.is-pop { animation: app-exp-pop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes app-exp-glint { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+@keyframes app-exp-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes app-exp-pop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
 .app-list { margin: 0; padding-left: 1.2em; }
 .app-model-label { margin: var(--space-3) 0 0; }
 .app-badges { display: flex; flex-wrap: wrap; gap: var(--space-4); justify-content: center; }
