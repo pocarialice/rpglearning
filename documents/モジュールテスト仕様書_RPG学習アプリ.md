@@ -3,8 +3,8 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第1.4版（ドラフト：第1〜6章、HTML版あり。第1.3版のあとに加えた画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースと、さくらのAI Engine の考える深さ（MT-A05-08・09）を載せる）       |
-| 作成日    | 2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31）                                      |
+| 版数     | 第1.5版（ドラフト：第1〜6章、HTML版あり。第1.4版のあとに加えたホームの受講中のコース（MT-H03-08・MT-F10-05）のケースを載せる）       |
+| 作成日    | 2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31）                                      |
 | 入力文書   | 詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
 
@@ -418,7 +418,7 @@ describe('M-D01 client', () => {
 | MT-D03-12 | users：一覧の並べ替え | `listForAdmin({sort:'lastLogin', order:'desc'})`／引数なし | `ORDER BY u.last_login_at DESC`／既定は `u.user_id ASC`・limit 50 | 同 |
 | MT-D03-13 | users：登録・ロール・削除・復活・物理削除 | `create`（ロール2つ）、`markDeleted`、`restore`（更新0件）、`purge` | user_roles に2行、notify_settings に1行。削除予定日は `{date}`。更新0件は false | 同 |
 | MT-D03-14 | users：物理削除・継続日数の対象 | `listPurgeTargets`・`listForStreak` | キャメルケースの配列。SQLに `LIMIT` を含む | 同 |
-| MT-D03-15 | courses の各関数 | `listWithProgress`・`findById`・`create`・`update`・`assignAdmins`・`listAdminCourses`・`isAdmin`・`dashboardRows`（引数省略） | 担当者は人数分 INSERT、`isAdmin` は行の有無、`dashboardRows` の既定は limit 1000・offset 0 | 同 |
+| MT-D03-15 | courses の各関数 | `listWithProgress`・`findById`・`findProgress`（行あり／なし）・`create`・`update`・`assignAdmins`・`listAdminCourses`・`isAdmin`・`dashboardRows`（引数省略） | 担当者は人数分 INSERT、`isAdmin` は行の有無、`dashboardRows` の既定は limit 1000・offset 0 | 同 |
 | MT-D03-16 | enrollments の各関数 | `enroll`・`isEnrolled`・`listCourseIds`・`nicknameTaken([])` | 日付は `{date}`。コースが空なら SQL を送らず false | 境 |
 | MT-D03-17 | questions：取得系 | `findForLearner`・`findById`・`findDraftsByImport`・`findKeyword` | 選択肢・キーワードのJSONを配列に直す。学習者向けは `status='published'` の条件 | 同 |
 | MT-D03-18 | questions：番号ごとの更新 | 既存の選択肢3つ・キーワード3つに、選択肢4つ・キーワード1つで `update`／問題の更新が0件 | 選択肢は UPDATE 3・INSERT 1、キーワードは UPDATE 1・DELETE 1（`sort_order > 1`）／選択肢・キーワードに触れず false | DT |
@@ -746,6 +746,7 @@ describe('M-D01 client', () => {
 | MT-H03-05 | レベル表示             | total 330                                              | `level:3, expInLevel:0, next:374`                        | 同  |
 | MT-H03-06 | コース未選択            | `current_course_id = null`                             | 409 `COURSE_REQUIRED`                                   | 状  |
 | MT-H03-07 | ひとことが空・パートナー未設定 | Bedrock が空白を返す、persona なし／Bedrock が例外・ライバル型 | 励まし型の定型文／ライバル型の定型文。保存しない | 異 |
+| MT-H03-08 | 受講中のコース | 受講中 c_3（問題120・学んだ択一42）／コースの行なし | `findProgress(3, 15)` を呼び、`course: {id:'c_3', name, certification, questionCount:120, coveragePct:35}`／`course: null` | 同 |
 
 #### M-H04 `routes/courses.js`（A-06）
 
@@ -1142,10 +1143,11 @@ describe('M-D01 client', () => {
 
 | ID | 観点 | 入力・前提 | 期待結果 | 技法 |
 | --- | --- | --- | --- | --- |
-| MT-F10-01 | 表示の順番 | A-05 の応答 | EXPバー → ひとこと → クエスト → 今日の復習の順、復習の内訳とリリース番号。クエスト名を状態に覚える | 同 |
+| MT-F10-01 | 表示の順番 | A-05 の応答 | EXPバー → ひとこと → 受講中のコース → クエスト → 今日の復習の順、復習の内訳とリリース番号。クエスト名を状態に覚える | 同 |
 | MT-F10-02 | 冒険に出る | 前の冒険IDあり → 「冒険に出る」 | 冒険IDを空にして A-07（`adventureId` なし）、択一なら S-04 へ | 状 |
 | MT-F10-03 | 冒険の終わりのお知らせ | 状態に `notice` あり | お知らせを出し、状態からは消す（1回だけ） | 状 |
 | MT-F10-04 | 読み込み失敗 | A-05 が通信エラー → 再読み込み | M-02 と再読み込みボタン → ホームを表示 | 異 |
+| MT-F10-05 | 受講中のコース | A-05 の `course` あり → 「コースを変える」／`course: null` | コース名・資格・問題数・網羅率（35.0%）と網羅率のバー（幅35%）、押すと S-03（`/courses`）へ／カードを出さない | 同 |
 
 #### M-F11 `pages/learner/s03-courses.js`（S-03 コース選択）
 

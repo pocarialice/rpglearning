@@ -88,6 +88,14 @@ describe('M-H03 home（A-05）', () => {
     expect(res.statusCode).toBe(409)
     expect(parse(res).error.code).toBe('COURSE_REQUIRED')
   })
+  it('MT-H03-08 受講中のコース', async () => {
+    courses.findProgress.mockResolvedValue({ courseId: 3, name: 'NW', certification: 'ネスペ', questionCount: 120, learnedCount: 42 })
+    const body = parse(await call({ path: '/api/home' }))
+    expect(courses.findProgress).toHaveBeenCalledWith(3, 15)
+    expect(body.course).toEqual({ id: 'c_3', name: 'NW', certification: 'ネスペ', questionCount: 120, coveragePct: 35 })
+    courses.findProgress.mockResolvedValue(null)
+    expect(parse(await call({ path: '/api/home' })).course).toBeNull()
+  })
 })
 describe('M-H04 courses（A-06）', () => {
   beforeEach(() => {

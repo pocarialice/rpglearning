@@ -6,13 +6,15 @@ import * as courses from '../../shared/db/repositories/courses.js'
 import * as enrollments from '../../shared/db/repositories/enrollments.js'
 import * as users from '../../shared/db/repositories/users.js'
 const round1 = (n) => Math.round(n * 10) / 10
+// 網羅率（%、小数1桁）。問題がなければ 0
+export const coveragePct = (learned, total) => (total === 0 ? 0 : round1((100 * learned) / total))
 export async function list(ctx) {
   const rows = await courses.listWithProgress(ctx.user.userId)
   return ok({
     courses: rows.map((c) => ({
       id: encodeId(PREFIX.course, c.courseId), name: c.name, certification: c.certification, description: c.description ?? null,
       questionCount: c.questionCount,
-      coveragePct: c.questionCount === 0 ? 0 : round1((100 * c.learnedCount) / c.questionCount),
+      coveragePct: coveragePct(c.learnedCount, c.questionCount),
       enrolled: !!c.enrolled, current: c.courseId === ctx.user.currentCourseId
     }))
   })

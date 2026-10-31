@@ -1,14 +1,24 @@
-// S-02 ホーム：EXPバー → ひとこと → デイリークエスト×3 → 今日の復習と「冒険に出る」（外部設計書 3.7）
+// S-02 ホーム：EXPバー → ひとこと → 受講中のコース → デイリークエスト×3 → 今日の復習と「冒険に出る」（外部設計書 3.7）
 import { getContext } from '../../core/context.js'
 import { expBar } from '../../components/exp-bar.js'
 import { partnerBubble, imageFor } from '../../components/partner-bubble.js'
 import { questCard } from '../../components/quest-card.js'
 import { button } from '../../components/button.js'
 import { loading, errorBand, errorMessage } from '../../components/status.js'
-import { escapeHtml, formatExp, aiText } from '../../logic/format.js'
+import { escapeHtml, formatExp, formatPct, aiText } from '../../logic/format.js'
 import { goNextQuest } from './adventure.js'
 export const M_HOME_ERROR = 'ホームを読み込めませんでした。もう一度お試しください'
 export const M_START_ERROR = '冒険を始められませんでした。もう一度お試しください'
+// 受講中のコース：名前・資格・問題数・網羅率と「コースを変える」
+function courseCard(course) {
+  if (!course) return ''
+  const pct = Math.min(100, Math.max(0, Number(course.coveragePct) || 0))
+  return `<section class="gd-card app-section" aria-labelledby="course-h"><h2 id="course-h" class="title">受講中のコース</h2>
+<div class="app-course-head"><p class="body"><b>${escapeHtml(course.name)}</b></p><span class="app-chip">受講中</span></div>
+<p class="meta">${escapeHtml(course.certification)}・問題 ${Number(course.questionCount)}問・網羅率 ${formatPct(course.coveragePct)}</p>
+<div class="gd-track" role="progressbar" aria-label="網羅率" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div class="gd-fill" style="width:${pct}%"></div></div>
+${button({ label: 'コースを変える', variant: 'quiet', block: true, attrs: 'data-action="courses"' })}</section>`
+}
 function reviewCard(review) {
   const total = review?.total ?? 0
   const detail = total > 0
@@ -38,9 +48,11 @@ export async function render(root) {
 ${expBar({ level: home.level, exp: home.expInLevel, next: home.next, title: home.streakDays ? `連続 ${home.streakDays}日` : '' })}
 <p class="meta app-total">累計 ${formatExp(home.totalExp)} EXP</p>
 ${partnerBubble({ name: home.message?.partnerName, persona: home.message?.persona, html: aiText(home.message?.text), imageUrl: imageFor(getState().user?.partner, home.message?.persona) })}
+${courseCard(home.course)}
 <section class="app-section" aria-labelledby="quest-h"><h2 id="quest-h" class="title">本日の依頼</h2>
 <div class="app-stack">${quests.map((q) => questCard({ title: q.title, reward: q.reward, current: q.progress, target: q.target, done: q.done })).join('') || '<p class="meta">今日の依頼はまだ届いていない</p>'}</div></section>
 ${reviewCard(home.review)}${release}`
+  root.querySelector('[data-action="courses"]')?.addEventListener('click', () => go('/courses'))
   const start = root.querySelector('[data-action="start"]')
   start.addEventListener('click', async () => {
     start.disabled = true
