@@ -3,7 +3,7 @@ import { getContext } from '../../core/context.js'
 import { partnerBubble, partnerName } from '../../components/partner-bubble.js'
 import { button } from '../../components/button.js'
 import { errorBand, errorMessage } from '../../components/status.js'
-import { escapeHtml } from '../../logic/format.js'
+import { escapeHtml, aiText } from '../../logic/format.js'
 import { validateExplanation, countChars, EXPLANATION_MIN, EXPLANATION_MAX } from '../../logic/validators.js'
 import { pollGrading } from '../../logic/grading-poller.js'
 import { progressLine } from './adventure.js'
@@ -59,7 +59,7 @@ ${button({ label: '採点してもらう', variant: 'primary', block: true, disa
     if (!prompt?.text) prompt = fallbackPrompt(quest.keyword.text)
     setState({ quest: { ...quest, prompt } })
   }
-  ask.innerHTML = `${partnerBubble({ ...partner, text: prompt.text })}${anglesLine(prompt.angles)}`
+  ask.innerHTML = `${partnerBubble({ ...partner, html: aiText(prompt.text) })}${anglesLine(prompt.angles)}`
   form.hidden = false
   const update = () => {
     const v = validateExplanation(ta.value)

@@ -179,6 +179,7 @@ describe('M-F13 S-05 パートナーの問いかけ（A-07b）', () => {
     resolve({ partnerName: 'セージ', persona: 'logic', prompt: PROMPT, fallback: false })
     await done
     expect(root.querySelector('.app-ask .gd-bubble').textContent).toContain(PROMPT.text)
+    expect(root.querySelector('.app-ask .gd-bubble').innerHTML).toContain('&lt;public&gt;')
     expect([...root.querySelectorAll('.app-ask .app-angle')].map((e) => e.textContent)).toEqual(['#目的', '#しくみ'])
     expect(root.querySelector('.app-explain-form').hidden).toBe(false)
     expect(root.querySelector('label[for="explain-text"]').textContent).toBe('あなたの回答（50〜400文字）')
@@ -245,6 +246,17 @@ describe('M-F14 S-06 結果・フィードバック', () => {
     setup({ result: { kind: 'explain', quest: EXPLAIN_Q, res: { ...res, prompt: undefined } } })
     await result.render(root)
     expect(root.textContent).not.toContain('の質問')
+  })
+  it('MT-F14-07 AI の文章は【】を太字にして改行する', async () => {
+    const res = { status: 'done', score: 80, passed: true, modelAnswer: '【定義】論理的に分離された網。【しくみ】サブネットに分ける。', missingPoints: ['【しくみ】ルート'], comment: { persona: 'logic', text: '<i>よい</i>説明です。' }, prompt: { text: '【目的】を教えて', angles: [] }, ...OUTCOME, quests: [], badges: [] }
+    setup({ result: { kind: 'explain', quest: EXPLAIN_Q, res } })
+    await result.render(root)
+    const bubble = root.querySelector('.gd-bubble')
+    expect([...bubble.querySelectorAll('strong')].map((e) => e.textContent)).toEqual(['【定義】', '【しくみ】'])
+    expect(bubble.innerHTML).toContain('網。<br><strong>【しくみ】</strong>')
+    expect(bubble.querySelector('i')).toBeNull()
+    expect(root.querySelector('.app-list strong').textContent).toBe('【しくみ】')
+    expect(root.querySelector('.gd-card .body strong').textContent).toBe('【目的】')
   })
   it('MT-F14-03 「次の問題へ」は同じ冒険で A-07 を呼ぶ', async () => {
     const res = { correct: true, correctChoice: 1, explanation: '', comment: { text: 'いいね' }, ...OUTCOME }

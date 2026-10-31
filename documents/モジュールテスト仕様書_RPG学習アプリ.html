@@ -5445,6 +5445,13 @@ describe('M-D01 client', () =&gt; {
 <td>境</td>
 </tr>
 <tr>
+<td>MT-F05-04</td>
+<td>AI の文章の整形</td>
+<td>【】の小見出しが続く文／文の途中の【】／21文字以上・空の【】／タグを含む文と改行／60文字以上と59文字の段落／null</td>
+<td>小見出しを太字にして前で改行／太字だけ／そのまま／エスケープしてから太字、改行は <code>&lt;br&gt;</code>／「。」ごとに改行（かぎかっこの中と最後は除く）・改行しない／空文字</td>
+<td>境</td>
+</tr>
+<tr>
 <td>MT-F06-01</td>
 <td>採点結果が返る</td>
 <td>1・2回目 processing、3回目 done</td>
@@ -5905,6 +5912,13 @@ describe('M-D01 client', () =&gt; {
 <td>説明の結果（問いかけつき）</td>
 <td><code>prompt</code>（観点が full・partial・none・unknown）、パートナー名なしのライバル型／<code>prompt</code> なし</td>
 <td>「レンの質問」と質問文（エスケープ）、観点ごとに ○ 答えられた・△ 一部・× まだ、unknown は印なし／質問を出さない</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F14-07</td>
+<td>AI の文章の太字と改行</td>
+<td>模範説明・足りない観点・質問に【】、コメントにタグ</td>
+<td>【】を <code>strong</code> で太字、小見出しの前で改行、タグはエスケープして要素にしない</td>
 <td>同</td>
 </tr>
 </tbody>

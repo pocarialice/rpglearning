@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { escapeHtml, formatDate, formatDateTime, formatExp, formatPct } from '../../../../web/js/logic/format.js'
+import { escapeHtml, formatDate, formatDateTime, formatExp, formatPct, aiText } from '../../../../web/js/logic/format.js'
 import { pollGrading } from '../../../../web/js/logic/grading-poller.js'
 import { ApiError } from '../../../../web/js/core/api.js'
 describe('M-F05 logic/format', () => {
@@ -20,6 +20,21 @@ describe('M-F05 logic/format', () => {
     expect(formatPct(40)).toBe('40.0%')
     expect(formatPct(null)).toBe('-')
     expect(escapeHtml(null)).toBe('')
+  })
+  it('MT-F05-04 AI の文章の整形', () => {
+    // 【】の小見出しは太字にし、文の切れ目なら前で改行する
+    expect(aiText('【定義】名前とアドレスを対応づける。【しくみ】順に問い合わせる。')).toBe('<strong>【定義】</strong>名前とアドレスを対応づける。<br><strong>【しくみ】</strong>順に問い合わせる。')
+    expect(aiText('説明！ 【例】URL')).toBe('説明！<br><strong>【例】</strong>URL')
+    // 文の途中の【】は改行しない。21文字以上・空の【】は小見出しとみなさない
+    expect(aiText('次は【しくみ】を書こう')).toBe('次は<strong>【しくみ】</strong>を書こう')
+    expect(aiText(`【${'あ'.repeat(21)}】【】`)).toBe(`【${'あ'.repeat(21)}】【】`)
+    // エスケープしてから太字にする。改行はそのまま
+    expect(aiText('<b>【x】</b>\r\n&')).toBe('&lt;b&gt;<strong>【x】</strong>&lt;/b&gt;<br>&amp;')
+    // 60文字以上の段落は「。」ごとに改行する。かぎかっこの中の「。」と最後の「。」では改行しない
+    const long = `${'あ'.repeat(40)}。${'い'.repeat(10)}「う。」と言う。${'え'.repeat(5)}。`
+    expect(aiText(long)).toBe(`${'あ'.repeat(40)}。<br>${'い'.repeat(10)}「う。」と言う。<br>${'え'.repeat(5)}。`)
+    expect(aiText(`${'あ'.repeat(30)}。${'い'.repeat(27)}。`)).toBe(`${'あ'.repeat(30)}。${'い'.repeat(27)}。`)
+    expect(aiText(null)).toBe('')
   })
 })
 describe('M-F06 logic/grading-poller', () => {

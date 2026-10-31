@@ -3052,8 +3052,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td><code>logic/format.js</code></td>
-<td><code>escapeHtml</code>、<code>formatDate</code>、<code>formatExp</code></td>
-<td>画面に出す文字はすべて <code>escapeHtml</code> を通す（AIの出力・利用者の入力を含む）</td>
+<td><code>escapeHtml</code>、<code>formatDate</code>、<code>formatExp</code>、<code>aiText</code></td>
+<td>画面に出す文字はすべて <code>escapeHtml</code> を通す（AIの出力・利用者の入力を含む）。AIの文章は <code>aiText</code> でエスケープしたうえで、【】の小見出し（20文字まで）を <code>&lt;strong&gt;</code> で太字にし、「。！？」のあとの小見出しの前と、60文字以上の段落の「。」のあと（かぎかっこの中と段落の最後は除く）に <code>&lt;br&gt;</code> を入れる</td>
 </tr>
 <tr>
 <td><code>logic/grading-poller.js</code></td>
