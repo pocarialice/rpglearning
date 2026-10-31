@@ -6532,6 +6532,34 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F24 <code>sw.js</code>（Service Worker）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>観点</th>
+<th>入力・前提</th>
+<th>期待結果</th>
+<th>技法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MT-F24-01</td>
+<td>キャッシュにないファイル</td>
+<td>キャッシュが空で <code>/js/pages/learner/s06-result.js</code> を GET</td>
+<td><code>fetch</code> を <code>{ cache: 'no-cache' }</code> で呼び、応答の写しをキャッシュに入れる</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F24-02</td>
+<td>キャッシュにあるファイル・扱わない要求</td>
+<td>キャッシュにある <code>/css/app.css</code>／<code>/api/home</code>／POST</td>
+<td>キャッシュの応答を返し <code>fetch</code> を呼ばない／どちらも <code>respondWith</code> を呼ばない（ブラウザに任せる）</td>
+<td>同</td>
+</tr>
+</tbody>
+</table></div>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-scale-balanced h-ico" aria-hidden="true"></i>6. トレーサビリティと合否基準</h2>
 <div class="vis">
   <p class="vis-label">カバレッジの基準</p>
@@ -6657,8 +6685,8 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>3.3 画面遷移、3.4 画面レイアウトの基本</td>
 <td>6.1、6.2</td>
-<td>shell、router</td>
-<td>MT-F08-01〜06、MT-F03-06</td>
+<td>shell、router、sw</td>
+<td>MT-F08-01〜06、MT-F03-06、MT-F24-01〜02</td>
 </tr>
 <tr>
 <td>3.5 共通の表示ルール、9章 メッセージ</td>

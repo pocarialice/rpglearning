@@ -1292,6 +1292,13 @@ describe('M-D01 client', () => {
 | MT-F23-07 | 使えない再設定リンク | A-35 が 400／通信エラー | M_RESET_INVALID／M_NETWORK | 異 |
 | MT-F23-08 | パスワードの決まり | `Guild2026`・`Guild26`・`guild2026`・`GUILD2026`・`Guildguild` | true・false・false・false・false | 境 |
 
+#### M-F24 `sw.js`（Service Worker）
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-F24-01 | キャッシュにないファイル | キャッシュが空で `/js/pages/learner/s06-result.js` を GET | `fetch` を `{ cache: 'no-cache' }` で呼び、応答の写しをキャッシュに入れる | 同 |
+| MT-F24-02 | キャッシュにあるファイル・扱わない要求 | キャッシュにある `/css/app.css`／`/api/home`／POST | キャッシュの応答を返し `fetch` を呼ばない／どちらも `respondWith` を呼ばない（ブラウザに任せる） | 同 |
+
 ## 6. トレーサビリティと合否基準
 
 ### 6.1 設計とテストケースの対応
@@ -1314,7 +1321,7 @@ describe('M-D01 client', () => {
 | 5.6 メール、6.2 送信方式       | 3.8、4.5、4.7、9.2             | build-notify、mail/smtp、templates、server/worker      | MT-W03-12、MT-W04-01〜07、MT-M01-01〜08、MT-S02-07〜11      |
 | 8.1 認証・権限、3.7 S-01 ログイン              | 3.2 M-U04、3.10、5.4 A-30〜A-35、6.1       | authz、router、auth/password・token、routes/auth、repositories/auth、core/auth.js、pages/login.js            | MT-U04-01〜10、MT-H01-06〜07、MT-K01・MT-K02、MT-H15-01〜12、MT-D04-05〜09、MT-F01-01〜10、MT-F23-01〜08   |
 | 8.2 データ保護              | 2.4.5、9.1           | logger、format、prompts           | MT-U05-04、MT-F05-01、MT-A04-02             |
-| 3.3 画面遷移、3.4 画面レイアウトの基本 | 6.1、6.2 | shell、router | MT-F08-01〜06、MT-F03-06 |
+| 3.3 画面遷移、3.4 画面レイアウトの基本 | 6.1、6.2 | shell、router、sw | MT-F08-01〜06、MT-F03-06、MT-F24-01〜02 |
 | 3.5 共通の表示ルール、9章 メッセージ | 6.1 | components、status | MT-F07-01〜13 |
 | 3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-10） | 6.2 | pages/learner、parts | MT-F09〜MT-F18 |
 | 3.8 管理画面（S-11〜S-14） | 6.2 | pages/admin | MT-F19〜MT-F22 |
