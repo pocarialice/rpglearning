@@ -3,8 +3,8 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第1.3版（ドラフト：第1〜6章、HTML版あり。さくらのクラウドへの切り替えに合わせ、DB（pg）・ジョブキュー・ログイン・メール（SMTP）・オブジェクトストレージ・AI の差し替え口・コンテナの入口のテストを追加し、AWS 固有のケースを差し替える）       |
-| 作成日    | 2026-10-20（第1.3版：2026-10-27）                                      |
+| 版数     | 第1.4版（ドラフト：第1〜6章、HTML版あり。第1.3版のあとに加えた画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースと、さくらのAI Engine の考える深さ（MT-A05-08・09）を載せる）       |
+| 作成日    | 2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31）                                      |
 | 入力文書   | 詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
 
@@ -629,6 +629,8 @@ describe('M-D01 client', () => {
 | MT-A05-05 | 時間切れ | 応答が返らない、`timeoutMs` 経過 | `AI_TIMEOUT`、WARN ログ `ai.timeout` | 境 |
 | MT-A05-06 | 文書・画像のブロック | `messages` に document、文字だけの content、content なし | `AI_ERROR`（「このAIは文書・画像を読めません」）で送信しない／文字のまま／空文字 | 異 |
 | MT-A05-07 | 既定の fetch | `fetchFn` を渡さない | `globalThis.fetch` を使う | 同 |
+| MT-A05-08 | 考える深さ（reasoning_effort） | `AI_REASONING_EFFORT` なし／`medium`／空文字。空文字で `converse` | 既定の `low`／`medium` を送る／`reasoning_effort` を送らない（`converse` の要求にも入らない） | 同 |
+| MT-A05-09 | 考えた分のトークン数と空の答え | `reasoning_tokens` 300・`finish_reason: 'length'` で答えが空／答えがあって `length` | `{ text: '', stopReason: 'max_tokens' }`。INFO ログ `ai.converse` に `reasoningTokens`、WARN ログ `ai.empty_answer`（用途・`maxTokens`・`reasoningTokens`）／答えがあれば `ai.empty_answer` を出さない | 境 |
 
 #### M-A06 `ai/client.js`（差し替え口）
 
