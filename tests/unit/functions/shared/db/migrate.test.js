@@ -31,7 +31,7 @@ beforeEach(async () => {
 describe('M-D05 migrate', () => {
   it('MT-D05-01 ファイルを番号順に並べる（*.down.sql などは除く）', async () => {
     expect((await listMigrations(dir)).map((m) => m.version)).toEqual(['V001', 'V002'])
-    expect((await listMigrations(resolve(import.meta.dirname, '../../../../../db/migrations'))).map((m) => m.version)).toEqual(['V001', 'V002', 'V003'])
+    expect((await listMigrations(resolve(import.meta.dirname, '../../../../../db/migrations'))).map((m) => m.version)).toEqual(['V001', 'V002', 'V003', 'V004'])
   })
   it('MT-D05-02 未適用だけを1ファイル＝1トランザクションで流す', async () => {
     const { pool, log } = fakePool({ applied: ['V001'] })

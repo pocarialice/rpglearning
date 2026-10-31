@@ -74,7 +74,14 @@ export const GRADING_SCHEMA = {
   concreteness: { type: 'int', min: 0, max: 20 },
   modelAnswer: { type: 'string', min: 1, max: 500 }, // 指示は空白・改行を除いて400文字まで。小見出しの改行の分だけ余裕を持たせる
   missingPoints: { type: 'array', min: 0, max: 3, items: { type: 'string', min: 1, max: 200 } },
-  comment: { type: 'string', min: 1, max: 300 }
+  comment: { type: 'string', min: 1, max: 300 },
+  // 問いかけの観点ごとの答え方（full・partial・none）。問いかけのない採点では返らない
+  angleResults: { type: 'array', min: 0, max: 3, required: false, items: { type: 'string', min: 1, max: 10 } }
+}
+// キーワード説明の問いかけの形（詳細設計書 7.6）
+export const EXPLAIN_QUESTION_SCHEMA = {
+  question: { type: 'string', min: 5, max: 200 },
+  angles: { type: 'array', min: 1, max: 3, items: { type: 'string', min: 1, max: 12 } }
 }
 // 抽出結果の形（詳細設計書 7.4）。中身の正規化は extractor が行う
 export const EXTRACTION_SCHEMA = {

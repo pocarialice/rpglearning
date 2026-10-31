@@ -8,11 +8,13 @@ import * as questions from '../../shared/db/repositories/questions.js'
 import * as gradings from '../../shared/db/repositories/gradings.js'
 import * as adventures from '../../shared/db/repositories/adventures.js'
 import * as jobs from '../../shared/db/repositories/jobs.js'
+import { normalizePrompt } from '../../shared/ai/prompts/explain-question.js'
 export const GRADING_LIMIT_MS = 30 * 1000
 export async function create(ctx) {
   const { user, log } = ctx
   const body = ctx.body()
   assertValid(validateExplanation(body.text))
+  const prompt = readPrompt(body.prompt)
   const keywordId = decodeId(PREFIX.keyword, body.keywordId)
   const kw = await questions.findKeyword(keywordId)
   if (!kw || kw.courseId !== user.currentCourseId || kw.status !== 'published') throw new AppError('NOT_FOUND', 'キーワードが見つかりません')
@@ -21,7 +23,7 @@ export async function create(ctx) {
     adventureId = decodeId(PREFIX.adventure, body.adventureId)
     if (!(await adventures.find(adventureId, user.userId))) throw new AppError('NOT_FOUND', '冒険が見つかりません')
   }
-  const job = await gradings.create({ userId: user.userId, courseId: user.currentCourseId, keywordId, adventureId, explanationText: body.text })
+  const job = await gradings.create({ userId: user.userId, courseId: user.currentCourseId, keywordId, adventureId, explanationText: body.text, prompt })
   try {
     await jobs.enqueue('grading', { gradingId: job.gradingId })
   } catch (err) {
@@ -30,6 +32,14 @@ export async function create(ctx) {
     throw new AppError('INTERNAL_ERROR', '採点を開始できませんでした')
   }
   return ok({ gradingId: encodeId(PREFIX.grading, job.gradingId), status: 'processing' }, 202)
+}
+// A-07b の問いかけ（任意）。学習者から届く値なので、形を確かめて長さを切り詰める
+function readPrompt(p) {
+  if (p === undefined || p === null) return null
+  if (typeof p !== 'object' || typeof p.text !== 'string' || !p.text.trim() || (p.angles !== undefined && !Array.isArray(p.angles))) {
+    throw new AppError('VALIDATION_ERROR', undefined, { details: [{ field: 'prompt', code: 'INVALID' }] })
+  }
+  return normalizePrompt(p.text, (p.angles ?? []).filter((a) => typeof a === 'string'))
 }
 export async function get(ctx) {
   const { user, now, log } = ctx

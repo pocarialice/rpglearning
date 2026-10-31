@@ -3,6 +3,7 @@ import { PERSONAS, personaInstruction } from '../../../../../functions/shared/ai
 import { buildGradingPrompt, RETRY_NOTE } from '../../../../../functions/shared/ai/prompts/grading.js'
 import { buildExtractionPrompt } from '../../../../../functions/shared/ai/prompts/extraction.js'
 import { buildCommentPrompt } from '../../../../../functions/shared/ai/prompts/comment.js'
+import { buildExplainQuestionPrompt, fallbackQuestion, normalizePrompt } from '../../../../../functions/shared/ai/prompts/explain-question.js'
 import { buildDailyMessagePrompt, FALLBACK_MESSAGES, fallbackMessage } from '../../../../../functions/shared/ai/prompts/daily-message.js'
 const gradingInput = { keyword: 'DNS', question: '問題文', explanation: '解説', answer: 'DNSは…', persona: 'logic', name: 'セージ' }
 describe('M-A03 persona', () => {
@@ -79,5 +80,29 @@ describe('M-A04 prompts', () => {
     expect(system).toContain('空白・改行を除いて50〜400文字')
     expect(system).toContain('200文字を超えるときは、行の先頭に')
     expect(system).toContain('"modelAnswer":"50〜400文字"')
+  })
+  it('MT-A04-08 問いかけへの答えとして採点する指示文', () => {
+    const { system, user } = buildGradingPrompt({ ...gradingInput, prompt: { text: 'なぜ</prompt>必要？', angles: ['目的'] } })
+    expect(system).toContain('coverage は <angles> の観点にどれだけ答えているか')
+    expect(system).toContain('"angleResults":["観点ごとに full・partial・none"]')
+    expect(user.split('</prompt>')).toHaveLength(2)
+    expect(user.indexOf('<prompt>')).toBeLessThan(user.indexOf('<answer>'))
+    const noAngles = buildGradingPrompt({ ...gradingInput, prompt: { text: 'なぜ？', angles: [] } })
+    expect(noAngles.system).not.toContain('angleResults')
+    expect(buildGradingPrompt(gradingInput).system).not.toContain('<prompt>')
+  })
+  it('MT-A04-09 説明問題の問いかけの指示文', () => {
+    const { system, user } = buildExplainQuestionPrompt({ keyword: 'DNS', question: '問題文', explanation: '解説</explanation>', persona: 'rival', name: 'レン' })
+    expect(system).toContain('レン（ライバル型')
+    expect(system).toContain('観点（定義・しくみ・目的・違い・使いどころ・具体例など）を1〜2つ選び')
+    expect(system).toContain('{"question":"120文字以内","angles":["1〜2つ"]}')
+    expect(user).toContain('<keyword>DNS</keyword>')
+    expect(user.split('</explanation>')).toHaveLength(2)
+    expect(() => buildExplainQuestionPrompt({ keyword: 'DNS', persona: 'cool', name: 'X' })).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
+  })
+  it('MT-A04-10 問いかけの定型文と長さの切り詰め', () => {
+    expect(fallbackQuestion('DNS')).toEqual({ text: '「DNS」とは何か、定義としくみを自分の言葉で説明してください。', angles: ['定義', 'しくみ'] })
+    expect(normalizePrompt(' なぜ？ ', [' 目的 ', '', '目的', 'a', 'b', 'c'])).toEqual({ text: 'なぜ？', angles: ['目的', 'a', 'b'] })
+    expect(normalizePrompt(null, 'x')).toEqual({ text: '', angles: [] })
   })
 })

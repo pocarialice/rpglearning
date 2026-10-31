@@ -4,13 +4,15 @@
 import { pathToFileURL } from 'node:url'
 import { converse as defaultConverse, provider } from '../functions/shared/ai/client.js'
 import { reasoningEffort } from '../functions/shared/ai/sakura.js'
-import { extractJson, validateShape, GRADING_SCHEMA, EXTRACTION_SCHEMA } from '../functions/shared/ai/json-guard.js'
+import { extractJson, validateShape, GRADING_SCHEMA, EXTRACTION_SCHEMA, EXPLAIN_QUESTION_SCHEMA } from '../functions/shared/ai/json-guard.js'
 import { buildCommentPrompt } from '../functions/shared/ai/prompts/comment.js'
 import { buildDailyMessagePrompt } from '../functions/shared/ai/prompts/daily-message.js'
 import { buildGradingPrompt } from '../functions/shared/ai/prompts/grading.js'
 import { buildExtractionPrompt } from '../functions/shared/ai/prompts/extraction.js'
+import { buildExplainQuestionPrompt } from '../functions/shared/ai/prompts/explain-question.js'
 import { COMMENT_AI } from '../functions/api-handler/routes/answers.js'
 import { DAILY_MESSAGE_AI } from '../functions/api-handler/routes/home.js'
+import { EXPLAIN_QUESTION_AI } from '../functions/api-handler/routes/quests.js'
 import { GRADING_AI } from '../functions/grading-worker/grader.js'
 import { EXTRACTION_AI } from '../functions/import-worker/extractor.js'
 export const LONG_TIMEOUT_MS = 300000
@@ -46,6 +48,17 @@ export const CHECKS = {
       return text(p.system, p.user)
     },
     judge: notEmpty
+  },
+  'explain-question': {
+    model: 'MODEL_LIGHT', ai: EXPLAIN_QUESTION_AI,
+    prompt: () => {
+      const p = buildExplainQuestionPrompt({ keyword: 'DNS', question: SAMPLE.question, explanation: SAMPLE.explanation, persona: 'encourage', name: 'ミナ' })
+      return text(p.system, p.user)
+    },
+    judge: (res) => {
+      const shape = validateShape(extractJson(res.text), EXPLAIN_QUESTION_SCHEMA)
+      return shape.ok ? { ok: true, note: 'JSON OK' } : { ok: false, note: `JSON NG（${shape.errors.map((e) => e.key).join(',')}）` }
+    }
   },
   grading: {
     model: 'MODEL_HIGH', ai: GRADING_AI,

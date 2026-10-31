@@ -33,6 +33,16 @@ body { background: var(--parchment); color: var(--ink); }
 .app-textarea { width: 100%; box-sizing: border-box; background: var(--parchment-sunk); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius-md); padding: var(--space-3); resize: vertical; min-height: 200px; }
 .app-counter { display: flex; justify-content: flex-end; align-items: center; }
 .app-hint { margin: 0; color: var(--wrong); min-height: 20px; }
+.app-angles { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); color: var(--ink-muted); }
+.app-angle { font-size: 13px; line-height: 20px; color: var(--teal); border: 1px solid var(--teal); border-radius: var(--radius-pill); padding: 0 var(--space-2); }
+.app-angle-results { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.app-angle-results li { display: flex; align-items: center; gap: var(--space-1); }
+.app-angle-mark { font-weight: 700; }
+.app-angle-full { color: var(--correct); }
+.app-angle-partial { color: var(--gold-ink); }
+.app-angle-none { color: var(--wrong); }
+.app-ask { display: flex; flex-direction: column; gap: var(--space-2); }
+.app-ask:empty { display: none; }
 .app-waiting { display: flex; flex-direction: column; gap: var(--space-3); }
 .app-verdict { font-family: var(--font-serif); font-weight: 800; font-size: 24px; line-height: 32px; }
 .app-verdict-correct { color: var(--correct); }

@@ -432,7 +432,7 @@ describe('M-D01 client', () => {
 | MT-D03-26 | users.lastLoginLogAt・reviews.countDueByKind | ログインあり／なし、形式ごとの件数あり／なし | 最後の日時／null、`{choice, explain, total}`（なければ0） | 境 |
 | MT-D03-27 | badges.listOwnedDetail・rankings.weeks・courses.listAll・listIds | 各関数 | 獲得日時つき、週の開始日の配列、担当者IDのJSONを配列に直す | 同 |
 | MT-D03-28 | imports.setKey・listByCourse、quests.listAssignTargets、partners | 各関数 | キーの更新、一覧、割り当て対象（復習数・割り当て済み）、パートナーの取得・画像の更新（null 可） | 同 |
-| MT-D03-29 | gradings の各関数 | `create`・`find`（自分／利用者指定なし／行なし）・`fail`・`deleteOlderThan` | 結果のJSONを直す、`fail` は `status='processing'` の条件、削除は日時の境目を渡す | 同 |
+| MT-D03-29 | gradings の各関数 | `create`（問いかけなし／あり）・`find`（自分／利用者指定なし／行なし／問いかけあり）・`fail`・`deleteOlderThan` | 問いかけなしは `prompt` null、ありは JSON で渡す。結果・問いかけのJSONを直す、`fail` は `status='processing'` の条件、削除は日時の境目を渡す | 同 |
 | MT-D03-30 | imports の各関数 | `create`・`find`・`findByKey`・`setStatus`（from あり／なし）・`insertDrafts`（2問） | 問題・選択肢・キーワードを INSERT。正解なし・解説なしは null・空文字 | 同 |
 | MT-D03-31 | adventures の各関数 | `start`・`find`（他人は null）・`incrementServed`・`finish` | `served` をJSONで追加、10問まで | 同 |
 | MT-D03-32 | audit.write | 対象IDあり／なし、detail 省略 | detail はJSON（省略時 `{}`）、対象IDなしは null | 境 |
@@ -457,7 +457,7 @@ describe('M-D01 client', () => {
 
 | ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
 | --------- | -- | ----- | ---- | -- |
-| MT-D05-01 | ファイルの並べ方 | テスト用のフォルダ（`V002`・`V001`・`.down.sql`・ほかのファイル）、リポジトリの `db/migrations` | `V001`・`V002` の順（`.down.sql` などは除く）、リポジトリは `V001`〜`V003` | 同 |
+| MT-D05-01 | ファイルの並べ方 | テスト用のフォルダ（`V002`・`V001`・`.down.sql`・ほかのファイル）、リポジトリの `db/migrations` | `V001`・`V002` の順（`.down.sql` などは除く）、リポジトリは `V001`〜`V004` | 同 |
 | MT-D05-02 | 未適用だけを流す | `V001` が適用済み、`V002` が未適用、`release:'r1'` | `pg_advisory_lock` → 適用済みの確認 → `BEGIN` → `V002` → `release_no` の更新 → `COMMIT` → ロックを外す。戻り値 `['V002']` | 状 |
 | MT-D05-03 | 初めての DB | `schema_migrations` がない | すべて未適用として流す | 境 |
 | MT-D05-04 | 失敗 | `V002` の SQL が例外 | `ROLLBACK`、「V002 の適用に失敗しました: …」を投げる。ロックを外して接続を返す | 異 |
@@ -614,6 +614,9 @@ describe('M-D01 client', () => {
 | MT-A04-05 | ひとことに個人情報を入れない   | `buildDailyMessagePrompt({reviewCount:5, ...})`                 | 渡した数値は入り、氏名・メールのキーを受け付けない（渡すと例外）                                | 異  |
 | MT-A04-06 | 解説コメントの指示文 | ライバル型・正解・問題文に閉じタグ／励まし型・不正解・解説なし | system に名前と性格、`<\/question>` に置換、`<result>` に正誤、解説なしは空タグ | 同 |
 | MT-A04-07 | 模範説明の長さと小見出し | `buildGradingPrompt(...)` | system に「空白・改行を除いて50〜400文字」「200文字を超えるときは行の先頭に【】の小見出し」、JSONの形に `"modelAnswer":"50〜400文字"` | 同 |
+| MT-A04-08 | 問いかけへの答えとして採点する指示文 | `buildGradingPrompt({..., prompt})`（質問に閉じタグ）／観点なし／問いかけなし | coverage を観点で付ける指示と `angleResults`、`<\/prompt>` に置換、`<prompt>` は `<answer>` の前／観点なしは `angleResults` なし／問いかけなしは `<prompt>` なし | 同 |
+| MT-A04-09 | 説明問題の問いかけの指示文 | `buildExplainQuestionPrompt`（ライバル型、解説に閉じタグ）／知らない性格 | system に名前と性格・観点を1〜2つ選ぶ指示・JSONの形、user に `<keyword>`、閉じタグを置換／例外 | 同 |
+| MT-A04-10 | 問いかけの定型文と長さの切り詰め | `fallbackQuestion('DNS')`、`normalizePrompt`（前後の空白・空・重複・4つ以上・null） | 定義としくみを聞く定型文、空白を除き重複と空を除いて3つまで、null は空 | 境 |
 
 #### M-A05 `ai/sakura.js`（さくらのAI Engine）
 
@@ -752,7 +755,7 @@ describe('M-D01 client', () => {
 | MT-H04-04 | ないコース        | `courseId:'c_999'`                       | 404                                           | 異  |
 | MT-H04-05 | コース一覧        | `GET /api/courses`                       | 各コースに問題数・自分の網羅率・受講中フラグ                        | 同  |
 
-#### M-H05 `routes/quests.js`（A-07）
+#### M-H05 `routes/quests.js`（A-07・A-07b）
 
 | ID        | 観点            | 入力・前提                                        | 期待結果                                                     | 技法 |
 | --------- | ------------- | -------------------------------------------- | -------------------------------------------------------- | -- |
@@ -764,6 +767,9 @@ describe('M-D01 client', () => {
 | MT-H05-06 | 答えを返さない       | 択一の問題を返す                                     | 応答に `correctChoice`・`explanation` のキーがない                  | 異  |
 | MT-H05-07 | 説明の出題         | `pickNext` が explain を返す                     | `kind:'explain'`、`keyword:{id:'kw_…', text}`、問題文            | 同  |
 | MT-H05-08 | 問題が取得できない・キーワードの文言がない | `findForLearner` が null／問題のキーワードが空 | 404／`keyword.text=''` | 異 |
+| MT-H05-09 | 説明問題の問いかけ（A-07b） | AI が前置きつきで `{"question","angles"}` を返す | 200 `{partnerName, persona, prompt:{text, angles}, fallback:false}`。`MODEL_LIGHT` で呼び、system にパートナーの名前と性格、user に `<keyword>` | 同 |
+| MT-H05-10 | 問いかけの失敗 | AI が例外／`angles` が空 | 200、定型の質問（定義・しくみ）で `fallback:true` | 異 |
+| MT-H05-11 | 問いかけできないキーワード | 他コース・非公開・ないキーワード | 404、AI を呼ばない | 異 |
 
 #### M-H06 `routes/answers.js`（A-08）
 
@@ -792,6 +798,7 @@ describe('M-D01 client', () => {
 | MT-H07-08 | 結果（AIの失敗）       | `status='failed'`、`failure_reason='ai_error'`  | 200 `{status:'failed', retryable:true}`                              | 状  |
 | MT-H07-09 | 他人の採点           | 別の利用者の gradingId                               | 404                                                                   | 異  |
 | MT-H07-10 | 冒険IDなし・他人の冒険 | `adventureId` なし／他人の冒険 | 202（`adventure_id` null）／404 | 異 |
+| MT-H07-11 | 問いかけつきの採点依頼 | `prompt` の質問210文字・観点の重複／数値／20文字／4つ以上、形の正しくない `prompt`（空・数値・文字列・観点が配列でない） | 質問200文字・観点3つ（各12文字）に切り詰めて保存／400（`field:'prompt'`, `code:'INVALID'`）で採点を作らない。MT-H07-01 の問いかけなしは `prompt:null` | 境 |
 
 #### M-H08 `routes/rankings.js`（A-11）
 
@@ -918,6 +925,8 @@ describe('M-D01 client', () => {
 | MT-W01-10 | パートナーの口調        | 利用者のパートナーがライバル型「レン」                                       | 採点の指示文に「レン」とライバル型の口調が入る                                              | 同  |
 | MT-W01-11 | リポジトリと DB の接続を通した採点 | リポジトリを差し替えず、`dbMock` で DB の応答を決める | 1つのトランザクション（`BEGIN`〜`COMMIT`）で採点結果・解答・EXP を保存する | 状 |
 | MT-W01-12 | パートナー未設定・書き込み中の例外・ジョブの入口 | persona なし、`answers.insert` が例外、`runGradingJob` | 励まし型で採点、例外は投げ直す（ERROR ログ）、ジョブの payload の gradingId を使う | 異 |
+| MT-W01-13 | 問いかけへの答えとして採点 | ジョブに `prompt`（観点3つ）、AI の `angleResults` は2つ | user に `<prompt>`・`<angles>`、system に「観点の順に3つ」。result の `prompt.angles` は full・partial・unknown | 同 |
+| MT-W01-14 | 問いかけのない採点 | ジョブの `prompt` なし | result に `prompt` を入れず、user に `<prompt>` を入れない | 異 |
 
 ### 5.3 import-worker
 
@@ -1153,6 +1162,8 @@ describe('M-D01 client', () => {
 | MT-F13-02 | 採点待ちと結果 | A-09 が受付 → A-10 が `done` | A-09 に本文・復習かどうか・冒険ID。パートナーの待機演出と M-06、結果を状態に入れて S-06 へ | 状 |
 | MT-F13-03 | 時間切れ | A-10 が `GRADING_TIMEOUT` | M-07 を出し、入力欄に戻して本文を残す | 異 |
 | MT-F13-04 | 採点の失敗 | A-10 が `failed` | 文言を出し、もう一度押せる | 異 |
+| MT-F13-05 | パートナーの問いかけ | A-07b の応答を待つ → 届く → 説明して送る | 待つ間は「〇〇が質問を考えています」と待機演出で入力欄を出さない。届いたら質問・観点のタグ・「あなたの回答」の入力欄、`store.quest.prompt` に覚え、A-09 に `prompt` を添える | 状 |
+| MT-F13-06 | 問いかけを読み込めない・開き直し | A-07b が通信エラー／`quest.prompt` あり | 定型の質問を出して入力できる／A-07b を呼ばずに同じ質問を出す | 異 |
 
 #### M-F14 `pages/learner/s06-result.js`（S-06 結果・フィードバック）
 
@@ -1163,6 +1174,7 @@ describe('M-D01 client', () => {
 | MT-F14-03 | 次の問題へ | 冒険の途中 | 同じ冒険IDで A-07、説明なら S-05 へ | 状 |
 | MT-F14-04 | 冒険の終わり | A-07 が `done` | お知らせを入れ、冒険IDを空にしてホームへ | 状 |
 | MT-F14-05 | 10問目のあと | 10 / 10問 | 「ホームへ」だけ。押すと冒険IDを空にしてホームへ | 境 |
+| MT-F14-06 | 説明の結果（問いかけつき） | `prompt`（観点が full・partial・none・unknown）、パートナー名なしのライバル型／`prompt` なし | 「レンの質問」と質問文（エスケープ）、観点ごとに ○ 答えられた・△ 一部・× まだ、unknown は印なし／質問を出さない | 同 |
 
 #### M-F15 `pages/learner/s07-ranking.js`（S-07 週間ランキング）
 
@@ -1280,13 +1292,13 @@ describe('M-D01 client', () => {
 | 外部設計書                  | 詳細設計書               | 主なモジュール                         | テストケース                                    |
 | ---------------------- | ------------------- | ------------------------------- | ----------------------------------------- |
 | 3.6.2 パートナー名、3.7 入力ルール | 3.2 M-U07           | validators                      | MT-U07-01〜33（08〜10・33は欠番）                              |
-| 4.3 出題ルール              | 3.5 M-G06、5.2 A-07  | picker、quests                   | MT-G06-01〜09、MT-H05-01〜08                 |
+| 4.3 出題ルール              | 3.5 M-G06、5.2 A-07  | picker、quests                   | MT-G06-01〜09、MT-H05-01〜11                 |
 | 4.4 忘却曲線               | 3.5 M-G01           | review                          | MT-G01-01〜14                              |
 | 4.5 経験値・レベル            | 3.5 M-G02・M-G07     | exp、answer-flow                 | MT-G02-01〜13、MT-G07-01〜08                 |
 | 4.6 週間ランキング            | 3.5 M-G05、4.5.1、5.2 A-11 | ranking、close-ranking、rankings | MT-G05-01〜06、MT-W03-03、MT-H08-01〜08       |
 | 4.7 デイリークエスト           | 3.5 M-G03、4.5.1     | quest、assign-quests             | MT-G03-01〜12、MT-W03-07〜08                 |
 | 4.8 バッジ                | 3.5 M-G04           | badge、update-streak             | MT-G04-01〜07、MT-W03-04〜06                 |
-| 4.9 説明の採点、2.5 非同期方式    | 3.7、4.3、4.7、5.2 A-09・A-10、7.3 | grading-worker、gradings、prompts、jobs、server/worker | MT-W01-01〜12、MT-H07-01〜10、MT-A02、MT-A04、MT-D04-01〜03、MT-S02-01〜06   |
+| 4.9 説明の採点、2.5 非同期方式    | 3.7、4.3、4.7、5.2 A-07b・A-09・A-10、7.3・7.6 | grading-worker、gradings、prompts、jobs、server/worker | MT-W01-01〜14、MT-H07-01〜11、MT-A02、MT-A04、MT-D04-01〜03、MT-S02-01〜06   |
 | 4.10 問題取り込み            | 4.4、5.3 A-13〜A-16、7.4 | import-worker、admin-imports、admin-questions | MT-W02-01〜20、MT-H09-01〜09、MT-H10              |
 | 4.11 アカウント管理、6.3 物理削除  | 5.3 A-19・A-20・A-21b、4.5.1 | admin-users、purge-users、s13-users         | MT-H12-01〜11、MT-W03-09・15、MT-F21-11                 |
 | 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01・M-D02、4.6、6.1 | errors、db/client、tx、server/http、api.js          | MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜10、MT-F02-02〜03          |

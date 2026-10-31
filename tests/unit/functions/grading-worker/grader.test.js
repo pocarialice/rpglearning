@@ -138,6 +138,23 @@ describe('M-W01 grading-worker', () => {
     expect(db.commits()).toBe(0)
     for (const fn of [answers.insert, reviews.upsertItem, exp.insertLog, users.addExp, quests.saveProgress]) expect(fn).not.toHaveBeenCalled()
   })
+  it('MT-W01-13 問いかけ（A-07b）への答えとして採点し、観点ごとの答え方を返す', async () => {
+    gradings.find.mockResolvedValue({ gradingId: 456, userId: 15, courseId: 3, keywordId: 123, adventureId: 90, status: 'processing', explanationText: 'DNSは…', prompt: { text: 'なぜ必要なの？', angles: ['目的', 'しくみ', '違い'] } })
+    replies([grading(40, 20, 12, { angleResults: ['full', 'partial'] })])
+    expect((await run()).status).toBe('done')
+    expect(gradings.complete.mock.calls[0][1].prompt).toEqual({
+      text: 'なぜ必要なの？', angles: [{ label: '目的', status: 'full' }, { label: 'しくみ', status: 'partial' }, { label: '違い', status: 'unknown' }]
+    })
+    const input = br.commandCalls(ConverseCommand)[0].args[0].input
+    expect(input.messages[0].content[0].text).toContain('<prompt>なぜ必要なの？</prompt>')
+    expect(input.messages[0].content[0].text).toContain('<angles>目的、しくみ、違い</angles>')
+    expect(input.system[0].text).toContain('angleResults は <angles> の観点の順に3つ')
+  })
+  it('MT-W01-14 問いかけのない採点は結果に prompt を入れない', async () => {
+    expect((await run()).status).toBe('done')
+    expect(gradings.complete.mock.calls[0][1]).not.toHaveProperty('prompt')
+    expect(br.commandCalls(ConverseCommand)[0].args[0].input.messages[0].content[0].text).not.toContain('<prompt>')
+  })
   it('MT-W01-10 パートナーの口調', async () => {
     users.findById.mockResolvedValue({ ...learner, partnerPersona: 'rival', partnerName: 'レン' })
     const res = await run()
