@@ -1,6 +1,11 @@
 /* 画面固有の調整（外部設計書 3.4・3.5）。色・文字・余白はアプリ用デザインシステムのトークンだけを使う */
 body { background: var(--parchment); color: var(--ink); }
 .app-shell { max-width: 420px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+/* 学習者エリア：端末の幅にぴったり収め、横スクロールさせない（管理局は対象外）
+   iOS Safari は、はみ出した中身に合わせて画面の幅を広げてしまうため、はみ出しを切り取る。長い英数字やURLは途中で折り返す */
+html:has(.app-shell:not(.app-admin)), html:has(.app-shell:not(.app-admin)) body { overflow-x: clip; }
+.app-shell:not(.app-admin) { width: 100%; overflow-x: clip; }
+.app-shell:not(.app-admin) .app-main { min-width: 0; overflow-wrap: anywhere; }
 .app-header { position: sticky; top: 0; z-index: 2; background: var(--parchment-raised); border-bottom: 1px solid var(--line); padding: var(--space-3) var(--space-4); }
 .app-name { font-family: var(--font-serif); font-weight: 700; font-size: 18px; color: var(--ink); text-decoration: none; }
 .app-name:focus-visible, .app-nav a:focus-visible, .app-textarea:focus-visible, .app-source summary:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
@@ -8,7 +13,7 @@ body { background: var(--parchment); color: var(--ink); }
 .app-main:focus { outline: none; }
 .app-no-nav .app-main { padding-bottom: var(--space-6); }
 .app-nav[hidden] { display: none; }
-.app-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; display: flex; background: var(--parchment-raised); border-top: 1px solid var(--line); z-index: 2; }
+.app-nav { position: fixed; bottom: 0; left: 0; right: 0; margin: 0 auto; max-width: 420px; display: flex; background: var(--parchment-raised); border-top: 1px solid var(--line); z-index: 2; }
 .app-nav a { flex: 1; text-align: center; padding: var(--space-3) 0 calc(var(--space-3) + env(safe-area-inset-bottom)); font-size: 13px; line-height: 20px; font-weight: 700; color: var(--ink-muted); text-decoration: none; }
 .app-nav a[aria-current="page"] { color: var(--crimson); box-shadow: inset 0 3px 0 var(--crimson); }
 .app-section { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
