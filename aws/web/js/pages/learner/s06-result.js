@@ -8,6 +8,7 @@ import { partnerBubble, imageFor } from '../../components/partner-bubble.js'
 import { questCard } from '../../components/quest-card.js'
 import { guildBadge, badgeFromCode } from '../../components/guild-badge.js'
 import { button } from '../../components/button.js'
+import { showLevelUp } from '../../components/level-up.js'
 import { errorBand, errorMessage } from '../../components/status.js'
 import { escapeHtml, formatDate, formatExp } from '../../logic/format.js'
 import { goNextQuest } from './adventure.js'
@@ -68,6 +69,11 @@ export async function render(root) {
 ${kind === 'choice' ? choiceSection(result, getState().user?.partner) : explainSection(result, getState().user?.partner)}
 ${expSection(res.exp)}${reviewSection(kind, res.review)}${achievements(res, questTitles)}
 <div class="app-error-slot"></div><div class="app-actions">${actions}</div>`
+  // レベルアップのお祝いは1つの結果につき1回だけ出す
+  if (res.exp?.levelUp && !result.levelUpShown) {
+    setState({ result: { ...result, levelUpShown: true } })
+    showLevelUp({ level: Number(res.exp.level), doc: root.ownerDocument })
+  }
   root.querySelector('[data-action="home"]').addEventListener('click', () => {
     setState({ result: null, quest: null, ...(last ? { adventureId: null } : {}) })
     go('/home')

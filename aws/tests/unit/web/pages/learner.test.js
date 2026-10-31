@@ -212,6 +212,21 @@ describe('M-F14 S-06 結果・フィードバック', () => {
     expect(store.getState().adventureId).toBeNull()
     expect(go).toHaveBeenCalledWith('/home')
   })
+  it('MT-F14-06 レベルアップしたときだけお祝いを1回出す', async () => {
+    const up = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME, exp: { ...OUTCOME.exp, level: 6, levelUp: true } }
+    setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res: up } })
+    await result.render(root)
+    const overlay = document.querySelector('.app-levelup-overlay')
+    expect(overlay.querySelector('.app-levelup-no').textContent).toBe('6')
+    expect(root.querySelector('.app-levelup').textContent).toContain('Lv.6')
+    overlay.dispatchEvent(new MouseEvent('click'))
+    expect(document.querySelector('.app-levelup-overlay')).toBeNull()
+    await result.render(root)
+    expect(document.querySelector('.app-levelup-overlay')).toBeNull()
+    setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res: { ...up, ...OUTCOME } } })
+    await result.render(root)
+    expect(document.querySelector('.app-levelup-overlay')).toBeNull()
+  })
   it('MT-F14-05 10問目のあとは「ホームへ」だけ', async () => {
     const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
     setup({ result: { kind: 'choice', quest: { ...CHOICE_Q, index: 10 }, selected: 1, res }, adventureId: 'adv_1' })

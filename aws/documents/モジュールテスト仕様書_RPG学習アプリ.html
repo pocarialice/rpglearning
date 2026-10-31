@@ -1333,6 +1333,8 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-F07-08</td><td>GuildBadge</td><td>コード <code>streak_silver</code></td><td>継続の証（銀）、紋章は「継」</td><td>同</td></tr>
 <tr><td>MT-F07-09</td><td>エラーの文言</td><td><code>NETWORK</code>／500／404（API の文言あり）</td><td>M-02／画面ごとの「〜できませんでした」／API の文言</td><td>DT</td></tr>
 <tr><td>MT-F07-10</td><td>紋章の画像</td><td><code>imageUrl</code> あり（記号を含むURL）／なし。<code>imageFor</code> に自分の仲間・別の仲間・なし</td><td>円の中に <code>&lt;img&gt;</code>（URLはエスケープ）／頭文字。自分の仲間のときだけ画像のURL</td><td>同</td></tr>
+<tr><td>MT-F07-11</td><td>LevelUp の表示と閉じ方</td><td>レベル（記号を含む）、<code>random</code> を固定。とじるを押す／Esc</td><td>暗い配色で新しいレベルをエスケープして表示、見出しと名前を結ぶ、紙吹雪55個（色はトークン）。押すと消えて <code>onClose</code> を1回、Esc は既定の動きを止めて消す</td><td>同</td></tr>
+<tr><td>MT-F07-12</td><td>LevelUp の紙吹雪の動き</td><td><code>animate</code> が使える環境</td><td>55個すべてを動かす。下から始まり画面の上の外へ抜ける。くり返しは無限</td><td>同</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F08 <code>shell.js</code></h4>
 <div class="table-wrap"><table>
@@ -1400,6 +1402,7 @@ describe('M-D01 data-api', () =&gt; {
 <tr><td>MT-F14-03</td><td>次の問題へ</td><td>冒険の途中</td><td>同じ冒険IDで A-07、説明なら S-05 へ</td><td>状</td></tr>
 <tr><td>MT-F14-04</td><td>冒険の終わり</td><td>A-07 が <code>done</code></td><td>お知らせを入れ、冒険IDを空にしてホームへ</td><td>状</td></tr>
 <tr><td>MT-F14-05</td><td>10問目のあと</td><td>10 / 10問</td><td>「ホームへ」だけ。押すと冒険IDを空にしてホームへ</td><td>境</td></tr>
+<tr><td>MT-F14-06</td><td>レベルアップのお祝い</td><td><code>levelUp</code> true（Lv6）／もう一度表示／<code>levelUp</code> false</td><td>お祝いに6を出し、タップで消える。同じ結果をもう一度出しても出さない。上がらないときは出さない</td><td>状</td></tr>
 </tbody></table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F15 <code>pages/learner/s07-ranking.js</code>（S-07 週間ランキング）</h4>
 <div class="table-wrap"><table>
