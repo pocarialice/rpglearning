@@ -1115,7 +1115,7 @@ describe('M-D01 data-api', () => {
 | 8.1 認証・権限              | 3.2 M-U04、6.1       | authz、router、auth.js            | MT-U04-01〜10、MT-H01-06〜07、MT-F01-01〜10   |
 | 8.2 データ保護              | 2.4.5、9.1           | logger、format、prompts           | MT-U05-04、MT-F05-01、MT-A04-02             |
 | 3.3 画面遷移、3.4 画面レイアウトの基本 | 6.1、6.2 | shell、router | MT-F08-01〜06、MT-F03-06 |
-| 3.5 共通の表示ルール、9章 メッセージ | 6.1 | components、status | MT-F07-01〜10 |
+| 3.5 共通の表示ルール、9章 メッセージ | 6.1 | components、status | MT-F07-01〜12 |
 | 3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-10） | 6.2 | pages/learner、parts | MT-F09〜MT-F18 |
 | 3.8 管理画面（S-11〜S-14） | 6.2 | pages/admin | MT-F19〜MT-F22 |
 

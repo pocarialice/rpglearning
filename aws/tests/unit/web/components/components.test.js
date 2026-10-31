@@ -16,7 +16,8 @@ const el = (html) => {
 }
 describe('M-F07 components', () => {
   it('MT-F07-01 デザインシステムの CSS をそのまま複製している', () => {
-    const ds = 'documents/アプリ用_デザインシステム'
+    // デザインシステムの原本はリポジトリ直下の documents にある（aws/documents には置いていない）
+    const ds = '../documents/アプリ用_デザインシステム'
     expect(readFileSync('web/css/bundle.css', 'utf8')).toBe(readFileSync(`${ds}/components/bundle.css`, 'utf8'))
     expect(readFileSync('web/css/tokens.css', 'utf8')).toBe(readFileSync(`${ds}/tokens.css`, 'utf8'))
   })
