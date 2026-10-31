@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第1.3版（ドラフト：第1〜6章、HTML版あり。さくらのクラウドへの切り替えに合わせ、DB（pg）・ジョブキュー・ログイン・メール（SMTP）・オブジェクトストレージ・AI の差し替え口・コンテナの入口のテストを追加し、AWS 固有のケースを差し替える）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27）</b></li>
+      <li>版数<b>第1.4版（ドラフト：第1〜6章、HTML版あり。第1.3版のあとに加えた画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースと、さくらのAI Engine の考える深さ（MT-A05-08・09）を載せる）</b></li>
+      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31）</b></li>
       <li>入力文書<b>詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
@@ -3045,6 +3045,20 @@ describe('M-D01 client', () =&gt; {
 <td><code>globalThis.fetch</code> を使う</td>
 <td>同</td>
 </tr>
+<tr>
+<td>MT-A05-08</td>
+<td>考える深さ（reasoning_effort）</td>
+<td><code>AI_REASONING_EFFORT</code> なし／<code>medium</code>／空文字。空文字で <code>converse</code></td>
+<td>既定の <code>low</code>／<code>medium</code> を送る／<code>reasoning_effort</code> を送らない（<code>converse</code> の要求にも入らない）</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-A05-09</td>
+<td>考えた分のトークン数と空の答え</td>
+<td><code>reasoning_tokens</code> 300・<code>finish_reason: 'length'</code> で答えが空／答えがあって <code>length</code></td>
+<td><code>{ text: '', stopReason: 'max_tokens' }</code>。INFO ログ <code>ai.converse</code> に <code>reasoningTokens</code>、WARN ログ <code>ai.empty_answer</code>（用途・<code>maxTokens</code>・<code>reasoningTokens</code>）／答えがあれば <code>ai.empty_answer</code> を出さない</td>
+<td>境</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A06 <code>ai/client.js</code>（差し替え口）</h4>
@@ -5592,6 +5606,27 @@ describe('M-D01 client', () =&gt; {
 <td>1枚目に「達成」の判子・名前（エスケープ）・<code>報酬 +30 EXP</code>、「1 / 3」「タップしてつぎへ」。タップで2枚目・3枚目（レベル6、「タップしてとじる」）へ進み、最後のタップで消えて <code>onClose</code> を1回。1件だけなら枚数を出さず「タップしてとじる」</td>
 <td>状</td>
 </tr>
+<tr>
+<td>MT-F07-14</td>
+<td>ExpGain の区間分け</td>
+<td>獲得15（同じレベル内）／獲得10＋依頼20でLv4→5／ちょうどLv5の0で止まる／Lv1で獲得が今のEXPより多い／獲得0・<code>exp</code> なし。<code>requiredExp</code> を Lv1〜200 でサーバーと比べる</td>
+<td>獲得前の位置から今の位置までをレベルごとの区間に分ける。最後は今のレベルで終える。Lv1より前には戻らない。増えていなければ空。必要EXPはサーバーと同じ</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-F07-15</td>
+<td>ExpBar の演出（レベルアップ）</td>
+<td>Lv5・EXP 12 / 690・獲得30、レベルアップの一文あり。<code>requestAnimationFrame</code>・時刻を差し替える</td>
+<td>はじめは Lv4・<code>EXP 510 / 528</code>、獲得EXPは隠し、一文も隠す。動かすと獲得EXPが出て、途中は Lv4 のまま。終わると Lv5 に変わって紋章が弾み、一文が出て <code>EXP 12 / 690</code>、バーに光が1回走る</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F07-16</td>
+<td>ExpBar の演出（動かさないとき）</td>
+<td>獲得0／<code>requestAnimationFrame</code> が使えない環境で獲得15</td>
+<td>獲得0なら何もしない。使えない環境では最後の状態（<code>EXP 425 / 690</code>）をすぐ出す</td>
+<td>異</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F08 <code>shell.js</code></h4>
@@ -5954,6 +5989,20 @@ describe('M-D01 client', () =&gt; {
 <td>クエスト達成のお祝い</td>
 <td>今回達成したクエスト2件（名前あり・なし）と達成済みの1件、レベルアップあり／レベルアップなし</td>
 <td>今回達成した2件だけを名前（なければ「本日の依頼」）と報酬で出し、そのあとレベルアップ。「1 / 3」。レベルアップがなければクエストだけの「1 / 2」</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F14-10</td>
+<td>獲得EXPの位置と演出</td>
+<td>レベルアップなし・お祝いなしの結果／もう一度表示</td>
+<td>獲得EXPを「◯ / 10問」のすぐ下、問題文より上に出す。はじめは獲得前の <code>EXP 410 / 690</code> で、少し待つと <code>EXP 425 / 690</code> まで伸びる。もう一度表示したときは動かさず最後の状態</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F14-11</td>
+<td>お祝いのあとにEXPバーを動かす</td>
+<td>クエスト達成のお祝いがある結果</td>
+<td>お祝いを出しているあいだは獲得前のまま。閉じてからEXPバーを動かして <code>EXP 425 / 690</code> にする</td>
 <td>状</td>
 </tr>
 </tbody>
@@ -6866,7 +6915,7 @@ describe('M-D01 client', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.3版（ドラフト：第1〜6章、HTML版あり。さくらのクラウドへの切り替えに合わせ、DB（pg）・ジョブキュー・ログイン・メール（SMTP）・オブジェクトストレージ・AI の差し替え口・コンテナの入口のテストを追加し、AWS 固有のケースを差し替える）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.4版（ドラフト：第1〜6章、HTML版あり。第1.3版のあとに加えた画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースと、さくらのAI Engine の考える深さ（MT-A05-08・09）を載せる）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

@@ -2,7 +2,7 @@
 import { getContext } from '../../core/context.js'
 import { choiceOption } from '../../components/choice-option.js'
 import { scoreMeter } from '../../components/score-meter.js'
-import { expBar } from '../../components/exp-bar.js'
+import { expBar, primeExpBar, playExpBar, EXP_DELAY_MS } from '../../components/exp-bar.js'
 import { reviewStage } from '../../components/review-stage.js'
 import { partnerBubble, partnerName, imageFor } from '../../components/partner-bubble.js'
 import { questCard } from '../../components/quest-card.js'
@@ -49,10 +49,10 @@ ${partnerBubble({ name: res.comment?.partnerName, persona: res.comment?.persona,
 function expSection(exp) {
   if (!exp) return ''
   const notes = []
-  if (exp.levelUp) notes.push(`<p class="app-levelup">レベルアップ　Lv.${Number(exp.level)}</p>`)
+  if (exp.levelUp) notes.push(`<p class="app-levelup" data-levelup>レベルアップ　Lv.${Number(exp.level)}</p>`)
   if (exp.reviewBonus) notes.push('<p class="meta">復習ボーナスを含む</p>')
   if (exp.questExp) notes.push(`<p class="meta">依頼の報酬 +${formatExp(exp.questExp)} EXP を含む</p>`)
-  return `<section class="gd-card app-section" aria-label="獲得EXP">${expBar({ level: exp.level, exp: exp.expInLevel, next: exp.next, gain: exp.gained })}${notes.join('')}</section>`
+  return `<section class="gd-card app-section app-exp-card" aria-label="獲得EXP">${expBar({ level: exp.level, exp: exp.expInLevel, next: exp.next, gain: exp.gained })}${notes.join('')}</section>`
 }
 function reviewSection(kind, review) {
   if (!review) return ''
@@ -81,15 +81,22 @@ export async function render(root) {
   const actions = last
     ? button({ label: 'ホームへ', variant: 'primary', block: true, attrs: 'data-action="home"' })
     : `${button({ label: '次の問題へ', variant: 'primary', block: true, attrs: 'data-action="next"' })}${button({ label: 'ホームへ', variant: 'quiet', block: true, attrs: 'data-action="home"' })}`
+  // 獲得EXPは問題文より上に置き、結果を開いてすぐ目に入るようにする
   root.innerHTML = `<p class="meta app-progress">${Number(quest.index)} / ${Number(quest.total)}問</p>
+${expSection(res.exp)}
 ${kind === 'choice' ? choiceSection(result, getState().user?.partner) : explainSection(result, getState().user?.partner)}
-${expSection(res.exp)}${reviewSection(kind, res.review)}${achievements(res, questTitles)}
+${reviewSection(kind, res.review)}${achievements(res, questTitles)}
 <div class="app-error-slot"></div><div class="app-actions">${actions}</div>`
-  // クエスト達成・レベルアップのお祝いは1つの結果につき1回だけ出す
-  const items = celebrations(res, questTitles)
-  if (items.length && !result.celebrated) {
+  // クエスト達成・レベルアップのお祝いと獲得EXPの演出は、1つの結果につき1回だけ出す。お祝いがあれば閉じてからEXPバーを動かす
+  if (!result.celebrated) {
     setState({ result: { ...result, celebrated: true } })
-    showCelebration({ items, doc: root.ownerDocument })
+    const card = root.querySelector('.app-exp-card')
+    const primed = card ? primeExpBar(card, res.exp) : null
+    const win = root.ownerDocument.defaultView ?? globalThis
+    const play = () => playExpBar(primed, { win })
+    const items = celebrations(res, questTitles)
+    if (items.length) showCelebration({ items, doc: root.ownerDocument, onClose: play })
+    else if (primed) win.setTimeout(play, EXP_DELAY_MS)
   }
   root.querySelector('[data-action="home"]').addEventListener('click', () => {
     setState({ result: null, quest: null, ...(last ? { adventureId: null } : {}) })

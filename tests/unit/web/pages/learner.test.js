@@ -316,6 +316,39 @@ describe('M-F14 S-06 結果・フィードバック', () => {
     expect(document.querySelectorAll('.app-levelup-overlay .app-celebrate-stamp')).toHaveLength(1)
     expect(document.querySelector('.app-celebrate-step').textContent).toBe('1 / 2')
   })
+  it('MT-F14-10 獲得EXPは問題文より上に出し、獲得前の位置から伸ばす', async () => {
+    vi.useFakeTimers()
+    try {
+      const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME, quests: [] }
+      setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res } })
+      await result.render(root)
+      const card = root.querySelector('.app-exp-card')
+      expect(card.compareDocumentPosition(root.querySelector('.question')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(root.querySelector('.app-progress').nextElementSibling).toBe(card)
+      expect(card.querySelector('.gd-exp-count').textContent).toBe('EXP 410 / 690')
+      await vi.advanceTimersByTimeAsync(2000)
+      expect(card.querySelector('.gd-exp-count').textContent).toBe('EXP 425 / 690')
+      await result.render(root)
+      expect(root.querySelector('.gd-exp-count').textContent).toBe('EXP 425 / 690')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('MT-F14-11 お祝いがあるときは、閉じてからEXPバーを動かす', async () => {
+    vi.useFakeTimers()
+    try {
+      const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
+      setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res } })
+      await result.render(root)
+      await vi.advanceTimersByTimeAsync(2000)
+      expect(root.querySelector('.gd-exp-count').textContent).toBe('EXP 410 / 690')
+      document.querySelector('.app-levelup-overlay').dispatchEvent(new MouseEvent('click'))
+      await vi.advanceTimersByTimeAsync(2000)
+      expect(root.querySelector('.gd-exp-count').textContent).toBe('EXP 425 / 690')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
   it('MT-F14-05 10問目のあとは「ホームへ」だけ', async () => {
     const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
     setup({ result: { kind: 'choice', quest: { ...CHOICE_Q, index: 10 }, selected: 1, res }, adventureId: 'adv_1' })

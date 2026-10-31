@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { expBar } from '../../../../web/js/components/exp-bar.js'
+import { expBar, primeExpBar, playExpBar } from '../../../../web/js/components/exp-bar.js'
+import { expSegments, requiredExp } from '../../../../web/js/logic/exp-gain.js'
+import { requiredExp as serverRequiredExp } from '../../../../functions/shared/domain/exp.js'
 import { partnerBubble, partnerName, imageFor } from '../../../../web/js/components/partner-bubble.js'
 import { questCard } from '../../../../web/js/components/quest-card.js'
 import { choiceOption } from '../../../../web/js/components/choice-option.js'
@@ -146,5 +148,52 @@ describe('M-F07 components', () => {
     expect(one.el.querySelector('.app-celebrate-step').textContent).toBe('')
     expect(one.el.querySelector('.app-levelup-close').textContent).toBe('タップしてとじる')
     one.close()
+  })
+  it('MT-F07-14 ExpGain：獲得前の位置からレベルごとの区間に分ける', () => {
+    for (let lv = 1; lv <= 200; lv++) expect(requiredExp(lv)).toBe(serverRequiredExp(lv))
+    expect(requiredExp(4)).toBe(528)
+    expect(requiredExp(5)).toBe(690)
+    expect(expSegments({ level: 5, expInLevel: 425, next: 690, gained: 15, questExp: 0 })).toEqual([{ level: 5, from: 410, to: 425, next: 690 }])
+    expect(expSegments({ level: 5, expInLevel: 12, next: 690, gained: 10, questExp: 20 })).toEqual([{ level: 4, from: 510, to: 528, next: 528 }, { level: 5, from: 0, to: 12, next: 690 }])
+    expect(expSegments({ level: 5, expInLevel: 0, next: 690, gained: 30 })).toEqual([{ level: 4, from: 498, to: 528, next: 528 }, { level: 5, from: 0, to: 0, next: 690 }])
+    expect(expSegments({ level: 1, expInLevel: 5, next: 100, gained: 30 })).toEqual([{ level: 1, from: 0, to: 5, next: 100 }])
+    expect(expSegments({ level: 5, expInLevel: 410, next: 690, gained: 0, questExp: 0 })).toEqual([])
+    expect(expSegments(null)).toEqual([])
+  })
+  it('MT-F07-15 ExpBar の演出：獲得前から伸びて数字が増え、レベルが上がると紋章が弾む', async () => {
+    const card = el(`<section>${expBar({ level: 5, exp: 12, next: 690, gain: 30 })}<p class="app-levelup" data-levelup>レベルアップ　Lv.5</p></section>`)
+    const primed = primeExpBar(card, { level: 5, expInLevel: 12, next: 690, gained: 30, levelUp: true })
+    expect(card.querySelector('.gd-crest b').textContent).toBe('4')
+    expect(card.querySelector('.gd-exp-count').textContent).toBe('EXP 510 / 528')
+    expect(card.querySelector('.gd-exp-gain').classList.contains('is-pending')).toBe(true)
+    expect(card.querySelector('[data-levelup]').hidden).toBe(true)
+    let t = 0
+    const frames = []
+    const win = { performance: { now: () => t }, requestAnimationFrame: (cb) => frames.push(cb) }
+    const done = playExpBar(primed, { win })
+    expect(card.querySelector('.gd-exp-gain').classList.contains('is-in')).toBe(true)
+    const tick = async (ms) => { t += ms; frames.splice(0).forEach((cb) => cb()); await Promise.resolve() }
+    await tick(0)
+    await tick(200)
+    expect(card.querySelector('.gd-crest b').textContent).toBe('4')
+    for (let i = 0; i < 10 && frames.length; i++) await tick(300)
+    await done
+    expect(card.querySelector('.gd-crest b').textContent).toBe('5')
+    expect(card.querySelector('.gd-crest').classList.contains('is-pop')).toBe(true)
+    expect(card.querySelector('[data-levelup]').hidden).toBe(false)
+    expect(card.querySelector('.gd-exp-count').textContent).toBe('EXP 12 / 690')
+    expect(card.querySelector('.gd-fill').style.width).toMatch(/^1\.7/)
+    expect(card.querySelector('.gd-fill').classList.contains('is-glint')).toBe(true)
+  })
+  it('MT-F07-16 ExpBar の演出：増えていなければ何もしない。アニメーションが使えなければ最後の状態をすぐ出す', async () => {
+    const zero = el(`<section>${expBar({ level: 5, exp: 410, next: 690 })}</section>`)
+    expect(primeExpBar(zero, { level: 5, expInLevel: 410, next: 690, gained: 0 })).toBeNull()
+    await playExpBar(null)
+    const card = el(`<section>${expBar({ level: 5, exp: 425, next: 690, gain: 15 })}</section>`)
+    const primed = primeExpBar(card, { level: 5, expInLevel: 425, next: 690, gained: 15 })
+    expect(card.querySelector('.gd-exp-count').textContent).toBe('EXP 410 / 690')
+    await playExpBar(primed, { win: {} })
+    expect(card.querySelector('.gd-exp-count').textContent).toBe('EXP 425 / 690')
+    expect(card.querySelector('.gd-exp-gain').classList.contains('is-pending')).toBe(false)
   })
 })
