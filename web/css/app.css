@@ -41,7 +41,7 @@ body { background: var(--parchment); color: var(--ink); }
 .app-angle-full { color: var(--correct); }
 .app-angle-partial { color: var(--gold-ink); }
 .app-angle-none { color: var(--wrong); }
-.app-ask { display: flex; flex-direction: column; gap: var(--space-1); }
+.app-ask { display: flex; flex-direction: column; gap: var(--space-2); }
 .app-ask:empty { display: none; }
 .app-waiting { display: flex; flex-direction: column; gap: var(--space-3); }
 .app-verdict { font-family: var(--font-serif); font-weight: 800; font-size: 24px; line-height: 32px; }
