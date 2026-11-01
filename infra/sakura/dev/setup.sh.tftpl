@@ -29,6 +29,14 @@ echo '${caddyfile_b64}' | base64 -d > /opt/rpg/Caddyfile
 echo '${dotenv_b64}' | base64 -d > /opt/rpg/.env
 chmod 600 /opt/rpg/.env
 chown -R ubuntu: /opt/rpg
+# 反映のコマンド rpg-deploy（3.11）
+echo '${rpg_deploy_b64}' | base64 -d > /usr/local/bin/rpg-deploy
+chmod 755 /usr/local/bin/rpg-deploy
+# Tailscale（スマホから Tailscale SSH で入って rpg-deploy を打つ。3.11）。外へつなぐだけなのでパケットフィルタは変えない
+curl -fsSL https://tailscale.com/install.sh | sh
+%{ if tailscale_auth_key != "" ~}
+tailscale up --ssh --hostname='${tailscale_hostname}' --auth-key='${tailscale_auth_key}'
+%{ endif ~}
 # レジストリへのログイン（root と ubuntu の両方）
 echo '${registry_pass}' | docker login '${registry}' -u '${registry_user}' --password-stdin
 mkdir -p /home/ubuntu/.docker && cp /root/.docker/config.json /home/ubuntu/.docker/ && chown -R ubuntu: /home/ubuntu/.docker
