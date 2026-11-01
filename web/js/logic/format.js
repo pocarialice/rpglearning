@@ -34,3 +34,13 @@ export function aiText(value) {
     return sentences.map((s) => escapeHtml(s).replace(new RegExp(HEADING.source, 'g'), (h) => `<strong>${h}</strong>`)).join('<br>')
   }).join('<br>')
 }
+// 秒 → '8分12秒'・'1時間5分'（1時間以上は秒を省く）
+export function formatDuration(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds) || 0))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  if (h > 0) return `${h}時間${m}分`
+  if (m > 0) return `${m}分${s}秒`
+  return `${s}秒`
+}

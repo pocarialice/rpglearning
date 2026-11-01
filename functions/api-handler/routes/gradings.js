@@ -22,6 +22,8 @@ export async function create(ctx) {
   if (body.adventureId) {
     adventureId = decodeId(PREFIX.adventure, body.adventureId)
     if (!(await adventures.find(adventureId, user.userId))) throw new AppError('NOT_FOUND', '冒険が見つかりません')
+    // 説明の学習時間は送った時点までを数える（採点を待つ時間は入れない）
+    await adventures.addStudyTime(adventureId, user.userId)
   }
   const job = await gradings.create({ userId: user.userId, courseId: user.currentCourseId, keywordId, adventureId, explanationText: body.text, prompt })
   try {

@@ -6,7 +6,7 @@ import { guildBadge } from '../../components/guild-badge.js'
 import { button } from '../../components/button.js'
 import { openDialog } from '../../components/dialog.js'
 import { loading, errorBand, errorMessage } from '../../components/status.js'
-import { escapeHtml, formatDate, formatExp, formatPct } from '../../logic/format.js'
+import { escapeHtml, formatDate, formatDuration, formatExp, formatPct } from '../../logic/format.js'
 import { mountNicknameStep } from '../../parts/nickname-step.js'
 export const M_PROFILE_ERROR = 'プロフィールを読み込めませんでした。もう一度お試しください'
 const MENU = [
@@ -14,8 +14,8 @@ const MENU = [
   ['/partner', 'AIパートナーを選び直す'],
   ['/settings/notify', '通知設定']
 ]
-function statTile(label, value) {
-  return `<div class="app-stat"><span class="meta">${label}</span><span class="numeral">${value}</span></div>`
+function statTile(label, value, wide = false) {
+  return `<div class="app-stat${wide ? ' app-stat-wide' : ''}"><span class="meta">${label}</span><span class="numeral">${value}</span></div>`
 }
 function badgeItem(b) {
   const earned = !!b.earnedAt
@@ -40,7 +40,7 @@ export async function render(root, params = {}) {
 <div class="app-profile-name"><p class="title app-nickname">${escapeHtml(nickname)}</p>${button({ label: 'ニックネームを変える', variant: 'quiet', size: 'sm', attrs: 'data-action="edit-nickname"' })}</div>
 ${expBar({ level: stats.level, exp: stats.expInLevel, next: stats.next, title: `累計 ${formatExp(stats.totalExp)} EXP` })}</section>
 <section class="gd-card app-section" aria-labelledby="stats-h"><h2 id="stats-h" class="title">学習記録</h2>
-<div class="app-stats">${statTile('網羅率', formatPct(stats.coveragePct))}${statTile('正答率', formatPct(stats.correctPct))}${statTile('連続学習', `${Number(stats.streakDays)}<small class="meta"> 日</small>`)}${statTile('習得済み', `${Number(stats.mastered)}<small class="meta"> 問</small>`)}</div></section>
+<div class="app-stats">${statTile('網羅率', formatPct(stats.coveragePct))}${statTile('正答率', formatPct(stats.correctPct))}${statTile('連続学習', `${Number(stats.streakDays)}<small class="meta"> 日</small>`)}${statTile('習得済み', `${Number(stats.mastered)}<small class="meta"> 問</small>`)}${statTile('累計の学習時間', escapeHtml(formatDuration(stats.totalStudySeconds)), true)}</div></section>
 <section class="app-section" aria-labelledby="badges-h"><h2 id="badges-h" class="title">バッジ</h2>
 <ul class="gd-card app-badge-list">${badges.map(badgeItem).join('')}</ul></section>
 <nav class="gd-card app-section app-menu" aria-label="プロフィールのメニュー">${MENU.map(([path, label]) => button({ label, variant: 'quiet', block: true, attrs: `data-go="${path}"` })).join('')}

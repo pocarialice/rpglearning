@@ -45,21 +45,32 @@ describe('M-H05 quests（A-07）', () => {
   it('MT-H05-01 冒険の開始', async () => {
     const body = parse(await call({ path: '/api/quests/next' }))
     expect(adventures.start).toHaveBeenCalledWith(15, 3)
-    expect(body).toMatchObject({ adventureId: 'adv_90', index: 1, total: 10, kind: 'choice', isReview: true })
+    expect(body).toMatchObject({ adventureId: 'adv_90', index: 1, total: 5, kind: 'choice', isReview: true })
     expect(adventures.incrementServed).toHaveBeenCalledWith(90, { k: 'choice', q: 42 })
     expect(reviews.listDue).toHaveBeenCalledWith(15, 3, 'choice', '2026-10-20')
   })
-  it('MT-H05-02 10問で終わり', async () => {
-    adventures.find.mockResolvedValue(adv({ servedCount: 10 }))
+  it('MT-H05-02 5問で終わり、冒険のまとめを返す', async () => {
+    adventures.find.mockResolvedValue(adv({ servedCount: 5 }))
+    adventures.summary.mockResolvedValue({ studySeconds: 492, totalStudySeconds: 7300, answered: 5, correct: 4, explainCount: 2, explainAvgScore: 72, expGained: 55 })
     const body = parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } }))
-    expect(body).toEqual({ adventureId: 'adv_90', done: true })
+    expect(body).toEqual({ adventureId: 'adv_90', done: true, summary: { answered: 5, correct: 4, explainCount: 2, explainAvgScore: 72, expGained: 55, studySeconds: 492, totalStudySeconds: 7300 } })
     expect(adventures.finish).toHaveBeenCalledWith(90)
+    expect(adventures.summary).toHaveBeenCalledWith(90, 15)
     expect(adventures.incrementServed).not.toHaveBeenCalled()
   })
-  it('MT-H05-03 9問目の次', async () => {
-    adventures.find.mockResolvedValue(adv({ servedCount: 9, lastKind: 'explain', served: [{ k: 'explain', q: 7, kw: 70 }] }))
+  it('MT-H05-03 4問目の次', async () => {
+    adventures.find.mockResolvedValue(adv({ servedCount: 4, lastKind: 'explain', served: [{ k: 'explain', q: 7, kw: 70 }] }))
     const body = parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } }))
-    expect(body).toMatchObject({ index: 10, total: 10, kind: 'choice' })
+    expect(body).toMatchObject({ index: 5, total: 5, kind: 'choice' })
+  })
+  it('MT-H05-12 1問も解いていない冒険のまとめは null、説明がなければ平均点は null', async () => {
+    adventures.find.mockResolvedValue(adv({ servedCount: 5 }))
+    adventures.summary.mockResolvedValueOnce({ studySeconds: 0, totalStudySeconds: 0, answered: 0, correct: 0, explainCount: 0, explainAvgScore: null, expGained: 0 })
+    expect(parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } })).summary).toBeNull()
+    adventures.summary.mockResolvedValueOnce(null)
+    expect(parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } })).summary).toBeNull()
+    adventures.summary.mockResolvedValueOnce({ studySeconds: 60, totalStudySeconds: 60, answered: 1, correct: 1, explainCount: 0, expGained: 10 })
+    expect(parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } })).summary).toMatchObject({ answered: 1, explainAvgScore: null })
   })
   it('MT-H05-04 他人の冒険', async () => {
     const res = await call({ path: '/api/quests/next', query: { adventureId: 'adv_91' } })
@@ -68,7 +79,7 @@ describe('M-H05 quests（A-07）', () => {
   it('MT-H05-05 出せる問題がない', async () => {
     adventures.find.mockResolvedValue(adv({ servedCount: 1, lastKind: 'choice', served: [{ k: 'choice', q: 42 }] }))
     const body = parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } }))
-    expect(body).toEqual({ adventureId: 'adv_90', done: true, reason: 'NO_QUESTION' })
+    expect(body).toEqual({ adventureId: 'adv_90', done: true, reason: 'NO_QUESTION', summary: null })
     expect(adventures.finish).toHaveBeenCalledWith(90)
   })
   it('MT-H05-06 答えを返さない', async () => {
@@ -120,7 +131,9 @@ describe('M-H06 answers（A-08）', () => {
     // 4つとも同じトランザクション（withTx が渡す tx）で書く
     const tx = txOf(answers.insert)
     expect(typeof tx.query).toBe('function')
-    for (const fn of [reviews.upsertItem, exp.insertLog, users.addExp]) expect(txOf(fn)).toBe(tx)
+    for (const fn of [reviews.upsertItem, exp.insertLog, users.addExp, adventures.addStudyTime]) expect(txOf(fn)).toBe(tx)
+    // 学習時間も同じトランザクションで冒険と累計に足す
+    expect(adventures.addStudyTime.mock.calls[0].slice(0, 2)).toEqual([90, 15])
     expect(answers.insert.mock.calls[0][0]).toMatchObject({ userId: 15, courseId: 3, questionId: 42, kind: 'choice', selectedChoice: 2, isCorrect: true, adventureId: 90, answeredOn: '2026-10-20' })
     expect(exp.insertLog.mock.calls[0][0]).toMatchObject({ reason: 'choice', refId: 777, exp: 10, weekStart: '2026-10-19' })
     expect(users.addExp.mock.calls[0][1]).toEqual({ exp: 10, level: 3, today: '2026-10-20' })
@@ -188,6 +201,8 @@ describe('M-H06 answers（A-08）', () => {
     expect(exp.insertLog.mock.calls[1][0]).toMatchObject({ refId: 1, exp: 20 })
     expect(badges.grant).toHaveBeenCalledWith(15, ['mastery_bronze'], expect.anything())
     expect(answers.insert.mock.calls[0][0].adventureId).toBeNull()
+    // 冒険の外の解答は学習時間に数えない
+    expect(adventures.addStudyTime).not.toHaveBeenCalled()
     expect(quests.saveProgress.mock.calls[0][0].map((q) => q.code)).toEqual(['Q-01'])
   })
 })

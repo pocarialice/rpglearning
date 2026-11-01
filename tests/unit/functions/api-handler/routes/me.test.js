@@ -133,7 +133,9 @@ describe('M-H02 me（A-01〜A-04、A-12）', () => {
   it('MT-H02-17 学習記録にレベルとEXPを含める', async () => {
     answers.statsForUser.mockResolvedValue({ publishedCount: 20, answeredQuestions: 8, answerCount: 10, correctCount: 7, mastered: 2 })
     const body = parse(await call({ path: '/api/me/stats' }))
-    expect(body).toMatchObject({ ...levelInfo(330), totalExp: 330 })
+    expect(body).toMatchObject({ ...levelInfo(330), totalExp: 330, totalStudySeconds: 0 })
+    users.findBySub.mockResolvedValue({ ...learner, totalStudySeconds: 7300 })
+    expect(parse(await call({ path: '/api/me/stats' })).totalStudySeconds).toBe(7300)
   })
   it('MT-H02-18 バッジの獲得日時は +09:00 付き', async () => {
     badges.listDefs.mockResolvedValue(DEFS)

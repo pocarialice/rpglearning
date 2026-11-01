@@ -634,7 +634,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>ゲームルール</td>
-<td>1回の冒険は10問。デイリークエストは5種類から1日3つ（復習対象がある日はQ-04を必ず含む、報酬20〜30 EXP）。バッジは習得10／50／100問・継続7／30／100日</td>
+<td>1回の冒険は5問（終わったら冒険のまとめを出す）。デイリークエストは5種類から1日3つ（復習対象がある日はQ-04を必ず含む、報酬20〜30 EXP）。バッジは習得10／50／100問・継続7／30／100日</td>
 <td>仮置き No.6、4.4</td>
 </tr>
 <tr>
@@ -1120,7 +1120,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </ul>
 </section><section class="chapter" id="ch3"><h2><i class="fa-solid fa-display h-ico" aria-hidden="true"></i>3. 画面設計</h2>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 画面一覧</h3>
-<p>要件定義書の画面一覧（S-01〜S-13）に、キャラクター画像の差し替え用として <strong>S-14 AIパートナー設定</strong> を追加する。</p>
+<p>要件定義書の画面一覧（S-01〜S-13）に、キャラクター画像の差し替え用として <strong>S-14 AIパートナー設定</strong> を、冒険の振り返り用として <strong>S-15 冒険のまとめ</strong> を追加する。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1230,6 +1230,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>#/admin/partners</code></td>
 <td>管理局</td>
 </tr>
+<tr>
+<td>S-15</td>
+<td>冒険のまとめ（追加）</td>
+<td>学習者</td>
+<td><code>#/quest/summary</code></td>
+<td>学習者</td>
+</tr>
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 画面構成図</h3>
@@ -1244,6 +1251,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     S04["S-04 演習 四肢択一"]
     S05["S-05 キーワード説明"]
     S06["S-06 結果・フィードバック"]
+    S15["S-15 冒険のまとめ"]
     S07["S-07 週間ランキング"]
     S08["S-08 プロフィール"]
     S09["S-09 AIパートナー選択"]
@@ -1277,6 +1285,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   S04 --&gt; S06["S-06 結果・フィードバック"]
   S05 --&gt;|"採点待ち 最大30秒"| S06
   S06 --&gt;|"次の問題"| Q
+  S06 --&gt;|"5問目のあと 冒険のまとめへ"| S15["S-15 冒険のまとめ"]
+  S15 --&gt;|"ホームへ"| S02
   S06 --&gt;|"ホームへ"| S02
   S02 --&gt; S07["S-07 週間ランキング"]
   S02 --&gt; S08["S-08 プロフィール"]
@@ -1636,7 +1646,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>進み具合</td>
-<td>「3 / 10問」、復習なら「復習」の印</td>
+<td>「3 / 5問」、復習なら「復習」の印</td>
 <td><code>meta</code> 書体</td>
 </tr>
 <tr>
@@ -1754,7 +1764,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-05 キーワード説明</p><div class="mock-row"><div class="ph-frame"><div class="gd-scope ph-screen">
 <div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
 <div class="mk-body">
-<p class="mk-meta">4 / 10問　<span class="mk-tag">復習</span></p>
+<p class="mk-meta">4 / 5問　<span class="mk-tag">復習</span></p>
 <div class="gd-card"><p class="mk-meta" style="margin:0">次のキーワードを説明してください</p><p class="gd-serif mk-title">公開鍵暗号方式</p><p class="mk-meta mk-fold"><i class="fa-solid fa-chevron-down"></i> 出典の問題文を見る</p></div>
 <div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ<span>励まし型</span></div>鍵を2つに分けると、どんないいことがあるの？HTTPSでの使われ方も教えてほしいな！</div></div>
 <p class="mk-meta"><span class="mk-tag">#目的</span> <span class="mk-tag">#使いどころ</span> この観点で答えてね</p>
@@ -1766,7 +1776,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </div><p class="mk-cap">入力中</p></div><div class="ph-frame"><div class="gd-scope ph-screen">
 <div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
 <div class="mk-body">
-<p class="mk-meta">4 / 10問　<span class="mk-tag">復習</span></p>
+<p class="mk-meta">4 / 5問　<span class="mk-tag">復習</span></p>
 <div class="gd-card"><p class="gd-serif mk-title" style="margin:0">公開鍵暗号方式</p></div>
 <div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ<span>採点しています</span></div><span class="gd-dots"><i></i><i></i><i></i></span></div></div>
 <p class="mk-meta" style="text-align:center">最大30秒ほどかかります</p>
@@ -1784,7 +1794,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>獲得EXP</td>
-<td>「◯ / 10問」のすぐ下、結果より上に出す。「+15 EXP」（復習ボーナスは内訳を表示）。獲得前の位置からバーが伸びて数字がカウントアップし、最後に光が1回走る。レベルが上がるときは満タンまで伸びたあと紋章が1回弾んで新しいレベルで伸び直す。お祝いがあれば閉じてから動かす。1つの結果につき1回。視差効果を減らす設定でも動かす</td>
+<td>「◯ / 5問」のすぐ下、結果より上に出す。「+15 EXP」（復習ボーナスは内訳を表示）。獲得前の位置からバーが伸びて数字がカウントアップし、最後に光が1回走る。レベルが上がるときは満タンまで伸びたあと紋章が1回弾んで新しいレベルで伸び直す。お祝いがあれば閉じてから動かす。1つの結果につき1回。視差効果を減らす設定でも動かす</td>
 <td><code>ExpBar gain</code></td>
 </tr>
 <tr>
@@ -1814,7 +1824,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>操作</td>
-<td>「次の問題へ」（primary）、「ホームへ」</td>
+<td>「次の問題へ」（primary）、「ホームへ」。5問目のあとは「冒険のまとめへ」（primary）、「ホームへ」</td>
 <td><code>Button</code></td>
 </tr>
 </tbody>
@@ -1830,6 +1840,47 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <button class="gd-btn gd-btn-quiet gd-btn-block" type="button">ホームへ</button>
 </div>
 </div><p class="mk-cap">説明問題で合格したとき</p></div></div><p class=mock-note>不合格のときは赤を使わず <code>gold</code> で「あと15点」と表示する（ScoreMeterの規定）。</p></div>
+<h4>S-15 冒険のまとめ（追加）</h4>
+<p>5問目の結果のあと「冒険のまとめへ」で開く。出せる問題がなくなって早めに終わったときも、1問以上解いていれば開く（そのときはお知らせを上に出す）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th>
+<th>表示内容</th>
+<th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ひとこと</td>
+<td>学習者のAIパートナーのねぎらい（全問正解ならほめる）</td>
+<td><code>PartnerBubble</code></td>
+</tr>
+<tr>
+<td>今回の冒険</td>
+<td>正解数（「4 / 5問」）、解答で得たEXP、説明の平均点（説明を解いたときだけ）</td>
+<td><code>gd-card</code></td>
+</tr>
+<tr>
+<td>時間</td>
+<td>かかった時間、累計の学習時間（4.3 の数え方）</td>
+<td><code>gd-card</code></td>
+</tr>
+<tr>
+<td>操作</td>
+<td>「ホームへ」</td>
+<td><code>Button primary block</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-15 冒険のまとめ</p><div class="mock-row"><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
+<div class="mk-body">
+<div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ</div>5問おつかれさま。この調子でいこう</div></div>
+<div class="gd-card"><p class="gd-serif"><b>今回の冒険</b></p><p>正解 <b>4</b> / 5問　・　獲得 <b>+55</b> EXP　・　説明の平均点 <b>72</b> 点</p><p>かかった時間 <b>8分12秒</b></p><p>累計の学習時間 <b>2時間1分</b></p></div>
+<button class="gd-btn gd-btn-primary gd-btn-block" type="button">ホームへ</button>
+</div>
+</div><p class="mk-cap">5問を解き終えたとき</p></div></div><p class=mock-note>学習時間は1問あたり10分までで数える（4.3）。</p></div>
 <h4>S-07 週間ランキング</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -1874,7 +1925,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>学習記録</td>
-<td>網羅率、正答率、連続学習日数</td>
+<td>網羅率、正答率、連続学習日数、習得済み、累計の学習時間</td>
 <td><code>gd-card</code></td>
 </tr>
 <tr>
@@ -2268,7 +2319,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 <ul>
-<li>1回の冒険は10問。途中でやめてもそれまでの結果は保存する</li>
+<li>1回の冒険は5問。途中でやめてもそれまでの結果は保存する</li>
+<li>学習時間は解答のたびに数える。1問ぶん＝前の解答（冒険の最初の問題は冒険の開始）から、その解答を送るまで。問題を開いたまま放置しても増えすぎないよう、1問あたり10分までとする</li>
+<li>学習時間は冒険ごとに持ち、利用者ごとの累計にも足す。途中でやめた冒険も、解いた問題のぶんは累計に入る。冒険の外の解答は数えない</li>
 <li>四肢択一とキーワード説明は、出題対象の中で交互に出す。キーワードがない問題は択一のみ</li>
 <li>キーワード説明は1問につき1キーワードを出す（復習予定日の早いもの）</li>
 </ul>
@@ -2855,7 +2908,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>A-07</td>
 <td>GET</td>
 <td><code>/quests/next</code></td>
-<td>次の問題（10問の冒険の中の1問）</td>
+<td>次の問題（5問の冒険の中の1問）。終わったら冒険のまとめ</td>
 <td>学習者</td>
 </tr>
 <tr>
@@ -3043,6 +3096,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 主なAPIの入出力</h3>
+<p><strong>A-07 次の問題（冒険の終わり）</strong></p>
+<pre><code class="language-json">// 5問を出し終えたあと（出せる問題がなくなったときは &quot;reason&quot;: &quot;NO_QUESTION&quot; がつく）。1問も解いていなければ summary は null
+{&quot;adventureId&quot;: &quot;adv_90&quot;, &quot;done&quot;: true,
+ &quot;summary&quot;: {&quot;answered&quot;: 5, &quot;correct&quot;: 4, &quot;explainCount&quot;: 2, &quot;explainAvgScore&quot;: 72, &quot;expGained&quot;: 55,
+             &quot;studySeconds&quot;: 492, &quot;totalStudySeconds&quot;: 7300}}
+</code></pre>
 <p><strong>A-07b 説明問題の問いかけ</strong></p>
 <pre><code class="language-json">// リクエスト
 {&quot;keywordId&quot;: &quot;kw_123&quot;}

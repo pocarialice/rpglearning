@@ -95,6 +95,7 @@ html:has(.app-shell:not(.app-admin)), html:has(.app-shell:not(.app-admin)) body 
 .app-stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .app-stat { display: flex; flex-direction: column; gap: var(--space-1); background: var(--parchment-sunk); border-radius: var(--radius-md); padding: var(--space-3); }
 .app-stat .numeral { color: var(--ink); }
+.app-stat-wide { grid-column: 1 / -1; }
 .app-badge-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4) var(--space-2); margin: 0; list-style: none; }
 .app-badge-item { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); text-align: center; }
 .app-badge-cond { margin: 0; color: var(--ink-muted); font-weight: 400; }

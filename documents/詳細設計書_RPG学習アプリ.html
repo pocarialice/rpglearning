@@ -695,7 +695,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 │  ├─ V001__create_tables.sql     # 第8章のCREATE TABLE
 │  ├─ V002__seed_masters.sql      # partners・quest_defs・badge_defs
 │  ├─ V003__auth_jobs.sql         # ログイン・ジョブキュー・定期処理の記録（8.4.1）
-│  └─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
+│  ├─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
+│  └─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -930,7 +931,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>問題</td>
 <td><code>q_</code></td>
 <td><code>q_42</code></td>
-<td>冒険（10問）</td>
+<td>冒険（5問）</td>
 <td><code>adv_</code></td>
 <td><code>adv_90</code></td>
 </tr>
@@ -1642,7 +1643,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td><code>adventures.js</code></td>
-<td><code>start</code>、<code>find</code>、<code>incrementServed</code>、<code>finish</code></td>
+<td><code>start</code>、<code>find</code>、<code>incrementServed</code>、<code>finish</code>、<code>addStudyTime</code>（1問10分までで冒険と累計に足す）、<code>summary</code>（S-15）</td>
 </tr>
 <tr>
 <td><code>audit.js</code></td>
@@ -2710,13 +2711,15 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-07 <code>GET /api/quests/next?adventureId=</code></h4>
 <ol>
 <li><code>adventureId</code> がなければ <code>adventures</code> を新しく作る。あれば自分のものか確認</li>
-<li><code>served_count &gt;= 10</code> なら <code>{ done: true }</code> を返し、<code>finished_at</code> を入れる</li>
+<li><code>served_count &gt;= 5</code>（<code>ADVENTURE_SIZE</code>）なら <code>finished_at</code> を入れ、<code>{ done: true, summary }</code> を返す（<code>summary</code> は下記。1問も解いていなければ null）</li>
 <li>候補を取得：<code>reviews.listDue</code>（現在のコース・形式ごと最大20件）、<code>reviews.listUnlearned</code>、<code>reviews.listLearned</code></li>
-<li><code>pickNext</code> で1件選ぶ。<code>null</code> なら <code>{ done: true, reason: 'NO_QUESTION' }</code></li>
+<li><code>pickNext</code> で1件選ぶ。<code>null</code> なら <code>finished_at</code> を入れ、<code>{ done: true, reason: 'NO_QUESTION', summary }</code></li>
 <li><code>adventures.served_count + 1</code>、<code>last_kind</code>・<code>served</code>（出した問題・キーワードの内部IDの配列）を更新</li>
-<li>応答（択一）：<code>{ adventureId, index: 3, total: 10, kind: 'choice', isReview, question: {id, body, choices: [{no, body}]} }</code>。正解と解説は返さない</li>
+<li>応答（択一）：<code>{ adventureId, index: 3, total: 5, kind: 'choice', isReview, question: {id, body, choices: [{no, body}]} }</code>。正解と解説は返さない</li>
 <li>応答（説明）：<code>{ ..., kind: 'explain', keyword: {id, text}, question: {id, body} }</code></li>
+<li><code>summary</code>（<code>adventures.summary</code>）：その冒険の <code>answer_logs</code> から <code>{ answered, correct, explainCount, explainAvgScore, expGained, studySeconds, totalStudySeconds }</code>。<code>expGained</code> は解答の EXP（<code>exp_logs</code> の理由 choice／explain）だけで、クエストの報酬は含めない。<code>explainAvgScore</code> は説明がなければ null</li>
 </ol>
+<p><strong>学習時間（V005）</strong>：解答のたびに <code>adventures.addStudyTime</code> で、<code>now() - adventures.last_activity_at</code>（0〜600秒に丸める）を <code>adventures.study_seconds</code> と <code>users.total_study_seconds</code> に足し、<code>last_activity_at</code> を今にする。1文で行い、冒険の行を <code>FOR UPDATE</code> で押さえる。択一は A-08 のトランザクションの中、説明は A-09 で採点を頼む前に呼ぶ（採点を待つ時間は入れない）。冒険IDのない解答は数えない。途中でやめた冒険も、解いた問題のぶんは累計に入る。</p>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-07b <code>POST /api/quests/explain-question</code></h4>
 <p>説明問題で、パートナーが「どの観点で説明してほしいか」を学習者に質問する。S-05 が出題のたびに1回呼ぶ（同じ出題を開き直したときは画面が覚えている質問を使い回す）。</p>
 <ol>
@@ -2749,11 +2752,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
    d. gained + questExp &gt; 0 なら exp_logs に追加（理由 choice／quest、earned_week = weekStartJst）
    e. users.total_exp・level・last_active_on を更新
    f. user_quests の進み具合を保存、新しいバッジを user_badges に追加
+   g. adventureId があれば adventures.addStudyTime（学習時間を冒険と累計に足す）
 4. コメント：Haiku で解説コメントを生成（5秒）。失敗したら questions.explanation をそのまま使う
 5. 応答：{ correct, correctChoice, explanation, comment, exp, review, quests, badges }（A-10 と同じ形）
 </code></pre>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-09 <code>POST /api/gradings</code></h4>
-<p><code>{ adventureId, keywordId, text, prompt }</code> → <code>validateExplanation</code>（NGなら400）→ キーワードが現在のコースの公開済み問題のものか確認 → <code>prompt</code>（A-07b の問いかけ。任意）を確かめる → <code>grading_jobs</code> に <code>processing</code> で追加（<code>prompt</code> 列に保存） → ジョブキューに <code>grading</code>（<code>{gradingId}</code>）を入れる（3.7）→ <code>202 { gradingId, status: 'processing' }</code>。キューに入れられなかったら、採点を <code>failed</code>（<code>ai_error</code>）にして 500 を返す。</p>
+<p><code>{ adventureId, keywordId, text, prompt }</code> → <code>validateExplanation</code>（NGなら400）→ キーワードが現在のコースの公開済み問題のものか確認 → <code>prompt</code>（A-07b の問いかけ。任意）を確かめる → <code>adventureId</code> があれば自分の冒険か確認して <code>adventures.addStudyTime</code> → <code>grading_jobs</code> に <code>processing</code> で追加（<code>prompt</code> 列に保存） → ジョブキューに <code>grading</code>（<code>{gradingId}</code>）を入れる（3.7）→ <code>202 { gradingId, status: 'processing' }</code>。キューに入れられなかったら、採点を <code>failed</code>（<code>ai_error</code>）にして 500 を返す。</p>
 <ul>
 <li>画面が送る <code>isReview</code> は使わない（復習かどうかは worker が <code>review_items</code> から判断する）</li>
 <li><code>prompt</code> は <code>{ text, angles }</code>。<code>text</code> が空・文字列でない、<code>angles</code> が配列でないときは 400（<code>field: 'prompt'</code>, <code>code: 'INVALID'</code>）。学習者から届く値なので <code>normalizePrompt</code> で長さを切り詰め、採点の指示文ではタグで囲んでデータとして渡す（7.3）</li>
@@ -2798,7 +2802,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>A-12 <code>GET /api/me/stats</code>・<code>GET /api/me/badges</code></h4>
 <ul>
-<li>stats：網羅率＝択一で1回以上解いた公開済み問題数 ÷ 公開済み問題数（現在のコース）、正答率＝択一の正解数 ÷ 択一の解答数、連続学習日数、習得済み数、レベル（<code>levelInfo(totalExp)</code> の <code>level</code>・<code>expInLevel</code>・<code>next</code>）と累計EXP（<code>totalExp</code>）。S-08 の上部（ExpBar）に使う</li>
+<li>stats：網羅率＝択一で1回以上解いた公開済み問題数 ÷ 公開済み問題数（現在のコース）、正答率＝択一の正解数 ÷ 択一の解答数、連続学習日数、習得済み数、レベル（<code>levelInfo(totalExp)</code> の <code>level</code>・<code>expInLevel</code>・<code>next</code>）と累計EXP（<code>totalExp</code>）。S-08 の上部（ExpBar）に使う。累計の学習時間（<code>totalStudySeconds</code>、秒）</li>
 <li>badges：<code>badge_defs</code> のうち Phase 1 のもの全部に、獲得済みなら <code>earnedAt</code>（<code>+09:00</code> 付き）を付けて返す（未獲得は条件文を表示）</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 管理API</h3>
@@ -3117,7 +3121,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>S-06</td>
 <td><code>learner/s06-result.js</code></td>
 <td>-（A-08／A-10の結果）</td>
-<td>説明は A-10 の <code>prompt</code> があれば「〇〇の質問」と観点ごとの答え方（○ 答えられた・△ 一部・× まだ）を出す。「次の問題へ」で A-07、10問目のあとは「ホームへ」</td>
+<td>説明は A-10 の <code>prompt</code> があれば「〇〇の質問」と観点ごとの答え方（○ 答えられた・△ 一部・× まだ）を出す。「次の問題へ」で A-07。5問目のあとは「冒険のまとめへ」で A-07 を呼び、<code>summary</code> があれば S-15 へ（なければホームへ）</td>
+</tr>
+<tr>
+<td>S-15</td>
+<td><code>learner/s15-summary.js</code></td>
+<td>-（A-07 の <code>summary</code>）</td>
+<td>正解数・EXP・説明の平均点・かかった時間・累計の学習時間（<code>formatDuration</code>）。問題が尽きて終わったときはお知らせも出す</td>
 </tr>
 <tr>
 <td>S-07</td>
@@ -3675,10 +3685,10 @@ angles には選んだ観点を、それぞれ2〜8文字の名詞で書く。
 <tr>
 <td>T-13</td>
 <td><code>adventures</code></td>
-<td>冒険（10問）</td>
+<td>冒険（5問）</td>
 <td><code>adventure_id</code></td>
 <td>20万</td>
-<td>追加（「3 / 10問」の管理）</td>
+<td>追加（「3 / 5問」の管理。V005 で学習時間）</td>
 </tr>
 <tr>
 <td>T-14</td>
@@ -3971,7 +3981,7 @@ CREATE TABLE IF NOT EXISTS keywords (
   UNIQUE (question_id, sort_order)
 );
 
--- T-13 冒険（1回10問）
+-- T-13 冒険（1回5問。served_count の上限10は旧仕様のまま。学習時間の列は V005 で追加）
 CREATE TABLE IF NOT EXISTS adventures (
   adventure_id  bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id       bigint      NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
@@ -4214,6 +4224,36 @@ INSERT INTO schema_migrations (version, description) VALUES ('V003', 'auth jobs'
 <pre><code class="language-sql">-- T-16 採点ジョブ（パートナーの問いかけ {&quot;text&quot;:&quot;...&quot;,&quot;angles&quot;:[&quot;しくみ&quot;,&quot;目的&quot;]}。問いかけなしの採点は NULL）
 ALTER TABLE grading_jobs ADD COLUMN IF NOT EXISTS prompt jsonb;
 INSERT INTO schema_migrations (version, description) VALUES (&#x27;V004&#x27;, &#x27;grading prompt&#x27;) ON CONFLICT DO NOTHING;
+</code></pre>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>8.4.3 学習時間（<code>db/migrations/V005__study_time.sql</code>）</h4>
+<p>冒険ごとの学習時間（<code>adventures.study_seconds</code>）と利用者の累計（<code>users.total_study_seconds</code>）を持つ。数え方は A-07 の「学習時間」のとおり。これまでの冒険は <code>answer_logs.answered_at</code> の間隔から同じ決まり（1問10分まで）で数え直す。</p>
+<pre><code class="language-sql">-- =========================================================
+-- V005__study_time.sql  学習時間（冒険ごとの時間と、利用者ごとの累計）
+-- 1問ぶんの時間＝前の解答（冒険の最初の問題は冒険の開始）からその解答まで。放置しても増えすぎないよう1問10分までにする
+-- 解答のたびに足すので、途中でやめた冒険の時間も累計に入る
+-- =========================================================
+-- T-13 冒険
+ALTER TABLE adventures ADD COLUMN IF NOT EXISTS study_seconds    integer     NOT NULL DEFAULT 0 CHECK (study_seconds &gt;= 0);
+ALTER TABLE adventures ADD COLUMN IF NOT EXISTS last_activity_at timestamptz NOT NULL DEFAULT now();  -- 開始または最後の解答
+-- T-02 利用者
+ALTER TABLE users ADD COLUMN IF NOT EXISTS total_study_seconds integer NOT NULL DEFAULT 0 CHECK (total_study_seconds &gt;= 0);
+-- これまでの冒険は解答履歴から同じ決まりで数え直す（説明の解答時刻は採点が終わった時刻なので、少し長めに出る）
+WITH steps AS (
+  SELECT l.adventure_id,
+         LEAST(GREATEST(EXTRACT(EPOCH FROM (l.answered_at - COALESCE(
+           LAG(l.answered_at) OVER (PARTITION BY l.adventure_id ORDER BY l.answered_at, l.answer_id), a.started_at))), 0), 600) AS sec
+  FROM answer_logs l JOIN adventures a ON a.adventure_id = l.adventure_id
+), per AS (
+  SELECT adventure_id, round(sum(sec))::int AS sec FROM steps GROUP BY adventure_id
+)
+UPDATE adventures a SET study_seconds = per.sec FROM per WHERE a.adventure_id = per.adventure_id;
+UPDATE adventures a SET last_activity_at = COALESCE(
+  (SELECT max(l.answered_at) FROM answer_logs l WHERE l.adventure_id = a.adventure_id), a.started_at);
+UPDATE users u SET total_study_seconds = s.sec
+FROM (SELECT user_id, sum(study_seconds)::int AS sec FROM adventures GROUP BY user_id) s
+WHERE u.user_id = s.user_id;
+
+INSERT INTO schema_migrations (version, description) VALUES ('V005', 'study time') ON CONFLICT DO NOTHING;
 </code></pre>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.5 初期データ（<code>db/migrations/V002__seed_masters.sql</code>）</h3>
 <pre><code class="language-sql">INSERT INTO partners (persona, label, default_name) VALUES

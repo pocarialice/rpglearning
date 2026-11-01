@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { escapeHtml, formatDate, formatDateTime, formatExp, formatPct, aiText } from '../../../../web/js/logic/format.js'
+import { escapeHtml, formatDate, formatDateTime, formatDuration, formatExp, formatPct, aiText } from '../../../../web/js/logic/format.js'
 import { pollGrading } from '../../../../web/js/logic/grading-poller.js'
 import { ApiError } from '../../../../web/js/core/api.js'
 describe('M-F05 logic/format', () => {
@@ -35,6 +35,15 @@ describe('M-F05 logic/format', () => {
     expect(aiText(long)).toBe(`${'あ'.repeat(40)}。<br>${'い'.repeat(10)}「う。」と言う。<br>${'え'.repeat(5)}。`)
     expect(aiText(`${'あ'.repeat(30)}。${'い'.repeat(27)}。`)).toBe(`${'あ'.repeat(30)}。${'い'.repeat(27)}。`)
     expect(aiText(null)).toBe('')
+  })
+  it('MT-F05-05 学習時間の表示', () => {
+    expect(formatDuration(0)).toBe('0秒')
+    expect(formatDuration(59)).toBe('59秒')
+    expect(formatDuration(492)).toBe('8分12秒')
+    expect(formatDuration(3600)).toBe('1時間0分')
+    expect(formatDuration(7300)).toBe('2時間1分')
+    expect(formatDuration(null)).toBe('0秒')
+    expect(formatDuration(-5)).toBe('0秒')
   })
 })
 describe('M-F06 logic/grading-poller', () => {
