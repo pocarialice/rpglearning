@@ -141,16 +141,19 @@ resource "sakuracloud_note" "setup" {
   name = "${local.prefix}-setup"
   tags = local.tags
   content = templatefile("${path.module}/setup.sh.tftpl", {
-    server_cidr   = "${local.server_ip}/24"
-    db_ip         = local.db_ip
-    db_password   = random_password.db.result
-    registry      = local.shared.registry
-    registry_user = local.shared.registry_pull_user
-    registry_pass = local.shared.registry_pull_password
-    start         = var.image != "" && var.site_address != ""
-    compose_b64   = filebase64("${path.module}/../../../compose.yaml")
-    caddyfile_b64 = filebase64("${path.module}/../../../Caddyfile")
-    dotenv_b64    = base64encode(local.dotenv)
+    server_cidr        = "${local.server_ip}/24"
+    db_ip              = local.db_ip
+    db_password        = random_password.db.result
+    registry           = local.shared.registry
+    registry_user      = local.shared.registry_pull_user
+    registry_pass      = local.shared.registry_pull_password
+    start              = var.image != "" && var.site_address != ""
+    compose_b64        = filebase64("${path.module}/../../../compose.yaml")
+    caddyfile_b64      = filebase64("${path.module}/../../../Caddyfile")
+    dotenv_b64         = base64encode(local.dotenv)
+    rpg_deploy_b64     = filebase64("${path.module}/rpg-deploy.sh")
+    tailscale_hostname = local.prefix
+    tailscale_auth_key = var.tailscale_auth_key
   })
 }
 resource "sakuracloud_disk" "app" {

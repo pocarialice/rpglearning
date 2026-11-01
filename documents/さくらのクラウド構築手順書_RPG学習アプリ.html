@@ -1489,7 +1489,83 @@ docker compose exec api node scripts/create-admin.mjs &lt;メールアドレス&
 <li>表示された仮パスワードはどこにも残さない（端末の履歴も <code>history -c</code> で消す）</li>
 </ol>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.11 リリースの反映</h3>
-<p>新しい版を反映するときは、詳細設計書 11.5 のとおりにサーバーで行う。</p>
+<p>新しい版を反映するときは、詳細設計書 11.5 のとおりにサーバーで行う。dev は、スマホから Tailscale SSH で入って <code>rpg-deploy</code> を打てば済む。</p>
+<p><strong>スマホから反映する（dev）</strong></p>
+<ol>
+<li>GitHub アプリで「Actions」→「release」→「Run workflow」（ブランチ <code>main</code>）を押し、終わるまで待つ</li>
+<li>スマホの Tailscale をオンにし、SSH アプリでホスト <code>rpg-dev</code>・ユーザー <code>ubuntu</code> に入る（パスワード・鍵は入れない）</li>
+<li><code>rpg-deploy</code> を打つ。最後に <code>✅ 反映できました</code> が出れば終わり</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>コマンド</th>
+<th>すること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-deploy</code></td>
+<td>レジストリでいちばん新しい <code>dev-YYYYMMDD-&lt;番号&gt;</code> を探して反映する</td>
+</tr>
+<tr>
+<td><code>rpg-deploy &lt;リリース番号&gt;</code></td>
+<td>指定した版を反映する（例 <code>rpg-deploy dev-20261101-13</code>）</td>
+</tr>
+<tr>
+<td><code>rpg-deploy rollback</code></td>
+<td>1つ前の版に戻す。もう一度打つと、戻す前の版に戻る</td>
+</tr>
+<tr>
+<td><code>rpg-deploy status</code></td>
+<td>いまの版とコンテナの状態</td>
+</tr>
+<tr>
+<td><code>rpg-deploy list</code></td>
+<td>レジストリの dev の版（新しい順に10個）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><code>rpg-deploy</code> は、下の「手で反映する」と同じことをする。<code>.env</code> の前の行は <code># 前回 IMAGE=</code> で残し（10個まで）、api が healthy になるのを待ってから、migrate・ERROR のログと <code>/api/health</code> の結果を出す</li>
+<li><code>❌ api が正常になりません</code> と出たら、<code>rpg-deploy rollback</code> で戻してから、PC で <code>docker compose logs api</code> を見る</li>
+<li>Tailscale の初めの設定のままだと、SSH は「check」になっていて、12時間ごとにブラウザで Tailscale へのログインを求められる。スマホで開いて承認すれば入れる</li>
+</ul>
+<figure class="diagram"><div class="mermaid">sequenceDiagram
+  participant P as スマホ
+  participant GH as GitHub Actions
+  participant CR as コンテナレジストリ
+  participant S as dev サーバー
+  P-&gt;&gt;GH: release を Run workflow
+  GH-&gt;&gt;CR: rpg-app:dev-YYYYMMDD-N を push
+  P-&gt;&gt;S: Tailscale SSH で rpg-deploy
+  S-&gt;&gt;CR: タグの一覧を取り、いちばん新しい版を pull
+  S-&gt;&gt;S: .env の IMAGE を書き換えて docker compose up -d
+  S--&gt;&gt;P: ✅ 反映できました
+</div></figure>
+<p><strong>スマホから入れるようにする（最初に1回だけ）</strong></p>
+<p>Tailscale は、サーバーから外へつなぐだけで動くため、パケットフィルタは変えない（UDP の戻りを通していないので、Tailscale の中継サーバー経由になる。SSH で打つだけなら遅さは気にならない）。</p>
+<ol>
+<li>Tailscale のアカウントを作る。ログインに使うアカウント（Google など）は2段階認証をオンにする（このアカウントが、スマホからサーバーへ入るときのカギになる）</li>
+<li>スマホに Tailscale アプリを入れて、1 のアカウントでログインする。SSH アプリ（Termius など）も入れる</li>
+<li>いまのサーバーに <code>rpg-deploy</code> と Tailscale を入れる。入れる鍵のある PC から次を打ち、<code>tailscale up</code> が出す URL をブラウザで開いて、1 のアカウントで承認する</li>
+</ol>
+<pre><code class="language-bash">scp infra/sakura/dev/rpg-deploy.sh ubuntu@&lt;V-02&gt;:/tmp/
+ssh ubuntu@&lt;V-02&gt;
+sudo install -m 755 /tmp/rpg-deploy.sh /usr/local/bin/rpg-deploy &amp;&amp; rm /tmp/rpg-deploy.sh
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up --ssh --hostname=rpg-dev
+rpg-deploy status
+</code></pre>
+<ol start="4">
+<li>Tailscale の管理画面「Machines」で <code>rpg-dev</code> の「…」→「Disable key expiry」を押す（押さないと180日でつながらなくなる）</li>
+<li>スマホの SSH アプリに、ホスト <code>rpg-dev</code>・ユーザー <code>ubuntu</code> を登録して入れることを確かめ、<code>rpg-deploy status</code> を打つ</li>
+</ol>
+<ul>
+<li>サーバーを Terraform で作り直すときは、Tailscale の管理画面「Settings」→「Keys」で認証キー（Reusable はオフ、Pre-approved はオン）を作り、環境変数 <code>TF_VAR_tailscale_auth_key</code> に入れてから apply する。スタートアップスクリプトが <code>rpg-deploy</code> と Tailscale を入れてつなぐ（作ったあとは 4. だけ行う）。キーはスタートアップスクリプトに残るため、1回しか使えないキーにする</li>
+<li><code>infra/sakura/dev/rpg-deploy.sh</code> を直したときは、3. の <code>scp</code> と <code>install</code> をやり直す</li>
+</ul>
+<p><strong>手で反映する（PC から）</strong></p>
 <pre><code class="language-bash">cd /opt/rpg
 sed -i 's/^IMAGE=/# 前回 IMAGE=/' .env &amp;&amp; echo &quot;IMAGE=&lt;V-20&gt;/rpg-app:&lt;新しいリリース番号&gt;&quot; &gt;&gt; .env
 docker compose pull
@@ -1499,7 +1575,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 </code></pre>
 <ul>
 <li>切り戻しは、<code>.env</code> の <code>IMAGE=</code> を前回の値に戻して <code>docker compose up -d</code>（詳細設計書 11.6）</li>
-<li><code>compose.yaml</code>・<code>Caddyfile</code> を変えたリリースのときだけ、8. のファイルも置き直す</li>
+<li><code>compose.yaml</code>・<code>Caddyfile</code> を変えたリリースのときだけ、8. のファイルも置き直す（<code>rpg-deploy</code> は置き直さない）</li>
 <li>api が <code>connect EHOSTUNREACH &lt;V-05&gt;:5432</code> で起動しなおしを繰り返し、サーバーから DB へ ping は届くのに 5432 だけ届かないときは、DB の中で通信がはじかれている。コントロールパネルで DB を「再起動」すると直る（2026-10-30 に dev で発生）。再起動のあいだのエラーは、api が自動で起動しなおすため気にしなくてよい</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.12 シンプル監視とバックアップ</h3>
