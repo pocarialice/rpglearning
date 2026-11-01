@@ -23,6 +23,7 @@
 | `TF_VAR_ai_api_key` | V-11 さくらのAI Engine のトークン |
 | `TF_VAR_smtp_password` | V-12 SMTP のパスワード |
 | `TF_VAR_alert_email` | V-14 監視のお知らせの宛先（個人のアドレスのため `dev.auto.tfvars` に書かない） |
+| `TF_VAR_tailscale_auth_key` | Tailscale の認証キー（1回しか使えないもの）。サーバーを作るときだけ使う。空なら Tailscale を入れるだけでつながない |
 
 ## 作る順番
 
@@ -40,4 +41,5 @@ infra/sakura/tf.sh dev output server_ip                         # DNS の A レ�
 - スタートアップスクリプトはサーバーを作ったときに1回だけ動く。動いた記録はサーバーの `/var/log/rpg-setup.log`
 - スタートアップスクリプトには `.env` の中身（パスワード・キー）が入る。コントロールパネルの「スタートアップスクリプト」で見えるため、dev だけで使う。prod は別に考える
 - 2回目からのリリースの反映は手順書 3.11 のとおりサーバーで行う。`image` を変えて apply してもサーバーは変わらない
+- スマホから反映できるよう、サーバーには反映のコマンド `rpg-deploy`（`dev/rpg-deploy.sh`）と Tailscale が入る。スマホの Tailscale と SSH アプリから `rpg-dev` に入り、`rpg-deploy` と打つといちばん新しい版を反映する。いまのサーバーへの入れ方は手順書 3.11
 - シンプル監視の通知は、さくらのクラウドの会員のメールアドレスに届く

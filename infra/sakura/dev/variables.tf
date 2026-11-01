@@ -75,3 +75,9 @@ variable "alert_email" {
   type        = string
   default     = ""
 }
+variable "tailscale_auth_key" {
+  description = "Tailscale の認証キー（tskey-auth-...）。サーバーを作るときにだけ使う。空なら Tailscale を入れるだけでつながない（README）"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

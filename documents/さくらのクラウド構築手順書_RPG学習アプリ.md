@@ -512,7 +512,64 @@ docker compose exec api node scripts/create-admin.mjs <メールアドレス> <�
 
 ### 3.11 リリースの反映
 
-新しい版を反映するときは、詳細設計書 11.5 のとおりにサーバーで行う。
+新しい版を反映するときは、詳細設計書 11.5 のとおりにサーバーで行う。dev は、スマホから Tailscale SSH で入って `rpg-deploy` を打てば済む。
+
+**スマホから反映する（dev）**
+
+1. GitHub アプリで「Actions」→「release」→「Run workflow」（ブランチ `main`）を押し、終わるまで待つ
+2. スマホの Tailscale をオンにし、SSH アプリでホスト `rpg-dev`・ユーザー `ubuntu` に入る（パスワード・鍵は入れない）
+3. `rpg-deploy` を打つ。最後に `✅ 反映できました` が出れば終わり
+
+| コマンド | すること |
+| --- | --- |
+| `rpg-deploy` | レジストリでいちばん新しい `dev-YYYYMMDD-<番号>` を探して反映する |
+| `rpg-deploy <リリース番号>` | 指定した版を反映する（例 `rpg-deploy dev-20261101-13`） |
+| `rpg-deploy rollback` | 1つ前の版に戻す。もう一度打つと、戻す前の版に戻る |
+| `rpg-deploy status` | いまの版とコンテナの状態 |
+| `rpg-deploy list` | レジストリの dev の版（新しい順に10個） |
+
+- `rpg-deploy` は、下の「手で反映する」と同じことをする。`.env` の前の行は `# 前回 IMAGE=` で残し（10個まで）、api が healthy になるのを待ってから、migrate・ERROR のログと `/api/health` の結果を出す
+- `❌ api が正常になりません` と出たら、`rpg-deploy rollback` で戻してから、PC で `docker compose logs api` を見る
+- Tailscale の初めの設定のままだと、SSH は「check」になっていて、12時間ごとにブラウザで Tailscale へのログインを求められる。スマホで開いて承認すれば入れる
+
+```mermaid
+sequenceDiagram
+  participant P as スマホ
+  participant GH as GitHub Actions
+  participant CR as コンテナレジストリ
+  participant S as dev サーバー
+  P->>GH: release を Run workflow
+  GH->>CR: rpg-app:dev-YYYYMMDD-N を push
+  P->>S: Tailscale SSH で rpg-deploy
+  S->>CR: タグの一覧を取り、いちばん新しい版を pull
+  S->>S: .env の IMAGE を書き換えて docker compose up -d
+  S-->>P: ✅ 反映できました
+```
+
+**スマホから入れるようにする（最初に1回だけ）**
+
+Tailscale は、サーバーから外へつなぐだけで動くため、パケットフィルタは変えない（UDP の戻りを通していないので、Tailscale の中継サーバー経由になる。SSH で打つだけなら遅さは気にならない）。
+
+1. Tailscale のアカウントを作る。ログインに使うアカウント（Google など）は2段階認証をオンにする（このアカウントが、スマホからサーバーへ入るときのカギになる）
+2. スマホに Tailscale アプリを入れて、1 のアカウントでログインする。SSH アプリ（Termius など）も入れる
+3. いまのサーバーに `rpg-deploy` と Tailscale を入れる。入れる鍵のある PC から次を打ち、`tailscale up` が出す URL をブラウザで開いて、1 のアカウントで承認する
+
+```bash
+scp infra/sakura/dev/rpg-deploy.sh ubuntu@<V-02>:/tmp/
+ssh ubuntu@<V-02>
+sudo install -m 755 /tmp/rpg-deploy.sh /usr/local/bin/rpg-deploy && rm /tmp/rpg-deploy.sh
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up --ssh --hostname=rpg-dev
+rpg-deploy status
+```
+
+4. Tailscale の管理画面「Machines」で `rpg-dev` の「…」→「Disable key expiry」を押す（押さないと180日でつながらなくなる）
+5. スマホの SSH アプリに、ホスト `rpg-dev`・ユーザー `ubuntu` を登録して入れることを確かめ、`rpg-deploy status` を打つ
+
+- サーバーを Terraform で作り直すときは、Tailscale の管理画面「Settings」→「Keys」で認証キー（Reusable はオフ、Pre-approved はオン）を作り、環境変数 `TF_VAR_tailscale_auth_key` に入れてから apply する。スタートアップスクリプトが `rpg-deploy` と Tailscale を入れてつなぐ（作ったあとは 4. だけ行う）。キーはスタートアップスクリプトに残るため、1回しか使えないキーにする
+- `infra/sakura/dev/rpg-deploy.sh` を直したときは、3. の `scp` と `install` をやり直す
+
+**手で反映する（PC から）**
 
 ```bash
 cd /opt/rpg
@@ -524,7 +581,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 ```
 
 - 切り戻しは、`.env` の `IMAGE=` を前回の値に戻して `docker compose up -d`（詳細設計書 11.6）
-- `compose.yaml`・`Caddyfile` を変えたリリースのときだけ、8. のファイルも置き直す
+- `compose.yaml`・`Caddyfile` を変えたリリースのときだけ、8. のファイルも置き直す（`rpg-deploy` は置き直さない）
 - api が `connect EHOSTUNREACH <V-05>:5432` で起動しなおしを繰り返し、サーバーから DB へ ping は届くのに 5432 だけ届かないときは、DB の中で通信がはじかれている。コントロールパネルで DB を「再起動」すると直る（2026-10-30 に dev で発生）。再起動のあいだのエラーは、api が自動で起動しなおすため気にしなくてよい
 
 ### 3.12 シンプル監視とバックアップ
