@@ -283,9 +283,24 @@ describe('M-D03 gradings・imports・adventures・audit・notify', () => {
     expect((await adventures.find(90, 15, fakeDb({ rows: [{ adventure_id: 90, served: [] }] }))).served).toEqual([])
     expect(await adventures.find(90, 16, fakeDb())).toBeNull()
     expect(await adventures.incrementServed(90, { k: 'explain', kw: 9 }, db)).toBe(true)
-    expect(db.execute.mock.calls[0][1]).toEqual({ adventureId: 90, kind: 'explain', entry: { json: [{ k: 'explain', kw: 9 }] } })
+    expect(db.execute.mock.calls[0][1]).toEqual({ adventureId: 90, kind: 'explain', entry: { json: [{ k: 'explain', kw: 9 }] }, size: 5 })
+    expect(db.execute.mock.calls[0][0]).toContain('served_count < :size')
     await adventures.finish(90, db)
-    expect(adventures.ADVENTURE_SIZE).toBe(10)
+    expect(adventures.ADVENTURE_SIZE).toBe(5)
+  })
+  it('MT-D03-35 adventures の学習時間とまとめ', async () => {
+    const db = fakeDb({ rows: [{ sec: 125 }] })
+    expect(await adventures.addStudyTime(90, 15, db)).toBe(125)
+    const [sql, params] = db.query.mock.calls[0]
+    expect(params).toEqual({ adventureId: 90, userId: 15, cap: 600 })
+    // 1問10分まで。冒険と利用者の累計を同じ文で足す
+    expect(sql).toContain('LEAST(GREATEST(EXTRACT(EPOCH FROM (now() - last_activity_at)), 0), :cap)')
+    expect(sql).toContain('UPDATE users SET total_study_seconds = users.total_study_seconds + d.sec')
+    expect(await adventures.addStudyTime(91, 15, fakeDb())).toBe(0)
+    const s = fakeDb({ rows: [{ study_seconds: 492, total_study_seconds: 7300, answered: 5, correct: 4, explain_count: 2, explain_avg_score: 72, exp_gained: 55 }] })
+    expect(await adventures.summary(90, 15, s)).toEqual({ studySeconds: 492, totalStudySeconds: 7300, answered: 5, correct: 4, explainCount: 2, explainAvgScore: 72, expGained: 55 })
+    expect(s.query.mock.calls[0][0]).toContain('a.user_id = :userId')
+    expect(await adventures.summary(90, 16, fakeDb())).toBeNull()
   })
   it('MT-D03-32 audit.write', async () => {
     const db = fakeDb()

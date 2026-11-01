@@ -1,4 +1,4 @@
-// S-06 結果・フィードバック：A-08／A-10 の結果を表示する。「次の問題へ」で A-07、10問目のあとは「ホームへ」（詳細設計書 6.2）
+// S-06 結果・フィードバック：A-08／A-10 の結果を表示する。「次の問題へ」で A-07、5問目のあとは「冒険のまとめへ」で A-07 から S-15 へ（詳細設計書 6.2）
 import { getContext } from '../../core/context.js'
 import { choiceOption } from '../../components/choice-option.js'
 import { scoreMeter } from '../../components/score-meter.js'
@@ -79,7 +79,7 @@ export async function render(root) {
   const { kind, quest, res } = result
   const last = quest.index >= quest.total
   const actions = last
-    ? button({ label: 'ホームへ', variant: 'primary', block: true, attrs: 'data-action="home"' })
+    ? `${button({ label: '冒険のまとめへ', variant: 'primary', block: true, attrs: 'data-action="next"' })}${button({ label: 'ホームへ', variant: 'quiet', block: true, attrs: 'data-action="home"' })}`
     : `${button({ label: '次の問題へ', variant: 'primary', block: true, attrs: 'data-action="next"' })}${button({ label: 'ホームへ', variant: 'quiet', block: true, attrs: 'data-action="home"' })}`
   // 獲得EXPは問題文より上に置き、結果を開いてすぐ目に入るようにする
   root.innerHTML = `<p class="meta app-progress">${Number(quest.index)} / ${Number(quest.total)}問</p>

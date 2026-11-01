@@ -136,7 +136,8 @@ rpglearning/
 │  ├─ V001__create_tables.sql     # 第8章のCREATE TABLE
 │  ├─ V002__seed_masters.sql      # partners・quest_defs・badge_defs
 │  ├─ V003__auth_jobs.sql         # ログイン・ジョブキュー・定期処理の記録（8.4.1）
-│  └─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
+│  ├─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
+│  └─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -228,7 +229,7 @@ rpglearning/
 | --------- | ------ | ---------- | --------- | ------ | --------- |
 | 利用者       | `u_`   | `u_15`     | 採点        | `gr_`  | `gr_456`  |
 | コース       | `c_`   | `c_3`      | 取り込み      | `imp_` | `imp_8`   |
-| 問題        | `q_`   | `q_42`     | 冒険（10問）   | `adv_` | `adv_90`  |
+| 問題        | `q_`   | `q_42`     | 冒険（5問）    | `adv_` | `adv_90`  |
 | キーワード     | `kw_`  | `kw_123`   | 解答        | `ans_` | `ans_777` |
 
 - `encodeId(prefix, n)` は `prefix + n`、`decodeId(prefix, s)` は接頭辞と数字（先頭0なし、1以上 `Number.MAX_SAFE_INTEGER` 以下）を確認し、合わなければ `VALIDATION_ERROR`。JSの数値で安全に扱える範囲に限る（DBのbigintがこの範囲を超えることは想定しない）
@@ -426,7 +427,7 @@ rpglearning/
 | `rankings.js` | `currentWeek`、`history`、`weeks`（過去週の開始日。新しい順に最大12）、`closeWeek` |
 | `gradings.js` | `create`、`find`、`complete`（`status='processing'` のときだけ更新）、`fail`、`deleteOlderThan(cutoff)`（cutoff は `+09:00` 付きの日時。日数ではない） |
 | `imports.js` | `create`、`setKey`、`find`、`findByKey`、`listByCourse`、`setStatus`、`insertDrafts` |
-| `adventures.js` | `start`、`find`、`incrementServed`、`finish`                                                             |
+| `adventures.js` | `start`、`find`、`incrementServed`、`finish`、`addStudyTime`（1問10分までで冒険と累計に足す）、`summary`（S-15）                                                            |
 | `audit.js`      | `write(actorId, action, target, detail)`                                                              |
 | `notify.js`     | `get`、`put`、`listForSlotBuild(today)`                                                                 |
 | `partners.js` | `get`、`list`、`setImage`（キャラクター画像のキー。null で外す） |
@@ -863,12 +864,15 @@ flowchart TD
 #### A-07 `GET /api/quests/next?adventureId=`
 
 1. `adventureId` がなければ `adventures` を新しく作る。あれば自分のものか確認
-2. `served_count >= 10` なら `{ done: true }` を返し、`finished_at` を入れる
+2. `served_count >= 5`（`ADVENTURE_SIZE`）なら `finished_at` を入れ、`{ done: true, summary }` を返す（`summary` は下記。1問も解いていなければ null）
 3. 候補を取得：`reviews.listDue`（現在のコース・形式ごと最大20件）、`reviews.listUnlearned`、`reviews.listLearned`
-4. `pickNext` で1件選ぶ。`null` なら `{ done: true, reason: 'NO_QUESTION' }`
+4. `pickNext` で1件選ぶ。`null` なら `finished_at` を入れ、`{ done: true, reason: 'NO_QUESTION', summary }`
 5. `adventures.served_count + 1`、`last_kind`・`served`（出した問題・キーワードの内部IDの配列）を更新
-6. 応答（択一）：`{ adventureId, index: 3, total: 10, kind: 'choice', isReview, question: {id, body, choices: [{no, body}]} }`。正解と解説は返さない
+6. 応答（択一）：`{ adventureId, index: 3, total: 5, kind: 'choice', isReview, question: {id, body, choices: [{no, body}]} }`。正解と解説は返さない
 7. 応答（説明）：`{ ..., kind: 'explain', keyword: {id, text}, question: {id, body} }`
+8. `summary`（`adventures.summary`）：その冒険の `answer_logs` から `{ answered, correct, explainCount, explainAvgScore, expGained, studySeconds, totalStudySeconds }`。`expGained` は解答の EXP（`exp_logs` の理由 choice／explain）だけで、クエストの報酬は含めない。`explainAvgScore` は説明がなければ null
+
+**学習時間（V005）**：解答のたびに `adventures.addStudyTime` で、`now() - adventures.last_activity_at`（0〜600秒に丸める）を `adventures.study_seconds` と `users.total_study_seconds` に足し、`last_activity_at` を今にする。1文で行い、冒険の行を `FOR UPDATE` で押さえる。択一は A-08 のトランザクションの中、説明は A-09 で採点を頼む前に呼ぶ（採点を待つ時間は入れない）。冒険IDのない解答は数えない。途中でやめた冒険も、解いた問題のぶんは累計に入る
 
 #### A-07b `POST /api/quests/explain-question`
 
@@ -908,13 +912,14 @@ sequenceDiagram
    d. gained + questExp > 0 なら exp_logs に追加（理由 choice／quest、earned_week = weekStartJst）
    e. users.total_exp・level・last_active_on を更新
    f. user_quests の進み具合を保存、新しいバッジを user_badges に追加
+   g. adventureId があれば adventures.addStudyTime（学習時間を冒険と累計に足す）
 4. コメント：Haiku で解説コメントを生成（5秒）。失敗したら questions.explanation をそのまま使う
 5. 応答：{ correct, correctChoice, explanation, comment, exp, review, quests, badges }（A-10 と同じ形）
 ```
 
 #### A-09 `POST /api/gradings`
 
-`{ adventureId, keywordId, text, prompt }` → `validateExplanation`（NGなら400）→ キーワードが現在のコースの公開済み問題のものか確認 → `prompt`（A-07b の問いかけ。任意）を確かめる → `grading_jobs` に `processing` で追加（`prompt` 列に保存） → ジョブキューに `grading`（`{gradingId}`）を入れる（3.7）→ `202 { gradingId, status: 'processing' }`。キューに入れられなかったら、採点を `failed`（`ai_error`）にして 500 を返す。
+`{ adventureId, keywordId, text, prompt }` → `validateExplanation`（NGなら400）→ キーワードが現在のコースの公開済み問題のものか確認 → `prompt`（A-07b の問いかけ。任意）を確かめる → `adventureId` があれば自分の冒険か確認して `adventures.addStudyTime` → `grading_jobs` に `processing` で追加（`prompt` 列に保存） → ジョブキューに `grading`（`{gradingId}`）を入れる（3.7）→ `202 { gradingId, status: 'processing' }`。キューに入れられなかったら、採点を `failed`（`ai_error`）にして 500 を返す。
 
 - 画面が送る `isReview` は使わない（復習かどうかは worker が `review_items` から判断する）
 - `prompt` は `{ text, angles }`。`text` が空・文字列でない、`angles` が配列でないときは 400（`field: 'prompt'`, `code: 'INVALID'`）。学習者から届く値なので `normalizePrompt` で長さを切り詰め、採点の指示文ではタグで囲んでデータとして渡す（7.3）
@@ -938,7 +943,7 @@ sequenceDiagram
 
 #### A-12 `GET /api/me/stats`・`GET /api/me/badges`
 
-- stats：網羅率＝択一で1回以上解いた公開済み問題数 ÷ 公開済み問題数（現在のコース）、正答率＝択一の正解数 ÷ 択一の解答数、連続学習日数、習得済み数、レベル（`levelInfo(totalExp)` の `level`・`expInLevel`・`next`）と累計EXP（`totalExp`）。S-08 の上部（ExpBar）に使う
+- stats：網羅率＝択一で1回以上解いた公開済み問題数 ÷ 公開済み問題数（現在のコース）、正答率＝択一の正解数 ÷ 択一の解答数、連続学習日数、習得済み数、レベル（`levelInfo(totalExp)` の `level`・`expInLevel`・`next`）と累計EXP（`totalExp`）。S-08 の上部（ExpBar）に使う。累計の学習時間（`totalStudySeconds`、秒）
 - badges：`badge_defs` のうち Phase 1 のもの全部に、獲得済みなら `earnedAt`（`+09:00` 付き）を付けて返す（未獲得は条件文を表示）
 
 ### 5.3 管理API
@@ -1094,7 +1099,8 @@ sequenceDiagram
 | S-03 | `learner/s03-courses.js`      | A-06                     | 受講中の印、409（M-08）ならニックネーム変更へ案内                               |
 | S-04 | `learner/s04-choice.js`       | A-07、A-08                | 選ぶまで「答える」を押せない。結果は S-06 へ                                  |
 | S-05 | `learner/s05-explain.js`      | A-07、A-07b、A-09、A-10     | 最初に A-07b でパートナーの問いかけを取得（待つ間は「〇〇が質問を考えています」、失敗したら定型の質問）し、`store.quest.prompt` に覚える。入力のたびに `validateExplanation` で文字数とM-03・M-04を表示。送信時に `prompt` を添え、送信後は `pollGrading` と待機演出 |
-| S-06 | `learner/s06-result.js`       | -（A-08／A-10の結果）          | 説明は A-10 の `prompt` があれば「〇〇の質問」と観点ごとの答え方（○ 答えられた・△ 一部・× まだ）を出す。「次の問題へ」で A-07、10問目のあとは「ホームへ」 |
+| S-06 | `learner/s06-result.js`       | -（A-08／A-10の結果）          | 説明は A-10 の `prompt` があれば「〇〇の質問」と観点ごとの答え方（○ 答えられた・△ 一部・× まだ）を出す。「次の問題へ」で A-07。5問目のあとは「冒険のまとめへ」で A-07 を呼び、`summary` があれば S-15 へ（なければホームへ） |
+| S-15 | `learner/s15-summary.js`      | -（A-07 の `summary`）       | 正解数・EXP・説明の平均点・かかった時間・累計の学習時間（`formatDuration`）。問題が尽きて終わったときはお知らせも出す |
 | S-07 | `learner/s07-ranking.js`      | A-11                     | 過去週の切り替え                                                   |
 | S-08 | `learner/s08-profile.js`      | A-12、A-02                | ニックネーム編集ダイアログ                                              |
 | S-09 | `learner/s09-partner.js`      | A-03                     | `validatePartnerName`                                      |
@@ -1340,7 +1346,7 @@ erDiagram
 | T-10 | `questions`         | 問題         | `question_id`                       | 1万                | QUESTIONS      |
 | T-11 | `choices`           | 選択肢        | `choice_id`                         | 4万                | CHOICES        |
 | T-12 | `keywords`          | キーワード      | `keyword_id`                        | 3万                | KEYWORDS       |
-| T-13 | `adventures`        | 冒険（10問）    | `adventure_id`                      | 20万               | 追加（「3 / 10問」の管理） |
+| T-13 | `adventures`        | 冒険（5問）     | `adventure_id`                      | 20万               | 追加（「3 / 5問」の管理。V005 で学習時間） |
 | T-14 | `answer_logs`       | 解答履歴       | `answer_id`                         | 500万              | ANSWER_LOGS    |
 | T-15 | `review_items`      | 復習項目       | `review_id`                         | 100万              | REVIEW_ITEMS   |
 | T-16 | `grading_jobs`      | 採点ジョブ      | `grading_id`                        | 10万（30日で削除）       | GRADING_JOBS   |
@@ -1529,7 +1535,7 @@ CREATE TABLE IF NOT EXISTS keywords (
   UNIQUE (question_id, sort_order)
 );
 
--- T-13 冒険（1回10問）
+-- T-13 冒険（1回5問。served_count の上限10は旧仕様のまま。学習時間の列は V005 で追加）
 CREATE TABLE IF NOT EXISTS adventures (
   adventure_id  bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id       bigint      NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
@@ -1780,6 +1786,40 @@ A-07b でパートナーが出した問いかけを、採点ワーカーに渡�
 -- T-16 採点ジョブ（パートナーの問いかけ {"text":"...","angles":["しくみ","目的"]}。問いかけなしの採点は NULL）
 ALTER TABLE grading_jobs ADD COLUMN IF NOT EXISTS prompt jsonb;
 INSERT INTO schema_migrations (version, description) VALUES ('V004', 'grading prompt') ON CONFLICT DO NOTHING;
+```
+
+#### 8.4.3 学習時間（`db/migrations/V005__study_time.sql`）
+
+冒険ごとの学習時間（`adventures.study_seconds`）と利用者の累計（`users.total_study_seconds`）を持つ。数え方は A-07 の「学習時間」のとおり。これまでの冒険は `answer_logs.answered_at` の間隔から同じ決まり（1問10分まで）で数え直す。
+
+```sql
+-- =========================================================
+-- V005__study_time.sql  学習時間（冒険ごとの時間と、利用者ごとの累計）
+-- 1問ぶんの時間＝前の解答（冒険の最初の問題は冒険の開始）からその解答まで。放置しても増えすぎないよう1問10分までにする
+-- 解答のたびに足すので、途中でやめた冒険の時間も累計に入る
+-- =========================================================
+-- T-13 冒険
+ALTER TABLE adventures ADD COLUMN IF NOT EXISTS study_seconds    integer     NOT NULL DEFAULT 0 CHECK (study_seconds >= 0);
+ALTER TABLE adventures ADD COLUMN IF NOT EXISTS last_activity_at timestamptz NOT NULL DEFAULT now();  -- 開始または最後の解答
+-- T-02 利用者
+ALTER TABLE users ADD COLUMN IF NOT EXISTS total_study_seconds integer NOT NULL DEFAULT 0 CHECK (total_study_seconds >= 0);
+-- これまでの冒険は解答履歴から同じ決まりで数え直す（説明の解答時刻は採点が終わった時刻なので、少し長めに出る）
+WITH steps AS (
+  SELECT l.adventure_id,
+         LEAST(GREATEST(EXTRACT(EPOCH FROM (l.answered_at - COALESCE(
+           LAG(l.answered_at) OVER (PARTITION BY l.adventure_id ORDER BY l.answered_at, l.answer_id), a.started_at))), 0), 600) AS sec
+  FROM answer_logs l JOIN adventures a ON a.adventure_id = l.adventure_id
+), per AS (
+  SELECT adventure_id, round(sum(sec))::int AS sec FROM steps GROUP BY adventure_id
+)
+UPDATE adventures a SET study_seconds = per.sec FROM per WHERE a.adventure_id = per.adventure_id;
+UPDATE adventures a SET last_activity_at = COALESCE(
+  (SELECT max(l.answered_at) FROM answer_logs l WHERE l.adventure_id = a.adventure_id), a.started_at);
+UPDATE users u SET total_study_seconds = s.sec
+FROM (SELECT user_id, sum(study_seconds)::int AS sec FROM adventures GROUP BY user_id) s
+WHERE u.user_id = s.user_id;
+
+INSERT INTO schema_migrations (version, description) VALUES ('V005', 'study time') ON CONFLICT DO NOTHING;
 ```
 
 ### 8.5 初期データ（`db/migrations/V002__seed_masters.sql`）

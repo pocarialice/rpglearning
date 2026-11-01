@@ -5,7 +5,7 @@ import { ApiError } from '../../../../web/js/core/api.js'
 import * as profile from '../../../../web/js/pages/learner/s08-profile.js'
 import * as courses from '../../../../web/js/pages/learner/s03-courses.js'
 import * as partnerPage from '../../../../web/js/pages/learner/s09-partner.js'
-const STATS = { courseId: 'c_3', coveragePct: 40, correctPct: null, answerCount: 0, mastered: 2, streakDays: 7, level: 3, expInLevel: 30, next: 240, totalExp: 330 }
+const STATS = { courseId: 'c_3', coveragePct: 40, correctPct: null, answerCount: 0, mastered: 2, streakDays: 7, level: 3, expInLevel: 30, next: 240, totalExp: 330, totalStudySeconds: 7300 }
 const BADGES = { badges: [
   { code: 'streak_bronze', category: 'streak', tier: 'bronze', name: '継続の証（銅）', condition: '7日連続で1問以上解答', earnedAt: '2026-10-20T00:00:00+09:00' },
   { code: 'mastery_bronze', category: 'mastery', tier: 'bronze', name: '習得の証（銅）', condition: '習得済みの問題が10問', earnedAt: null }
@@ -37,7 +37,7 @@ describe('M-F16 S-08 プロフィール', () => {
     expect(q('.gd-crest b').textContent).toBe('3')
     expect(root.textContent).toContain('累計 330 EXP')
     const stats = [...root.querySelectorAll('.app-stat')].map((s) => s.textContent)
-    expect(stats).toEqual(['網羅率40.0%', '正答率-', '連続学習7 日', '習得済み2 問'])
+    expect(stats).toEqual(['網羅率40.0%', '正答率-', '連続学習7 日', '習得済み2 問', '累計の学習時間2時間1分'])
     const [earned, locked] = root.querySelectorAll('.app-badge-item')
     expect(earned.querySelector('.gd-badge-date').textContent).toBe('2026/10/20')
     expect(locked.querySelector('.gd-emblem-locked')).not.toBeNull()

@@ -41,6 +41,8 @@ describe('M-H07 gradings（A-09・A-10）', () => {
     expect(res.statusCode).toBe(202)
     expect(parse(res)).toEqual({ gradingId: 'gr_456', status: 'processing' })
     expect(gradings.create).toHaveBeenCalledWith({ userId: 15, courseId: 3, keywordId: 123, adventureId: 90, explanationText: X(120), prompt: null })
+    // 送った時点までを学習時間に足す
+    expect(adventures.addStudyTime).toHaveBeenCalledWith(90, 15)
     // ワーカーへはジョブキューで渡す
     expect(jobs.enqueue).toHaveBeenCalledWith('grading', { gradingId: 456 })
   })

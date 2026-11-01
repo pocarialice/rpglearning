@@ -6,7 +6,8 @@ import * as home from '../../../../web/js/pages/learner/s02-home.js'
 import * as choice from '../../../../web/js/pages/learner/s04-choice.js'
 import * as explain from '../../../../web/js/pages/learner/s05-explain.js'
 import * as result from '../../../../web/js/pages/learner/s06-result.js'
-import { NOTICE_DONE } from '../../../../web/js/pages/learner/adventure.js'
+import * as summary from '../../../../web/js/pages/learner/s15-summary.js'
+import { NOTICE_DONE, NOTICE_NO_QUESTION } from '../../../../web/js/pages/learner/adventure.js'
 const HOME = {
   level: 5, expInLevel: 410, next: 690, totalExp: 1232, streakDays: 3,
   message: { partnerName: 'ミナ', persona: 'encourage', text: '昨日より3問多く解けてるよ' },
@@ -14,8 +15,9 @@ const HOME = {
   course: { id: 'c_3', name: 'ネットワーク応用', certification: 'ネットワークスペシャリスト', questionCount: 120, coveragePct: 35 },
   review: { choice: 3, explain: 2, total: 5 }
 }
-const CHOICE_Q = { adventureId: 'adv_1', index: 3, total: 10, kind: 'choice', isReview: true, question: { id: 'q_9', body: '最も適切なものはどれか', choices: [1, 2, 3, 4].map((no) => ({ no, body: `選択肢${no}` })) } }
-const EXPLAIN_Q = { adventureId: 'adv_1', index: 4, total: 10, kind: 'explain', isReview: false, keyword: { id: 'kw_123', text: 'VPC' }, question: { id: 'q_9', body: '出典の問題' } }
+const CHOICE_Q = { adventureId: 'adv_1', index: 3, total: 5, kind: 'choice', isReview: true, question: { id: 'q_9', body: '最も適切なものはどれか', choices: [1, 2, 3, 4].map((no) => ({ no, body: `選択肢${no}` })) } }
+const EXPLAIN_Q = { adventureId: 'adv_1', index: 4, total: 5, kind: 'explain', isReview: false, keyword: { id: 'kw_123', text: 'VPC' }, question: { id: 'q_9', body: '出典の問題' } }
+const SUMMARY = { answered: 5, correct: 4, explainCount: 2, explainAvgScore: 72, expGained: 55, studySeconds: 492, totalStudySeconds: 7300 }
 const OUTCOME = { exp: { gained: 15, reviewBonus: true, questExp: 0, level: 5, levelUp: false, expInLevel: 425, next: 690 }, review: { stage: 2, nextDate: '2026-10-24' }, quests: [{ id: 'Q-01', progress: 5, target: 5, done: true, achievedNow: true, reward: 30 }], badges: ['mastery_bronze'] }
 let root, store, api, go
 function setup(state = {}) {
@@ -89,7 +91,7 @@ describe('M-F12 S-04 演習（四肢択一）', () => {
   it('MT-F12-02 選ぶまで「答える」を押せず、答えると S-06 へ', async () => {
     setup({ quest: CHOICE_Q, adventureId: 'adv_1' })
     await choice.render(root)
-    expect(root.querySelector('.app-progress').textContent).toBe('3 / 10問復習')
+    expect(root.querySelector('.app-progress').textContent).toBe('3 / 5問復習')
     const answer = root.querySelector('[data-action="answer"]')
     expect(answer.disabled).toBe(true)
     click('[data-choice="2"]')
@@ -364,13 +366,62 @@ describe('M-F14 S-06 結果・フィードバック', () => {
       vi.useRealTimers()
     }
   })
-  it('MT-F14-05 10問目のあとは「ホームへ」だけ', async () => {
+  it('MT-F14-05 5問目のあとは「冒険のまとめへ」と「ホームへ」', async () => {
     const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
-    setup({ result: { kind: 'choice', quest: { ...CHOICE_Q, index: 10 }, selected: 1, res }, adventureId: 'adv_1' })
+    setup({ result: { kind: 'choice', quest: { ...CHOICE_Q, index: 5 }, selected: 1, res }, adventureId: 'adv_1' })
     await result.render(root)
-    expect(root.querySelector('[data-action="next"]')).toBeNull()
+    expect(root.querySelector('[data-action="next"]').textContent).toBe('冒険のまとめへ')
     click('[data-action="home"]')
     expect(store.getState().adventureId).toBeNull()
+    expect(go).toHaveBeenCalledWith('/home')
+  })
+  it('MT-F14-12 「冒険のまとめへ」で A-07 のまとめを持って S-15 へ移る', async () => {
+    const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
+    setup({ result: { kind: 'choice', quest: { ...CHOICE_Q, index: 5 }, selected: 1, res }, adventureId: 'adv_1' })
+    await result.render(root)
+    api.apiGet.mockResolvedValue({ adventureId: 'adv_1', done: true, summary: SUMMARY })
+    click('[data-action="next"]')
+    await flush()
+    expect(api.apiGet).toHaveBeenCalledWith('/quests/next?adventureId=adv_1')
+    expect(store.getState()).toMatchObject({ adventureId: null, result: null, summary: { ...SUMMARY, notice: null } })
+    expect(go).toHaveBeenCalledWith('/quest/summary')
+  })
+  it('MT-F14-13 問題が尽きて終わったときは、まとめにお知らせを載せる', async () => {
+    const res = { correct: true, correctChoice: 1, comment: { text: '' }, ...OUTCOME }
+    setup({ result: { kind: 'choice', quest: CHOICE_Q, selected: 1, res }, adventureId: 'adv_1' })
+    await result.render(root)
+    api.apiGet.mockResolvedValue({ adventureId: 'adv_1', done: true, reason: 'NO_QUESTION', summary: SUMMARY })
+    click('[data-action="next"]')
+    await flush()
+    expect(store.getState().summary.notice).toBe(NOTICE_NO_QUESTION)
+    expect(go).toHaveBeenCalledWith('/quest/summary')
+  })
+})
+describe('M-F25 S-15 冒険のまとめ', () => {
+  it('MT-F25-01 正解数・EXP・説明の平均点・かかった時間・累計の学習時間を表示する', async () => {
+    setup({ summary: { ...SUMMARY, notice: null } })
+    await summary.render(root)
+    expect(root.querySelector('h1').textContent).toBe('冒険のまとめ')
+    const tiles = [...root.querySelectorAll('.app-stat')].map((s) => s.textContent)
+    expect(tiles).toEqual(['正解4 / 5問', '獲得EXP+55', '説明の平均点72 点', 'かかった時間8分12秒', '累計の学習時間2時間1分'])
+    expect(root.querySelector('.app-stat-wide').textContent).toBe('累計の学習時間2時間1分')
+    expect(root.querySelector('.gd-bubble-name').textContent).toContain('セージ')
+    expect(root.textContent).toContain('5問おつかれさま')
+    expect(root.querySelector('.app-notice')).toBeNull()
+    click('[data-action="home"]')
+    expect(store.getState().summary).toBeNull()
+    expect(go).toHaveBeenCalledWith('/home')
+  })
+  it('MT-F25-02 説明がなければ平均点を出さず、全問正解をほめる。お知らせを出す', async () => {
+    setup({ summary: { ...SUMMARY, correct: 5, explainCount: 0, explainAvgScore: null, notice: NOTICE_NO_QUESTION } })
+    await summary.render(root)
+    expect(root.textContent).not.toContain('説明の平均点')
+    expect(root.querySelectorAll('.app-stat-wide')).toHaveLength(2)
+    expect(root.textContent).toContain('5問ぜんぶ正解')
+    expect(root.querySelector('.app-notice').textContent).toBe(NOTICE_NO_QUESTION)
+  })
+  it('MT-F25-03 まとめがなければホームへ', async () => {
+    await summary.render(root)
     expect(go).toHaveBeenCalledWith('/home')
   })
 })

@@ -1,4 +1,4 @@
-// A-07 次の問題（10問の冒険の中の1問）、A-07b キーワード説明の問いかけ
+// A-07 次の問題（5問の冒険の中の1問。冒険を終えるときは冒険のまとめ（S-15）も返す）、A-07b キーワード説明の問いかけ
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
@@ -10,6 +10,15 @@ import { converse } from '../../shared/ai/client.js'
 import { extractJson, validateShape, EXPLAIN_QUESTION_SCHEMA } from '../../shared/ai/json-guard.js'
 import { buildExplainQuestionPrompt, fallbackQuestion, normalizePrompt } from '../../shared/ai/prompts/explain-question.js'
 const KINDS = ['choice', 'explain']
+// 冒険のまとめ。1問も解いていなければ null
+async function summaryView(adventureId, userId) {
+  const s = await adventures.summary(adventureId, userId)
+  if (!s || s.answered === 0) return null
+  return {
+    answered: s.answered, correct: s.correct, explainCount: s.explainCount, explainAvgScore: s.explainAvgScore ?? null,
+    expGained: s.expGained, studySeconds: s.studySeconds, totalStudySeconds: s.totalStudySeconds
+  }
+}
 const entryKey = (e) => (e.k === 'choice' ? servedKey('choice', { questionId: e.q }) : servedKey('explain', { keywordId: e.kw }))
 export async function next(ctx) {
   const { user, today, query } = ctx
@@ -24,7 +33,7 @@ export async function next(ctx) {
   const adventureId = encodeId(PREFIX.adventure, adv.adventureId)
   if (adv.servedCount >= adventures.ADVENTURE_SIZE) {
     await adventures.finish(adv.adventureId)
-    return ok({ adventureId, done: true })
+    return ok({ adventureId, done: true, summary: await summaryView(adv.adventureId, user.userId) })
   }
   const candidates = { due: {}, unlearned: {}, learned: {} }
   await Promise.all(KINDS.map(async (kind) => {
@@ -40,7 +49,7 @@ export async function next(ctx) {
   const pick = pickNext(candidates, { lastKind: adv.lastKind ?? null, servedIds: (adv.served ?? []).map(entryKey) })
   if (!pick) {
     await adventures.finish(adv.adventureId)
-    return ok({ adventureId, done: true, reason: 'NO_QUESTION' })
+    return ok({ adventureId, done: true, reason: 'NO_QUESTION', summary: await summaryView(adv.adventureId, user.userId) })
   }
   const q = await questions.findForLearner(pick.questionId, courseId)
   if (!q) throw new AppError('NOT_FOUND', '問題が見つかりません')

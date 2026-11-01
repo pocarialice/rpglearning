@@ -2,7 +2,7 @@
 import { AppError } from '../../util/errors.js'
 import { defaultDb, camelRow, camelRows, date } from './_base.js'
 const USER_COLS = `u.user_id, u.auth_sub, u.email, u.full_name, u.nickname, u.status, u.partner_persona, u.partner_name,
-  u.current_course_id, u.total_exp, u.level, u.streak_days, u.streak_checked_on, u.last_active_on, u.last_login_at,
+  u.current_course_id, u.total_exp, u.total_study_seconds, u.level, u.streak_days, u.streak_checked_on, u.last_active_on, u.last_login_at,
   u.daily_message, u.daily_message_on, u.delete_scheduled_on,
   COALESCE((SELECT json_agg(r.role ORDER BY r.role) FROM user_roles r WHERE r.user_id = u.user_id), '[]') AS roles`
 function withRoles(row) {

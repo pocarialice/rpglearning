@@ -97,7 +97,8 @@ export async function stats(ctx) {
     mastered: s.mastered,
     streakDays: ctx.user.streakDays ?? 0,
     ...levelInfo(ctx.user.totalExp ?? 0),
-    totalExp: ctx.user.totalExp ?? 0
+    totalExp: ctx.user.totalExp ?? 0,
+    totalStudySeconds: ctx.user.totalStudySeconds ?? 0
   })
 }
 export async function badges_(ctx) {

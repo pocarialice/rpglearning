@@ -30,6 +30,7 @@ export async function choice(ctx) {
     const c = await loadAnswerContext(tx, a)
     const o = computeOutcome(c, a)
     await writeOutcome(tx, o, c, a)
+    if (adventureId) await adventures.addStudyTime(adventureId, user.userId, tx)
     return o
   })
   const persona = user.partnerPersona ?? 'encourage'

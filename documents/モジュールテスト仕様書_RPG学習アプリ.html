@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第1.5版（ドラフト：第1〜6章、HTML版あり。第1.4版のあとに加えたホームの受講中のコース（MT-H03-08・MT-F10-05）のケースを載せる）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31）</b></li>
+      <li>版数<b>第1.6版（ドラフト：第1〜6章、HTML版あり。冒険を5問にし、冒険のまとめ（S-15）と学習時間のケース（MT-D03-35・MT-H05-12・MT-F05-05・MT-F14-12〜13・MT-F25）を載せる）</b></li>
+      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01）</b></li>
       <li>入力文書<b>詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
@@ -1996,7 +1996,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-D03-31</td>
 <td>adventures の各関数</td>
 <td><code>start</code>・<code>find</code>（他人は null）・<code>incrementServed</code>・<code>finish</code></td>
-<td><code>served</code> をJSONで追加、10問まで</td>
+<td><code>served</code> をJSONで追加、5問まで（<code>served_count &lt; :size</code>、<code>ADVENTURE_SIZE = 5</code>）</td>
 <td>同</td>
 </tr>
 <tr>
@@ -2018,6 +2018,13 @@ describe('M-D01 client', () =&gt; {
 <td>listByCourse・findByIds</td>
 <td>絞り込みなし／<code>{status:'published', importId:8}</code>、行なし。<code>findByIds([43,44])</code>／<code>[]</code></td>
 <td>archived を除き新しい順に最大500件。状態・取り込みは SQL のパラメータで渡す。<code>findByIds</code> は <code>ANY(string_to_array(…))</code> で、空なら SQL を流さない</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-D03-35</td>
+<td>adventures の学習時間とまとめ</td>
+<td><code>addStudyTime(90, 15)</code> が 125 秒を返す／行なし。<code>summary</code> の行あり／他人</td>
+<td>125／0。SQL は0〜600秒に丸め、冒険と <code>users.total_study_seconds</code> を同じ文で足す。まとめは camelCase、他人は null</td>
 <td>同</td>
 </tr>
 </tbody>
@@ -2115,7 +2122,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-D05-01</td>
 <td>ファイルの並べ方</td>
 <td>テスト用のフォルダ（<code>V002</code>・<code>V001</code>・<code>.down.sql</code>・ほかのファイル）、リポジトリの <code>db/migrations</code></td>
-<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V004</code></td>
+<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V005</code></td>
 <td>同</td>
 </tr>
 <tr>
@@ -3549,9 +3556,9 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-H02-17</td>
-<td>学習記録のレベルとEXP</td>
-<td>累計EXP 330 の利用者で <code>GET /api/me/stats</code></td>
-<td><code>levelInfo(330)</code> の <code>level</code>・<code>expInLevel</code>・<code>next</code> と <code>totalExp:330</code> を含む</td>
+<td>学習記録のレベルとEXP・学習時間</td>
+<td>累計EXP 330 の利用者で <code>GET /api/me/stats</code>、累計の学習時間 7300 秒の利用者</td>
+<td><code>levelInfo(330)</code> の <code>level</code>・<code>expInLevel</code>・<code>next</code> と <code>totalExp:330</code>、<code>totalStudySeconds:0</code>／<code>7300</code> を含む</td>
 <td>同</td>
 </tr>
 <tr>
@@ -3710,16 +3717,16 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-H05-02</td>
-<td>10問で終わり</td>
-<td><code>served_count = 10</code></td>
-<td><code>{ done: true }</code>、<code>finished_at</code> を入れる</td>
+<td>5問で終わり</td>
+<td><code>served_count = 5</code></td>
+<td><code>{ done: true, summary }</code>（まとめは <code>adventures.summary(90, 15)</code> から）、<code>finished_at</code> を入れる</td>
 <td>境</td>
 </tr>
 <tr>
 <td>MT-H05-03</td>
-<td>9問目の次</td>
-<td><code>served_count = 9</code></td>
-<td><code>index:10</code> の問題を返す</td>
+<td>4問目の次</td>
+<td><code>served_count = 4</code></td>
+<td><code>index:5, total:5</code> の問題を返す</td>
 <td>境</td>
 </tr>
 <tr>
@@ -3733,7 +3740,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-H05-05</td>
 <td>出せる問題がない</td>
 <td><code>pickNext</code> が null</td>
-<td><code>{ done:true, reason:'NO_QUESTION' }</code></td>
+<td><code>{ done:true, reason:'NO_QUESTION', summary: null }</code></td>
 <td>境</td>
 </tr>
 <tr>
@@ -3778,6 +3785,13 @@ describe('M-D01 client', () =&gt; {
 <td>404、AI を呼ばない</td>
 <td>異</td>
 </tr>
+<tr>
+<td>MT-H05-12</td>
+<td>まとめがない・平均点がない</td>
+<td>解答0件のまとめ／行なし／説明なし</td>
+<td><code>summary:null</code>／<code>null</code>／<code>explainAvgScore:null</code></td>
+<td>境</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H06 <code>routes/answers.js</code>（A-08）</h4>
@@ -3796,7 +3810,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-H06-01</td>
 <td>正解</td>
 <td><code>choiceNo:2</code>、正解2、初回</td>
-<td><code>correct:true</code>、トランザクション内で answer_logs・review_items・exp_logs・users を更新、<code>exp.gained:10</code></td>
+<td><code>correct:true</code>、トランザクション内で answer_logs・review_items・exp_logs・users を更新し、学習時間を足す（<code>addStudyTime(90, 15)</code>）、<code>exp.gained:10</code></td>
 <td>同</td>
 </tr>
 <tr>
@@ -3845,7 +3859,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-H06-08</td>
 <td>冒険IDなし・クエスト達成・バッジ</td>
 <td>冒険IDなし、段階5の復習に正解、Q-01(4/5)、習得9件、Bedrock が空文字</td>
-<td>gained 15・questExp 20、exp_logs は choice と quest の2行、<code>mastery_bronze</code>、コメントは解説文</td>
+<td>gained 15・questExp 20、exp_logs は choice と quest の2行、<code>mastery_bronze</code>、コメントは解説文。冒険の外なので学習時間は足さない</td>
 <td>同</td>
 </tr>
 </tbody>
@@ -3866,7 +3880,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-H07-01</td>
 <td>採点の受付</td>
 <td>説明文120文字、キーワードは現在のコース</td>
-<td>202 <code>{gradingId:'gr_…', status:'processing'}</code>。ジョブキューに <code>grading</code>（<code>{gradingId}</code>）を入れる</td>
+<td>202 <code>{gradingId:'gr_…', status:'processing'}</code>。ジョブキューに <code>grading</code>（<code>{gradingId}</code>）を入れる。採点を頼む前に <code>addStudyTime(90, 15)</code></td>
 <td>同</td>
 </tr>
 <tr>
@@ -5473,6 +5487,13 @@ describe('M-D01 client', () =&gt; {
 <td>境</td>
 </tr>
 <tr>
+<td>MT-F05-05</td>
+<td>学習時間の表示</td>
+<td>0・59・492・3600・7300・null・-5 秒</td>
+<td><code>0秒</code>・<code>59秒</code>・<code>8分12秒</code>・<code>1時間0分</code>・<code>2時間1分</code>・<code>0秒</code>・<code>0秒</code></td>
+<td>境</td>
+</tr>
+<tr>
 <td>MT-F06-01</td>
 <td>採点結果が返る</td>
 <td>1・2回目 processing、3回目 done</td>
@@ -5862,7 +5883,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-F12-02</td>
 <td>選んで答える</td>
 <td>復習の3問目、イを選んで「答える」</td>
-<td>「3 / 10問」と復習の印、選ぶまで押せない。A-08 に問題ID・選択肢・冒険ID、結果を状態に入れて S-06 へ</td>
+<td>「3 / 5問」と復習の印、選ぶまで押せない。A-08 に問題ID・選択肢・冒険ID、結果を状態に入れて S-06 へ</td>
 <td>状</td>
 </tr>
 <tr>
@@ -5972,9 +5993,9 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-F14-05</td>
-<td>10問目のあと</td>
-<td>10 / 10問</td>
-<td>「ホームへ」だけ。押すと冒険IDを空にしてホームへ</td>
+<td>5問目のあと</td>
+<td>5 / 5問</td>
+<td>「冒険のまとめへ」と「ホームへ」。「ホームへ」は冒険IDを空にしてホームへ</td>
 <td>境</td>
 </tr>
 <tr>
@@ -6009,7 +6030,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-F14-10</td>
 <td>獲得EXPの位置と演出</td>
 <td>レベルアップなし・お祝いなしの結果／もう一度表示</td>
-<td>獲得EXPを「◯ / 10問」のすぐ下、問題文より上に出す。はじめは獲得前の <code>EXP 410 / 690</code> で、少し待つと <code>EXP 425 / 690</code> まで伸びる。もう一度表示したときは動かさず最後の状態</td>
+<td>獲得EXPを「◯ / 5問」のすぐ下、問題文より上に出す。はじめは獲得前の <code>EXP 410 / 690</code> で、少し待つと <code>EXP 425 / 690</code> まで伸びる。もう一度表示したときは動かさず最後の状態</td>
 <td>状</td>
 </tr>
 <tr>
@@ -6017,6 +6038,20 @@ describe('M-D01 client', () =&gt; {
 <td>お祝いのあとにEXPバーを動かす</td>
 <td>クエスト達成のお祝いがある結果</td>
 <td>お祝いを出しているあいだは獲得前のまま。閉じてからEXPバーを動かして <code>EXP 425 / 690</code> にする</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F14-12</td>
+<td>冒険のまとめへ</td>
+<td>5問目で「冒険のまとめへ」、A-07 が <code>done</code> と <code>summary</code></td>
+<td>同じ冒険で A-07 を呼び、冒険ID・結果を空にしてまとめを状態に入れ、S-15 へ</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F14-13</td>
+<td>問題が尽きた</td>
+<td>A-07 が <code>reason:NO_QUESTION</code> と <code>summary</code></td>
+<td>まとめに M の「いま出せる問題がない」を載せて S-15 へ</td>
 <td>状</td>
 </tr>
 </tbody>
@@ -6085,8 +6120,8 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-F16-01</td>
 <td>表示</td>
-<td>A-12 の学習記録（正答率なし）とバッジ（獲得1・未獲得1）</td>
-<td>ニックネーム、Lv と累計EXP、4つの記録（正答率は「-」）、獲得日、未獲得は条件文、リリース番号</td>
+<td>A-12 の学習記録（正答率なし、学習時間 7300 秒）とバッジ（獲得1・未獲得1）</td>
+<td>ニックネーム、Lv と累計EXP、5つの記録（正答率は「-」、累計の学習時間「2時間1分」）、獲得日、未獲得は条件文、リリース番号</td>
 <td>同</td>
 </tr>
 <tr>
@@ -6623,6 +6658,41 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F25 <code>pages/learner/s15-summary.js</code>（S-15 冒険のまとめ）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>観点</th>
+<th>入力・前提</th>
+<th>期待結果</th>
+<th>技法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MT-F25-01</td>
+<td>表示</td>
+<td>まとめ（5問中4問正解、説明2問で平均72点、+55 EXP、492秒、累計7300秒）</td>
+<td>見出し「冒険のまとめ」、「正解4 / 5問」「獲得EXP+55」「説明の平均点72 点」「かかった時間8分12秒」「累計の学習時間2時間1分」、パートナーのねぎらい。「ホームへ」でまとめを空にしてホームへ</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F25-02</td>
+<td>説明なし・全問正解・お知らせ</td>
+<td>5問とも正解、説明0問、お知らせあり</td>
+<td>平均点を出さない、「ぜんぶ正解」とほめる、お知らせを表示</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F25-03</td>
+<td>まとめがない</td>
+<td>状態にまとめがない</td>
+<td>ホームへ</td>
+<td>異</td>
+</tr>
+</tbody>
+</table></div>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-scale-balanced h-ico" aria-hidden="true"></i>6. トレーサビリティと合否基準</h2>
 <div class="vis">
   <p class="vis-label">カバレッジの基準</p>
@@ -6659,7 +6729,7 @@ describe('M-D01 client', () =&gt; {
 <td>4.3 出題ルール</td>
 <td>3.5 M-G06、5.2 A-07</td>
 <td>picker、quests</td>
-<td>MT-G06-01〜09、MT-H05-01〜11</td>
+<td>MT-G06-01〜09、MT-H05-01〜12</td>
 </tr>
 <tr>
 <td>4.4 忘却曲線</td>

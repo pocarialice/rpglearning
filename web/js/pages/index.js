@@ -7,6 +7,7 @@ export const PAGES = [
   ['/quest/choice', () => import('./learner/s04-choice.js'), LEARNER],
   ['/quest/explain', () => import('./learner/s05-explain.js'), LEARNER],
   ['/quest/result', () => import('./learner/s06-result.js'), LEARNER],
+  ['/quest/summary', () => import('./learner/s15-summary.js'), LEARNER],
   ['/onboarding', () => import('./learner/onboarding.js'), LEARNER],
   ['/courses', () => import('./learner/s03-courses.js'), LEARNER],
   ['/ranking', () => import('./learner/s07-ranking.js'), LEARNER],
