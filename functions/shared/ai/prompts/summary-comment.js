@@ -1,4 +1,4 @@
-// 学習サマリのパートナーコメントの指示文（A-13・A-14）。200字くらいで、がんばった点・復習するべき観点・次にやることを1つずつ入れる
+// 学習サマリのパートナーコメントの指示文（A-12b・A-12c）。200字くらいで、がんばった点・復習するべき観点・次にやることを1つずつ入れる
 import { getPersona } from '../persona.js'
 import { wrap } from './sanitize.js'
 export const SUMMARY_COMMENT_CHARS = 200

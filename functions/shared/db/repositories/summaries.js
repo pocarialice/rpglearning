@@ -1,4 +1,4 @@
-// 学習サマリ（A-13・A-14）に使う解答の一覧。answer_logs（T-14）に問題・キーワード・復習項目・採点結果を付けて返す
+// 学習サマリ（A-12b・A-12c）に使う解答の一覧。answer_logs（T-14）に問題・キーワード・復習項目・採点結果を付けて返す
 import { defaultDb, camelRows, date } from './_base.js'
 // 説明の足りない観点は、同じ解答を書き込んだ採点（grading_jobs.result）から引く。採点の完了と解答の記録は同じトランザクションなので時刻がいちばん近いものを選ぶ
 const SELECT = `SELECT a.answer_id, a.course_id, c.name AS course_name, a.adventure_id, ad.started_at AS adventure_started_at,

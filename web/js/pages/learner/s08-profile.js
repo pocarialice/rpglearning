@@ -47,7 +47,7 @@ ${expBar({ level: stats.level, exp: stats.expInLevel, next: stats.next, title: `
 <ul class="gd-card app-badge-list">${badges.map(badgeItem).join('')}</ul></section>
 <nav class="gd-card app-section app-menu" aria-label="プロフィールのメニュー">${MENU.map(([path, label]) => button({ label, variant: 'quiet', block: true, attrs: `data-go="${path}"` })).join('')}
 ${button({ label: 'ログアウトする', variant: 'quiet', block: true, attrs: 'data-action="logout"' })}</nav>${release}`
-  // 1日の学習サマリ（A-14）。ふだんは閉じている
+  // 1日の学習サマリ（A-12c）。ふだんは閉じている
   mountSummaryPanel(root.querySelector('.app-summary-mount'), { api, label: '1日の学習サマリ', withDate: true, path: (date) => `/me/summary?date=${encodeURIComponent(date)}` })
   root.querySelector('.app-menu').addEventListener('click', (e) => {
     const b = e.target.closest('[data-go]')

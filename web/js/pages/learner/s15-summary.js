@@ -1,5 +1,5 @@
 // S-15 冒険のまとめ：A-07 が冒険を終えたときに返すまとめを表示する。解答数・正解数・説明の平均点・EXP・かかった時間・累計の学習時間
-// その下に、ノートアプリに貼れる学習サマリ（A-13）をふだんは閉じたアコーディオンで出す
+// その下に、ノートアプリに貼れる学習サマリ（A-12b）をふだんは閉じたアコーディオンで出す
 import { getContext } from '../../core/context.js'
 import { partnerBubble, partnerName } from '../../components/partner-bubble.js'
 import { button } from '../../components/button.js'

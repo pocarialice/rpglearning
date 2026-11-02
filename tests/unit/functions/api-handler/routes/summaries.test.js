@@ -21,7 +21,7 @@ const ROWS = [
   { answerId: 2, courseName: '基本情報', adventureId: 90, adventureStartedAt: '2026-10-19 15:30:00.000', kind: 'explain', questionId: 42, keywordId: 123, keyword: 'VPC', isCorrect: false, score: 45, isReview: false, answeredOn: '2026-10-20', answeredAt: '2026-10-19 15:40:00.000', reviewStage: 1, nextReviewOn: '2026-10-21', missingPoints: ['サブネット'] }
 ]
 const COMMENT = 'ミナだよ。'.repeat(40)
-describe('M-H12 summaries（A-13・A-14）', () => {
+describe('M-H12 summaries（A-12b・A-12c）', () => {
   beforeEach(() => {
     br.reset()
     br.on(ConverseCommand).resolves(converseOutput(COMMENT))

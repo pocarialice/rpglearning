@@ -1,4 +1,4 @@
-// A-13 冒険の学習サマリ、A-14 1日の学習サマリ。ノートアプリに貼れる Markdown と、AIパートナーの200字くらいのコメントを返す
+// A-12b 冒険の学習サマリ、A-12c 1日の学習サマリ。ノートアプリに貼れる Markdown と、AIパートナーの200字くらいのコメントを返す
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'

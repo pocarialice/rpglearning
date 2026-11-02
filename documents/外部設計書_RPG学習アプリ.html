@@ -1867,6 +1867,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>gd-card</code></td>
 </tr>
 <tr>
+<td>学習サマリ</td>
+<td>「冒険の学習サマリ」。ふだんは見出し1行だけのアコーディオンで閉じていて、開くとこの冒険の学習サマリ（Markdown）と「コピーする」を出す（下の「学習サマリのルール」）</td>
+<td><code>details</code>（アプリ側の部品）</td>
+</tr>
+<tr>
 <td>操作</td>
 <td>「ホームへ」</td>
 <td><code>Button primary block</code></td>
@@ -1881,6 +1886,110 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <button class="gd-btn gd-btn-primary gd-btn-block" type="button">ホームへ</button>
 </div>
 </div><p class="mk-cap">5問を解き終えたとき</p></div></div><p class=mock-note>学習時間は1問あたり10分までで数える（4.3）。</p></div>
+<p><strong>学習サマリのルール</strong>（S-15・S-08 で共通）</p>
+<p>ほかのノートアプリなどに貼り付けられるよう、学習の記録を Markdown で出す。</p>
+<figure class="diagram"><div class="mermaid">flowchart TB
+  A["学習サマリを開く"] --&gt; B{"もう読み込んだ？"}
+  B --&gt;|"はい"| E["そのまま表示"]
+  B --&gt;|"いいえ"| C["A-12b／A-12c"]
+  C --&gt; D["解答の一覧から学習時間・内容・復習観点"]
+  D --&gt; F["AI（軽量）でパートナーのコメント"]
+  F --&gt;|"失敗"| G["定型文"]
+  F --&gt; H["Markdown にまとめて表示"]
+  G --&gt; H
+  H --&gt; I["コピーする → クリップボード"]
+</div></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>置き場所</td>
+<td>S-15 は「冒険の学習サマリ」（その冒険1回ぶん。A-12b）。S-08 は「1日の学習サマリ」（選んだ日の解答すべて。コースをまたぐ。A-12c）</td>
+</tr>
+<tr>
+<td>開き方</td>
+<td>ふだんは閉じていて、場所を取らない。開いたときに初めて読み込む（AI のコメントもこのときだけ作る）。閉じて開き直しても読み直さない</td>
+</tr>
+<tr>
+<td>学習日</td>
+<td>冒険：冒険を始めた日（JST）。1日：選んだ日。S-08 は日付を選べる（今日より先は選べない。初めは今日）</td>
+</tr>
+<tr>
+<td>学習時間</td>
+<td>冒険：S-15 の「かかった時間」と同じ値。1日：その日の解答を冒険ごとに、前の解答（最初は冒険の開始）からの時間を1問10分までで足す（4.3 と同じ数え方）。「8分12秒」「1時間5分」の形</td>
+</tr>
+<tr>
+<td>学習した内容</td>
+<td>解いた問題数（択一・説明・うち復習）、択一の正解数・説明の合格数、1問ずつの結果（択一は問題文の頭40文字と○×、説明はキーワードと点数・合否）</td>
+</tr>
+<tr>
+<td>復習するべき観点</td>
+<td>間違えた択一は「正解は「…」」、不合格の説明は採点の足りない観点（なければ「模範説明を読み直す」）。それぞれ次の復習日をつける。同じ問題・キーワードは1つにまとめる。なければ「間違えた問題はありません」</td>
+</tr>
+<tr>
+<td>パートナーのコメント</td>
+<td>学習者のAIパートナーが、性格・口調（3.6.1）で200字くらい（180〜220字）の1段落を書く。がんばった点・復習するべき観点・次にやることを1つずつ入れる。AI が失敗したときは定型文（5.5）</td>
+</tr>
+<tr>
+<td>書き方</td>
+<td>見出し（<code>#</code>・<code>##</code>）と箇条書き（<code>-</code>）だけを使い、空行は入れない。問題文のタグ・改行は落とし、Markdown の記号（<code>*</code> <code>_</code> <code>#</code> <code>|</code> など）は <code>\</code> で逃がす</td>
+</tr>
+<tr>
+<td>コピー</td>
+<td>「コピーする」1回でクリップボードに入れ、「クリップボードにコピーしました」と出す。クリップボードが使えないブラウザでは選択してコピーし、それもできなければ「コピーできませんでした。テキストを選んでコピーしてください」</td>
+</tr>
+<tr>
+<td>解答がないとき</td>
+<td>「この日に解いた問題はありません」とだけ出す（AI は呼ばない）</td>
+</tr>
+</tbody>
+</table></div>
+<pre><code class="language-text"># 学習サマリ 2026/11/02（冒険のまとめ）
+- 学習日：2026/11/02
+- 学習時間：8分12秒
+- コース：基本情報
+## 学習した内容
+- 解いた問題：5問（択一 3問・説明 2問、うち復習 1問）
+- 結果：択一 2/3問 正解、説明 1/2問 合格
+  - 択一（復習）：DNSの役割は？ … × 不正解
+  - 説明：VPC … 45点 不合格
+## 復習するべき観点
+- 択一「DNSの役割は？」：正解は「名前解決」（次の復習 2026/11/03）
+- 説明「VPC」（45点）：足りない観点は サブネット（次の復習 2026/11/04）
+## ミナからのコメント
+（パートナーの200字くらいのコメント）
+</code></pre>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：学習サマリ（S-15 の下）</p><div class="mock-row"><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
+<div class="mk-body">
+<div class="gd-card"><p class="gd-serif"><b>今回の冒険</b></p><p>正解 <b>4</b> / 5問　・　獲得 <b>+55</b> EXP</p></div>
+<div class="gd-card" style="display:flex;justify-content:space-between;align-items:center"><b style="white-space:nowrap;font-size:13px">冒険の学習サマリ</b><span class="mk-meta" style="white-space:nowrap;font-size:10px">Markdown でコピー <span class="mk-fold">＋</span></span></div>
+<button class="gd-btn gd-btn-primary gd-btn-block" type="button">ホームへ</button>
+</div>
+</div><p class="mk-cap">ふだん（閉じている）</p></div><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
+<div class="mk-body">
+<div class="gd-card"><div style="display:flex;justify-content:space-between;align-items:center"><b style="white-space:nowrap;font-size:13px">冒険の学習サマリ</b><span class="mk-meta" style="white-space:nowrap;font-size:10px">Markdown でコピー <span class="mk-fold">－</span></span></div>
+<p class="mk-meta">学習時間 8分12秒・5問</p>
+<pre style="white-space:pre-wrap;font-size:11px;line-height:16px;background:var(--parchment-sunk);border:1px solid var(--line);border-radius:6px;padding:8px;margin:6px 0">
+# 学習サマリ 2026/11/02（冒険のまとめ）
+- 学習日：2026/11/02
+- 学習時間：8分12秒
+## 学習した内容
+- 解いた問題：5問（択一 3問・説明 2問）
+## 復習するべき観点
+- 説明「VPC」（45点）：足りない観点は サブネット
+## ミナからのコメント
+今日は8分で5問もがんばったね！…</pre>
+<button class="gd-btn gd-btn-secondary gd-btn-block" type="button">コピーする</button>
+<p class="mk-meta">クリップボードにコピーしました</p></div>
+</div>
+</div><p class="mk-cap">開いて「コピーする」を押したとき</p></div></div><p class=mock-note>S-08 の「1日の学習サマリ」も同じ形で、開くと先に「学習日」の選択が出る。</p></div>
 <h4>S-07 週間ランキング</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -1927,6 +2036,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>学習記録</td>
 <td>網羅率、正答率、連続学習日数、習得済み、累計の学習時間</td>
 <td><code>gd-card</code></td>
+</tr>
+<tr>
+<td>学習サマリ</td>
+<td>「1日の学習サマリ」。ふだんは閉じたアコーディオン。開くと学習日の選択、その日の学習サマリ（Markdown）と「コピーする」を出す（S-15 の「学習サマリのルール」）</td>
+<td><code>details</code>（アプリ側の部品）</td>
 </tr>
 <tr>
 <td>バッジ</td>
@@ -2954,6 +3068,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>学習者</td>
 </tr>
 <tr>
+<td>A-12b</td>
+<td>GET</td>
+<td><code>/adventures/{id}/summary</code></td>
+<td>冒険の学習サマリ（Markdown とパートナーのコメント）</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-12c</td>
+<td>GET</td>
+<td><code>/me/summary?date=</code></td>
+<td>1日の学習サマリ（Markdown とパートナーのコメント）</td>
+<td>学習者</td>
+</tr>
+<tr>
 <td>A-13</td>
 <td>POST</td>
 <td><code>/admin/imports</code></td>
@@ -3110,6 +3238,17 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
  &quot;prompt&quot;: {&quot;text&quot;: &quot;TCPの接続を始めるとき、なんで3回もやりとりが必要なの？&quot;, &quot;angles&quot;: [&quot;しくみ&quot;, &quot;目的&quot;]},
  &quot;fallback&quot;: false}
 </code></pre>
+<p><strong>A-12b 冒険の学習サマリ・A-12c 1日の学習サマリ</strong></p>
+<pre><code class="language-json">// A-12b は自分の冒険だけ（ほかは 404）。A-12c の date は YYYY-MM-DD（省くと今日。今日より先・形の違いは 400）
+// 解答がなければ comment・markdown は null（AI は呼ばない）
+{"adventureId": "adv_90", "scope": "adventure", "date": "2026-11-02",
+ "studySeconds": 492, "studyTime": "8分12秒", "answerCount": 5, "correctCount": 3,
+ "comment": {"partnerName": "ミナ", "persona": "encourage", "text": "..."},
+ "markdown": "# 学習サマリ 2026/11/02（冒険のまとめ）\n- 学習日：2026/11/02\n..."}
+</code></pre>
+<ul>
+<li>A-12c の応答は <code>adventureId</code> がなく、<code>scope</code> は <code>day</code></li>
+</ul>
 <p><strong>A-09 採点依頼</strong></p>
 <pre><code class="language-json">// リクエスト（prompt は A-07b の問いかけ。省略したときはキーワード全体の説明として採点する）
 {&quot;keywordId&quot;: &quot;kw_123&quot;, &quot;text&quot;: &quot;【定義】...\n【しくみ】...&quot;, &quot;isReview&quot;: true,
@@ -3204,6 +3343,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>api</td>
 <td>テキスト（2〜3文）</td>
 <td>5秒で打ち切り。失敗したら定型文を表示</td>
+</tr>
+<tr>
+<td>学習サマリのコメント</td>
+<td>軽量</td>
+<td>api</td>
+<td>テキスト（200字くらいの1段落）</td>
+<td>10秒で打ち切り。失敗したらパートナーごとの定型文</td>
 </tr>
 </tbody>
 </table></div>

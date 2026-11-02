@@ -1,4 +1,4 @@
-// 学習サマリ（A-13・A-14）のアコーディオン。ふだんは閉じていて、開いたときに読み込む（AIのコメントを作るのは開いたときだけ）
+// 学習サマリ（A-12b・A-12c）のアコーディオン。ふだんは閉じていて、開いたときに読み込む（AIのコメントを作るのは開いたときだけ）
 // 中身はノートアプリに貼れる Markdown。「コピーする」でクリップボードに入れる
 import { button } from '../components/button.js'
 import { loading, errorBand, errorMessage } from '../components/status.js'
@@ -33,7 +33,7 @@ export async function copyText(text, doc = document) {
   area.remove()
   return !!done
 }
-// path(date) は A-13／A-14 のパスを返す。withDate：日付を選べるようにする（S-08）
+// path(date) は A-12b／A-12c のパスを返す。withDate：日付を選べるようにする（S-08）
 export function mountSummaryPanel(el, { api, path, label = '学習サマリ', withDate = false, today = todayJst() }) {
   const dateField = withDate
     ? `<div class="app-summary-date"><label class="label" for="summary-date">学習日</label><input id="summary-date" class="app-input body" type="date" value="${escapeHtml(today)}" max="${escapeHtml(today)}"></div>`
