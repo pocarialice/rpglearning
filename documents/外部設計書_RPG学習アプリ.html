@@ -525,9 +525,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.1版（ドラフト：第1〜10章、HTML版あり。AWS からさくらのクラウドへ切り替え、ログイン・AI・メール・定期処理の方式を見直す）</b></li>
-      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27）</b></li>
-      <li>入力文書<b>RPG学習アプリ 要件定義書 第1.1版（ドラフト）</b></li>
+      <li>版数<b>第1.2版（ドラフト：第1〜10章、HTML版あり。第1.1版で AWS からさくらのクラウドへ切り替え、第1.2版でログイン画面からのアカウント作成を追加）</b></li>
+      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27、第1.2版：2026-11-02）</b></li>
+      <li>入力文書<b>RPG学習アプリ 要件定義書 第1.2版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
   </div>
@@ -569,7 +569,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>認証</td>
-<td>アプリでログインを持つ（メールアドレス＋パスワード、仮パスワードでの招待、パスワード再設定）。将来の社内SSOは OIDC 連携を追加して対応</td>
+<td>アプリでログインを持つ（メールアドレス＋パスワード、仮パスワードでの招待、パスワード再設定、ログイン画面からのアカウント作成（メールで確認））。将来の社内SSOは OIDC 連携を追加して対応</td>
 <td>6.5</td>
 </tr>
 <tr>
@@ -1274,6 +1274,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <p>初回ログイン時は「はじめての冒険」として、ニックネーム登録 → コース選択 → AIパートナー選択の3段階を済ませてからホームに進む。</p>
 <figure class="diagram"><div class="mermaid">flowchart TD
   S01["S-01 ログイン"] --&gt; J{初回ログイン}
+  S01 --&gt;|"アカウントを作る"| SU["アカウント作成&lt;br&gt;名前・メール・パスワード"]
+  SU --&gt;|"確認メールのリンク"| J
   J --&gt;|"はい"| NN["ニックネーム登録&lt;br&gt;S-08の編集ダイアログ"]
   NN --&gt; S03a["S-03 コース選択"]
   S03a --&gt; S09a["S-09 AIパートナー選択&lt;br&gt;名前入力"]
@@ -1609,6 +1611,14 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>パスワードを忘れたとき</td>
 <td>メールアドレスを入れると、登録されていれば再設定のリンクをメールで送る（登録の有無は画面に出さない）。リンクは1時間・1回だけ使える。再設定すると、ほかの端末のログインも切れる</td>
+</tr>
+<tr>
+<td>アカウントを作る</td>
+<td>ログインの表示の下の「アカウントを作る」から開く。名前（50文字まで）・メールアドレス・パスワード（2回）を入れる。決まりを満たして2回が一致するまでボタンを押せない。送ると「確認のメールを送りました」（M-13）を出してログインの表示に戻る。メールアドレスが登録済みかどうかは画面に出さない（登録済みのときは、その人に「すでに登録されています」の案内メールが届く）</td>
+</tr>
+<tr>
+<td>確認リンクを開いたとき</td>
+<td>確認メールのリンク（24時間・1回だけ）を開くと、学習者として登録してそのままログインし、「はじめての冒険」（ニックネーム登録から）に進む。期限切れ・使用済みのときは M-14 と「ログインに戻る」を出す</td>
 </tr>
 <tr>
 <td>ログイン後</td>
@@ -2435,6 +2445,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>PUT /api/me/notify</code></td>
 <td>メールのみ</td>
 </tr>
+<tr>
+<td>F-14</td>
+<td>アカウント作成</td>
+<td>S-01</td>
+<td><code>POST /api/auth/signup</code>、<code>POST /api/auth/signup/verify</code></td>
+<td>○</td>
+</tr>
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.2 解答から結果表示までの処理</h3>
@@ -2880,6 +2897,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.11 アカウント管理（F-07）</h3>
 <figure class="diagram"><div class="mermaid">stateDiagram-v2
   [*] --&gt; 招待中: 管理者が登録
+  [*] --&gt; 招待中: 自分で作成（メールで確認）
   招待中 --&gt; 有効: 初回ログイン
   有効 --&gt; 論理削除: 管理者が削除
   論理削除 --&gt; 有効: 30日以内に復活
@@ -2899,6 +2917,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>登録</td>
 <td>利用者を「招待中」で登録</td>
 <td>仮パスワード（12文字・7日有効）を作り、招待メールで送る。メールを送れなければ登録しない</td>
+</tr>
+<tr>
+<td>自分で作成</td>
+<td>利用者を「招待中」で登録し、学習者のロールを付ける。最初の API の呼び出しで「有効」になる</td>
+<td>S-01 で入れたパスワードのハッシュを確認待ち（24時間）に置き、確認メールのリンクを開いたときに登録する。管理者の操作はいらない</td>
 </tr>
 <tr>
 <td>再招待</td>
@@ -2942,7 +2965,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>認証</td>
-<td><code>Authorization: Bearer &lt;アクセストークン&gt;</code>。api コンテナが署名と期限を確かめる（ログイン A-30〜A-35 とヘルスチェックはトークンなし）</td>
+<td><code>Authorization: Bearer &lt;アクセストークン&gt;</code>。api コンテナが署名と期限を確かめる（ログイン A-30〜A-37 とヘルスチェックはトークンなし）</td>
 </tr>
 <tr>
 <td>権限</td>
@@ -3274,6 +3297,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>再設定リンクからの新しいパスワード</td>
 <td>全員（トークン不要）</td>
 </tr>
+<tr>
+<td>A-36</td>
+<td>POST</td>
+<td><code>/auth/signup</code></td>
+<td>アカウント作成の受付（確認メールを送る）</td>
+<td>全員（トークン不要）</td>
+</tr>
+<tr>
+<td>A-37</td>
+<td>POST</td>
+<td><code>/auth/signup/verify</code></td>
+<td>確認リンクからの登録（そのままログイン）</td>
+<td>全員（トークン不要）</td>
+</tr>
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 主なAPIの入出力</h3>
@@ -3464,6 +3501,18 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>S-01 で「パスワードを忘れたとき」を使ったとき</td>
 <td>【RPG学習アプリ】パスワードの再設定</td>
 <td>再設定のリンク（1時間・1回だけ）、心当たりがないときの案内</td>
+</tr>
+<tr>
+<td>アカウント作成の確認</td>
+<td>S-01 で「アカウントを作る」を使ったとき（未登録のメールアドレス）</td>
+<td>【RPG学習アプリ】アカウント作成の確認</td>
+<td>確認のリンク（24時間・1回だけ）、心当たりがないときの案内</td>
+</tr>
+<tr>
+<td>アカウント作成の受付（登録済み）</td>
+<td>S-01 で「アカウントを作る」を使ったとき（登録済みのメールアドレス）</td>
+<td>【RPG学習アプリ】アカウント作成の受付</td>
+<td>すでに登録されていること、ログインURL、「パスワードを忘れたとき」の案内</td>
 </tr>
 <tr>
 <td>学習のお知らせ</td>
@@ -3670,6 +3719,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>リフレッシュトークン・再設定リンクのハッシュ、利用者ID、期限、使った日時（値そのものは保存しない）</td>
 </tr>
 <tr>
+<td><code>SIGNUP_REQUESTS</code></td>
+<td>アカウント作成の確認リンクのハッシュ、メールアドレス、氏名、パスワードのハッシュ、期限（24時間）、使った日時</td>
+</tr>
+<tr>
 <td><code>JOBS</code>・<code>SCHEDULE_RUNS</code></td>
 <td>採点・取り込みのジョブキュー（状態・回数・やり直しの時刻）、定期処理を動かした枠</td>
 </tr>
@@ -3706,7 +3759,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>ジョブキュー・トークン</td>
-<td>終わったジョブは30日、期限の切れたトークン・再設定リンクは1日で削除</td>
+<td>終わったジョブは30日、期限の切れたトークン・再設定リンク・アカウント作成の確認待ちは1日で削除</td>
 </tr>
 <tr>
 <td>ログ（コンテナのログ）</td>
@@ -3743,6 +3796,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>管理画面の入口</td>
 <td>管理者のグループに入っている人にだけ、ヘッダーに「管理局へ」を表示</td>
+</tr>
+<tr>
+<td>アカウントの作成</td>
+<td>ログイン画面から誰でも作れる。作れるのは学習者だけ（管理者のロールは S-13 で付ける）。メールのリンクを開くまで登録しない。登録済みかどうかは画面にも応答時間にも出さない。同じメールアドレスへの確認メールは60秒に1通まで</td>
 </tr>
 <tr>
 <td>将来のSSO</td>
@@ -3943,6 +4000,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>公開できない</td>
 <td>選択肢を4つそろえてから公開してください</td>
 </tr>
+<tr>
+<td>M-13</td>
+<td>アカウント作成の受付</td>
+<td>確認のメールを送りました。メールのリンクを24時間以内に開くと、登録が終わります</td>
+</tr>
+<tr>
+<td>M-14</td>
+<td>確認リンクが使えない</td>
+<td>リンクの期限が切れているか、すでに使われています。もう一度「アカウントを作る」からやり直してください</td>
+</tr>
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch10"><h2><i class="fa-solid fa-circle-question h-ico" aria-hidden="true"></i>10. 未決事項</h2>
@@ -4033,6 +4100,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>メールの送信に使う SMTP サーバー</td>
 <td>社内の SMTP サーバーを使えるか確認する。使えなければさくらのメールボックスなどを契約する</td>
 <td>構築時</td>
+</tr>
+<tr>
+<td>14</td>
+<td>自分でアカウントを作れる人の範囲</td>
+<td><b>仮置き</b>：メールアドレスの確認だけで誰でも作れる（学習者のみ）。<br>・このままだと：社外の人や個人のメールアドレスでも登録でき、コースを選べば問題を見られる。<br>・社内のドメイン（例：<code>@example.co.jp</code>）に絞ると：社外の人は作れなくなるが、ドメインが複数ある会社では一覧の管理が必要になる。<br>・作成後に管理者の承認を待つ形にすると：いちばん安全だが、管理者の手間が増え、すぐに学習を始められない</td>
+<td>パイロット開始前</td>
 </tr>
 </tbody>
 </table></div>

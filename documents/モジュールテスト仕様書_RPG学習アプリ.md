@@ -3,9 +3,9 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第1.8版（ドラフト：第1〜6章、HTML版あり。IDのなかった Ctrl+Enter・ピンチでの拡大を止めるテストを、MT-F27（`core/keys.js`）・MT-F28（`core/zoom.js`）として載せる）       |
-| 作成日    | 2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02）                                      |
-| 入力文書   | 詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
+| 版数     | 第1.9版（ドラフト：第1〜6章、HTML版あり。アカウント作成（A-36・A-37、S-01）のテスト14件を MT-H15-13〜18・MT-D04-10・MT-F01-11・MT-F23-09〜13・MT-M01-09 として載せる）       |
+| 作成日    | 2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02）                                      |
+| 入力文書   | 詳細設計書 第1.3版、外部設計書 第1.2版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
 
 ---
@@ -455,12 +455,13 @@ describe('M-D01 client', () => {
 | MT-D04-07 | パスワードの保存 | `setPassword(id, hash, {mustChange:true})`、期限の日数の指定、`tempPasswordExpired` | 仮パスワードの期限は既定7日（指定した日数も渡す）。期限切れなら true、行がなければ false | DT |
 | MT-D04-08 | リフレッシュトークン | `saveRefreshToken`・`consumeRefreshToken`（有効／使えない）・`revokeRefreshToken`・`revokeAllForUser` | ハッシュと期限7日を保存。使うと無効にして利用者IDを返す（`revoked_at IS NULL AND expires_at > now()` の行だけ）、使えなければ null | 状 |
 | MT-D04-09 | 再設定リンク | `recentResetExists(id, 60)`・`saveReset`・`consumeReset`（有効／使えない）・`deleteExpired` | 直近60秒の発行の有無、期限60分を保存、使うと利用者ID／null、掃除した件数 | 状 |
+| MT-D04-10 | アカウント作成の確認待ち | `recentSignupExists(email, 60)`（あり／なし）・`saveSignup`（パスワードのハッシュなし）・`consumeSignup`（有効／使えない） | 直近60秒の受付の有無（メールアドレスは大文字小文字を区別しない）、24時間を保存、使うと `{email, fullName, passwordHash}`／null。期限内・未使用・パスワードありだけを使う | 状 |
 
 #### M-D05 `db/migrate.js`
 
 | ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
 | --------- | -- | ----- | ---- | -- |
-| MT-D05-01 | ファイルの並べ方 | テスト用のフォルダ（`V002`・`V001`・`.down.sql`・ほかのファイル）、リポジトリの `db/migrations` | `V001`・`V002` の順（`.down.sql` などは除く）、リポジトリは `V001`〜`V005` | 同 |
+| MT-D05-01 | ファイルの並べ方 | テスト用のフォルダ（`V002`・`V001`・`.down.sql`・ほかのファイル）、リポジトリの `db/migrations` | `V001`・`V002` の順（`.down.sql` などは除く）、リポジトリは `V001`〜`V006` | 同 |
 | MT-D05-02 | 未適用だけを流す | `V001` が適用済み、`V002` が未適用、`release:'r1'` | `pg_advisory_lock` → 適用済みの確認 → `BEGIN` → `V002` → `release_no` の更新 → `COMMIT` → ロックを外す。戻り値 `['V002']` | 状 |
 | MT-D05-03 | 初めての DB | `schema_migrations` がない | すべて未適用として流す | 境 |
 | MT-D05-04 | 失敗 | `V002` の SQL が例外 | `ROLLBACK`、「V002 の適用に失敗しました: …」を投げる。ロックを外して接続を返す | 異 |
@@ -672,6 +673,7 @@ describe('M-D01 client', () => {
 | MT-M01-06 | SMTP の接続設定 | `SMTP_HOST`・`SMTP_PORT=465`・`SMTP_SECURE=true`・`SMTP_USER`・`SMTP_PASS`／ポートほかなし | nodemailer に `{host, port:465, secure:true, auth:{user, pass}}`／既定は 587・`secure:false`・`auth` なし | 同 |
 | MT-M01-07 | 招待メール | `inviteMail({email, tempPassword, validDays:7})`、`APP_ENV=dev` | 件名 `[dev]【RPG学習アプリ】ギルドへの招待`。本文にログインURL・仮パスワード・期限7日 | 同 |
 | MT-M01-08 | 再設定メール | `resetMail({email, token:'a+b/c', validMinutes:60})` | 件名 `【RPG学習アプリ】パスワードの再設定`。URL は `#/reset?token=a%2Bb%2Fc`、60分以内、問い合わせ先 | 同 |
+| MT-M01-09 | アカウント作成のメール | `signupMail({fullName:'山田 花子', token:'a+b/c', validHours:24})`・`signupExistsMail` | 件名 `【RPG学習アプリ】アカウント作成の確認`、「山田 花子さん」、URL は `#/signup?token=a%2Bb%2Fc`、期限は24時間／件名 `【RPG学習アプリ】アカウント作成の受付`、ログインURL、問い合わせ先 | 同 |
 
 #### M-O01 `storage/object-storage.js`（さくらのオブジェクトストレージ）
 
@@ -897,7 +899,7 @@ describe('M-D01 client', () => {
 | MT-H12-11 | 再招待（A-21b） | 招待中の利用者／有効な利用者／メールを送れない | 200 `{id, status:'invited'}`、仮パスワードを作り直して期限7日、その仮パスワード入りの招待メール、操作記録 `user.reinvite`／409／500（取り消す） | 状 |
 | MT-H12-10 | 一覧の最終ログイン日時 | DBの最終ログイン `'2026-10-19 15:00:00'`（UTC）／なし | `'2026-10-20T00:00:00+09:00'`／`null` | 境 |
 
-#### M-H15 `routes/auth.js`（A-30〜A-35）
+#### M-H15 `routes/auth.js`（A-30〜A-37）
 
 | ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
 | --------- | -- | ----- | ---- | -- |
@@ -913,6 +915,12 @@ describe('M-D01 client', () => {
 | MT-H15-10 | 再設定メールを送れない | SMTP が失敗 | 202（WARN ログ `auth.reset_mail_failed`） | 異 |
 | MT-H15-11 | 再設定（A-35） | 有効なリンク・決まりを満たすパスワード | 204、リンクを使用済みに、`mustChange:false` で保存、ロックを解く、リフレッシュトークンをすべて無効に | 状 |
 | MT-H15-12 | 再設定を受け付けない | 弱いパスワード／使用済みのリンク／token なし／利用者が削除予定 | 400（リンクは `details:[{field:'token', code:'INVALID'}]`）。保存しない | 異 |
+| MT-H15-13 | アカウント作成の受付（A-36） | 前後に空白のあるメールアドレス・名前、決まりを満たすパスワード | 202 `{status:'accepted'}`。確認メール（`#/signup?token=…`）を1通、リンクのハッシュ・空白を除いたメールアドレスと名前・パスワードのハッシュ・24時間を保存。ログにパスワードとメールアドレスを出さない | 同 |
+| MT-H15-14 | 登録済みのメールアドレス | 有効な利用者と同じメールアドレス | 同じ 202。パスワードのハッシュは保存せず、リンクのない「アカウント作成の受付」のメール（「パスワードを忘れたとき」の案内）を送る | 異 |
+| MT-H15-15 | 連打・メールの失敗 | 60秒以内の2回目／メールを送れない | どちらも 202。2回目は保存も送信もしない／ログに `auth.signup_mail_failed` | 異 |
+| MT-H15-16 | アカウント作成の入力の誤り | メールアドレスの形が違う・255文字・文字でない／名前が空白だけ・51文字／弱いパスワード | 400、`details` の `field` が `email`・`fullName`・`password`。保存しない | 境 |
+| MT-H15-17 | 確認リンクからの登録（A-37） | 有効なリンク | 201。`users.create`（ロール `learner`）・`setPassword`（`mustChange:false`）・操作記録 `user.signup` を1つのトランザクションでコミット。IDトークンの groups は `learner`、リフレッシュトークンを保存 | 状 |
+| MT-H15-18 | 確認リンクを受け付けない | 使用済み・期限切れのリンク／token なし／先に同じメールアドレスが登録された（`23505`） | 400（`details:[{field:'token', code:'INVALID'}]`）で利用者を作らない／409 `CONFLICT` でロールバック、トークンを出さない | 異 |
 
 #### M-H13 `routes/admin-courses.js`（A-21）・M-H14 `routes/admin-partners.js`（A-22）
 
@@ -1089,6 +1097,7 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-F01-08 | ログアウト（A-33） | ログイン中／トークンなし／A-33 が失敗 | 先に消してから `POST /api/auth/logout`、読み込み直す／API を呼ばない／それでも読み込み直す | 状 |
 | MT-F01-09 | やり直し・再設定 | `login()`、`forgot`、`resetPassword` | 消して読み込み直す、`POST /api/auth/forgot`・`/api/auth/reset` | 同 |
 | MT-F01-10 | 既定 | `apiBase` なし、`expiresIn` なし | `/api` を使い、期限は3600秒 | 境 |
+| MT-F01-11 | アカウント作成（A-36・A-37） | `signUp`、`verifySignup`（成功／400） | `POST /api/auth/signup`（トークンは保存しない）、`/api/auth/signup/verify` のトークンを保存、400 は `AuthError` を投げる | 同 |
 
 #### M-F02 `core/api.js`
 
@@ -1338,6 +1347,11 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-F23-06 | 再設定（A-35） | `#/reset?token=t%2B1` で開き、新しいパスワード | 見出し「パスワードの再設定」、`resetPassword('t+1', …)`、URL を `/` に戻し M_RESET_DONE | 状 |
 | MT-F23-07 | 使えない再設定リンク | A-35 が 400／通信エラー | M_RESET_INVALID／M_NETWORK | 異 |
 | MT-F23-08 | パスワードの決まり | `Guild2026`・`Guild26`・`guild2026`・`GUILD2026`・`Guildguild` | true・false・false・false・false | 境 |
+| MT-F23-09 | アカウントを作る（A-36） | 「アカウントを作る」→ 名前・メールアドレス・パスワード2回（一致しない → 一致する） | そろうまでボタンを押せない、`signUp('hana@x.jp', '山田 花子', 'Guild2026')`（空白を除く）、ログインの表示に戻り M_SIGNUP_SENT | 状 |
+| MT-F23-10 | アカウント作成の失敗と戻る | A-36 が 400／通信エラー／「ログインに戻る」 | サーバーの文言／M_NETWORK（ボタンはまた押せる）／ログインの表示 | 異 |
+| MT-F23-11 | 確認リンク（A-37） | `#/signup?token=t%2B1` で開く | 見出し「アカウントの登録」と M_SIGNUP_VERIFYING、`verifySignup('t+1')`、URL を `/` に戻して読み込み直す | 状 |
+| MT-F23-12 | 使えない確認リンク・登録済み | A-37 が 400／409 →「ログインに戻る」 | M_SIGNUP_INVALID／サーバーの文言（読み込み直さない）、URL を `/` に戻してログインの表示 | 異 |
+| MT-F23-13 | アカウント作成の入力の決まり | `signupOk`：名前が空白・51文字、メールアドレスの形、弱いパスワード、2回が違う | そろったときだけ true | 境 |
 
 #### M-F24 `sw.js`（Service Worker）
 
@@ -1414,8 +1428,8 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01・M-D02、4.6、6.1 | errors、db/client、tx、server/http、api.js          | MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜10、MT-F02-02〜03          |
 | 5.4 CSV出力              | 5.3 A-17・A-18       | admin-dashboard                 | MT-H11-01〜08                              |
 | 5.5 AI連携          | 3.6、7章              | ai/client、sakura、bedrock、json-guard、persona、prompts | MT-A01〜MT-A06                            |
-| 5.6 メール、6.2 送信方式       | 3.8、4.5、4.7、9.2             | build-notify、mail/smtp、templates、server/worker      | MT-W03-12、MT-W04-01〜07、MT-M01-01〜08、MT-S02-07〜11      |
-| 8.1 認証・権限、3.7 S-01 ログイン              | 3.2 M-U04、3.10、5.4 A-30〜A-35、6.1       | authz、router、auth/password・token、routes/auth、repositories/auth、core/auth.js、pages/login.js            | MT-U04-01〜10、MT-H01-06〜07、MT-K01・MT-K02、MT-H15-01〜12、MT-D04-05〜09、MT-F01-01〜10、MT-F23-01〜08   |
+| 5.6 メール、6.2 送信方式       | 3.8、4.5、4.7、9.2             | build-notify、mail/smtp、templates、server/worker      | MT-W03-12、MT-W04-01〜07、MT-M01-01〜09、MT-S02-07〜11      |
+| 8.1 認証・権限、3.7 S-01 ログイン              | 3.2 M-U04、3.10、5.4 A-30〜A-37、6.1       | authz、router、auth/password・token、routes/auth、repositories/auth、core/auth.js、pages/login.js            | MT-U04-01〜10、MT-H01-06〜07、MT-K01・MT-K02、MT-H15-01〜18、MT-D04-05〜10、MT-F01-01〜11、MT-F23-01〜13   |
 | 8.2 データ保護              | 2.4.5、9.1           | logger、format、prompts           | MT-U05-04、MT-F05-01、MT-A04-02             |
 | 3.3 画面遷移、3.4 画面レイアウトの基本 | 6.1、6.2 | shell、router、sw | MT-F08-01〜06、MT-F03-06、MT-F24-01〜02 |
 | 3.5 共通の表示ルール、9章 メッセージ | 6.1 | components、status | MT-F07-01〜13 |

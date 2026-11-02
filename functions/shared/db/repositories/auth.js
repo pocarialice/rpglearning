@@ -1,4 +1,4 @@
-// ログインまわり（T-02 の認証の列・T-25 auth_refresh_tokens・T-26 password_resets）
+// ログインまわり（T-02 の認証の列・T-25 auth_refresh_tokens・T-26 password_resets・T-29 signup_requests）
 import { defaultDb, camelRow } from './_base.js'
 export const LOCK_AFTER_FAILURES = 5
 export const LOCK_MINUTES = 15
@@ -71,9 +71,29 @@ export async function consumeReset(tokenHash, db = defaultDb) {
     WHERE token_hash = :tokenHash AND used_at IS NULL AND expires_at > now() RETURNING user_id`, { tokenHash })
   return rows[0]?.user_id ?? null
 }
+// 直近 seconds 秒以内に同じメールアドレスでアカウント作成を受け付けていたら true（メールの連打を防ぐ）
+export async function recentSignupExists(email, seconds, db = defaultDb) {
+  const rows = await db.query(`SELECT 1 FROM signup_requests WHERE lower(email) = lower(:email) AND created_at > now() - make_interval(secs => :seconds) LIMIT 1`,
+    { email, seconds })
+  return rows.length > 0
+}
+// passwordHash が null のものは登録済みのメールアドレスへの案内（連打の防止のためだけに残す）
+export async function saveSignup({ tokenHash, email, fullName, passwordHash, hours }, db = defaultDb) {
+  await db.execute(`INSERT INTO signup_requests (token_hash, email, full_name, password_hash, expires_at)
+    VALUES (:tokenHash, :email, :fullName, :passwordHash, now() + make_interval(hours => :hours))`,
+  { tokenHash, email, fullName, passwordHash, hours })
+}
+// 期限内で未使用なら使用済みにして中身を返す
+export async function consumeSignup(tokenHash, db = defaultDb) {
+  const rows = await db.query(`UPDATE signup_requests SET used_at = now()
+    WHERE token_hash = :tokenHash AND used_at IS NULL AND expires_at > now() AND password_hash IS NOT NULL
+    RETURNING email, full_name, password_hash`, { tokenHash })
+  return camelRow(rows[0]) ?? null
+}
 // 期限切れの記録の削除（日次処理）
 export async function deleteExpired(db = defaultDb) {
   const a = await db.execute(`DELETE FROM auth_refresh_tokens WHERE expires_at < now() - interval '1 day'`)
   const b = await db.execute(`DELETE FROM password_resets WHERE expires_at < now() - interval '1 day'`)
-  return a.numberOfRecordsUpdated + b.numberOfRecordsUpdated
+  const c = await db.execute(`DELETE FROM signup_requests WHERE expires_at < now() - interval '1 day'`)
+  return a.numberOfRecordsUpdated + b.numberOfRecordsUpdated + c.numberOfRecordsUpdated
 }

@@ -70,3 +70,31 @@ export function resetMail({ email, token, validMinutes }) {
   ]
   return { to: email, subject: `${subjectPrefix()}【RPG学習アプリ】パスワードの再設定`, text: lines.join('\n') }
 }
+// アカウント作成の確認（A-36）。リンクを開くと登録が終わる
+export function signupMail({ email, fullName, token, validHours }) {
+  const appUrl = process.env.APP_URL
+  const lines = [
+    `${fullName}さん`,
+    '',
+    'RPG学習アプリのアカウント作成を受け付けました。',
+    `次のリンクを開くと登録が終わり、そのままログインします。リンクの期限は${validHours}時間です。`,
+    `${appUrl}/#/signup?token=${encodeURIComponent(token)}`,
+    '',
+    '心当たりがない場合は、このメールを捨ててください。アカウントは作られません。',
+    `問い合わせ先：${SUPPORT_CONTACT}`
+  ]
+  return { to: email, subject: `${subjectPrefix()}【RPG学習アプリ】アカウント作成の確認`, text: lines.join('\n') }
+}
+// すでに登録されているメールアドレスでアカウント作成を受け付けたとき（登録の有無を画面に出さない代わりにメールで知らせる）
+export function signupExistsMail({ email }) {
+  const appUrl = process.env.APP_URL
+  const lines = [
+    'RPG学習アプリのアカウント作成を受け付けましたが、このメールアドレスはすでに登録されています。',
+    `ログインURL：${appUrl}/`,
+    'パスワードがわからない場合は、ログイン画面の「パスワードを忘れたとき」から再設定してください。',
+    '',
+    '心当たりがない場合は、このメールを捨ててください。アカウントは変わりません。',
+    `問い合わせ先：${SUPPORT_CONTACT}`
+  ]
+  return { to: email, subject: `${subjectPrefix()}【RPG学習アプリ】アカウント作成の受付`, text: lines.join('\n') }
+}

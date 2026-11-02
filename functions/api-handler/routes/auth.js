@@ -1,21 +1,28 @@
-// A-30〜A-35 ログイン（詳細設計書 5.4）。Cognito の代わりにアプリでパスワードとトークンを扱う。認証なしで呼べる
+// A-30〜A-37 ログインとアカウント作成（詳細設計書 5.4）。Cognito の代わりにアプリでパスワードとトークンを扱う。認証なしで呼べる
+import { randomUUID } from 'node:crypto'
 import { AppError } from '../../shared/util/errors.js'
 import { ok, noContent } from '../../shared/util/http.js'
 import { hashPassword, verifyPassword, passwordProblems } from '../../shared/auth/password.js'
 import { signToken, verifyToken, newOpaqueToken, sha256, ACCESS_TTL_SECONDS } from '../../shared/auth/token.js'
 import * as auth from '../../shared/db/repositories/auth.js'
+import * as users from '../../shared/db/repositories/users.js'
+import * as audit from '../../shared/db/repositories/audit.js'
+import { withTx } from '../../shared/db/tx.js'
 import { sendMail } from '../../shared/mail/smtp.js'
-import { resetMail } from '../../shared/mail/templates.js'
+import { resetMail, signupMail, signupExistsMail } from '../../shared/mail/templates.js'
 export const REFRESH_DAYS = 7
 export const CHALLENGE_SECONDS = 10 * 60
 export const RESET_MINUTES = 60
 export const RESET_INTERVAL_SECONDS = 60
+export const SIGNUP_HOURS = 24
+export const SIGNUP_INTERVAL_SECONDS = 60
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // 存在しない利用者でも時間をかけて、メールアドレスの有無を応答時間から分からなくする
 const DUMMY_HASH = 'scrypt$16384$8$1$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
 const str = (v) => (typeof v === 'string' ? v : '')
-function assertPassword(password) {
+function assertPassword(password, field = 'newPassword') {
   const problems = passwordProblems(password)
-  if (problems.length) throw new AppError('VALIDATION_ERROR', 'パスワードは8文字以上で、数字・大文字・小文字を入れてください', { details: problems.map((code) => ({ field: 'newPassword', code })) })
+  if (problems.length) throw new AppError('VALIDATION_ERROR', 'パスワードは8文字以上で、数字・大文字・小文字を入れてください', { details: problems.map((code) => ({ field, code })) })
 }
 // アクセストークンとリフレッシュトークンを出す
 async function issue(user, now) {
@@ -103,4 +110,48 @@ export async function reset(ctx) {
   await auth.revokeAllForUser(user.userId)
   ctx.log.info({ msg: 'auth.password_reset', userId: user.userId })
   return noContent()
+}
+// A-36 アカウント作成の受付。確認メールを送り、登録の有無に関わらず同じ応答を返す
+export async function signup(ctx) {
+  const b = ctx.body()
+  const email = str(b.email).trim()
+  const fullName = str(b.fullName).trim()
+  const invalid = (field) => new AppError('VALIDATION_ERROR', undefined, { details: [{ field, code: 'INVALID' }] })
+  if (!EMAIL_RE.test(email) || email.length > 254) throw invalid('email')
+  if (fullName === '' || [...fullName].length > 50) throw invalid('fullName')
+  assertPassword(b.password, 'password')
+  const existing = await auth.findByEmail(email)
+  // パスワードのハッシュは、存在しない利用者のときも計算して応答時間をそろえる
+  const passwordHash = await hashPassword(b.password)
+  if (await auth.recentSignupExists(email, SIGNUP_INTERVAL_SECONDS)) return ok({ status: 'accepted' }, 202)
+  const token = newOpaqueToken()
+  await auth.saveSignup({ tokenHash: sha256(token), email, fullName, passwordHash: existing ? null : passwordHash, hours: SIGNUP_HOURS })
+  try {
+    await sendMail(existing ? signupExistsMail({ email }) : signupMail({ email, fullName, token, validHours: SIGNUP_HOURS }))
+    ctx.log.info({ msg: existing ? 'auth.signup_exists_sent' : 'auth.signup_sent' })
+  } catch (err) {
+    ctx.log.warn({ msg: 'auth.signup_mail_failed', errorName: err?.name })
+  }
+  return ok({ status: 'accepted' }, 202)
+}
+// A-37 確認リンクからの登録。学習者として作り、そのままログインする
+export async function signupVerify(ctx) {
+  const token = str(ctx.body().token)
+  const req = token ? await auth.consumeSignup(sha256(token)) : null
+  if (!req) throw new AppError('VALIDATION_ERROR', 'リンクの期限が切れているか、すでに使われています', { details: [{ field: 'token', code: 'INVALID' }] })
+  const sub = randomUUID()
+  let userId
+  try {
+    userId = await withTx(async (tx) => {
+      const id = await users.create({ sub, email: req.email, fullName: req.fullName, roles: ['learner'] }, tx)
+      await auth.setPassword(id, req.passwordHash, { mustChange: false }, tx)
+      await audit.write(id, 'user.signup', { type: 'user', id }, { roles: ['learner'] }, tx)
+      return id
+    })
+  } catch (err) {
+    if (err?.code === '23505') throw new AppError('CONFLICT', 'このメールアドレスはすでに登録されています。ログイン画面からログインしてください', { details: [{ field: 'email' }] })
+    throw err
+  }
+  ctx.log.info({ msg: 'auth.signup', userId })
+  return ok(await issue({ userId, authSub: sub, roles: ['learner'] }, ctx.now), 201)
 }

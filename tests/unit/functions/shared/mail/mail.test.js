@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import nodemailer from 'nodemailer'
 import { sendMail, setTransport } from '../../../../../functions/shared/mail/smtp.js'
-import { notifyMail, deletionMail, inviteMail, resetMail, SUPPORT_CONTACT } from '../../../../../functions/shared/mail/templates.js'
+import { notifyMail, deletionMail, inviteMail, resetMail, signupMail, signupExistsMail, SUPPORT_CONTACT } from '../../../../../functions/shared/mail/templates.js'
 import { mailMock } from '../../../../helpers/mocks.js'
 const mail = mailMock()
 const item = { to: 'taro@example.co.jp', nickname: 'たろう', partnerPersona: 'encourage', partnerName: 'ミナ', reviewCount: 5,
@@ -73,5 +73,18 @@ describe('M-M01 mail', () => {
     expect(m.text).toContain('https://app.example.co.jp/#/reset?token=a%2Bb%2Fc')
     expect(m.text).toContain('60分以内')
     expect(m.text).toContain(SUPPORT_CONTACT)
+  })
+  it('MT-M01-09 アカウント作成の確認メール・登録済みの案内', () => {
+    process.env.APP_ENV = 'prod'
+    const m = signupMail({ email: 'a@x.jp', fullName: '山田 花子', token: 'a+b/c', validHours: 24 })
+    expect(m.to).toBe('a@x.jp')
+    expect(m.subject).toBe('【RPG学習アプリ】アカウント作成の確認')
+    expect(m.text).toContain('山田 花子さん')
+    expect(m.text).toContain('https://app.example.co.jp/#/signup?token=a%2Bb%2Fc')
+    expect(m.text).toContain('期限は24時間')
+    const e = signupExistsMail({ email: 'a@x.jp' })
+    expect(e.subject).toBe('【RPG学習アプリ】アカウント作成の受付')
+    expect(e.text).toContain('ログインURL：https://app.example.co.jp/')
+    expect(e.text).toContain(SUPPORT_CONTACT)
   })
 })

@@ -399,9 +399,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.2版（ドラフト：第1〜12章、HTML版あり。AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる）</b></li>
-      <li>作成日<b>2026-10-20（第1.2版：2026-10-27）</b></li>
-      <li>入力文書<b>要件定義書 第1.1版（ドラフト）、外部設計書 第1.1版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は <code>aws/documents/</code> に退避</b></li>
+      <li>版数<b>第1.3版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加）</b></li>
+      <li>作成日<b>2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02）</b></li>
+      <li>入力文書<b>要件定義書 第1.2版（ドラフト）、外部設計書 第1.2版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
       <li>関連文書<b>モジュールテスト仕様書_RPG学習アプリ（本書のモジュール単位の試験を定める）</b></li>
     </ul>
@@ -696,7 +696,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 │  ├─ V002__seed_masters.sql      # partners・quest_defs・badge_defs
 │  ├─ V003__auth_jobs.sql         # ログイン・ジョブキュー・定期処理の記録（8.4.1）
 │  ├─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
-│  └─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
+│  ├─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
+│  └─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -1428,7 +1429,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>M-M01</td>
 <td><code>mail/smtp.js</code>・<code>templates.js</code></td>
 <td>メール</td>
-<td><code>sendMail({to, subject, text})</code>、<code>setTransport</code>、<code>notifyMail(item)</code>、<code>deletionMail(user)</code>、<code>inviteMail(…)</code>、<code>resetMail(…)</code></td>
+<td><code>sendMail({to, subject, text})</code>、<code>setTransport</code>、<code>notifyMail(item)</code>、<code>deletionMail(user)</code>、<code>inviteMail(…)</code>、<code>resetMail(…)</code>、<code>signupMail(…)</code>、<code>signupExistsMail(…)</code></td>
 </tr>
 <tr>
 <td>M-O01</td>
@@ -1669,7 +1670,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td><code>auth.js</code>（さくら版）</td>
-<td><code>findByEmail</code>（大文字小文字を区別しない）、<code>findById</code>、<code>recordFailure</code>（5回で15分ロック）、<code>recordSuccess</code>、<code>setPassword</code>（仮パスワードは期限つき）、<code>tempPasswordExpired</code>、<code>saveRefreshToken</code>、<code>consumeRefreshToken</code>（使い捨て）、<code>revokeRefreshToken</code>、<code>revokeAllForUser</code>、<code>recentResetExists</code>、<code>saveReset</code>、<code>consumeReset</code>、<code>deleteExpired</code></td>
+<td><code>findByEmail</code>（大文字小文字を区別しない）、<code>findById</code>、<code>recordFailure</code>（5回で15分ロック）、<code>recordSuccess</code>、<code>setPassword</code>（仮パスワードは期限つき）、<code>tempPasswordExpired</code>、<code>saveRefreshToken</code>、<code>consumeRefreshToken</code>（使い捨て）、<code>revokeRefreshToken</code>、<code>revokeAllForUser</code>、<code>recentResetExists</code>、<code>saveReset</code>、<code>consumeReset</code>、<code>recentSignupExists</code>（同じメールアドレスで60秒以内）、<code>saveSignup</code>、<code>consumeSignup</code>（期限内・未使用・パスワードありのときだけ使用済みにして中身を返す）、<code>deleteExpired</code>（トークン・再設定リンク・確認待ち）</td>
 </tr>
 <tr>
 <td><code>jobs.js</code>（さくら版）</td>
@@ -2050,7 +2051,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>本文</td>
-<td>9.2 のとおり。さくら版で <code>inviteMail</code>（招待・再招待）と <code>resetMail</code>（パスワード再設定）を追加</td>
+<td>9.2 のとおり。さくら版で <code>inviteMail</code>（招待・再招待）と <code>resetMail</code>（パスワード再設定）を、第1.3版で <code>signupMail</code>（アカウント作成の確認）と <code>signupExistsMail</code>（登録済みの案内）を追加</td>
 </tr>
 <tr>
 <td>監視のお知らせ</td>
@@ -2126,6 +2127,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>再設定リンク</td>
 <td>32バイトの乱数。DB には SHA-256 だけを保存（60分・1回だけ）。同じ利用者には60秒に1通まで。登録の有無に関わらず同じ応答を返す</td>
+</tr>
+<tr>
+<td>アカウント作成の確認リンク</td>
+<td>32バイトの乱数。DB（<code>signup_requests</code>）には SHA-256 と、名前・メールアドレス・パスワードのハッシュを保存（24時間・1回だけ）。同じメールアドレスへは60秒に1通まで。登録済みのメールアドレスでも同じ応答を返し、パスワードのハッシュは置かずに「すでに登録されています」の案内だけを送る。リンクを開いたら <code>learner</code> のロールで <code>users</code> を作る（状態は <code>invited</code>。最初の API で <code>active</code>）</td>
 </tr>
 <tr>
 <td>利用者の sub</td>
@@ -2424,9 +2429,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>system_admin</td>
 </tr>
 <tr>
-<td>A-30〜A-35</td>
-<td><code>POST /api/auth/login</code>・<code>new-password</code>・<code>refresh</code>・<code>logout</code>・<code>forgot</code>・<code>reset</code></td>
-<td><code>auth.login</code>・<code>.newPassword</code>・<code>.refresh</code>・<code>.logout</code>・<code>.forgot</code>・<code>.reset</code></td>
+<td>A-30〜A-37</td>
+<td><code>POST /api/auth/login</code>・<code>new-password</code>・<code>refresh</code>・<code>logout</code>・<code>forgot</code>・<code>reset</code>・<code>signup</code>・<code>signup/verify</code></td>
+<td><code>auth.login</code>・<code>.newPassword</code>・<code>.refresh</code>・<code>.logout</code>・<code>.forgot</code>・<code>.reset</code>・<code>.signup</code>・<code>.signupVerify</code></td>
 <td>不要（ログイン前に呼ぶ）</td>
 </tr>
 </tbody>
@@ -2585,7 +2590,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>4</td>
 <td><code>purge-users.js</code></td>
-<td><code>delete_scheduled_on &lt;= 今日</code> の利用者を <code>DELETE FROM users</code> で消す（関連テーブル・トークン・再設定リンクはCASCADE）。操作記録 <code>user.purge</code>（操作者は NULL）を残す。あわせて期限の切れたトークン・再設定リンクを消す（<code>auth.deleteExpired</code>）</td>
+<td><code>delete_scheduled_on &lt;= 今日</code> の利用者を <code>DELETE FROM users</code> で消す（関連テーブル・トークン・再設定リンクはCASCADE）。操作記録 <code>user.purge</code>（操作者は NULL）を残す。あわせて期限の切れたトークン・再設定リンク・アカウント作成の確認待ちを消す（<code>auth.deleteExpired</code>）</td>
 <td>条件付きDELETEなので何度でも同じ</td>
 </tr>
 <tr>
@@ -2691,7 +2696,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   <div class="vis-grid tiles4">
     <div class="tile strong"><p class="tile-num">12</p><p class="tile-cap">学習者API（A-01〜A-12）</p></div>
     <div class="tile"><p class="tile-num">12</p><p class="tile-cap">管理API（A-13〜A-22、A-13b・A-21b）</p></div>
-    <div class="tile"><p class="tile-num">6</p><p class="tile-cap">ログインAPI（A-30〜A-35）</p></div>
+    <div class="tile"><p class="tile-num">8</p><p class="tile-cap">ログインAPI（A-30〜A-37）</p></div>
     <div class="tile"><p class="tile-num sm">30<small>秒</small></p><p class="tile-cap">採点の上限（超えたら504）</p></div>
   </div>
 </div>
@@ -3017,7 +3022,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <ul>
 <li>キーに日時を入れて毎回名前を変えるため、画面・Service Worker のキャッシュを消す必要はない。画像は api コンテナの <code>/partners/*</code> が配信する（4.6）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 ログインAPI（A-30〜A-35）</h3>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 ログインAPI（A-30〜A-37）</h3>
 <p>トークンなしで呼べる（4.2.2）。応答の形は外部設計書 5.1。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -3058,6 +3063,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>{ token, newPassword }</code></td>
 <td>パスワードの決まりを確かめ、リンクを使用済みにして保存し、ロックを解いて、その人のリフレッシュトークンをすべて無効にする → <code>204</code>。リンクが使えない・利用者が削除予定 → <code>400</code>（<code>details: [{ field: 'token', code: 'INVALID' }]</code>）</td>
 </tr>
+<tr>
+<td>A-36 <code>POST /api/auth/signup</code></td>
+<td><code>{ email, fullName, password }</code></td>
+<td>メールアドレス（254文字まで）・名前（前後の空白を除いて1〜50文字）・パスワードの決まりを確かめる（だめなら <code>400</code>、<code>details</code> の <code>field</code> は <code>email</code>・<code>fullName</code>・<code>password</code>）。登録の有無に関わらずパスワードのハッシュを計算して応答時間をそろえる。同じメールアドレスで60秒以内に受け付けていれば何もしない。未登録なら確認待ち（24時間）を保存して確認メール（<code>signupMail</code>）、登録済み（削除予定を含む）ならパスワードのハッシュなしで記録だけして案内（<code>signupExistsMail</code>）を送る。メールを送れなくても <code>202</code>（ログに <code>auth.signup_mail_failed</code>）。どの場合も <code>202 { status: 'accepted' }</code></td>
+</tr>
+<tr>
+<td>A-37 <code>POST /api/auth/signup/verify</code></td>
+<td><code>{ token }</code></td>
+<td>確認待ちを使用済みにして中身を取り出す（使えない → <code>400</code>、<code>details: [{ field: 'token', code: 'INVALID' }]</code>）。1つのトランザクションで <code>users.create</code>（ロール <code>learner</code>、通知設定も作る）・<code>auth.setPassword</code>（<code>mustChange: false</code>）・操作記録 <code>user.signup</code>（操作者は本人）。メールアドレスが先に登録されていたら（一意制約 <code>23505</code>）<code>409 CONFLICT</code>。成功したら A-30 と同じトークンの組を <code>201</code> で返す</td>
+</tr>
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-mobile-screen h-ico" aria-hidden="true"></i>6. 画面モジュール設計（web）</h2>
@@ -3092,6 +3107,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
       API--&gt;&gt;L: challenge・session
       L-&gt;&gt;API: POST /api/auth/new-password（A-31）
     end
+    opt アカウントを作る（A-36）
+      L-&gt;&gt;API: POST /api/auth/signup
+      API--&gt;&gt;B: 確認メール（#/signup?token=…）
+      B-&gt;&gt;L: リンクを開く
+      L-&gt;&gt;API: POST /api/auth/signup/verify（A-37）
+    end
     API--&gt;&gt;AU: IDトークン・リフレッシュトークン
     AU-&gt;&gt;B: 読み込み直す
   end
@@ -3110,13 +3131,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td><code>core/auth.js</code></td>
-<td><code>ensureLogin</code>、<code>signIn</code>、<code>completeNewPassword</code>、<code>refresh</code>、<code>login</code>、<code>getIdToken</code>、<code>logout</code>、<code>forgot</code>、<code>resetPassword</code></td>
-<td>A-30〜A-35 を呼ぶ。トークンはメモリと <code>sessionStorage</code>（キー <code>rpg.auth</code>）だけに置く。期限の5分前に <code>refresh</code>（A-32）。失敗したら消して読み込み直し、ログイン画面へ。<code>logout</code> は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする）</td>
+<td><code>ensureLogin</code>、<code>signIn</code>、<code>completeNewPassword</code>、<code>refresh</code>、<code>login</code>、<code>getIdToken</code>、<code>logout</code>、<code>forgot</code>、<code>resetPassword</code>、<code>signUp</code>、<code>verifySignup</code></td>
+<td>A-30〜A-37 を呼ぶ（<code>verifySignup</code> は返ってきたトークンを保存する）。トークンはメモリと <code>sessionStorage</code>（キー <code>rpg.auth</code>）だけに置く。期限の5分前に <code>refresh</code>（A-32）。失敗したら消して読み込み直し、ログイン画面へ。<code>logout</code> は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする）</td>
 </tr>
 <tr>
 <td><code>pages/login.js</code></td>
-<td><code>renderLogin</code>、<code>renderSignIn</code></td>
-<td>S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（<code>#/reset?token=…</code>）の4つの表示を切り替える。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED）</td>
+<td><code>renderLogin</code>、<code>renderSignIn</code>、<code>signupOk</code></td>
+<td>S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（<code>#/reset?token=…</code>）・アカウントを作る・アカウントの登録（<code>#/signup?token=…</code>。開いたらすぐ A-37 を呼び、できたら URL を <code>/</code> に戻して読み込み直す）の6つの表示を切り替える。<code>main.js</code> は <code>#/reset?</code>・<code>#/signup?</code> のときログイン中でもこの画面を出す。アカウントを作る表示は、名前・メールアドレスの形・パスワードの決まり・2回の一致がそろうまでボタンを押せない（<code>signupOk</code>）。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED）</td>
 </tr>
 <tr>
 <td><code>core/api.js</code></td>
@@ -3937,6 +3958,14 @@ angles には選んだ観点を、それぞれ2〜8文字の名詞で書く。
 <td>年に約1万</td>
 <td>追加（V003、EventBridge の代わり）</td>
 </tr>
+<tr>
+<td>T-29</td>
+<td><code>signup_requests</code></td>
+<td>アカウント作成の確認待ち</td>
+<td><code>token_hash</code></td>
+<td>数百（期限の1日後に削除）</td>
+<td>追加（V006、アカウント作成）</td>
+</tr>
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.4 CREATE TABLE文（<code>db/migrations/V001__create_tables.sql</code>）</h3>
@@ -4382,6 +4411,33 @@ WHERE u.user_id = s.user_id;
 
 INSERT INTO schema_migrations (version, description) VALUES ('V005', 'study time') ON CONFLICT DO NOTHING;
 </code></pre>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>8.4.4 アカウント作成の確認待ち（<code>db/migrations/V006__signup.sql</code>）</h4>
+<p>確認リンクを開くまで <code>users</code> を作らないため、<code>users</code> への外部キーは持たない。操作記録の種類に <code>user.signup</code> を足す。</p>
+<pre><code class="language-sql">-- =========================================================
+-- V006__signup.sql  利用者が自分でアカウントを作る（詳細設計書 5.4 A-36・A-37）
+-- 入力を確認待ちとして置き、メールのリンクを開いたら users を作る
+-- =========================================================
+-- T-29 アカウント作成の確認待ち（メールのリンクの値の SHA-256。1回だけ使える）
+CREATE TABLE IF NOT EXISTS signup_requests (
+  token_hash     text        PRIMARY KEY,
+  email          text        NOT NULL CHECK (char_length(email) &lt;= 254),
+  full_name      text        NOT NULL CHECK (char_length(full_name) BETWEEN 1 AND 50),
+  password_hash  text,                                   -- scrypt。登録済みのメールアドレスへの案内のときは NULL
+  expires_at     timestamptz NOT NULL,                   -- 発行から24時間
+  used_at        timestamptz,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS signup_requests_email_idx ON signup_requests (lower(email), created_at DESC);
+-- T-23 操作記録（自分でのアカウント作成を追加）
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'question.update', 'question.publish', 'question.delete',
+  'user.create', 'user.role', 'user.delete', 'user.restore', 'user.purge', 'user.reinvite', 'user.signup',
+  'course.create', 'course.update', 'course.assign',
+  'partner.image', 'dashboard.csv'));
+
+INSERT INTO schema_migrations (version, description) VALUES ('V006', 'signup') ON CONFLICT DO NOTHING;
+</code></pre>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.5 初期データ（<code>db/migrations/V002__seed_masters.sql</code>）</h3>
 <pre><code class="language-sql">INSERT INTO partners (persona, label, default_name) VALUES
   ('encourage', '励まし型', 'ミナ'),
@@ -4576,7 +4632,7 @@ ORDER BY a.answered_at, a.answer_id;
 </tr>
 <tr>
 <td>パスワードの推測・漏えい</td>
-<td>scrypt（N=16384・r=8・p=1、ソルト16バイト）でハッシュだけを保存。5回続けて間違えたら15分ロック。いない人でも同じ時間をかけて照合し、失敗の理由を画面で区別しない。リフレッシュトークン・再設定リンクは値の SHA-256 だけを保存し、使い捨て</td>
+<td>scrypt（N=16384・r=8・p=1、ソルト16バイト）でハッシュだけを保存。5回続けて間違えたら15分ロック。いない人でも同じ時間をかけて照合し、失敗の理由を画面で区別しない。リフレッシュトークン・再設定リンク・アカウント作成の確認リンクは値の SHA-256 だけを保存し、使い捨て</td>
 <td><code>auth/password.js</code>、<code>routes/auth.js</code>、<code>repositories/auth.js</code></td>
 </tr>
 <tr>
@@ -4618,6 +4674,11 @@ ORDER BY a.answered_at, a.answer_id;
 <td>ファイルのアップロード</td>
 <td>署名付きURLは15分、<code>Content-Type</code> 固定、キーはサーバーが決める。サイズは申告値を確認し、取り込み時にも実サイズを確認</td>
 <td><code>admin-imports.js</code>、<code>import-worker</code></td>
+</tr>
+<tr>
+<td>勝手なアカウント作成・登録の有無の調査</td>
+<td>アカウント作成はメールの確認リンクを開くまで登録しない。登録済みでも同じ <code>202</code> を返し、パスワードのハッシュを必ず計算して応答時間をそろえる。作れるのは <code>learner</code> だけ。同じメールアドレスへの確認メールは60秒に1通まで</td>
+<td><code>routes/auth.js</code>（A-36・A-37）</td>
 </tr>
 <tr>
 <td>個人情報の記録</td>
@@ -4665,6 +4726,16 @@ ORDER BY a.answered_at, a.answer_id;
 <td><code>resetMail(x)</code></td>
 <td>【RPG学習アプリ】パスワードの再設定</td>
 <td>再設定の URL <code>APP_URL/#/reset?token=…</code>、有効期限（60分・1回だけ）、心当たりがなければ何もしなくてよいこと</td>
+</tr>
+<tr>
+<td><code>signupMail(x)</code></td>
+<td>【RPG学習アプリ】アカウント作成の確認</td>
+<td>「{fullName}さん」、確認の URL <code>APP_URL/#/signup?token=…</code>、有効期限（24時間・1回だけ）、心当たりがなければ捨ててよいこと、問い合わせ先</td>
+</tr>
+<tr>
+<td><code>signupExistsMail(x)</code></td>
+<td>【RPG学習アプリ】アカウント作成の受付</td>
+<td>すでに登録されていること、ログインの URL <code>APP_URL/</code>、「パスワードを忘れたとき」の案内、問い合わせ先（リンクは入れない）</td>
 </tr>
 </tbody>
 </table></div>
@@ -5287,12 +5358,18 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 <td>サーバー・DB・オブジェクトストレージの月額は構築時に料金表で確認し、外部設計書のコストの表に書く</td>
 <td>dev 構築時</td>
 </tr>
+<tr>
+<td>15</td>
+<td>アカウント作成の範囲とボット対策</td>
+<td>メールアドレスの確認だけで誰でも学習者として作れる（外部設計書 10 No.14）。社内のドメインに絞るときは A-36 にドメインの許可リスト（環境変数）を足す。同じメールアドレスへの連打は60秒で止めるが、別々のメールアドレスを大量に使われたときの IP ごとの制限はない（必要なら Caddy の rate limit を足す）</td>
+<td>パイロット開始前</td>
+</tr>
 </tbody>
 </table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.2版（ドラフト：第1〜12章、HTML版あり。AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.3版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

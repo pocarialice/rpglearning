@@ -39,8 +39,8 @@ export async function boot({ win = window, config = CONFIG } = {}) {
     }
   }
   const api = { apiGet: settle(raw.apiGet), apiPost: settle(raw.apiPost), apiPut: settle(raw.apiPut), apiDelete: settle(raw.apiDelete) }
-  // 再設定リンク（#/reset?token=…）はログイン中でも再設定の画面を出す
-  if (/^#\/reset\?/.test(win.location.hash)) return renderLogin(root, { auth, win })
+  // 再設定リンク（#/reset?token=…）とアカウント作成の確認リンク（#/signup?token=…）は、ログイン中でもその画面を出す
+  if (/^#\/(reset|signup)\?/.test(win.location.hash)) return renderLogin(root, { auth, win })
   if (!auth.ensureLogin()) return
   let me
   try {
