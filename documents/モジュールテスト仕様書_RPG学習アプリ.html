@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第1.7版（ドラフト：第1〜6章、HTML版あり。学習サマリ（A-12b・A-12c、S-15・S-08）のケース（MT-G08・MT-H16・MT-D03-36〜37・MT-A04-11〜12・MT-F26・MT-F25-04・MT-F16-06）を載せる）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02）</b></li>
+      <li>版数<b>第1.8版（ドラフト：第1〜6章、HTML版あり。IDのなかった Ctrl+Enter・ピンチでの拡大を止めるテストを、MT-F27（<code>core/keys.js</code>）・MT-F28（<code>core/zoom.js</code>）として載せる）</b></li>
+      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02）</b></li>
       <li>入力文書<b>詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
@@ -6940,6 +6940,120 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F27 <code>core/keys.js</code>（Ctrl+Enter で確定ボタンを押す）</h4>
+<p><code>installCtrlEnter(document)</code> を入れたうえで、入力欄から <code>keydown</code>（Enter）を送る。主ボタンの <code>click</code>・form の <code>submit</code> は <code>vi.fn</code> で受ける。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>観点</th>
+<th>入力・前提</th>
+<th>期待結果</th>
+<th>技法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MT-F27-01</td>
+<td>Ctrl+Enter</td>
+<td>textarea で Ctrl+Enter、同じ囲みに主ボタン</td>
+<td>主ボタンを1回押し、既定の動き（改行）を止める</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F27-02</td>
+<td>⌘+Enter（Mac）</td>
+<td>input で ⌘+Enter</td>
+<td>主ボタンを1回押す</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F27-03</td>
+<td>押さないキー</td>
+<td>Enter だけ／Ctrl+Enter の変換中（<code>isComposing</code>）／Shift+Enter</td>
+<td>どれも押さない</td>
+<td>デ</td>
+</tr>
+<tr>
+<td>MT-F27-04</td>
+<td>主ボタンが押せない</td>
+<td>主ボタンが <code>disabled</code>／<code>hidden</code> の中</td>
+<td>何もしない（既定の動きも止めない）</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F27-05</td>
+<td>対象外の場所</td>
+<td>ボタンの上で Ctrl+Enter／<code>&lt;main&gt;</code> の中に主ボタンがない（外にだけある）</td>
+<td>押さない／<code>findPrimary</code> は null（<code>&lt;main&gt;</code> の外へ探しに行かない）</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F27-06</td>
+<td>ダイアログ</td>
+<td>ダイアログの外にだけ主ボタン／ダイアログの form に <code>type="submit"</code></td>
+<td>null（外へ探しに行かない）／ダイアログの「保存」</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F27-07</td>
+<td>優先するボタン</td>
+<td>同じ囲みに主ボタン「公開」と <code>data-ctrl-enter</code> の「保存」</td>
+<td>「保存」</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F27-08</td>
+<td>form の送信</td>
+<td>form の中に確定ボタンがなく、form の外に主ボタン</td>
+<td>form を送信し（<code>submit</code> が1回）、外の主ボタンは押さない</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F27-09</td>
+<td>文字を打たない入力</td>
+<td>チェックボックスで Ctrl+Enter</td>
+<td>押さない</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F27-10</td>
+<td>親のない要素</td>
+<td><code>findPrimary(document.createElement('input'))</code></td>
+<td>null</td>
+<td>境</td>
+</tr>
+</tbody>
+</table></div>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F28 <code>core/zoom.js</code>（ピンチでの拡大を止める）</h4>
+<p><code>blockPinchZoom(document)</code> を入れたうえで、<code>cancelable</code> のイベントを送り <code>defaultPrevented</code> を見る。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>観点</th>
+<th>入力・前提</th>
+<th>期待結果</th>
+<th>技法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MT-F28-01</td>
+<td>iOS のピンチ</td>
+<td><code>gesturestart</code></td>
+<td>打ち消す</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F28-02</td>
+<td>指の本数</td>
+<td><code>touchmove</code> が2本指／1本指／<code>touches</code> なし</td>
+<td>打ち消す／打ち消さない（スクロールは止めない）／打ち消さない</td>
+<td>境</td>
+</tr>
+</tbody>
+</table></div>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-scale-balanced h-ico" aria-hidden="true"></i>6. トレーサビリティと合否基準</h2>
 <div class="vis">
   <p class="vis-label">カバレッジの基準</p>
@@ -7085,6 +7199,12 @@ describe('M-D01 client', () =&gt; {
 <td>6.2</td>
 <td>pages/admin</td>
 <td>MT-F19〜MT-F22</td>
+</tr>
+<tr>
+<td>（設計書に記載なし）入力欄の Ctrl+Enter、ピンチでの拡大の抑止</td>
+<td>（設計書に記載なし）</td>
+<td>core/keys、core/zoom</td>
+<td>MT-F27-01〜10、MT-F28-01〜02</td>
 </tr>
 <tr>
 <td>3.7 S-15・S-08 学習サマリ（学習サマリのルール）、5.3 A-12b・A-12c、5.5 AI連携</td>
@@ -7252,7 +7372,7 @@ describe('M-D01 client', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.7版（ドラフト：第1〜6章、HTML版あり。学習サマリ（A-12b・A-12c、S-15・S-08）のケース（MT-G08・MT-H16・MT-D03-36〜37・MT-A04-11〜12・MT-F26・MT-F25-04・MT-F16-06）を載せる）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.8版（ドラフト：第1〜6章、HTML版あり。IDのなかった Ctrl+Enter・ピンチでの拡大を止めるテストを、MT-F27（core/keys.js）・MT-F28（core/zoom.js）として載せる）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

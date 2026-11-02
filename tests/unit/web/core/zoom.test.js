@@ -7,11 +7,11 @@ const fire = (type, props = {}) => {
   document.body.dispatchEvent(e)
   return e
 }
-describe('core/zoom ピンチでの拡大を止める', () => {
-  it('iOS のピンチ（gesturestart）を打ち消す', () => {
+describe('M-F28 core/zoom.js ピンチでの拡大を止める', () => {
+  it('MT-F28-01 iOS のピンチ（gesturestart）を打ち消す', () => {
     expect(fire('gesturestart').defaultPrevented).toBe(true)
   })
-  it('2本指の touchmove は打ち消し、1本指のスクロールは止めない', () => {
+  it('MT-F28-02 2本指の touchmove は打ち消し、1本指のスクロールは止めない', () => {
     expect(fire('touchmove', { touches: [{}, {}] }).defaultPrevented).toBe(true)
     expect(fire('touchmove', { touches: [{}] }).defaultPrevented).toBe(false)
     expect(fire('touchmove').defaultPrevented).toBe(false)

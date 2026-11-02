@@ -3,8 +3,8 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第1.7版（ドラフト：第1〜6章、HTML版あり。学習サマリ（A-12b・A-12c、S-15・S-08）のケース（MT-G08・MT-H16・MT-D03-36〜37・MT-A04-11〜12・MT-F26・MT-F25-04・MT-F16-06）を載せる）       |
-| 作成日    | 2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02）                                      |
+| 版数     | 第1.8版（ドラフト：第1〜6章、HTML版あり。IDのなかった Ctrl+Enter・ピンチでの拡大を止めるテストを、MT-F27（`core/keys.js`）・MT-F28（`core/zoom.js`）として載せる）       |
+| 作成日    | 2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02）                                      |
 | 入力文書   | 詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
 
@@ -1369,6 +1369,32 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-F26-06 | 古い読み込みを捨てる | 1回目が遅れて返る、2回目が失敗、3回目が失敗 | あとから返った1回目の結果で上書きしない（Markdown を出さない） | 状 |
 | MT-F26-07 | 今日の日付 | UTC 10/19 15:30 | JST の `2026-10-20` | 境 |
 
+#### M-F27 `core/keys.js`（Ctrl+Enter で確定ボタンを押す）
+
+`installCtrlEnter(document)` を入れたうえで、入力欄から `keydown`（Enter）を送る。主ボタンの `click`・form の `submit` は `vi.fn` で受ける。
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-F27-01 | Ctrl+Enter | textarea で Ctrl+Enter、同じ囲みに主ボタン | 主ボタンを1回押し、既定の動き（改行）を止める | 同 |
+| MT-F27-02 | ⌘+Enter（Mac） | input で ⌘+Enter | 主ボタンを1回押す | 同 |
+| MT-F27-03 | 押さないキー | Enter だけ／Ctrl+Enter の変換中（`isComposing`）／Shift+Enter | どれも押さない | デ |
+| MT-F27-04 | 主ボタンが押せない | 主ボタンが `disabled`／`hidden` の中 | 何もしない（既定の動きも止めない） | 異 |
+| MT-F27-05 | 対象外の場所 | ボタンの上で Ctrl+Enter／`<main>` の中に主ボタンがない（外にだけある） | 押さない／`findPrimary` は null（`<main>` の外へ探しに行かない） | 異 |
+| MT-F27-06 | ダイアログ | ダイアログの外にだけ主ボタン／ダイアログの form に `type="submit"` | null（外へ探しに行かない）／ダイアログの「保存」 | 同 |
+| MT-F27-07 | 優先するボタン | 同じ囲みに主ボタン「公開」と `data-ctrl-enter` の「保存」 | 「保存」 | 同 |
+| MT-F27-08 | form の送信 | form の中に確定ボタンがなく、form の外に主ボタン | form を送信し（`submit` が1回）、外の主ボタンは押さない | 同 |
+| MT-F27-09 | 文字を打たない入力 | チェックボックスで Ctrl+Enter | 押さない | 異 |
+| MT-F27-10 | 親のない要素 | `findPrimary(document.createElement('input'))` | null | 境 |
+
+#### M-F28 `core/zoom.js`（ピンチでの拡大を止める）
+
+`blockPinchZoom(document)` を入れたうえで、`cancelable` のイベントを送り `defaultPrevented` を見る。
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-F28-01 | iOS のピンチ | `gesturestart` | 打ち消す | 同 |
+| MT-F28-02 | 指の本数 | `touchmove` が2本指／1本指／`touches` なし | 打ち消す／打ち消さない（スクロールは止めない）／打ち消さない | 境 |
+
 ## 6. トレーサビリティと合否基準
 
 ### 6.1 設計とテストケースの対応
@@ -1395,6 +1421,7 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | 3.5 共通の表示ルール、9章 メッセージ | 6.1 | components、status | MT-F07-01〜13 |
 | 3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-10） | 6.2 | pages/learner、parts | MT-F09〜MT-F18 |
 | 3.8 管理画面（S-11〜S-14） | 6.2 | pages/admin | MT-F19〜MT-F22 |
+| （設計書に記載なし）入力欄の Ctrl+Enter、ピンチでの拡大の抑止 | （設計書に記載なし） | core/keys、core/zoom | MT-F27-01〜10、MT-F28-01〜02 |
 | 3.7 S-15・S-08 学習サマリ（学習サマリのルール）、5.3 A-12b・A-12c、5.5 AI連携 | 3.5 M-G08、5.2 A-12b・A-12c、6.2、7.7、8.6 | domain/summary、routes/summaries、repositories/summaries、prompts/summary-comment、parts/summary-panel、s15-summary、s08-profile | MT-G08-01〜08、MT-H16-01〜08、MT-D03-36〜37、MT-A04-11〜12、MT-F26-01〜07、MT-F25-04、MT-F16-06、MT-F14-12 |
 | 2章 システム構成（ファイル・監視・リリース） | 3.9、4.1、8.7、10.4 | storage、db/migrate、server/main、util/alert | MT-O01-01〜05、MT-D05-01〜05、MT-S03-01〜05、MT-U08-01〜03 |
 
