@@ -1421,7 +1421,7 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | 3.5 共通の表示ルール、9章 メッセージ | 6.1 | components、status | MT-F07-01〜13 |
 | 3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-10） | 6.2 | pages/learner、parts | MT-F09〜MT-F18 |
 | 3.8 管理画面（S-11〜S-14） | 6.2 | pages/admin | MT-F19〜MT-F22 |
-| （設計書に記載なし）入力欄の Ctrl+Enter、ピンチでの拡大の抑止 | （設計書に記載なし） | core/keys、core/zoom | MT-F27-01〜10、MT-F28-01〜02 |
+| 3.5.1 キーボードとタッチの操作 | 6.1 | core/keys、core/zoom | MT-F27-01〜10、MT-F28-01〜02 |
 | 3.7 S-15・S-08 学習サマリ（学習サマリのルール）、5.3 A-12b・A-12c、5.5 AI連携 | 3.5 M-G08、5.2 A-12b・A-12c、6.2、7.7、8.6 | domain/summary、routes/summaries、repositories/summaries、prompts/summary-comment、parts/summary-panel、s15-summary、s08-profile | MT-G08-01〜08、MT-H16-01〜08、MT-D03-36〜37、MT-A04-11〜12、MT-F26-01〜07、MT-F25-04、MT-F16-06、MT-F14-12 |
 | 2章 システム構成（ファイル・監視・リリース） | 3.9、4.1、8.7、10.4 | storage、db/migrate、server/main、util/alert | MT-O01-01〜05、MT-D05-01〜05、MT-S03-01〜05、MT-U08-01〜03 |
 

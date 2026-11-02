@@ -1412,6 +1412,59 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
+<h4>3.5.1 キーボードとタッチの操作</h4>
+<p>学習者画面・管理画面のどちらでも同じにする。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>場面</th>
+<th>動き</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入力欄で Ctrl+Enter（Mac は ⌘+Enter）</td>
+<td>入力欄にいちばん近い確定ボタンを押す（S-05 の「採点してもらう」、S-11 の「取り込む」など）。Enter だけでは押さない（文章の改行のまま）。日本語の変換中・チェックボックスなど文字を打たない入力欄では何もしない</td>
+</tr>
+<tr>
+<td>確定ボタンの探し方</td>
+<td>入力欄から外側へたどり、ボタンを含む最初の囲みで探す。囲みの中に「Ctrl+Enter で押すボタン」の印（<code>data-ctrl-enter</code>）があればそれを、なければ主ボタン（<code>gd-btn-primary</code>）か送信ボタンを押す。ダイアログの中ではダイアログのボタンだけ、本文（<code>&lt;main&gt;</code>）の外へは探しに行かない。フォームの中でボタンが見つからなければ、そのフォームを送信する</td>
+</tr>
+<tr>
+<td>押せないとき</td>
+<td>ボタンが押せない（入力が足りない・非表示）ときは何もしない</td>
+</tr>
+<tr>
+<td>Ctrl+Enter で押すボタンを決めている画面</td>
+<td>S-11：取り込みの「取り込む」、修正ダイアログの「保存して次へ」（主ボタンの「公開して次へ」ではなく、こちらを押す）</td>
+</tr>
+<tr>
+<td>指で広げる拡大（ピンチ）</td>
+<td>止める（iOS Safari は viewport の拡大禁止の指定を無視するため、ピンチの操作そのものを打ち消す）。1本指のスクロールは止めない</td>
+</tr>
+<tr>
+<td>ダブルタップでの拡大</td>
+<td>止める（スクロールはそのまま）</td>
+</tr>
+<tr>
+<td>スマホで入力欄を選んだとき</td>
+<td>入力欄の文字を16pxにして、iOS が自動で拡大しないようにする（指で操作する端末だけ）</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="diagram"><div class="mermaid">flowchart TB
+  K["入力欄で Ctrl+Enter（⌘+Enter）"] --&gt; C{"変換中・文字を打たない入力欄？"}
+  C --&gt;|"はい"| N["何もしない"]
+  C --&gt;|"いいえ"| U["外側の囲みへ1つ上がる"]
+  U --&gt; F{"囲みに確定ボタンがある？"}
+  F --&gt;|"ある"| P{"押せる？"}
+  P --&gt;|"はい"| CL["押す（印つきのボタンを優先）"]
+  P --&gt;|"いいえ"| N
+  F --&gt;|"ない"| B{"フォーム・ダイアログ・本文の端？"}
+  B --&gt;|"フォーム"| S["フォームを送信"]
+  B --&gt;|"ダイアログ・本文"| N
+  B --&gt;|"まだ"| U
+</div></figure>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 AIパートナー設計</h3>
 <h4>3.6.1 キャラクター定義</h4>
 <div class="table-wrap"><table>
