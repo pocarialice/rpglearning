@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第1.6版（ドラフト：第1〜6章、HTML版あり。冒険を5問にし、冒険のまとめ（S-15）と学習時間のケース（MT-D03-35・MT-H05-12・MT-F05-05・MT-F14-12〜13・MT-F25）を載せる）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01）</b></li>
+      <li>版数<b>第1.7版（ドラフト：第1〜6章、HTML版あり。学習サマリ（A-12b・A-12c、S-15・S-08）のケース（MT-G08・MT-H16・MT-D03-36〜37・MT-A04-11〜12・MT-F26・MT-F25-04・MT-F16-06）を載せる）</b></li>
+      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02）</b></li>
       <li>入力文書<b>詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
@@ -2027,6 +2027,20 @@ describe('M-D01 client', () =&gt; {
 <td>125／0。SQL は0〜600秒に丸め、冒険と <code>users.total_study_seconds</code> を同じ文で足す。まとめは camelCase、他人は null</td>
 <td>同</td>
 </tr>
+<tr>
+<td>MT-D03-36</td>
+<td>summaries.listForAdventure</td>
+<td>冒険90・利用者15、足りない観点が JSON 文字列の行と null の行</td>
+<td>SQL は本人と冒険で絞り、採点（<code>status='done'</code>）から足りない観点を引く。足りない観点は配列（null は <code>[]</code>）、列は camelCase。パラメータが SQL の <code>:name</code> とそろう</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-D03-37</td>
+<td>summaries.listForDate</td>
+<td>利用者15・<code>2026-10-20</code></td>
+<td>SQL は <code>answered_on = :day</code> で絞り、日付は <code>{date}</code> で渡す。足りない観点が配列のときはそのまま</td>
+<td>同</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-D04 リポジトリ（ジョブキュー・定期処理・ログイン）</h4>
@@ -2738,6 +2752,76 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-G08 <code>domain/summary.js</code> 学習サマリ</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>観点</th>
+<th>入力・前提</th>
+<th>期待結果</th>
+<th>技法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MT-G08-01</td>
+<td>学習時間と休憩の上限</td>
+<td>冒険の開始 01:00、解答 01:02・01:05・02:05</td>
+<td>2分＋3分＋10分（1つの間隔は10分まで）＝ 900秒</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-G08-02</td>
+<td>冒険のない解答・冒険ごとの合計・順番</td>
+<td>冒険なしの解答1つ、冒険91の解答2つ（並びが逆）、解答なし</td>
+<td>冒険なしは0秒、冒険91は開始から10分で600秒、合計600秒。解答なしは0</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-G08-03</td>
+<td>学習時間の表示</td>
+<td>0・null・-5・20・1503・3600・3909 秒</td>
+<td>「0秒」「0秒」「0秒」「20秒」「25分3秒」「1時間0分」「1時間5分」（画面の <code>formatDuration</code> と同じ）</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-G08-04</td>
+<td>問題文の1行化</td>
+<td>タグと改行を含む文、45文字、Markdown の記号、null</td>
+<td>タグ・改行を落とす、40文字で切って「…」、<code>*</code> <code>[</code> <code>#</code> <code>|</code> <code>`</code> を <code>\</code> で逃がす、空文字</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-G08-05</td>
+<td>復習するべき観点</td>
+<td>正解、同じ問題の不正解2回、正解の選択肢なし・習得済みの不正解、足りない観点ありの不合格、足りない観点・キーワード・復習日なしの不合格</td>
+<td>正解は出さない、同じ問題は1つ、「解説を読み直す」と復習日なし、「足りない観点は サブネット、ルート（次の復習 2026/10/24）」、「模範説明を読み直す」</td>
+<td>デ</td>
+</tr>
+<tr>
+<td>MT-G08-06</td>
+<td>数の集計</td>
+<td>択一の正解（復習）・不正解、説明の合格</td>
+<td>解答3・正解2・択一2（正解1）・説明1（合格1）・復習1</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-G08-07</td>
+<td>Markdown の全体</td>
+<td>2コース、択一2・説明2、コメントに改行</td>
+<td>見出し → 学習日・学習時間「25分0秒」・コース2つ → 学習した内容（1問ずつ）→ 復習するべき観点 → 「ミナからのコメント」。コメントの改行は空白に、空行がない</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-G08-08</td>
+<td>Markdown の省略</td>
+<td>コース名なし、間違いなし、名前なしのコメント、コメントなし</td>
+<td>コースの行を出さない、「間違えた問題はありません」、「パートナーのコメント」、コメントの見出しを出さない</td>
+<td>同</td>
+</tr>
+</tbody>
+</table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.4 ai</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A01 <code>ai/bedrock.js</code></h4>
 <div class="table-wrap"><table>
@@ -2988,6 +3072,20 @@ describe('M-D01 client', () =&gt; {
 <td><code>fallbackQuestion('DNS')</code>、<code>normalizePrompt</code>（前後の空白・空・重複・4つ以上・null）</td>
 <td>定義としくみを聞く定型文、空白を除き重複と空を除いて3つまで、null は空</td>
 <td>境</td>
+</tr>
+<tr>
+<td>MT-A04-11</td>
+<td>学習サマリのコメントの指示文</td>
+<td>ライバル型・冒険、苦手に閉じタグ／論理型・1日、苦手なし</td>
+<td>system に名前と性格・「1回の冒険（5問）」・「200字くらい（180〜220字）」・タグの中の指示に従わない、user に学習時間・数・<code>&lt;weak&gt;</code>（閉じタグは <code>&lt;\/weak&gt;</code>）／「この日1日分」、<code>&lt;weak&gt;なし&lt;/weak&gt;</code></td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-A04-12</td>
+<td>学習サマリのコメントの定型文</td>
+<td>3人と知らない性格 × 苦手あり／なし</td>
+<td>解いた数を入れる、苦手があれば「「VPC」」、なければ苦手の名前を出さない（ライバル型は「ノーミス」）。知らない性格は励まし型</td>
+<td>同</td>
 </tr>
 </tbody>
 </table></div>
@@ -4557,6 +4655,77 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H16 <code>routes/summaries.js</code>（A-12b・A-12c）</h4>
+<p>AI は Bedrock のモック（<code>bedrockMock</code>）、リポジトリは <code>vi.mock</code> で差し替える。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>観点</th>
+<th>入力・前提</th>
+<th>期待結果</th>
+<th>技法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MT-H16-01</td>
+<td>冒険の学習サマリ</td>
+<td><code>GET /api/adventures/adv_90/summary</code>。解答2つ（択一の不正解・説明45点）、冒険の開始は JST 10/20 0:30、<code>adventures.summary</code> の学習時間 492 秒</td>
+<td>200、学習日 <code>2026-10-20</code>、<code>studySeconds</code> 492・「8分12秒」（S-15 と同じ値）、コメントと Markdown。AI は <code>MODEL_LIGHT</code>・<code>SUMMARY_AI</code>、system に「200字くらい」、user の <code>&lt;weak&gt;</code> に足りない観点</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-H16-02</td>
+<td>他人の冒険</td>
+<td><code>adventures.find</code> が null</td>
+<td>404、解答を読まない</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H16-03</td>
+<td>解答がない冒険</td>
+<td>解答なし、まとめなし</td>
+<td><code>answerCount</code> 0・「0秒」、<code>comment</code>・<code>markdown</code> は null、AI を呼ばない</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-H16-04</td>
+<td>冒険の開始時刻がない</td>
+<td>開始時刻 null、解答日 <code>2026-10-19</code></td>
+<td>学習日は解答日</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H16-05</td>
+<td>1日の学習サマリ（日付なし）</td>
+<td><code>GET /api/me/summary</code></td>
+<td>今日（<code>2026-10-20</code>）で読む。学習時間は解答の時刻から600秒・「10分0秒」、見出しに「1日のまとめ」、system に「この日1日分」</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-H16-06</td>
+<td>日付の指定と不正</td>
+<td><code>2026-10-18</code>／<code>2026/10/18</code>・<code>2026-02-30</code>・<code>2026-10-21</code>（明日）</td>
+<td>指定の日で読む／400</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-H16-07</td>
+<td>AI の失敗・空の応答</td>
+<td>論理型で AI が <code>ThrottlingException</code>／パートナーなしで空白だけの応答</td>
+<td>論理型の定型文と「セージからのコメント」／励まし型の定型文、<code>partnerName</code> null</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H16-08</td>
+<td>ニックネーム未登録</td>
+<td>ニックネームなし</td>
+<td>409 <code>ONBOARDING_REQUIRED</code></td>
+<td>異</td>
+</tr>
+</tbody>
+</table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 grading-worker</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-W01 <code>grading-worker/index.mjs</code>・<code>grader.js</code></h4>
 <div class="table-wrap"><table>
@@ -6044,7 +6213,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-F14-12</td>
 <td>冒険のまとめへ</td>
 <td>5問目で「冒険のまとめへ」、A-07 が <code>done</code> と <code>summary</code></td>
-<td>同じ冒険で A-07 を呼び、冒険ID・結果を空にしてまとめを状態に入れ、S-15 へ</td>
+<td>同じ冒険で A-07 を呼び、冒険ID・結果を空にしてまとめ（学習サマリ用に冒険ID <code>adventureId</code> も）を状態に入れ、S-15 へ</td>
 <td>状</td>
 </tr>
 <tr>
@@ -6151,6 +6320,13 @@ describe('M-D01 client', () =&gt; {
 <td>A-12 が通信エラー → 再読み込み</td>
 <td>プロフィールを表示</td>
 <td>異</td>
+</tr>
+<tr>
+<td>MT-F16-06</td>
+<td>1日の学習サマリ</td>
+<td>プロフィールを表示 → アコーディオンを開く</td>
+<td>学習記録のすぐ下に閉じた「1日の学習サマリ」。開くと今日（JST）の日付で A-12c を呼ぶ</td>
+<td>同</td>
 </tr>
 </tbody>
 </table></div>
@@ -6691,6 +6867,77 @@ describe('M-D01 client', () =&gt; {
 <td>ホームへ</td>
 <td>異</td>
 </tr>
+<tr>
+<td>MT-F25-04</td>
+<td>冒険の学習サマリ</td>
+<td>まとめに冒険ID <code>adv_1</code> あり → 開く／冒険IDなし</td>
+<td>閉じた「冒険の学習サマリ」を出し、開くと A-12b（<code>/adventures/adv_1/summary</code>）を呼ぶ／出さない</td>
+<td>同</td>
+</tr>
+</tbody>
+</table></div>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F26 <code>parts/summary-panel.js</code>（学習サマリのアコーディオン）</h4>
+<p>クリップボード（<code>navigator.clipboard</code>）と <code>document.execCommand</code> はテストの中で差し替える。jsdom も <code>details</code> の <code>open</code> を変えると <code>toggle</code> を出すので、開くときは <code>open</code> を変えるだけにする。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>観点</th>
+<th>入力・前提</th>
+<th>期待結果</th>
+<th>技法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MT-F26-01</td>
+<td>閉じた状態と読み込み</td>
+<td>表示 → 開く → 閉じる → また開く。Markdown に <code>&lt;b&gt;</code></td>
+<td>初めは閉じていて A-12b／A-12c を呼ばない。開くと1回だけ呼び、Markdown を <code>pre</code> にそのまま（タグとして解釈しない）、「学習時間 25分・10問」。開き直しても呼ばない</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F26-02</td>
+<td>コピー</td>
+<td>「コピーする」、<code>clipboard.writeText</code> あり</td>
+<td>Markdown をそのまま渡し、「クリップボードにコピーしました」</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F26-03</td>
+<td>クリップボードが使えない</td>
+<td><code>writeText</code> が失敗 → <code>execCommand</code> が true／<code>clipboard</code> なしで <code>execCommand</code> が例外／<code>execCommand</code> もない</td>
+<td>選択してコピーし true、<code>textarea</code> を残さない／false／false。画面には「コピーできませんでした。…」</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F26-04</td>
+<td>解答なし・読み込みの失敗</td>
+<td>応答が <code>markdown: null</code>／別のアコーディオンで応答が 500 → 「もう一度読み込む」</td>
+<td>「この日に解いた問題はありません」／エラー帯 → 読み直して表示</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F26-05</td>
+<td>日付の選択</td>
+<td>初めは今日、閉じたまま 10/18 に変える → 開く → 10/17 に変える → 空にする</td>
+<td><code>max</code> は今日。閉じているときは呼ばず、開いたとき 10/18 で、開いていれば 10/17 ですぐ読む。空なら読まない</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F26-06</td>
+<td>古い読み込みを捨てる</td>
+<td>1回目が遅れて返る、2回目が失敗、3回目が失敗</td>
+<td>あとから返った1回目の結果で上書きしない（Markdown を出さない）</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F26-07</td>
+<td>今日の日付</td>
+<td>UTC 10/19 15:30</td>
+<td>JST の <code>2026-10-20</code></td>
+<td>境</td>
+</tr>
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-scale-balanced h-ico" aria-hidden="true"></i>6. トレーサビリティと合否基準</h2>
@@ -6838,6 +7085,12 @@ describe('M-D01 client', () =&gt; {
 <td>6.2</td>
 <td>pages/admin</td>
 <td>MT-F19〜MT-F22</td>
+</tr>
+<tr>
+<td>3.7 S-15・S-08 学習サマリ（学習サマリのルール）、5.3 A-12b・A-12c、5.5 AI連携</td>
+<td>3.5 M-G08、5.2 A-12b・A-12c、6.2、7.7、8.6</td>
+<td>domain/summary、routes/summaries、repositories/summaries、prompts/summary-comment、parts/summary-panel、s15-summary、s08-profile</td>
+<td>MT-G08-01〜08、MT-H16-01〜08、MT-D03-36〜37、MT-A04-11〜12、MT-F26-01〜07、MT-F25-04、MT-F16-06、MT-F14-12</td>
 </tr>
 <tr>
 <td>2章 システム構成（ファイル・監視・リリース）</td>
@@ -6999,7 +7252,7 @@ describe('M-D01 client', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.5版（ドラフト：第1〜6章、HTML版あり。第1.4版のあとに加えたホームの受講中のコース（MT-H03-08・MT-F10-05）のケースを載せる）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.7版（ドラフト：第1〜6章、HTML版あり。学習サマリ（A-12b・A-12c、S-15・S-08）のケース（MT-G08・MT-H16・MT-D03-36〜37・MT-A04-11〜12・MT-F26・MT-F25-04・MT-F16-06）を載せる）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

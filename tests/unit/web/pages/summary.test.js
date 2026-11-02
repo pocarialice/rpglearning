@@ -23,8 +23,8 @@ beforeEach(() => {
   api = { apiGet: vi.fn(async () => SUMMARY) }
 })
 afterEach(() => setClipboard(undefined))
-describe('M-F20 学習サマリのアコーディオン', () => {
-  it('MT-F20-01 ふだんは閉じていて、開いたときに1回だけ読み込む', async () => {
+describe('M-F26 parts/summary-panel.js 学習サマリのアコーディオン', () => {
+  it('MT-F26-01 ふだんは閉じていて、開いたときに1回だけ読み込む', async () => {
     mountSummaryPanel(el, { api, path: () => '/adventures/adv_1/summary', label: '冒険の学習サマリ' })
     expect(q('details').open).toBe(false)
     expect(q('summary').textContent).toContain('冒険の学習サマリ')
@@ -39,7 +39,7 @@ describe('M-F20 学習サマリのアコーディオン', () => {
     await open()
     expect(api.apiGet).toHaveBeenCalledTimes(1)
   })
-  it('MT-F20-02 「コピーする」で Markdown をクリップボードに入れる', async () => {
+  it('MT-F26-02 「コピーする」で Markdown をクリップボードに入れる', async () => {
     const writeText = vi.fn(async () => {})
     setClipboard(writeText)
     mountSummaryPanel(el, { api, path: () => '/x' })
@@ -49,7 +49,7 @@ describe('M-F20 学習サマリのアコーディオン', () => {
     expect(writeText).toHaveBeenCalledWith(MD)
     expect(q('.app-copy-status').textContent).toBe(M_COPIED)
   })
-  it('MT-F20-03 クリップボードが使えないときは選択してコピーし、それもだめなら案内する', async () => {
+  it('MT-F26-03 クリップボードが使えないときは選択してコピーし、それもだめなら案内する', async () => {
     setClipboard(vi.fn(async () => { throw new Error('denied') }))
     document.execCommand = vi.fn(() => true)
     expect(await copyText('abc')).toBe(true)
@@ -66,7 +66,7 @@ describe('M-F20 学習サマリのアコーディオン', () => {
     await flush()
     expect(q('.app-copy-status').textContent).toBe(M_COPY_FAILED)
   })
-  it('MT-F20-04 解答がない日・読み込みの失敗ともう一度', async () => {
+  it('MT-F26-04 解答がない日・読み込みの失敗ともう一度', async () => {
     api.apiGet.mockResolvedValueOnce({ ...SUMMARY, markdown: null, answerCount: 0 })
     mountSummaryPanel(el, { api, path: () => '/x' })
     await open()
@@ -82,7 +82,7 @@ describe('M-F20 学習サマリのアコーディオン', () => {
     await flush()
     expect(q('.app-md').textContent).toBe(MD)
   })
-  it('MT-F20-05 日付を選べる（今日より先は選べない）。閉じているときは開いたときに読み直す', async () => {
+  it('MT-F26-05 日付を選べる（今日より先は選べない）。閉じているときは開いたときに読み直す', async () => {
     const path = vi.fn((d) => `/me/summary?date=${d}`)
     mountSummaryPanel(el, { api, path, withDate: true, today: '2026-10-20' })
     const input = q('#summary-date')
@@ -101,7 +101,7 @@ describe('M-F20 学習サマリのアコーディオン', () => {
     input.dispatchEvent(new Event('change'))
     expect(api.apiGet).toHaveBeenCalledTimes(2)
   })
-  it('MT-F20-06 古い読み込みの結果で上書きしない', async () => {
+  it('MT-F26-06 古い読み込みの結果で上書きしない', async () => {
     let resolveFirst
     api.apiGet.mockImplementationOnce(() => new Promise((r) => { resolveFirst = r }))
     api.apiGet.mockImplementationOnce(async () => { throw new ApiError('INTERNAL_ERROR', 500) })
@@ -120,12 +120,12 @@ describe('M-F20 学習サマリのアコーディオン', () => {
     expect(q('.app-md')).toBeNull()
     expect(el.textContent).not.toContain('old')
   })
-  it('MT-F20-07 今日の日付は JST', () => {
+  it('MT-F26-07 今日の日付は JST', () => {
     expect(todayJst(new Date('2026-10-19T15:30:00Z'))).toBe('2026-10-20')
     expect(todayJst()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 })
-describe('M-F20 画面への組み込み', () => {
+describe('M-F25・M-F16 学習サマリの組み込み', () => {
   function setup(state) {
     const store = createStore({ user: { roles: ['learner'], nickname: 'たろう', partner: { persona: 'encourage', name: 'ミナ' } }, ...state })
     api.apiGet = vi.fn(async (p) => {
@@ -135,7 +135,7 @@ describe('M-F20 画面への組み込み', () => {
     })
     setContext({ api, getState: store.getState, setState: store.setState, go: vi.fn(), auth: { logout: vi.fn() }, config: {} })
   }
-  it('MT-F20-08 S-15 冒険のまとめ：冒険の学習サマリを出す（冒険IDがなければ出さない）', async () => {
+  it('MT-F25-04 S-15 冒険のまとめ：冒険の学習サマリを出す（冒険IDがなければ出さない）', async () => {
     const S = { answered: 5, correct: 4, explainCount: 0, explainAvgScore: null, expGained: 55, studySeconds: 492, totalStudySeconds: 7300, notice: null }
     setup({ summary: { ...S, adventureId: 'adv_1' } })
     await summaryPage.render(el)
@@ -148,7 +148,7 @@ describe('M-F20 画面への組み込み', () => {
     await summaryPage.render(el)
     expect(q('.app-summary')).toBeNull()
   })
-  it('MT-F20-09 S-08：学習記録の下に1日の学習サマリを出す', async () => {
+  it('MT-F16-06 S-08：学習記録の下に1日の学習サマリを出す', async () => {
     setup({})
     await profile.render(el)
     expect(q('[aria-labelledby="stats-h"] + .app-summary-mount .app-summary summary').textContent).toContain('1日の学習サマリ')
