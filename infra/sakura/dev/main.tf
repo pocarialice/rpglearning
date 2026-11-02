@@ -193,6 +193,29 @@ resource "sakuracloud_server" "app" {
   }
   depends_on = [sakuracloud_database.main]
 }
+# --- DNS の A レコード（2.2）。ゾーンは画面で作り、site_address のホスト名をサーバーの IP アドレスに向ける ---
+locals {
+  dns_host = split(".", var.site_address)[0]
+  dns_zone = join(".", slice(split(".", var.site_address), 1, length(split(".", var.site_address))))
+}
+data "sakuracloud_dns" "zone" {
+  count = var.site_address != "" ? 1 : 0
+  filter {
+    names = [local.dns_zone]
+  }
+}
+resource "sakuracloud_dns_record" "app" {
+  count  = var.site_address != "" ? 1 : 0
+  dns_id = data.sakuracloud_dns.zone[0].id
+  name   = local.dns_host
+  type   = "A"
+  value  = sakuracloud_server.app.ip_address
+  ttl    = 300
+}
+moved {
+  from = sakuracloud_dns_record.app
+  to   = sakuracloud_dns_record.app[0]
+}
 # --- シンプル監視（3.12）。通知はさくらのクラウドの会員のメールアドレスに届く ---
 resource "sakuracloud_simple_monitor" "ping" {
   target     = sakuracloud_server.app.ip_address
