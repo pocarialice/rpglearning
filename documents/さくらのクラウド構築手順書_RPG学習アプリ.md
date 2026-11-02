@@ -113,7 +113,7 @@ flowchart TD
 
 | リソース | dev | prod |
 | --- | --- | --- |
-| サーバー | 2コア・4GB・ディスク40GB | 2コア・4GB・ディスク40GB（利用者が増えたら4コア・8GB） |
+| サーバー | 1コア・2GB・ディスク40GB | 2コア・4GB・ディスク40GB（利用者が増えたら4コア・8GB） |
 | スイッチ | 1 | 1 |
 | データベースアプライアンス | 10GB プラン（1コア・2GB） | 30GB プラン（2コア・4GB） |
 | オブジェクトストレージ | バケット3つ | バケット3つ |
@@ -362,7 +362,7 @@ docker compose exec api node -e "import('./functions/shared/mail/smtp.js').then(
 
 | 項目 | 値 |
 | --- | --- |
-| プラン | 2コア・4GB |
+| プラン | 1コア・2GB（prod は2コア・4GB） |
 | ディスク | 40GB（SSD）、アーカイブ「Ubuntu Server 24.04 LTS」 |
 | NIC 1 | インターネット（共有セグメント）、パケットフィルタ `rpg-dev-pf` |
 | NIC 2 | スイッチ `rpg-dev-sw`（追加の NIC。作成後に「NIC」タブで足してもよい） |

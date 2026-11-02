@@ -168,8 +168,8 @@ resource "sakuracloud_disk" "app" {
 }
 resource "sakuracloud_server" "app" {
   name   = "${local.prefix}-app"
-  core   = 2
-  memory = 4
+  core   = 1
+  memory = 2
   disks  = [sakuracloud_disk.app.id]
   tags   = local.tags
   network_interface {
