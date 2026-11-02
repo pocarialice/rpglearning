@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderLogin, passwordOk, M_LOGIN_FAILED, M_FORGOT_SENT, M_RESET_DONE, M_RESET_INVALID, M_NETWORK } from '../../../../web/js/pages/login.js'
+import { renderLogin, passwordOk, signupOk, M_LOGIN_FAILED, M_FORGOT_SENT, M_RESET_DONE, M_RESET_INVALID, M_NETWORK, M_SIGNUP_SENT, M_SIGNUP_INVALID, M_SIGNUP_VERIFYING } from '../../../../web/js/pages/login.js'
 import { AuthError } from '../../../../web/js/core/auth.js'
 let root, auth, win
-function setup(hash = '') {
+function setup(hash = '', patch = () => {}) {
   root = document.createElement('div')
   document.body.replaceChildren(root)
-  auth = { signIn: vi.fn(async () => ({ done: true })), completeNewPassword: vi.fn(async () => {}), forgot: vi.fn(async () => ({})), resetPassword: vi.fn(async () => null) }
+  auth = { signIn: vi.fn(async () => ({ done: true })), completeNewPassword: vi.fn(async () => {}), forgot: vi.fn(async () => ({})), resetPassword: vi.fn(async () => null),
+    signUp: vi.fn(async () => ({ status: 'accepted' })), verifySignup: vi.fn(async () => {}) }
   win = { location: { hash, pathname: '/', reload: vi.fn() }, history: { replaceState: vi.fn() } }
+  patch(auth)
   renderLogin(root, { auth, win })
 }
 const q = (sel) => root.querySelector(sel)
@@ -132,5 +134,76 @@ describe('M-F23 S-01 ログイン', () => {
     expect(passwordOk('guild2026')).toBe(false)
     expect(passwordOk('GUILD2026')).toBe(false)
     expect(passwordOk('Guildguild')).toBe(false)
+  })
+  it('MT-F23-09 ログイン画面からアカウントを作る（A-36）', async () => {
+    click('[data-action="signup"]')
+    expect(q('h1').textContent).toBe('アカウントを作る')
+    expect(q('#signup-email').getAttribute('autocomplete')).toBe('email')
+    expect(q('#signup-password').getAttribute('autocomplete')).toBe('new-password')
+    const submit = q('[data-action="signup-send"]')
+    expect(submit.disabled).toBe(true)
+    type('#signup-name', ' 山田 花子 ')
+    type('#signup-email', 'hana@x.jp')
+    type('#signup-password', 'Guild2026')
+    expect(submit.disabled).toBe(true)
+    type('#signup-password2', 'Guild2027')
+    expect(submit.disabled).toBe(true)
+    type('#signup-password2', 'Guild2026')
+    expect(submit.disabled).toBe(false)
+    click('[data-action="signup-send"]')
+    await flush()
+    expect(auth.signUp).toHaveBeenCalledWith('hana@x.jp', '山田 花子', 'Guild2026')
+    expect(q('h1').textContent).toBe('RPG学習アプリ')
+    expect(q('.app-notice').textContent).toBe(M_SIGNUP_SENT)
+  })
+  it('MT-F23-10 アカウント作成の失敗と戻る', async () => {
+    click('[data-action="signup"]')
+    type('#signup-name', '花子')
+    type('#signup-email', 'hana@x.jp')
+    type('#signup-password', 'Guild2026')
+    type('#signup-password2', 'Guild2026')
+    auth.signUp.mockRejectedValueOnce(new AuthError('VALIDATION_ERROR', 400, '入力内容に誤りがあります'))
+    click('[data-action="signup-send"]')
+    await flush()
+    expect(errorText()).toBe('入力内容に誤りがあります')
+    expect(q('[data-action="signup-send"]').disabled).toBe(false)
+    auth.signUp.mockRejectedValueOnce(new AuthError('NETWORK', 0))
+    click('[data-action="signup-send"]')
+    await flush()
+    expect(errorText()).toBe(M_NETWORK)
+    click('[data-action="back"]')
+    expect(q('#login-email')).not.toBeNull()
+  })
+  it('MT-F23-11 確認リンク（A-37）で登録してログインする', async () => {
+    let done
+    setup('#/signup?token=t%2B1', (a) => a.verifySignup.mockImplementationOnce(() => new Promise((r) => { done = r })))
+    expect(q('h1').textContent).toBe('アカウントの登録')
+    expect(q('[role="status"]').textContent).toBe(M_SIGNUP_VERIFYING)
+    expect(auth.verifySignup).toHaveBeenCalledWith('t+1')
+    done()
+    await flush()
+    expect(win.history.replaceState).toHaveBeenCalledWith(null, '', '/')
+    expect(win.location.reload).toHaveBeenCalledTimes(1)
+  })
+  it('MT-F23-12 期限切れの確認リンク・登録済み', async () => {
+    setup('#/signup?token=old', (a) => a.verifySignup.mockRejectedValueOnce(new AuthError('VALIDATION_ERROR', 400, 'x')))
+    await flush()
+    expect(errorText()).toBe(M_SIGNUP_INVALID)
+    expect(win.location.reload).not.toHaveBeenCalled()
+    click('[data-action="back"]')
+    expect(win.history.replaceState).toHaveBeenCalledWith(null, '', '/')
+    expect(q('#login-email')).not.toBeNull()
+    setup('#/signup?token=t', (a) => a.verifySignup.mockRejectedValueOnce(new AuthError('CONFLICT', 409, 'このメールアドレスはすでに登録されています。ログイン画面からログインしてください')))
+    await flush()
+    expect(errorText()).toBe('このメールアドレスはすでに登録されています。ログイン画面からログインしてください')
+  })
+  it('MT-F23-13 アカウント作成の入力の決まり', () => {
+    const v = { fullName: '花子', email: 'a@x.jp', password: 'Guild2026', password2: 'Guild2026' }
+    expect(signupOk(v)).toBe(true)
+    expect(signupOk({ ...v, fullName: ' ' })).toBe(false)
+    expect(signupOk({ ...v, fullName: 'あ'.repeat(51) })).toBe(false)
+    expect(signupOk({ ...v, email: 'a@x' })).toBe(false)
+    expect(signupOk({ ...v, password: 'guild2026', password2: 'guild2026' })).toBe(false)
+    expect(signupOk({ ...v, password2: 'Guild2027' })).toBe(false)
   })
 })

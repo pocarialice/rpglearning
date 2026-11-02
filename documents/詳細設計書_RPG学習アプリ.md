@@ -3,9 +3,9 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.2版（ドラフト：第1〜12章、HTML版あり。AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる）      |
-| 作成日    | 2026-10-20（第1.2版：2026-10-27）                                                 |
-| 入力文書   | 要件定義書 第1.1版（ドラフト）、外部設計書 第1.1版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は `aws/documents/` に退避                 |
+| 版数     | 第1.3版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加）      |
+| 作成日    | 2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02）                                                 |
+| 入力文書   | 要件定義書 第1.2版（ドラフト）、外部設計書 第1.2版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は `aws/documents/` に退避                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
 
@@ -137,7 +137,8 @@ rpglearning/
 │  ├─ V002__seed_masters.sql      # partners・quest_defs・badge_defs
 │  ├─ V003__auth_jobs.sql         # ログイン・ジョブキュー・定期処理の記録（8.4.1）
 │  ├─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
-│  └─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
+│  ├─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
+│  └─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -351,7 +352,7 @@ rpglearning/
 | M-A02 | `ai/json-guard.js`            | 出力JSONの取り出しと検証                         | `extractJson(text)`、`validateShape(obj, schema)`              |
 | M-A03 | `ai/persona.js`               | パートナーの性格                               | `PERSONAS`、`personaInstruction(persona, name)`               |
 | M-A04 | `ai/prompts/*.js`             | 指示文の組み立て                               | `buildGradingPrompt`、`buildExtractionPrompt`、`buildCommentPrompt`、`buildDailyMessagePrompt`、`buildSummaryCommentPrompt`・`fallbackSummaryComment` |
-| M-M01 | `mail/smtp.js`・`templates.js`  | メール                                    | `sendMail({to, subject, text})`、`setTransport`、`notifyMail(item)`、`deletionMail(user)`、`inviteMail(…)`、`resetMail(…)` |
+| M-M01 | `mail/smtp.js`・`templates.js`  | メール                                    | `sendMail({to, subject, text})`、`setTransport`、`notifyMail(item)`、`deletionMail(user)`、`inviteMail(…)`、`resetMail(…)`、`signupMail(…)`、`signupExistsMail(…)` |
 | M-O01 | `storage/object-storage.js` | オブジェクトストレージ | `putObject`、`getBytes`、`getText`、`getStream`、`deleteObject`、`presignPut` |
 | M-K01 | `auth/password.js` | パスワード | `hashPassword`、`verifyPassword`、`passwordProblems`、`generateTempPassword` |
 | M-K02 | `auth/token.js` | トークン | `signToken`、`verifyToken`、`newOpaqueToken`、`sha256` |
@@ -433,7 +434,7 @@ rpglearning/
 | `audit.js`      | `write(actorId, action, target, detail)`                                                              |
 | `notify.js`     | `get`、`put`、`listForSlotBuild(today)`                                                                 |
 | `partners.js` | `get`、`list`、`setImage`（キャラクター画像のキー。null で外す） |
-| `auth.js`（さくら版） | `findByEmail`（大文字小文字を区別しない）、`findById`、`recordFailure`（5回で15分ロック）、`recordSuccess`、`setPassword`（仮パスワードは期限つき）、`tempPasswordExpired`、`saveRefreshToken`、`consumeRefreshToken`（使い捨て）、`revokeRefreshToken`、`revokeAllForUser`、`recentResetExists`、`saveReset`、`consumeReset`、`deleteExpired` |
+| `auth.js`（さくら版） | `findByEmail`（大文字小文字を区別しない）、`findById`、`recordFailure`（5回で15分ロック）、`recordSuccess`、`setPassword`（仮パスワードは期限つき）、`tempPasswordExpired`、`saveRefreshToken`、`consumeRefreshToken`（使い捨て）、`revokeRefreshToken`、`revokeAllForUser`、`recentResetExists`、`saveReset`、`consumeReset`、`recentSignupExists`（同じメールアドレスで60秒以内）、`saveSignup`、`consumeSignup`（期限内・未使用・パスワードありのときだけ使用済みにして中身を返す）、`deleteExpired`（トークン・再設定リンク・確認待ち） |
 | `jobs.js`（さくら版） | `enqueue(kind, payload)`、`claimNext(kinds, lockSeconds)`、`complete`、`retry(jobId, error, delaySeconds)`、`fail`、`countFailedSince`、`deleteFinishedBefore` |
 | `schedules.js`（さくら版） | `claim(name, slot)`、`finish(name, slot, result)`、`release(name, slot)` |
 
@@ -591,7 +592,7 @@ AWS 版の「Lambda の非同期呼び出し（採点）」「S3 のイベント
 | --- | --- |
 | 送信 | nodemailer の SMTP。`SMTP_HOST`・`SMTP_PORT`（既定587）・`SMTP_SECURE`（465 のとき true）・`SMTP_USER`・`SMTP_PASS`。送信元は `MAIL_FROM`。テキストメールのみ |
 | テスト | `setTransport(t)` で送り先を差し替える |
-| 本文 | 9.2 のとおり。さくら版で `inviteMail`（招待・再招待）と `resetMail`（パスワード再設定）を追加 |
+| 本文 | 9.2 のとおり。さくら版で `inviteMail`（招待・再招待）と `resetMail`（パスワード再設定）を、第1.3版で `signupMail`（アカウント作成の確認）と `signupExistsMail`（登録済みの案内）を追加 |
 | 監視のお知らせ | `util/alert.js` の `alert(key, subject, lines)`。`ALERT_EMAIL` がなければ送らない。同じ key は1時間に1通。送れなくても例外は投げない（10.4） |
 
 ### 3.9 ファイル（`storage/object-storage.js`）
@@ -617,6 +618,7 @@ AWS 版の Cognito の代わり。外部設計書 3.7 S-01・8.1。
 | リフレッシュトークン | 32バイトの乱数（base64url）。DB には SHA-256 だけを保存（7日）。使うと無効にして新しいものを出す（使い回しを防ぐ） |
 | ロック | ログインに5回続けて失敗したら15分（`locked_until`）。成功で数え直す |
 | 再設定リンク | 32バイトの乱数。DB には SHA-256 だけを保存（60分・1回だけ）。同じ利用者には60秒に1通まで。登録の有無に関わらず同じ応答を返す |
+| アカウント作成の確認リンク | 32バイトの乱数。DB（`signup_requests`）には SHA-256 と、名前・メールアドレス・パスワードのハッシュを保存（24時間・1回だけ）。同じメールアドレスへは60秒に1通まで。登録済みのメールアドレスでも同じ応答を返し、パスワードのハッシュは置かずに「すでに登録されています」の案内だけを送る。リンクを開いたら `learner` のロールで `users` を作る（状態は `invited`。最初の API で `active`） |
 | 利用者の sub | 登録時に UUID を振る（`users.auth_sub`）。メールアドレスを変えてもトークンの持ち主が変わらないようにするため |
 
 ## 4. 処理の入口設計（コンテナ）
@@ -699,7 +701,7 @@ flowchart TD
 | A-21b | `POST /api/admin/users/{id}/reinvite`     | `adminUsers.reinvite`          | system_admin   |
 | A-21 | `GET・POST /api/admin/courses`、`PUT /api/admin/courses/{id}` | `adminCourses.list`・`.create`・`.update` | system_admin   |
 | A-22 | `GET・PUT・DELETE /api/admin/partners/{persona}/image` | `adminPartners.get`・`.put`・`.delete` | system_admin   |
-| A-30〜A-35 | `POST /api/auth/login`・`new-password`・`refresh`・`logout`・`forgot`・`reset` | `auth.login`・`.newPassword`・`.refresh`・`.logout`・`.forgot`・`.reset` | 不要（ログイン前に呼ぶ） |
+| A-30〜A-37 | `POST /api/auth/login`・`new-password`・`refresh`・`logout`・`forgot`・`reset`・`signup`・`signup/verify` | `auth.login`・`.newPassword`・`.refresh`・`.logout`・`.forgot`・`.reset`・`.signup`・`.signupVerify` | 不要（ログイン前に呼ぶ） |
 
 - `course_admin` のルートは `system_admin` も使える（`requireRole(auth, 'course_admin', 'system_admin')`）
 - パスの `{id}` は router が取り出し、ハンドラの中で `decodeId` する
@@ -793,7 +795,7 @@ flowchart TD
 | 1 | `close-ranking.js`      | 月曜だけ：前週（今日−7日〜昨日）の `exp_logs` をコース・利用者ごとに合計し、`rankRows` で順位をつけて `weekly_rankings` に保存。論理削除中の利用者は除く | `INSERT ... ON CONFLICT (course_id, week_start, user_id) DO NOTHING` |
 | 2 | `update-streak.js`      | 昨日 `last_active_on = 昨日` の利用者は `streak_days + 1`、それ以外は0。継続バッジを判定して付与                                         | `streak_checked_on = 今日` の利用者は飛ばす                              |
 | 3 | `assign-quests.js`      | 有効な学習者ごとに、0:00時点の復習対象数（全コース）を数え、`pickDailyQuests` で3つ選んで `user_quests` に入れる                                     | `UNIQUE (user_id, quest_on, quest_code)`。今日の行がある利用者は飛ばす          |
-| 4 | `purge-users.js`        | `delete_scheduled_on <= 今日` の利用者を `DELETE FROM users` で消す（関連テーブル・トークン・再設定リンクはCASCADE）。操作記録 `user.purge`（操作者は NULL）を残す。あわせて期限の切れたトークン・再設定リンクを消す（`auth.deleteExpired`）        | 条件付きDELETEなので何度でも同じ                 |
+| 4 | `purge-users.js`        | `delete_scheduled_on <= 今日` の利用者を `DELETE FROM users` で消す（関連テーブル・トークン・再設定リンクはCASCADE）。操作記録 `user.purge`（操作者は NULL）を残す。あわせて期限の切れたトークン・再設定リンク・アカウント作成の確認待ちを消す（`auth.deleteExpired`）        | 条件付きDELETEなので何度でも同じ                 |
 | 5 | `cleanup-gradings.js`   | 作成から30日を過ぎた `grading_jobs` と、終わってから30日を過ぎた `jobs` を削除                                                                            | 条件付きDELETEなので何度でも同じ                                          |
 | 6 | `build-notify.js`       | メール通知オンの有効な学習者について、送信時刻ごとに送信リストを作り、オブジェクトストレージ `notify/{今日}/{HHMM}.json` に置く                                             | 同じキーに上書き                                                      |
 
@@ -1076,7 +1078,7 @@ AWS 版の「S3 のイベント通知 → SQS」の代わり。画面が署名�
 
 - キーに日時を入れて毎回名前を変えるため、画面・Service Worker のキャッシュを消す必要はない。画像は api コンテナの `/partners/*` が配信する（4.6）
 
-### 5.4 ログインAPI（A-30〜A-35）
+### 5.4 ログインAPI（A-30〜A-37）
 
 トークンなしで呼べる（4.2.2）。応答の形は外部設計書 5.1。
 
@@ -1088,6 +1090,8 @@ AWS 版の「S3 のイベント通知 → SQS」の代わり。画面が署名�
 | A-33 `POST /api/auth/logout` | `{ refreshToken }` | 無効にして `204`。トークンがなくても `204` |
 | A-34 `POST /api/auth/forgot` | `{ email }` | 登録があり、削除予定でなく、パスワードを決めた利用者なら、再設定リンク（60分・1回）をメールで送る（同じ人へは60秒に1通）。どの場合も `202 { status: 'accepted' }` |
 | A-35 `POST /api/auth/reset` | `{ token, newPassword }` | パスワードの決まりを確かめ、リンクを使用済みにして保存し、ロックを解いて、その人のリフレッシュトークンをすべて無効にする → `204`。リンクが使えない・利用者が削除予定 → `400`（`details: [{ field: 'token', code: 'INVALID' }]`） |
+| A-36 `POST /api/auth/signup` | `{ email, fullName, password }` | メールアドレス（254文字まで）・名前（前後の空白を除いて1〜50文字）・パスワードの決まりを確かめる（だめなら `400`、`details` の `field` は `email`・`fullName`・`password`）。登録の有無に関わらずパスワードのハッシュを計算して応答時間をそろえる。同じメールアドレスで60秒以内に受け付けていれば何もしない。未登録なら確認待ち（24時間）を保存して確認メール（`signupMail`）、登録済み（削除予定を含む）ならパスワードのハッシュなしで記録だけして案内（`signupExistsMail`）を送る。メールを送れなくても `202`（ログに `auth.signup_mail_failed`）。どの場合も `202 { status: 'accepted' }` |
+| A-37 `POST /api/auth/signup/verify` | `{ token }` | 確認待ちを使用済みにして中身を取り出す（使えない → `400`、`details: [{ field: 'token', code: 'INVALID' }]`）。1つのトランザクションで `users.create`（ロール `learner`、通知設定も作る）・`auth.setPassword`（`mustChange: false`）・操作記録 `user.signup`（操作者は本人）。メールアドレスが先に登録されていたら（一意制約 `23505`）`409 CONFLICT`。成功したら A-30 と同じトークンの組を `201` で返す |
 
 ---
 
@@ -1111,6 +1115,12 @@ sequenceDiagram
       API-->>L: challenge・session
       L->>API: POST /api/auth/new-password（A-31）
     end
+    opt アカウントを作る（A-36）
+      L->>API: POST /api/auth/signup
+      API-->>B: 確認メール（#/signup?token=…）
+      B->>L: リンクを開く
+      L->>API: POST /api/auth/signup/verify（A-37）
+    end
     API-->>AU: IDトークン・リフレッシュトークン
     AU->>B: 読み込み直す
   end
@@ -1121,8 +1131,8 @@ sequenceDiagram
 
 | モジュール               | 公開関数                                                   | 処理                                                                                                    |
 | ------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `core/auth.js`      | `ensureLogin`、`signIn`、`completeNewPassword`、`refresh`、`login`、`getIdToken`、`logout`、`forgot`、`resetPassword` | A-30〜A-35 を呼ぶ。トークンはメモリと `sessionStorage`（キー `rpg.auth`）だけに置く。期限の5分前に `refresh`（A-32）。失敗したら消して読み込み直し、ログイン画面へ。`logout` は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする） |
-| `pages/login.js`    | `renderLogin`、`renderSignIn`                           | S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（`#/reset?token=…`）の4つの表示を切り替える。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED） |
+| `core/auth.js`      | `ensureLogin`、`signIn`、`completeNewPassword`、`refresh`、`login`、`getIdToken`、`logout`、`forgot`、`resetPassword`、`signUp`、`verifySignup` | A-30〜A-37 を呼ぶ（`verifySignup` は返ってきたトークンを保存する）。トークンはメモリと `sessionStorage`（キー `rpg.auth`）だけに置く。期限の5分前に `refresh`（A-32）。失敗したら消して読み込み直し、ログイン画面へ。`logout` は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする） |
+| `pages/login.js`    | `renderLogin`、`renderSignIn`、`signupOk`                           | S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（`#/reset?token=…`）・アカウントを作る・アカウントの登録（`#/signup?token=…`。開いたらすぐ A-37 を呼び、できたら URL を `/` に戻して読み込み直す）の6つの表示を切り替える。`main.js` は `#/reset?`・`#/signup?` のときログイン中でもこの画面を出す。アカウントを作る表示は、名前・メールアドレスの形・パスワードの決まり・2回の一致がそろうまでボタンを押せない（`signupOk`）。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED） |
 | `core/api.js`       | `apiGet`、`apiPost`、`apiPut`、`apiDelete`                 | `/api` に `Authorization: Bearer` を付ける。`503 DB_RESUMING` は2・4・8秒あけて最大3回やり直し、その間 M-01 を表示。`401` は1回だけ `refresh` してやり直す。そのほかは `ApiError(code, status)` を投げる |
 | `core/router.js`    | `register(path, page, roles)`、`start`、`go(path)`        | `#/home` などのハッシュで画面モジュールを選び `render(root, params)` を呼ぶ。知らないハッシュは `#/home` にする。ロールが足りなければ M-11。初回の流れ（ニックネーム→コース→パートナー）が終わるまでほかの画面へ行かせない（管理局 `/admin/…` は除く。管理者は学習者の初回の流れを済ませなくても管理の作業ができる） |
 | `core/store.js`     | `getState`、`setState`、`subscribe`                      | 利用者・現在のコース・冒険ID などを持つ                                                                              |
@@ -1415,6 +1425,7 @@ erDiagram
 | T-26 | `password_resets`   | パスワード再設定   | `token_hash`                        | 数百                | 追加（V003、ログイン） |
 | T-27 | `jobs`              | ジョブキュー     | `job_id`                            | 数万（30日で削除）        | 追加（V003、SQS の代わり） |
 | T-28 | `schedule_runs`     | 定期処理の実行記録  | `name, slot`                        | 年に約1万            | 追加（V003、EventBridge の代わり） |
+| T-29 | `signup_requests` | アカウント作成の確認待ち | `token_hash` | 数百（期限の1日後に削除） | 追加（V006、アカウント作成） |
 
 ### 8.4 CREATE TABLE文（`db/migrations/V001__create_tables.sql`）
 
@@ -1875,6 +1886,37 @@ WHERE u.user_id = s.user_id;
 INSERT INTO schema_migrations (version, description) VALUES ('V005', 'study time') ON CONFLICT DO NOTHING;
 ```
 
+#### 8.4.4 アカウント作成の確認待ち（`db/migrations/V006__signup.sql`）
+
+確認リンクを開くまで `users` を作らないため、`users` への外部キーは持たない。操作記録の種類に `user.signup` を足す。
+
+```sql
+-- =========================================================
+-- V006__signup.sql  利用者が自分でアカウントを作る（詳細設計書 5.4 A-36・A-37）
+-- 入力を確認待ちとして置き、メールのリンクを開いたら users を作る
+-- =========================================================
+-- T-29 アカウント作成の確認待ち（メールのリンクの値の SHA-256。1回だけ使える）
+CREATE TABLE IF NOT EXISTS signup_requests (
+  token_hash     text        PRIMARY KEY,
+  email          text        NOT NULL CHECK (char_length(email) <= 254),
+  full_name      text        NOT NULL CHECK (char_length(full_name) BETWEEN 1 AND 50),
+  password_hash  text,                                   -- scrypt。登録済みのメールアドレスへの案内のときは NULL
+  expires_at     timestamptz NOT NULL,                   -- 発行から24時間
+  used_at        timestamptz,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS signup_requests_email_idx ON signup_requests (lower(email), created_at DESC);
+-- T-23 操作記録（自分でのアカウント作成を追加）
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'question.update', 'question.publish', 'question.delete',
+  'user.create', 'user.role', 'user.delete', 'user.restore', 'user.purge', 'user.reinvite', 'user.signup',
+  'course.create', 'course.update', 'course.assign',
+  'partner.image', 'dashboard.csv'));
+
+INSERT INTO schema_migrations (version, description) VALUES ('V006', 'signup') ON CONFLICT DO NOTHING;
+```
+
 ### 8.5 初期データ（`db/migrations/V002__seed_masters.sql`）
 
 ```sql
@@ -2038,7 +2080,7 @@ ORDER BY a.answered_at, a.answer_id;
 | 脅威・要件               | 対策                                                                                         | 実装箇所                              |
 | ------------------- | ------------------------------------------------------------------------------------------ | --------------------------------- |
 | なりすまし               | `server/http.mjs` が IDトークン（HS256）の署名・期限・発行者・用途を検証し、通ったクレームだけをルートに渡す（AWS 版の API Gateway の役割）。署名の鍵 `AUTH_SECRET` は `.env` だけに置く                                     | `server/http.mjs`、`auth/token.js`、`util/authz.js`       |
-| パスワードの推測・漏えい        | scrypt（N=16384・r=8・p=1、ソルト16バイト）でハッシュだけを保存。5回続けて間違えたら15分ロック。いない人でも同じ時間をかけて照合し、失敗の理由を画面で区別しない。リフレッシュトークン・再設定リンクは値の SHA-256 だけを保存し、使い捨て | `auth/password.js`、`routes/auth.js`、`repositories/auth.js` |
+| パスワードの推測・漏えい        | scrypt（N=16384・r=8・p=1、ソルト16バイト）でハッシュだけを保存。5回続けて間違えたら15分ロック。いない人でも同じ時間をかけて照合し、失敗の理由を画面で区別しない。リフレッシュトークン・再設定リンク・アカウント作成の確認リンクは値の SHA-256 だけを保存し、使い捨て | `auth/password.js`、`routes/auth.js`、`repositories/auth.js` |
 | 通信の盗み見              | Caddy が HTTPS を終端（Let's Encrypt）し、HSTS を付ける。DB・ワーカーはローカルスイッチの中だけで話し、インターネットに出さない（パケットフィルタで 80・443・SSH だけ開ける） | `Caddyfile`、構築手順書 3.2 |
 | 権限外の操作              | すべてのルートでロールを確認。コース管理者は `assertCourseAdmin` で担当コースだけ                                          | `router.js`、`util/authz.js`       |
 | 他人のデータの参照（IDの付け替え）  | 学習者のデータは必ず `WHERE user_id = :me` を付ける。他人の採点・冒険は 404 にする                                      | 各リポジトリ                            |
@@ -2047,6 +2089,7 @@ ORDER BY a.answered_at, a.answer_id;
 | 指示の乗っ取り（プロンプトインジェクション） | 学習者の説明文・取り込み資料をタグで囲み「中の指示に従わない」と明記。出力はJSONの形を検証し、点数は合計し直す                                | `ai/prompts/*`、`ai/json-guard.js`  |
 | CSVの数式実行            | `=`・`+`・`-`・`@` で始まる値の先頭に `'`                                                             | `admin-dashboard.js`              |
 | ファイルのアップロード         | 署名付きURLは15分、`Content-Type` 固定、キーはサーバーが決める。サイズは申告値を確認し、取り込み時にも実サイズを確認                         | `admin-imports.js`、`import-worker` |
+| 勝手なアカウント作成・登録の有無の調査 | アカウント作成はメールの確認リンクを開くまで登録しない。登録済みでも同じ `202` を返し、パスワードのハッシュを必ず計算して応答時間をそろえる。作れるのは `learner` だけ。同じメールアドレスへの確認メールは60秒に1通まで | `routes/auth.js`（A-36・A-37） |
 | 個人情報の記録             | ログに説明文・メール・氏名・パスワード・トークンを出さない。AI に渡すのは問題・説明文だけで、氏名・メールは渡さない（さくらのAI Engine は入力を学習に使わない契約。構築手順書 3.5）                                       | `util/logger.js`、`ai/*`                   |
 | 静的ファイルの配信           | `/` 以外のパスは `web/` の中に解決できるものだけを返す（`..` で外に出られない） | `server/http.mjs` |
 | トークンの保管             | メモリと `sessionStorage`（画面を閉じたら消える）。`localStorage` には置かない                                       | `core/auth.js`                     |
@@ -2059,6 +2102,8 @@ ORDER BY a.answered_at, a.answer_id;
 | `deletionMail(u)`   | 【RPG学習アプリ】アカウント停止のお知らせ       | 30日後（`delete_scheduled_on`）に学習履歴を含めて完全に削除されること、問い合わせ先                                       |
 | `inviteMail(x)`     | 【RPG学習アプリ】ギルドへの招待       | ログインの URL `APP_URL/`、メールアドレス、仮パスワード、有効期限（7日）、初回ログインで新しいパスワードに変えること（AWS 版では Cognito が送っていた） |
 | `resetMail(x)`      | 【RPG学習アプリ】パスワードの再設定       | 再設定の URL `APP_URL/#/reset?token=…`、有効期限（60分・1回だけ）、心当たりがなければ何もしなくてよいこと |
+| `signupMail(x)` | 【RPG学習アプリ】アカウント作成の確認 | 「{fullName}さん」、確認の URL `APP_URL/#/signup?token=…`、有効期限（24時間・1回だけ）、心当たりがなければ捨ててよいこと、問い合わせ先 |
+| `signupExistsMail(x)` | 【RPG学習アプリ】アカウント作成の受付 | すでに登録されていること、ログインの URL `APP_URL/`、「パスワードを忘れたとき」の案内、問い合わせ先（リンクは入れない） |
 
 - テキストメールのみ（HTMLメールにしない）。`APP_ENV` が `prod` 以外なら件名の先頭に `[{APP_ENV}]`（通常は `[dev]`）を付ける
 - 送信は `mail/smtp.js`（M-O01、nodemailer）。送信元は `MAIL_FROM`。SPF・DKIM を送信元のドメインに設定する（構築手順書 3.6）
@@ -2270,3 +2315,4 @@ flowchart LR
 | 12 | 画像の取り込み                         | さくらのAI Engine では使えない（7章）。Bedrock に切り替えたら使える。それまでは S-11 で画像を選ぶと「失敗」になる | Bedrock の切り替え時 |
 | 13 | 古い `waiting` の取り込みの掃除          | A-13b が呼ばれなかった取り込みは `waiting` のまま残る。日次処理で1日より古いものを `failed` にするかを検討 | Phase 2 |
 | 14 | さくらのクラウドの料金                   | サーバー・DB・オブジェクトストレージの月額は構築時に料金表で確認し、外部設計書のコストの表に書く | dev 構築時 |
+| 15 | アカウント作成の範囲とボット対策 | メールアドレスの確認だけで誰でも学習者として作れる（外部設計書 10 No.14）。社内のドメインに絞るときは A-36 にドメインの許可リスト（環境変数）を足す。同じメールアドレスへの連打は60秒で止めるが、別々のメールアドレスを大量に使われたときの IP ごとの制限はない（必要なら Caddy の rate limit を足す） | パイロット開始前 |

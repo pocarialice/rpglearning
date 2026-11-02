@@ -265,3 +265,4 @@ html { touch-action: manipulation; }
 .app-summary-date { display: flex; flex-direction: column; gap: var(--space-1); }
 .app-md { margin: 0; max-height: 280px; overflow: auto; white-space: pre-wrap; word-break: break-word; background: var(--parchment-sunk); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: var(--space-3); font-size: 13px; line-height: 20px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .app-copy-status:empty { display: none; }
+.app-login-divider { margin: var(--space-4) 0 0; text-align: center; color: var(--ink-muted); }

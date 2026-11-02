@@ -399,9 +399,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第1.8版（ドラフト：第1〜6章、HTML版あり。IDのなかった Ctrl+Enter・ピンチでの拡大を止めるテストを、MT-F27（<code>core/keys.js</code>）・MT-F28（<code>core/zoom.js</code>）として載せる）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02）</b></li>
-      <li>入力文書<b>詳細設計書 第1.2版、外部設計書 第1.1版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
+      <li>版数<b>第1.9版（ドラフト：第1〜6章、HTML版あり。アカウント作成（A-36・A-37、S-01）のテスト14件を MT-H15-13〜18・MT-D04-10・MT-F01-11・MT-F23-09〜13・MT-M01-09 として載せる）</b></li>
+      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02）</b></li>
+      <li>入力文書<b>詳細設計書 第1.3版、外部設計書 第1.2版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
   </div>
@@ -429,7 +429,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <div class="lv"><b>受け入れ確認</b>dev・コース管理者</div>
   </div>
   <div class="vis-grid tiles4">
-    <div class="tile strong"><p class="tile-num">624</p><p class="tile-cap">テストケース</p></div>
+    <div class="tile strong"><p class="tile-num">732</p><p class="tile-cap">テストケース</p></div>
     <div class="tile"><p class="tile-num">73</p><p class="tile-cap">対象モジュール（ID単位）</p></div>
     <div class="tile"><p class="tile-num sm">Vitest</p><p class="tile-cap">リリースごとに全件実行</p></div>
     <div class="tile"><p class="tile-num sm">MT-G01-04</p><p class="tile-cap">ID＝モジュール＋連番</p></div>
@@ -2118,6 +2118,13 @@ describe('M-D01 client', () =&gt; {
 <td>直近60秒の発行の有無、期限60分を保存、使うと利用者ID／null、掃除した件数</td>
 <td>状</td>
 </tr>
+<tr>
+<td>MT-D04-10</td>
+<td>アカウント作成の確認待ち</td>
+<td><code>recentSignupExists(email, 60)</code>（あり／なし）・<code>saveSignup</code>（パスワードのハッシュなし）・<code>consumeSignup</code>（有効／使えない）</td>
+<td>直近60秒の受付の有無（メールアドレスは大文字小文字を区別しない）、24時間を保存、使うと <code>{email, fullName, passwordHash}</code>／null。期限内・未使用・パスワードありだけを使う</td>
+<td>状</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-D05 <code>db/migrate.js</code></h4>
@@ -2136,7 +2143,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-D05-01</td>
 <td>ファイルの並べ方</td>
 <td>テスト用のフォルダ（<code>V002</code>・<code>V001</code>・<code>.down.sql</code>・ほかのファイル）、リポジトリの <code>db/migrations</code></td>
-<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V005</code></td>
+<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V006</code></td>
 <td>同</td>
 </tr>
 <tr>
@@ -3268,6 +3275,13 @@ describe('M-D01 client', () =&gt; {
 <td>再設定メール</td>
 <td><code>resetMail({email, token:'a+b/c', validMinutes:60})</code></td>
 <td>件名 <code>【RPG学習アプリ】パスワードの再設定</code>。URL は <code>#/reset?token=a%2Bb%2Fc</code>、60分以内、問い合わせ先</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-M01-09</td>
+<td>アカウント作成のメール</td>
+<td><code>signupMail({fullName:'山田 花子', token:'a+b/c', validHours:24})</code>・<code>signupExistsMail</code></td>
+<td>件名 <code>【RPG学習アプリ】アカウント作成の確認</code>、「山田 花子さん」、URL は <code>#/signup?token=a%2Bb%2Fc</code>、期限は24時間／件名 <code>【RPG学習アプリ】アカウント作成の受付</code>、ログインURL、問い合わせ先</td>
 <td>同</td>
 </tr>
 </tbody>
@@ -4473,7 +4487,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H15 <code>routes/auth.js</code>（A-30〜A-35）</h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H15 <code>routes/auth.js</code>（A-30〜A-37）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -4567,6 +4581,48 @@ describe('M-D01 client', () =&gt; {
 <td>再設定を受け付けない</td>
 <td>弱いパスワード／使用済みのリンク／token なし／利用者が削除予定</td>
 <td>400（リンクは <code>details:[{field:'token', code:'INVALID'}]</code>）。保存しない</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H15-13</td>
+<td>アカウント作成の受付（A-36）</td>
+<td>前後に空白のあるメールアドレス・名前、決まりを満たすパスワード</td>
+<td>202 <code>{status:'accepted'}</code>。確認メール（<code>#/signup?token=…</code>）を1通、リンクのハッシュ・空白を除いたメールアドレスと名前・パスワードのハッシュ・24時間を保存。ログにパスワードとメールアドレスを出さない</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-H15-14</td>
+<td>登録済みのメールアドレス</td>
+<td>有効な利用者と同じメールアドレス</td>
+<td>同じ 202。パスワードのハッシュは保存せず、リンクのない「アカウント作成の受付」のメール（「パスワードを忘れたとき」の案内）を送る</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H15-15</td>
+<td>連打・メールの失敗</td>
+<td>60秒以内の2回目／メールを送れない</td>
+<td>どちらも 202。2回目は保存も送信もしない／ログに <code>auth.signup_mail_failed</code></td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H15-16</td>
+<td>アカウント作成の入力の誤り</td>
+<td>メールアドレスの形が違う・255文字・文字でない／名前が空白だけ・51文字／弱いパスワード</td>
+<td>400、<code>details</code> の <code>field</code> が <code>email</code>・<code>fullName</code>・<code>password</code>。保存しない</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-H15-17</td>
+<td>確認リンクからの登録（A-37）</td>
+<td>有効なリンク</td>
+<td>201。<code>users.create</code>（ロール <code>learner</code>）・<code>setPassword</code>（<code>mustChange:false</code>）・操作記録 <code>user.signup</code> を1つのトランザクションでコミット。IDトークンの groups は <code>learner</code>、リフレッシュトークンを保存</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-H15-18</td>
+<td>確認リンクを受け付けない</td>
+<td>使用済み・期限切れのリンク／token なし／先に同じメールアドレスが登録された（<code>23505</code>）</td>
+<td>400（<code>details:[{field:'token', code:'INVALID'}]</code>）で利用者を作らない／409 <code>CONFLICT</code> でロールバック、トークンを出さない</td>
 <td>異</td>
 </tr>
 </tbody>
@@ -5486,6 +5542,13 @@ describe('M-D01 client', () =&gt; {
 <td><code>apiBase</code> なし、<code>expiresIn</code> なし</td>
 <td><code>/api</code> を使い、期限は3600秒</td>
 <td>境</td>
+</tr>
+<tr>
+<td>MT-F01-11</td>
+<td>アカウント作成（A-36・A-37）</td>
+<td><code>signUp</code>、<code>verifySignup</code>（成功／400）</td>
+<td><code>POST /api/auth/signup</code>（トークンは保存しない）、<code>/api/auth/signup/verify</code> のトークンを保存、400 は <code>AuthError</code> を投げる</td>
+<td>同</td>
 </tr>
 </tbody>
 </table></div>
@@ -6804,6 +6867,41 @@ describe('M-D01 client', () =&gt; {
 <td>true・false・false・false・false</td>
 <td>境</td>
 </tr>
+<tr>
+<td>MT-F23-09</td>
+<td>アカウントを作る（A-36）</td>
+<td>「アカウントを作る」→ 名前・メールアドレス・パスワード2回（一致しない → 一致する）</td>
+<td>そろうまでボタンを押せない、<code>signUp('hana@x.jp', '山田 花子', 'Guild2026')</code>（空白を除く）、ログインの表示に戻り M_SIGNUP_SENT</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F23-10</td>
+<td>アカウント作成の失敗と戻る</td>
+<td>A-36 が 400／通信エラー／「ログインに戻る」</td>
+<td>サーバーの文言／M_NETWORK（ボタンはまた押せる）／ログインの表示</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F23-11</td>
+<td>確認リンク（A-37）</td>
+<td><code>#/signup?token=t%2B1</code> で開く</td>
+<td>見出し「アカウントの登録」と M_SIGNUP_VERIFYING、<code>verifySignup('t+1')</code>、URL を <code>/</code> に戻して読み込み直す</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F23-12</td>
+<td>使えない確認リンク・登録済み</td>
+<td>A-37 が 400／409 →「ログインに戻る」</td>
+<td>M_SIGNUP_INVALID／サーバーの文言（読み込み直さない）、URL を <code>/</code> に戻してログインの表示</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F23-13</td>
+<td>アカウント作成の入力の決まり</td>
+<td><code>signupOk</code>：名前が空白・51文字、メールアドレスの形、弱いパスワード、2回が違う</td>
+<td>そろったときだけ true</td>
+<td>境</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F24 <code>sw.js</code>（Service Worker）</h4>
@@ -7162,13 +7260,13 @@ describe('M-D01 client', () =&gt; {
 <td>5.6 メール、6.2 送信方式</td>
 <td>3.8、4.5、4.7、9.2</td>
 <td>build-notify、mail/smtp、templates、server/worker</td>
-<td>MT-W03-12、MT-W04-01〜07、MT-M01-01〜08、MT-S02-07〜11</td>
+<td>MT-W03-12、MT-W04-01〜07、MT-M01-01〜09、MT-S02-07〜11</td>
 </tr>
 <tr>
 <td>8.1 認証・権限、3.7 S-01 ログイン</td>
-<td>3.2 M-U04、3.10、5.4 A-30〜A-35、6.1</td>
+<td>3.2 M-U04、3.10、5.4 A-30〜A-37、6.1</td>
 <td>authz、router、auth/password・token、routes/auth、repositories/auth、core/auth.js、pages/login.js</td>
-<td>MT-U04-01〜10、MT-H01-06〜07、MT-K01・MT-K02、MT-H15-01〜12、MT-D04-05〜09、MT-F01-01〜10、MT-F23-01〜08</td>
+<td>MT-U04-01〜10、MT-H01-06〜07、MT-K01・MT-K02、MT-H15-01〜18、MT-D04-05〜10、MT-F01-01〜11、MT-F23-01〜13</td>
 </tr>
 <tr>
 <td>8.2 データ保護</td>
@@ -7372,7 +7470,7 @@ describe('M-D01 client', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.8版（ドラフト：第1〜6章、HTML版あり。IDのなかった Ctrl+Enter・ピンチでの拡大を止めるテストを、MT-F27（core/keys.js）・MT-F28（core/zoom.js）として載せる）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第1.9版（ドラフト：第1〜6章、HTML版あり。アカウント作成（A-36・A-37、S-01）のテスト14件を MT-H15-13〜18・MT-D04-10・MT-F01-11・MT-F23-09〜13・MT-M01-09 として載せる）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

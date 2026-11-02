@@ -1,4 +1,4 @@
-// ログインとトークンの管理（詳細設計書 6.1）。アプリの API（A-30〜A-35）を使う。トークンはメモリと sessionStorage だけに置く
+// ログインとトークンの管理（詳細設計書 6.1）。アプリの API（A-30〜A-37）を使う。トークンはメモリと sessionStorage だけに置く
 export const TOKEN_KEY = 'rpg.auth'
 export const REFRESH_BEFORE_MS = 5 * 60 * 1000
 export class AuthError extends Error {
@@ -97,5 +97,11 @@ export function createAuth({
   }
   const forgot = (email) => post('/auth/forgot', { email })
   const resetPassword = (token, newPassword) => post('/auth/reset', { token, newPassword })
-  return { ensureLogin, signIn, completeNewPassword, refresh, login, getIdToken, logout, forgot, resetPassword }
+  // A-36 アカウント作成の受付（確認メールが届く）
+  const signUp = (email, fullName, password) => post('/auth/signup', { email, fullName, password })
+  // A-37 確認リンクからの登録。そのままログインした状態になる
+  async function verifySignup(token) {
+    save(await post('/auth/signup/verify', { token }))
+  }
+  return { ensureLogin, signIn, completeNewPassword, refresh, login, getIdToken, logout, forgot, resetPassword, signUp, verifySignup }
 }

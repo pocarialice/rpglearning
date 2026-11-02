@@ -307,7 +307,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
     <h1>
 <i class="fa-solid fa-file-lines h-ico" aria-hidden="true"></i>RPG学習アプリ 要件定義書</h1>
     <ul class="meta">
-      <li>版数<b>第1.1版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更）</b>
+      <li>版数<b>第1.2版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更。2026-11-02：ログイン画面からのアカウント作成（F-14）を追加）</b>
 </li>
       <li>作成日<b>2026-10-17</b>
 </li>
@@ -555,6 +555,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
   L --&gt; C3[キーワード説明]
   L --&gt; C4[週間ランキング閲覧]
   L --&gt; C5[AIパートナー選択]
+  L --&gt; C6[アカウント作成]
   CM[コース管理者] --&gt; D1[問題の取り込み・レビュー・公開]
   CM --&gt; D2[担当コースの学習状況把握]
   SA[システム管理者] --&gt; E1[利用者・コース・権限管理]
@@ -587,6 +588,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
       <span class="feat l1"><b>F-11</b>バッジ</span>
       <span class="feat l1"><b>F-12</b>AIパートナー選択</span>
       <span class="feat l1"><b>F-13</b>通知</span>
+      <span class="feat l1"><b>F-14</b>アカウント作成</span>
     </div>
     <div class="fcol">
       <p class="fcol-h">整える</p>
@@ -703,6 +705,12 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 <td>通知</td>
 <td>学習者</td>
 <td>復習対象・クエストをメールとプッシュで通知</td>
+</tr>
+<tr>
+<td>F-14</td>
+<td>アカウント作成</td>
+<td>学習者（未登録の人）</td>
+<td>ログイン画面から自分でアカウントを作る。メールの確認リンクを開いたら学習者として登録される</td>
 </tr>
 </tbody>
 </table></div>
@@ -1248,6 +1256,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 <i class="fa-solid fa-lock h-ico" aria-hidden="true"></i>6.5 認証・セキュリティ</h3>
 <ul>
 <li>ID/パスワード認証（パスワードはハッシュ化して保存）</li>
+<li>利用者はログイン画面から自分でアカウントを作れる（メールアドレスの確認が必要。作れるのは学習者だけで、管理者のロールはシステム管理者が付ける）</li>
 <li>将来のSSO（SAML/OIDC）対応を前提とした認証基盤を採用する</li>
 <li>通信はすべてTLSで暗号化する</li>
 <li>ロールに応じたアクセス制御を行う（コース管理者は担当コースのデータのみ参照可能）</li>
@@ -1490,11 +1499,16 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 <td>AIパートナーのキャラクター数・設定</td>
 <td>基本設計で決定</td>
 </tr>
+<tr>
+<td>10</td>
+<td>自分でアカウントを作れる人の範囲</td>
+<td>メールアドレスの確認だけで誰でも作れる。社外の人も登録できてしまうため、社内のドメインに絞るか、管理者の承認を待つ形にするかをパイロット前に決める（外部設計書 10 未決事項 No.14 に影響を詳しく記載）</td>
+</tr>
 </tbody>
 </table></div></section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 要件定義書 第1.1版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 要件定義書 第1.2版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更。2026-11-02：ログイン画面からのアカウント作成（F-14）を追加）</div></footer>
 
 </body>
 </html>
