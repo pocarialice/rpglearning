@@ -252,3 +252,16 @@ select.app-input:disabled { opacity: .5; }
 @media (pointer: coarse) { input, textarea, select { font-size: 16px !important; } }
 /* ダブルタップでの拡大も止める（スクロールはそのまま） */
 html { touch-action: manipulation; }
+/* 学習サマリ（S-15 冒険のまとめ・S-08）。ふだんは見出し1行だけのアコーディオン */
+.app-summary { margin-top: var(--space-3); padding-top: var(--space-3); padding-bottom: var(--space-3); }
+.app-summary-head { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 44px; list-style: none; }
+.app-summary-head::-webkit-details-marker { display: none; }
+.app-summary-head::after { content: "＋"; color: var(--teal); font-weight: 700; }
+.app-summary[open] .app-summary-head::after { content: "－"; }
+.app-summary-head .meta { margin-left: auto; color: var(--ink-muted); }
+.app-summary-head:focus-visible, .app-md:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app-summary-body { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
+.app-summary-body p { margin: 0; }
+.app-summary-date { display: flex; flex-direction: column; gap: var(--space-1); }
+.app-md { margin: 0; max-height: 280px; overflow: auto; white-space: pre-wrap; word-break: break-word; background: var(--parchment-sunk); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: var(--space-3); font-size: 13px; line-height: 20px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.app-copy-status:empty { display: none; }

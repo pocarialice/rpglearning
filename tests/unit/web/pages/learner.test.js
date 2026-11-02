@@ -383,7 +383,7 @@ describe('M-F14 S-06 結果・フィードバック', () => {
     click('[data-action="next"]')
     await flush()
     expect(api.apiGet).toHaveBeenCalledWith('/quests/next?adventureId=adv_1')
-    expect(store.getState()).toMatchObject({ adventureId: null, result: null, summary: { ...SUMMARY, notice: null } })
+    expect(store.getState()).toMatchObject({ adventureId: null, result: null, summary: { ...SUMMARY, adventureId: 'adv_1', notice: null } })
     expect(go).toHaveBeenCalledWith('/quest/summary')
   })
   it('MT-F14-13 問題が尽きて終わったときは、まとめにお知らせを載せる', async () => {
