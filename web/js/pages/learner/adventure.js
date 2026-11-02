@@ -9,7 +9,7 @@ export async function goNextQuest({ api, getState, setState, go }) {
   if (next.done) {
     const notice = next.reason === 'NO_QUESTION' ? NOTICE_NO_QUESTION : NOTICE_DONE
     if (next.summary) {
-      setState({ adventureId: null, quest: null, result: null, summary: { ...next.summary, notice: next.reason === 'NO_QUESTION' ? notice : null } })
+      setState({ adventureId: null, quest: null, result: null, summary: { ...next.summary, adventureId: next.adventureId, notice: next.reason === 'NO_QUESTION' ? notice : null } })
       return go('/quest/summary')
     }
     setState({ adventureId: null, quest: null, notice })

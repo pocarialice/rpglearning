@@ -141,17 +141,18 @@ resource "sakuracloud_note" "setup" {
   name = "${local.prefix}-setup"
   tags = local.tags
   content = templatefile("${path.module}/setup.sh.tftpl", {
-    server_cidr        = "${local.server_ip}/24"
-    db_ip              = local.db_ip
-    db_password        = random_password.db.result
-    registry           = local.shared.registry
-    registry_user      = local.shared.registry_pull_user
-    registry_pass      = local.shared.registry_pull_password
-    start              = var.image != "" && var.site_address != ""
-    compose_b64        = filebase64("${path.module}/../../../compose.yaml")
-    caddyfile_b64      = filebase64("${path.module}/../../../Caddyfile")
-    dotenv_b64         = base64encode(local.dotenv)
-    rpg_deploy_b64     = filebase64("${path.module}/rpg-deploy.sh")
+    server_cidr   = "${local.server_ip}/24"
+    db_ip         = local.db_ip
+    db_password   = random_password.db.result
+    registry      = local.shared.registry
+    registry_user = local.shared.registry_pull_user
+    registry_pass = local.shared.registry_pull_password
+    start         = var.image != "" && var.site_address != ""
+    # ファイルは gzip してから base64 にする（スタートアップスクリプトは 10,000 文字まで）
+    compose_gz         = base64gzip(file("${path.module}/../../../compose.yaml"))
+    caddyfile_gz       = base64gzip(file("${path.module}/../../../Caddyfile"))
+    dotenv_gz          = base64gzip(local.dotenv)
+    rpg_deploy_gz      = base64gzip(file("${path.module}/rpg-deploy.sh"))
     tailscale_hostname = local.prefix
     tailscale_auth_key = var.tailscale_auth_key
   })
@@ -168,8 +169,8 @@ resource "sakuracloud_disk" "app" {
 }
 resource "sakuracloud_server" "app" {
   name   = "${local.prefix}-app"
-  core   = 2
-  memory = 4
+  core   = 1
+  memory = 2
   disks  = [sakuracloud_disk.app.id]
   tags   = local.tags
   network_interface {
@@ -192,6 +193,29 @@ resource "sakuracloud_server" "app" {
     ignore_changes = [disk_edit_parameter]
   }
   depends_on = [sakuracloud_database.main]
+}
+# --- DNS の A レコード（2.2）。ゾーンは画面で作り、site_address のホスト名をサーバーの IP アドレスに向ける ---
+locals {
+  dns_host = split(".", var.site_address)[0]
+  dns_zone = join(".", slice(split(".", var.site_address), 1, length(split(".", var.site_address))))
+}
+data "sakuracloud_dns" "zone" {
+  count = var.site_address != "" ? 1 : 0
+  filter {
+    names = [local.dns_zone]
+  }
+}
+resource "sakuracloud_dns_record" "app" {
+  count  = var.site_address != "" ? 1 : 0
+  dns_id = data.sakuracloud_dns.zone[0].id
+  name   = local.dns_host
+  type   = "A"
+  value  = sakuracloud_server.app.ip_address
+  ttl    = 300
+}
+moved {
+  from = sakuracloud_dns_record.app
+  to   = sakuracloud_dns_record.app[0]
 }
 # --- シンプル監視（3.12）。通知はさくらのクラウドの会員のメールアドレスに届く ---
 resource "sakuracloud_simple_monitor" "ping" {
