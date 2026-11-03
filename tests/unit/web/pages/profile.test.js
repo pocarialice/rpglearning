@@ -57,7 +57,7 @@ describe('M-F16 S-08 プロフィール', () => {
     click('[data-action="logout"]')
     expect(auth.logout).toHaveBeenCalled()
   })
-  it('MT-F16-06 2つめのカードに受講中のコース（名前・学習時間・受講開始・最後の学習）', async () => {
+  it('MT-F16-07 2つめのカードに受講中のコース（名前・学習時間・受講開始・最後の学習）', async () => {
     mockProfile()
     await profile.render(root)
     const cards = [...root.querySelectorAll('section.gd-card')]
@@ -66,7 +66,7 @@ describe('M-F16 S-08 プロフィール', () => {
     expect(q('.app-course-now .app-chip').textContent).toBe('受講中')
     expect(q('.app-course-meta').textContent).toBe('このコースの学習時間 1時間15分受講開始 2026/09/14最後の学習 2026/10/19')
   })
-  it('MT-F16-07 まだ解いていなければ「まだありません」、コースがなければカードを出さない', async () => {
+  it('MT-F16-08 まだ解いていなければ「まだありません」、コースがなければカードを出さない', async () => {
     api.apiGet.mockImplementation(async (p) => (p === '/me/stats' ? { ...STATS, course: { ...COURSE, name: '<b>X</b>', enrolledOn: null, lastStudiedOn: null, studySeconds: 0 } } : BADGES))
     await profile.render(root)
     expect(q('.app-course-name').textContent).toBe('<b>X</b>')

@@ -31,8 +31,8 @@ const q = (sel) => root.querySelector(sel)
 const click = (sel) => q(sel).dispatchEvent(new MouseEvent('click', { bubbles: true }))
 const flush = () => new Promise((r) => setTimeout(r, 0))
 beforeEach(setup)
-describe('M-F27 S-16 コースごとの実績（一覧）', () => {
-  it('MT-F27-01 全コースの累計とコースのカードを表示し、カードから詳細へ移る', async () => {
+describe('M-F29 S-16 コースごとの実績（一覧）', () => {
+  it('MT-F29-01 全コースの累計とコースのカードを表示し、カードから詳細へ移る', async () => {
     api.apiGet.mockResolvedValue(LIST)
     await list.render(root)
     expect(api.apiGet).toHaveBeenCalledWith('/me/courses')
@@ -52,7 +52,7 @@ describe('M-F27 S-16 コースごとの実績（一覧）', () => {
     click('[data-go="/profile"]')
     expect(go).toHaveBeenCalledWith('/profile')
   })
-  it('MT-F27-02 コースがなければ案内、読み込めなければ再読み込み', async () => {
+  it('MT-F29-02 コースがなければ案内、読み込めなければ再読み込み', async () => {
     api.apiGet.mockResolvedValueOnce({ totalStudySeconds: 0, courses: [] })
     await list.render(root)
     expect(root.textContent).toContain(list.M_RECORDS_EMPTY)
@@ -65,9 +65,9 @@ describe('M-F27 S-16 コースごとの実績（一覧）', () => {
     expect(root.querySelectorAll('.app-course-row')).toHaveLength(2)
   })
 })
-describe('M-F28 S-17 コースの実績（詳細）', () => {
+describe('M-F30 S-17 コースの実績（詳細）', () => {
   const mockDetail = (comment = COMMENT) => api.apiGet.mockImplementation(async (p) => (p.endsWith('/comment') ? comment : DETAIL))
-  it('MT-F28-01 実績（累積の学習時間がいちばん上）・内訳・苦手な問題・パートナーのコメント', async () => {
+  it('MT-F30-01 実績（累積の学習時間がいちばん上）・内訳・苦手な問題・パートナーのコメント', async () => {
     mockDetail()
     await detail.render(root, { id: 'c_3' })
     expect(api.apiGet.mock.calls.map((c) => c[0])).toEqual(['/me/courses/c_3', '/me/courses/c_3/comment'])
@@ -84,7 +84,7 @@ describe('M-F28 S-17 コースの実績（詳細）', () => {
     click('[data-go="/profile/courses"]')
     expect(go).toHaveBeenCalledWith('/profile/courses')
   })
-  it('MT-F28-02 コメントを待つ間は「…」、解答がなければ案内、失敗したらコメントだけ読み直せる', async () => {
+  it('MT-F30-02 コメントを待つ間は「…」、解答がなければ案内、失敗したらコメントだけ読み直せる', async () => {
     let resolve
     api.apiGet.mockImplementation((p) => (p.endsWith('/comment') ? new Promise((r) => { resolve = r }) : Promise.resolve({ ...DETAIL, weak: [], explain: { count: 0, passed: 0, avgScore: null } })))
     const done = detail.render(root, { id: 'c_3' })
@@ -104,7 +104,7 @@ describe('M-F28 S-17 コースの実績（詳細）', () => {
     await flush()
     expect(q('.app-comment-slot .gd-bubble').textContent).toContain('よくがんばったね。')
   })
-  it('MT-F28-03 ID がなければ一覧へ、読み込めなければ再読み込み', async () => {
+  it('MT-F30-03 ID がなければ一覧へ、読み込めなければ再読み込み', async () => {
     await detail.render(root, {})
     expect(go).toHaveBeenCalledWith('/profile/courses')
     expect(api.apiGet).not.toHaveBeenCalled()
@@ -117,7 +117,7 @@ describe('M-F28 S-17 コースの実績（詳細）', () => {
     await flush()
     expect(q('.app-course-title')).not.toBeNull()
   })
-  it('MT-F28-04 画面の登録：S-16 と S-17 は学習者だけ', () => {
+  it('MT-F30-04 画面の登録：S-16 と S-17 は学習者だけ', () => {
     const paths = new Map(PAGES.map(([p, , roles]) => [p, roles]))
     expect(paths.get('/profile/courses')).toEqual(['learner'])
     expect(paths.get('/profile/course')).toEqual(['learner'])
