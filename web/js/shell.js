@@ -50,6 +50,7 @@ export function updateShell(doc, hash, { roles = [], has = () => true }) {
     sw.setAttribute('href', admin ? '#/home' : `#${startPath(roles, has)}`)
     sw.textContent = admin ? '学習者エリアへ' : '管理局へ'
   }
-  markCurrent(nav.querySelectorAll('a'), path)
+  // プロフィールの下の画面（S-16・S-17）でも下部ナビの「プロフィール」を選んだ状態にする
+  markCurrent(nav.querySelectorAll('a'), path.startsWith('/profile/') ? '/profile' : path)
   markCurrent(side.querySelectorAll('a'), path)
 }

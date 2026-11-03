@@ -9,6 +9,7 @@ import * as answers from './routes/answers.js'
 import * as gradings from './routes/gradings.js'
 import * as rankings from './routes/rankings.js'
 import * as summaries from './routes/summaries.js'
+import * as courseRecords from './routes/course-records.js'
 import * as adminImports from './routes/admin-imports.js'
 import * as adminQuestions from './routes/admin-questions.js'
 import * as adminDashboard from './routes/admin-dashboard.js'
@@ -49,6 +50,9 @@ export const ROUTES = [
   r('GET', '/api/me/badges', me.badges, LEARNER, 'nickname'),
   r('GET', '/api/me/summary', summaries.day, LEARNER, 'nickname'),
   r('GET', '/api/adventures/{id}/summary', summaries.adventure, LEARNER, 'nickname'),
+  r('GET', '/api/me/courses', courseRecords.list, LEARNER, 'nickname'),
+  r('GET', '/api/me/courses/{id}', courseRecords.detail, LEARNER, 'nickname'),
+  r('GET', '/api/me/courses/{id}/comment', courseRecords.comment, LEARNER, 'nickname'),
   r('POST', '/api/admin/imports', adminImports.create, COURSE_ADMIN),
   r('GET', '/api/admin/imports', adminImports.list, COURSE_ADMIN),
   r('GET', '/api/admin/imports/{id}', adminImports.get, COURSE_ADMIN),

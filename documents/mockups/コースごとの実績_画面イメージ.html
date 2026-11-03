@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>画面イメージ：コースごとの実績（案C）</title>
+<link rel="stylesheet" href="../../web/css/tokens.css">
+<link rel="stylesheet" href="../../web/css/bundle.css">
+<link rel="stylesheet" href="../../web/css/app.css">
+<style>
+/* 画面イメージ用：3画面を横に並べる */
+body { padding: 24px; }
+.mk-row { display: flex; gap: 32px; align-items: flex-start; }
+.mk-col { width: 390px; flex: none; }
+.mk-cap { font-family: var(--font-sans); font-weight: 700; font-size: 15px; margin: 0 0 8px; color: var(--ink); }
+.mk-cap small { display: block; font-weight: 400; font-size: 12px; color: var(--ink-muted); }
+.mk-phone { border: 1px solid var(--line-strong); border-radius: 16px; overflow: hidden; background: var(--parchment); position: relative; }
+.mk-phone .app-shell { min-height: auto; }
+.mk-phone .app-nav { position: static; width: 100%; max-width: none; }
+.mk-phone .app-main { padding-bottom: var(--space-4); }
+.mk-new { outline: 3px dashed var(--crimson); outline-offset: 4px; border-radius: var(--radius-md); }
+.mk-tag { position: absolute; right: 8px; margin-top: -14px; background: var(--crimson); color: var(--on-crimson); font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 4px; z-index: 1; }
+/* ---- ここから実装で app.css に足す候補 ---- */
+.app-course-now { display: flex; flex-direction: column; gap: var(--space-2); }
+.app-course-now-head { display: flex; align-items: center; gap: var(--space-2); }
+.app-course-now-name { margin: 0; }
+.app-course-now-head .app-chip { flex: none; white-space: nowrap; }
+.app-course-now-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); color: var(--ink-muted); margin: 0; }
+.app-course-now-meta b { color: var(--ink); font-weight: 700; }
+.app-course-total { display: flex; justify-content: space-between; align-items: baseline; background: var(--parchment-sunk); border-radius: var(--radius-md); padding: var(--space-3); }
+.app-course-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.app-course-row { display: flex; flex-direction: column; gap: var(--space-2); text-decoration: none; color: var(--ink); }
+.app-course-row-head { display: flex; align-items: center; gap: var(--space-2); }
+.app-course-row-head .label { flex: 1; }
+.app-course-row-head::after { content: "›"; color: var(--teal); font-size: 22px; font-weight: 700; }
+.app-course-row-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.app-course-row-nums div { display: flex; flex-direction: column; }
+.app-course-row-nums .label { font-family: var(--font-serif); font-size: 18px; }
+.app-course-bar { height: 6px; background: var(--parchment-sunk); border-radius: var(--radius-pill); overflow: hidden; }
+.app-course-bar i { display: block; height: 100%; background: var(--teal); }
+.app-back { align-self: flex-start; margin-left: calc(var(--space-3) * -1); }
+.app-breakdown { list-style: none; margin: 0; padding: 0; }
+.app-breakdown li { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-top: 1px solid var(--line); }
+.app-breakdown li:first-child { border-top: 0; }
+.app-weak { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.app-weak li { display: flex; gap: var(--space-2); align-items: flex-start; }
+.app-weak .app-chip { flex: none; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="mk-row">
+  <div class="mk-col"><p class="mk-cap">① S-08 プロフィール（変更）<small>2つめのカードに「受講中のコース」、下部メニューに「コースごとの実績」を追加</small></p><div class="mk-phone" id="s1"></div></div>
+  <div class="mk-col"><p class="mk-cap">② S-16 コースごとの実績（一覧・新規）<small>#/profile/courses　最後に学習した日が新しい順</small></p><div class="mk-phone" id="s2"></div></div>
+  <div class="mk-col"><p class="mk-cap">③ S-17 コースの実績（詳細・新規）<small>#/profile/courses/{コースID}　AIコメントは画面を開いたときに生成</small></p><div class="mk-phone" id="s3"></div></div>
+</div>
+<script type="module">
+import { expBar } from '../../web/js/components/exp-bar.js'
+import { button } from '../../web/js/components/button.js'
+import { partnerBubble } from '../../web/js/components/partner-bubble.js'
+const shell = (main, nav = 'プロフィール') => `<div class="app-shell"><header class="app-header"><span class="app-name">RPG学習アプリ</span></header>
+<main class="app-main">${main}</main>
+<nav class="app-nav">${['ホーム', 'ランキング', 'プロフィール'].map((l) => `<a href="#"${l === nav ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav></div>`
+const stat = (label, value, wide = false) => `<div class="app-stat${wide ? ' app-stat-wide' : ''}"><span class="meta">${label}</span><span class="numeral">${value}</span></div>`
+const tag = (t) => `<span class="mk-tag">${t}</span>`
+// ① プロフィール
+document.getElementById('s1').innerHTML = shell(`<h1 class="display">プロフィール</h1>
+<section class="gd-card app-section"><div class="app-profile-name"><p class="title app-nickname">ジュン</p>${button({ label: 'ニックネームを変える', variant: 'quiet', size: 'sm' })}</div>
+${expBar({ level: 12, exp: 340, next: 500, title: '累計 5,840 EXP' })}</section>
+<section class="gd-card app-section app-course-now mk-new"><h2 class="title">受講中のコース</h2>
+<div class="app-course-now-head"><p class="label app-course-now-name">ネットワークスペシャリスト</p><span class="app-chip">受講中</span></div>
+<p class="meta app-course-now-meta"><span>このコースの学習時間 <b>18時間42分</b></span><span>受講開始 2026/09/14</span><span>最後の学習 2026/11/02</span></p></section>
+<section class="gd-card app-section"><h2 class="title">学習記録</h2>
+<div class="app-stats">${stat('網羅率', '62.4<small class="meta"> %</small>')}${stat('正答率', '78.1<small class="meta"> %</small>')}${stat('連続学習', '9<small class="meta"> 日</small>')}${stat('習得済み', '41<small class="meta"> 問</small>')}${stat('累計の学習時間', '31時間05分', true)}</div></section>
+<details class="gd-card app-summary"><summary class="app-summary-head"><span class="label">1日の学習サマリ</span><span class="meta">Markdown でコピー</span></summary></details>
+<section class="app-section"><h2 class="title">バッジ</h2><p class="meta app-center">（バッジ一覧は今のまま・省略）</p></section>
+<nav class="gd-card app-section app-menu" style="position:relative">
+<div class="mk-new" style="border-radius:0">${button({ label: 'コースごとの実績', variant: 'quiet', block: true })}</div>
+${button({ label: 'コースを選び直す', variant: 'quiet', block: true })}${button({ label: 'AIパートナーを選び直す', variant: 'quiet', block: true })}${button({ label: '通知設定', variant: 'quiet', block: true })}${button({ label: 'ログアウトする', variant: 'quiet', block: true })}</nav>`)
+// ② 一覧
+const row = (name, time, correct, cover, last, now = false) => `<li class="gd-card"><a class="app-course-row" href="#">
+<div class="app-course-row-head"><span class="label">${name}</span>${now ? '<span class="app-chip">受講中</span>' : ''}</div>
+<div class="app-course-row-nums"><div><span class="meta">学習時間</span><span class="label">${time}</span></div><div><span class="meta">正答率</span><span class="label">${correct}</span></div><div><span class="meta">網羅率</span><span class="label">${cover}</span></div></div>
+<div class="app-course-bar" role="img" aria-label="網羅率 ${cover}"><i style="width:${cover}"></i></div>
+<span class="meta">最後の学習 ${last}</span></a></li>`
+document.getElementById('s2').innerHTML = shell(`<div class="app-back">${button({ label: '‹ プロフィールへ戻る', variant: 'quiet', size: 'sm' })}</div>
+<h1 class="display">コースごとの実績</h1>
+<div class="app-course-total"><span class="meta">全コースの累計の学習時間</span><span class="numeral">31時間05分</span></div>
+<ul class="app-course-list">
+${row('ネットワークスペシャリスト', '18時間42分', '78.1%', '62.4%', '2026/11/02', true)}
+${row('Google Cloud ACE', '9時間10分', '84.6%', '91.0%', '2026/10/21')}
+${row('G検定', '3時間13分', '65.0%', '18.5%', '2026/08/30')}
+</ul>
+<p class="meta app-center">受講したことのあるコースだけを表示します</p>`)
+// ③ 詳細
+document.getElementById('s3').innerHTML = shell(`<div class="app-back">${button({ label: '‹ コースごとの実績へ戻る', variant: 'quiet', size: 'sm' })}</div>
+<div class="app-course-now-head"><h1 class="title" style="margin:0;font-size:24px;line-height:34px">ネットワークスペシャリスト</h1><span class="app-chip">受講中</span></div>
+<p class="meta" style="margin:0">受講開始 2026/09/14・最後の学習 2026/11/02</p>
+<section class="gd-card app-section"><h2 class="title">実績</h2>
+<div class="app-stats">${stat('累積の学習時間', '18時間42分', true)}${stat('冒険の回数', '46<small class="meta"> 回</small>')}${stat('解いた問題', '412<small class="meta"> 問</small>')}${stat('正答率', '78.1<small class="meta"> %</small>')}${stat('網羅率', '62.4<small class="meta"> %</small>')}${stat('習得済み', '41<small class="meta"> 問</small>')}${stat('今日の復習', '7<small class="meta"> 問</small>')}</div>
+<ul class="app-breakdown body"><li><span>択一</span><span>288 / 360問 正解</span></li><li><span>説明</span><span>34 / 52問 合格（平均 68点）</span></li></ul></section>
+<section class="gd-card app-section"><h2 class="title">苦手な問題</h2>
+<ul class="app-weak body"><li><span class="app-chip">択一</span><span>OSPF のエリア境界ルータが行う経路集約の…（3回まちがい）</span></li>
+<li><span class="app-chip">説明</span><span>VRRP（直近 45点・足りない観点：優先度）</span></li>
+<li><span class="app-chip">択一</span><span>IPv6 のリンクローカルアドレスについて…（2回まちがい）</span></li></ul></section>
+<section class="app-section"><h2 class="title">パートナーのコメント</h2>
+${partnerBubble({ name: 'ミナ', persona: 'encourage', text: 'このコースはもう18時間42分も続けてきたね！択一は360問中288問正解で、しっかり力がついてるよ。いちばん気になるのはOSPFの経路集約で、3回つまずいてるから、エリア境界ルータの役割から見直してみよう。今日は復習が7問あるから、まずそこから片づけて、そのあと新しい問題に進もうね！' })}
+<p class="meta" style="margin:0">このコースの学習全体をもとに、開いたときに作ります</p></section>`)
+</script>
+</body>
+</html>

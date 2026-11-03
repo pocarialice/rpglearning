@@ -525,8 +525,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.2版（ドラフト：第1〜10章、HTML版あり。第1.1版で AWS からさくらのクラウドへ切り替え、第1.2版でログイン画面からのアカウント作成を追加）</b></li>
-      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27、第1.2版：2026-11-02）</b></li>
+      <li>版数<b>第1.3版（ドラフト：第1〜10章、HTML版あり。第1.1版で AWS からさくらのクラウドへ切り替え、第1.2版でログイン画面からのアカウント作成を追加、第1.3版でコースごとの実績を追加）</b></li>
+      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27、第1.2版：2026-11-02、第1.3版：2026-11-03）</b></li>
       <li>入力文書<b>RPG学習アプリ 要件定義書 第1.2版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
@@ -1120,7 +1120,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </ul>
 </section><section class="chapter" id="ch3"><h2><i class="fa-solid fa-display h-ico" aria-hidden="true"></i>3. 画面設計</h2>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 画面一覧</h3>
-<p>要件定義書の画面一覧（S-01〜S-13）に、キャラクター画像の差し替え用として <strong>S-14 AIパートナー設定</strong> を、冒険の振り返り用として <strong>S-15 冒険のまとめ</strong> を追加する。</p>
+<p>要件定義書の画面一覧（S-01〜S-13）に、キャラクター画像の差し替え用として <strong>S-14 AIパートナー設定</strong> を、冒険の振り返り用として <strong>S-15 冒険のまとめ</strong> を、コースごとの振り返り用として <strong>S-16 コースごとの実績</strong>・<strong>S-17 コースの実績</strong> を追加する。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1237,6 +1237,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>#/quest/summary</code></td>
 <td>学習者</td>
 </tr>
+<tr>
+<td>S-16</td>
+<td>コースごとの実績（追加）</td>
+<td>学習者</td>
+<td><code>#/profile/courses</code></td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>S-17</td>
+<td>コースの実績（追加）</td>
+<td>学習者</td>
+<td><code>#/profile/course?id=</code></td>
+<td>学習者</td>
+</tr>
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 画面構成図</h3>
@@ -1254,6 +1268,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     S15["S-15 冒険のまとめ"]
     S07["S-07 週間ランキング"]
     S08["S-08 プロフィール"]
+    S16["S-16 コースごとの実績"]
+    S17["S-17 コースの実績"]
     S09["S-09 AIパートナー選択"]
     S10["S-10 通知設定"]
   end
@@ -1292,6 +1308,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   S06 --&gt;|"ホームへ"| S02
   S02 --&gt; S07["S-07 週間ランキング"]
   S02 --&gt; S08["S-08 プロフィール"]
+  S08 --&gt;|"コースごとの実績"| S16["S-16 コースごとの実績"]
+  S16 --&gt;|"コースを選ぶ"| S17["S-17 コースの実績"]
+  S17 --&gt;|"戻る"| S16
+  S16 --&gt;|"戻る"| S08
   S08 --&gt; S03["S-03 コース選択"]
   S08 --&gt; S09["S-09 AIパートナー選択"]
   S08 --&gt; S10["S-10 通知設定"]
@@ -2096,6 +2116,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>ExpBar</code></td>
 </tr>
 <tr>
+<td>受講中のコース</td>
+<td>2つめのカード。コース名（「受講中」の印つき）、このコースの学習時間、受講開始日、最後の学習日（まだ解いていなければ「まだありません」）</td>
+<td><code>gd-card</code></td>
+</tr>
+<tr>
 <td>学習記録</td>
 <td>網羅率、正答率、連続学習日数、習得済み、累計の学習時間</td>
 <td><code>gd-card</code></td>
@@ -2112,7 +2137,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>メニュー</td>
-<td>コース選択、AIパートナー選択、通知設定、ログアウト</td>
+<td>コースごとの実績（S-16）、コース選択、AIパートナー選択、通知設定、ログアウト</td>
 <td><code>Button quiet</code></td>
 </tr>
 </tbody>
@@ -2149,6 +2174,148 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>管理者からの見え方</td>
 <td>S-12・S-13 では氏名とニックネームを並べて表示する</td>
+</tr>
+</tbody>
+</table></div>
+<h4>S-16 コースごとの実績（追加）</h4>
+<p>S-08 の下部メニュー「コースごとの実績」から開く。受講したコースと、解答したことのあるコースを1コース1枚のカードで並べる。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th><th>表示内容</th><th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>戻る</td>
+<td>「‹ プロフィールへ戻る」</td>
+<td><code>Button quiet sm</code></td>
+</tr>
+<tr>
+<td>全体の累計</td>
+<td>全コースの累計の学習時間（S-08 の「累計の学習時間」と同じ値）</td>
+<td><code>numeral</code> 書体</td>
+</tr>
+<tr>
+<td>コースのカード</td>
+<td>コース名（受講中は「受講中」の印）、学習時間、正答率、網羅率、網羅率のバー、最後の学習日。押すと S-17 へ</td>
+<td><code>gd-card</code>（リンク）</td>
+</tr>
+<tr>
+<td>並び順</td>
+<td>最後に学習した日が新しい順。まだ解いていないコースは後ろ（コースの登録順）</td>
+<td>-</td>
+</tr>
+<tr>
+<td>0件のとき</td>
+<td>「まだ受講したコースがありません」</td>
+<td>-</td>
+</tr>
+</tbody>
+</table></div>
+<h4>S-17 コースの実績（追加）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>領域</th><th>表示内容</th><th>部品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>戻る</td>
+<td>「‹ コースごとの実績へ戻る」</td>
+<td><code>Button quiet sm</code></td>
+</tr>
+<tr>
+<td>見出し</td>
+<td>コース名（受講中は「受講中」の印）、受講開始日・最後の学習日</td>
+<td><code>title</code> 書体</td>
+</tr>
+<tr>
+<td>実績</td>
+<td><strong>累積の学習時間</strong>（いちばん上・横いっぱい）、冒険の回数、解いた問題、正答率、網羅率、習得済み、今日の復習。その下に択一の正解数と説明の合格数（平均点つき）</td>
+<td><code>gd-card</code></td>
+</tr>
+<tr>
+<td>苦手な問題</td>
+<td>まだ習得していない問題・キーワードのうち、まちがえた回数が多い順に3つ。択一は「n回まちがい」、説明は直近の点数と足りない観点</td>
+<td><code>gd-card</code></td>
+</tr>
+<tr>
+<td>パートナーのコメント</td>
+<td>このコースの学習全体をもとにした200字くらいのコメント（A-12e）。画面を開いたときに作り、待つ間は「…」を出す</td>
+<td><code>PartnerBubble</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-08 の受講中のコース・S-16・S-17</p><div class="mock-row"><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">プロフィール</span></div>
+<div class="mk-body">
+<div class="gd-card"><p class="gd-serif"><b>ジュン</b></p><p class="mk-meta">Lv 12・累計 5,840 EXP</p></div>
+<div class="gd-card" style="outline:2px dashed var(--crimson);outline-offset:3px"><p class="gd-serif"><b>受講中のコース</b></p><p><b>ネットワークスペシャリスト</b> <span class="mk-course">受講中</span></p><p class="mk-meta">このコースの学習時間 <b>18時間42分</b><br>受講開始 2026/09/14・最後の学習 2026/11/02</p></div>
+<div class="gd-card"><p class="gd-serif"><b>学習記録</b></p><p class="mk-meta">網羅率・正答率・連続学習・習得済み・累計の学習時間</p></div>
+<div class="gd-card"><p style="text-decoration:underline;outline:2px dashed var(--crimson);outline-offset:3px">コースごとの実績</p><p style="text-decoration:underline">コースを選び直す</p><p style="text-decoration:underline">AIパートナーを選び直す</p></div>
+</div>
+</div><p class="mk-cap">S-08 プロフィール（点線が追加）</p></div><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">コースごとの実績</span></div>
+<div class="mk-body">
+<div class="gd-card" style="display:flex;justify-content:space-between;align-items:baseline"><span class="mk-meta">全コースの累計の学習時間</span><b class="gd-serif" style="font-size:18px">31時間05分</b></div>
+<div class="gd-card"><p><b>ネットワークスペシャリスト</b> <span class="mk-course">受講中</span> ›</p><p class="mk-meta">学習時間 <b>18時間42分</b>・正答率 <b>78.1%</b>・網羅率 <b>62.4%</b></p><div class="ph-bar"><span style="width:62%"></span></div><p class="mk-meta">最後の学習 2026/11/02</p></div>
+<div class="gd-card"><p><b>Google Cloud ACE</b> ›</p><p class="mk-meta">学習時間 <b>9時間10分</b>・正答率 <b>84.6%</b>・網羅率 <b>91.0%</b></p><div class="ph-bar"><span style="width:91%"></span></div><p class="mk-meta">最後の学習 2026/10/21</p></div>
+</div>
+</div><p class="mk-cap">S-16 コースごとの実績</p></div><div class="ph-frame"><div class="gd-scope ph-screen">
+<div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">コースの実績</span></div>
+<div class="mk-body">
+<div class="gd-card"><p class="gd-serif"><b>実績</b></p><p>累積の学習時間 <b style="font-size:18px">18時間42分</b></p><p class="mk-meta">冒険 46回・解いた問題 412問・正答率 78.1%・網羅率 62.4%・習得済み 41問・今日の復習 7問</p><p class="mk-meta">択一 288/360問 正解・説明 34/52問 合格（平均 68点）</p></div>
+<div class="gd-card"><p class="gd-serif"><b>苦手な問題</b></p><p class="mk-meta">択一 OSPF の経路集約…（3回まちがい）<br>説明 VRRP（直近 45点・足りない観点：優先度）</p></div>
+<div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ</div>18時間42分も続けてきたね！OSPF の経路集約は3回つまずいてるから、今日の復習7問から片づけよう</div></div>
+</div>
+</div><p class="mk-cap">S-17 コースの実績</p></div></div><p class=mock-note>学習時間はコースごとの冒険の学習時間の合計（1問10分まで。4.3）。コメントは開いたときに作る。</p></div>
+<p><strong>コースごとの実績のルール</strong>（S-08・S-16・S-17 で共通）</p>
+<figure class="diagram"><div class="mermaid">flowchart LR
+  A["S-17 を開く"] --&gt; B["A-12d 実績"]
+  B --&gt; C["実績・苦手な問題を表示"]
+  C --&gt; D["A-12e コメント"]
+  D --&gt; E{"解答あり？"}
+  E --&gt;|"なし"| F["案内文&lt;br&gt;AIは呼ばない"]
+  E --&gt;|"あり"| G{"AIの応答"}
+  G --&gt;|"成功"| H["AIのコメント"]
+  G --&gt;|"失敗・空"| I["定型文&lt;br&gt;パートナーの口調"]
+</div></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th><th>ルール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象のコース</td>
+<td>受講したコース（T-07）と、解答したことのあるコース（T-14）。どちらもないコースは 404</td>
+</tr>
+<tr>
+<td>学習時間</td>
+<td>そのコースの冒険の学習時間（T-13 の <code>study_seconds</code>）の合計。1問10分までで数える（4.3 と同じ）。全コースの合計は S-08 の「累計の学習時間」と同じ</td>
+</tr>
+<tr>
+<td>正答率・網羅率</td>
+<td>S-08 の学習記録と同じく、択一の公開済み問題で数える</td>
+</tr>
+<tr>
+<td>択一・説明の内訳</td>
+<td>アーカイブした問題の解答も含めて数える（正答率とは分母が違うことがある）</td>
+</tr>
+<tr>
+<td>最後の学習日</td>
+<td>そのコースで最後に解答した日（JST）</td>
+</tr>
+<tr>
+<td>今日の復習</td>
+<td>復習日が今日までで、まだ習得していない公開済みの問題・キーワードの数</td>
+</tr>
+<tr>
+<td>コメント</td>
+<td>開いたときに作り、保存しない（開くたびに文章が変わることがある）。AI が失敗したときは学習サマリと同じ定型文</td>
 </tr>
 </tbody>
 </table></div>
@@ -3140,7 +3307,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>A-12</td>
 <td>GET</td>
 <td><code>/me/stats</code>、<code>/me/badges</code></td>
-<td>学習記録とバッジ</td>
+<td>学習記録（受講中のコースを含む）とバッジ</td>
 <td>学習者</td>
 </tr>
 <tr>
@@ -3155,6 +3322,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>GET</td>
 <td><code>/me/summary?date=</code></td>
 <td>1日の学習サマリ（Markdown とパートナーのコメント）</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-12d</td>
+<td>GET</td>
+<td><code>/me/courses</code>、<code>/me/courses/{id}</code></td>
+<td>コースごとの実績の一覧と詳細</td>
+<td>学習者</td>
+</tr>
+<tr>
+<td>A-12e</td>
+<td>GET</td>
+<td><code>/me/courses/{id}/comment</code></td>
+<td>コースの実績へのパートナーのコメント</td>
 <td>学習者</td>
 </tr>
 <tr>
@@ -3339,6 +3520,21 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <ul>
 <li>A-12c の応答は <code>adventureId</code> がなく、<code>scope</code> は <code>day</code></li>
 </ul>
+<p><strong>A-12 学習記録の受講中のコース・A-12d コースごとの実績・A-12e コメント</strong></p>
+<pre><code class="language-json">// A-12（/me/stats）に course を足す（受講中のコースがなければ null）。A-12d の一覧の1件と同じ形
+{"course": {"id": "c_3", "name": "ネットワーク", "certification": "ネットワークスペシャリスト", "current": true,
+  "enrolled": true, "enrolledOn": "2026-09-14", "lastStudiedOn": "2026-11-02",
+  "studySeconds": 67320, "studyTime": "18時間42分", "coveragePct": 62.4, "correctPct": 78.1}}
+// A-12d 一覧（/me/courses）
+{"totalStudySeconds": 111900, "totalStudyTime": "31時間5分", "courses": [ /* 上の course と同じ形 */ ]}
+// A-12d 詳細（/me/courses/c_3）。一覧の1件に次を足す。受講も解答もしていないコースは 404
+{"adventureCount": 46, "answerCount": 412, "choice": {"count": 360, "correct": 288},
+ "explain": {"count": 52, "passed": 34, "avgScore": 68}, "mastered": 41, "dueToday": 7,
+ "weak": [{"kind": "choice", "label": "OSPF のエリア境界ルータ…", "missCount": 3, "score": null, "missingPoints": []},
+          {"kind": "explain", "label": "VRRP", "missCount": 2, "score": 45, "missingPoints": ["優先度"]}]}
+// A-12e（/me/courses/c_3/comment）。解答がなければ comment は null（AI は呼ばない）
+{"courseId": "c_3", "comment": {"partnerName": "ミナ", "persona": "encourage", "text": "..."}}
+</code></pre>
 <p><strong>A-09 採点依頼</strong></p>
 <pre><code class="language-json">// リクエスト（prompt は A-07b の問いかけ。省略したときはキーワード全体の説明として採点する）
 {&quot;keywordId&quot;: &quot;kw_123&quot;, &quot;text&quot;: &quot;【定義】...\n【しくみ】...&quot;, &quot;isReview&quot;: true,

@@ -6,6 +6,8 @@ vi.mock('../../../../../functions/shared/db/repositories/notify.js')
 vi.mock('../../../../../functions/shared/db/repositories/answers.js')
 vi.mock('../../../../../functions/shared/db/repositories/badges.js')
 vi.mock('../../../../../functions/shared/db/repositories/courses.js')
+vi.mock('../../../../../functions/shared/db/repositories/course-records.js')
+import * as courseRecords from '../../../../../functions/shared/db/repositories/course-records.js'
 import * as users from '../../../../../functions/shared/db/repositories/users.js'
 import * as enrollments from '../../../../../functions/shared/db/repositories/enrollments.js'
 import * as partners from '../../../../../functions/shared/db/repositories/partners.js'
@@ -136,6 +138,15 @@ describe('M-H02 me（A-01〜A-04、A-12）', () => {
     expect(body).toMatchObject({ ...levelInfo(330), totalExp: 330, totalStudySeconds: 0 })
     users.findBySub.mockResolvedValue({ ...learner, totalStudySeconds: 7300 })
     expect(parse(await call({ path: '/api/me/stats' })).totalStudySeconds).toBe(7300)
+  })
+  it('MT-H02-20 学習記録に受講中のコース（S-08 の2つめのカード）を含める', async () => {
+    answers.statsForUser.mockResolvedValue({ publishedCount: 20, answeredQuestions: 8, answerCount: 10, correctCount: 7, mastered: 2 })
+    courseRecords.findForUser.mockResolvedValue({ courseId: 3, name: '基本情報', certification: '基本情報技術者', enrolledOn: '2026-09-14', studySeconds: 4500, lastStudiedOn: '2026-10-19', publishedCount: 20, answeredQuestions: 8, choiceCount: 10, choiceCorrect: 7 })
+    const body = parse(await call({ path: '/api/me/stats' }))
+    expect(courseRecords.findForUser).toHaveBeenCalledWith(15, 3)
+    expect(body.course).toEqual({ id: 'c_3', name: '基本情報', certification: '基本情報技術者', current: true, enrolled: true, enrolledOn: '2026-09-14', lastStudiedOn: '2026-10-19', studySeconds: 4500, studyTime: '1時間15分', coveragePct: 40, correctPct: 70 })
+    courseRecords.findForUser.mockResolvedValue(null)
+    expect(parse(await call({ path: '/api/me/stats' })).course).toBeNull()
   })
   it('MT-H02-18 バッジの獲得日時は +09:00 付き', async () => {
     badges.listDefs.mockResolvedValue(DEFS)

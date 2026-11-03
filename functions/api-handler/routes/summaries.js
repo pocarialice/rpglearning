@@ -11,15 +11,12 @@ import * as summaries from '../../shared/db/repositories/summaries.js'
 // コメントの AI の設定。上限は推論モデルの考える分も含む
 export const SUMMARY_AI = { maxTokens: 1500, temperature: 0.7, timeoutMs: 10000 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-async function partnerComment({ user, log, scope, rows, seconds }) {
+// パートナーのコメントを作る。失敗したら定型文（保存しない）。weak：画面・定型文に出す苦手の名前、weakDetail：AIに渡す苦手（足りない観点つき）
+export async function generateComment({ user, log, scope, studyTime, tally: t, weak, weakDetail = weak, courseName, extra }) {
   const persona = user.partnerPersona ?? 'encourage'
-  const t = tally(rows)
-  const points = reviewPoints(rows)
-  const studyTime = formatStudyTime(seconds)
-  let text = fallbackSummaryComment(persona, { tally: t, weak: points.map((p) => p.label) })
+  let text = fallbackSummaryComment(persona, { tally: t, weak })
   try {
-    const weak = points.map((p) => (p.missing?.length ? `${p.label}（足りない観点：${p.missing.join('、')}）` : p.label))
-    const p = buildSummaryCommentPrompt({ persona, name: user.partnerName ?? '', scope, studyTime, tally: t, weak })
+    const p = buildSummaryCommentPrompt({ persona, name: user.partnerName ?? '', scope, studyTime, tally: t, weak: weakDetail, courseName, extra })
     const res = await converse({
       modelId: process.env.MODEL_LIGHT, system: p.system, messages: [{ role: 'user', content: [{ text: p.user }] }],
       ...SUMMARY_AI, purpose: 'summary', logger: log
@@ -29,6 +26,14 @@ async function partnerComment({ user, log, scope, rows, seconds }) {
     log.warn({ msg: 'summary.fallback', code: err.code ?? 'AI_ERROR' })
   }
   return { partnerName: user.partnerName ?? null, persona, text }
+}
+function partnerComment({ user, log, scope, rows, seconds }) {
+  const points = reviewPoints(rows)
+  return generateComment({
+    user, log, scope, studyTime: formatStudyTime(seconds), tally: tally(rows),
+    weak: points.map((p) => p.label),
+    weakDetail: points.map((p) => (p.missing?.length ? `${p.label}（足りない観点：${p.missing.join('、')}）` : p.label))
+  })
 }
 // seconds：学習時間（秒）。省くと解答の時刻から数える
 async function respond(ctx, { scope, title, date, rows, extra, seconds = studySeconds(rows) }) {
