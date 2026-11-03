@@ -13,6 +13,8 @@ import * as notify from '../../shared/db/repositories/notify.js'
 import * as answers from '../../shared/db/repositories/answers.js'
 import * as badges from '../../shared/db/repositories/badges.js'
 import * as courses from '../../shared/db/repositories/courses.js'
+import * as courseRecords from '../../shared/db/repositories/course-records.js'
+import { courseItem } from './course-records.js'
 export const LOGIN_LOG_INTERVAL_MS = 30 * 60 * 1000
 export const imageUrl = (key) => (key ? `${process.env.APP_URL}/${key}` : null)
 const round1 = (n) => Math.round(n * 10) / 10
@@ -85,9 +87,14 @@ export async function putNotify(ctx) {
   await notify.put(ctx.user.userId, { emailEnabled, sendTime })
   return ok({ emailEnabled, sendTime, note: 'M-09' })
 }
+// course：受講中のコース（S-08 の2つめのカード。名前・受講開始日・このコースの学習時間・最後の学習日）
 export async function stats(ctx) {
-  const s = await answers.statsForUser(ctx.user.userId, ctx.user.currentCourseId)
+  const [s, current] = await Promise.all([
+    answers.statsForUser(ctx.user.userId, ctx.user.currentCourseId),
+    courseRecords.findForUser(ctx.user.userId, ctx.user.currentCourseId)
+  ])
   return ok({
+    course: current ? courseItem(current, ctx.user.currentCourseId) : null,
     courseId: encodeId(PREFIX.course, ctx.user.currentCourseId),
     publishedCount: s.publishedCount,
     answeredQuestions: s.answeredQuestions,

@@ -52,4 +52,12 @@ describe('M-F08 shell ロールと管理局', () => {
     updateShell(document, '#/home', { roles: ['learner'] })
     expect(q('.app-area-link').hidden).toBe(true)
   })
+  it('MT-F08-07 プロフィールの下の画面（S-16・S-17）でも「プロフィール」を選んだ状態にする', () => {
+    renderShell(document, { roles: ['learner'] })
+    for (const hash of ['#/profile/courses', '#/profile/course?id=c_3']) {
+      updateShell(document, hash, { roles: ['learner'] })
+      expect(q('.app-nav').hidden).toBe(false)
+      expect(q('.app-nav [aria-current="page"]').textContent).toBe('プロフィール')
+    }
+  })
 })

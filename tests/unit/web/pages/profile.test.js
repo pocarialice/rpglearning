@@ -5,7 +5,8 @@ import { ApiError } from '../../../../web/js/core/api.js'
 import * as profile from '../../../../web/js/pages/learner/s08-profile.js'
 import * as courses from '../../../../web/js/pages/learner/s03-courses.js'
 import * as partnerPage from '../../../../web/js/pages/learner/s09-partner.js'
-const STATS = { courseId: 'c_3', coveragePct: 40, correctPct: null, answerCount: 0, mastered: 2, streakDays: 7, level: 3, expInLevel: 30, next: 240, totalExp: 330, totalStudySeconds: 7300 }
+const COURSE = { id: 'c_3', name: '基本情報', current: true, enrolledOn: '2026-09-14', lastStudiedOn: '2026-10-19', studySeconds: 4500 }
+const STATS = { course: COURSE, courseId: 'c_3', coveragePct: 40, correctPct: null, answerCount: 0, mastered: 2, streakDays: 7, level: 3, expInLevel: 30, next: 240, totalExp: 330, totalStudySeconds: 7300 }
 const BADGES = { badges: [
   { code: 'streak_bronze', category: 'streak', tier: 'bronze', name: '継続の証（銅）', condition: '7日連続で1問以上解答', earnedAt: '2026-10-20T00:00:00+09:00' },
   { code: 'mastery_bronze', category: 'mastery', tier: 'bronze', name: '習得の証（銅）', condition: '習得済みの問題が10問', earnedAt: null }
@@ -47,12 +48,32 @@ describe('M-F16 S-08 プロフィール', () => {
   it('MT-F16-02 メニューから各画面へ移り、ログアウトできる', async () => {
     mockProfile()
     await profile.render(root)
+    expect(q('.app-menu .gd-btn').textContent).toBe('コースごとの実績')
+    click('[data-go="/profile/courses"]')
     click('[data-go="/courses"]')
     click('[data-go="/partner"]')
     click('[data-go="/settings/notify"]')
-    expect(go.mock.calls.map((c) => c[0])).toEqual(['/courses', '/partner', '/settings/notify'])
+    expect(go.mock.calls.map((c) => c[0])).toEqual(['/profile/courses', '/courses', '/partner', '/settings/notify'])
     click('[data-action="logout"]')
     expect(auth.logout).toHaveBeenCalled()
+  })
+  it('MT-F16-06 2つめのカードに受講中のコース（名前・学習時間・受講開始・最後の学習）', async () => {
+    mockProfile()
+    await profile.render(root)
+    const cards = [...root.querySelectorAll('section.gd-card')]
+    expect(cards[1].getAttribute('aria-labelledby')).toBe('course-now-h')
+    expect(q('.app-course-now .app-course-name').textContent).toBe('基本情報')
+    expect(q('.app-course-now .app-chip').textContent).toBe('受講中')
+    expect(q('.app-course-meta').textContent).toBe('このコースの学習時間 1時間15分受講開始 2026/09/14最後の学習 2026/10/19')
+  })
+  it('MT-F16-07 まだ解いていなければ「まだありません」、コースがなければカードを出さない', async () => {
+    api.apiGet.mockImplementation(async (p) => (p === '/me/stats' ? { ...STATS, course: { ...COURSE, name: '<b>X</b>', enrolledOn: null, lastStudiedOn: null, studySeconds: 0 } } : BADGES))
+    await profile.render(root)
+    expect(q('.app-course-name').textContent).toBe('<b>X</b>')
+    expect(q('.app-course-meta').textContent).toBe('このコースの学習時間 0秒最後の学習 まだありません')
+    api.apiGet.mockImplementation(async (p) => (p === '/me/stats' ? { ...STATS, course: null } : BADGES))
+    await profile.render(root)
+    expect(q('.app-course-now')).toBeNull()
   })
   it('MT-F16-03 ニックネームをダイアログで変える', async () => {
     mockProfile()
