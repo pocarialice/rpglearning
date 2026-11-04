@@ -2256,7 +2256,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>A-00</td>
 <td><code>GET /api/health</code></td>
 <td><code>health.get</code>（DBに <code>SELECT 1</code>）</td>
-<td>不要（コンテナのヘルスチェック・シンプル監視・配置後の確認）</td>
+<td>不要（コンテナのヘルスチェック・シンプル監視・配置後の確認）。シンプル監視は HEAD で見に来るため、HEAD は GET のルートで答える</td>
 </tr>
 <tr>
 <td>A-01</td>

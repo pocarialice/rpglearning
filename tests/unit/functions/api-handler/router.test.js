@@ -106,4 +106,11 @@ describe('M-H01 router・入口', () => {
     const noCtx = await main({}, { log })
     expect(noCtx.statusCode).toBe(404)
   })
+  it('MT-H01-13 HEAD は GET のルートで答える', async () => {
+    db.resolves({ rows: [{ ok: 1 }] })
+    const res = await call({ method: 'HEAD', path: '/api/health', auth: false })
+    expect(res.statusCode).toBe(200)
+    expect(match('HEAD', '/api/home').route.method).toBe('GET')
+    expect(match('HEAD', '/api/me/profile')).toBeNull()
+  })
 })

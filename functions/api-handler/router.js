@@ -82,9 +82,11 @@ function toRegExp(path) {
   return new RegExp(`^${src}$`)
 }
 // 一致したルートとパスのパラメータを返す。なければ null
+// HEAD は GET のルートで答える（シンプル監視は HEAD で見に来る。本文は node:http が送らない）
 export function match(method, path) {
+  const want = method === 'HEAD' ? 'GET' : method
   for (const route of ROUTES) {
-    if (route.method !== method) continue
+    if (route.method !== want) continue
     const m = route.re.exec(path)
     if (m) return { route, params: { ...m.groups } }
   }
