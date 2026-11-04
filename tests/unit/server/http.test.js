@@ -128,4 +128,11 @@ describe('M-S01 server/http', () => {
     expect(ev.queryStringParameters).toBeUndefined()
     expect(ev.requestContext.requestId).toMatch(/^[0-9a-f-]{36}$/)
   })
+  it('MT-S01-11 HEAD の API は本文を送らない', async () => {
+    const res = await request('/api/health', { method: 'HEAD' })
+    expect(res.status).toBe(200)
+    expect(res.headers['content-type']).toBe('application/json')
+    expect(res.body).toBe('')
+    expect(handle.mock.calls[0][0].requestContext.http.method).toBe('HEAD')
+  })
 })

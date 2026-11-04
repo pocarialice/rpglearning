@@ -3575,6 +3575,13 @@ describe('M-D01 client', () =&gt; {
 <td>404。ログに route・status・durationMs</td>
 <td>境</td>
 </tr>
+<tr>
+<td>MT-H01-13</td>
+<td>HEAD は GET のルートで答える</td>
+<td><code>HEAD /api/health</code>（authorizer なし）、<code>HEAD /api/home</code>、<code>HEAD /api/me/profile</code></td>
+<td>200／GET のルートに一致／null（PUT だけのルート）</td>
+<td>同</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H02 <code>routes/me.js</code>（A-01〜A-04、A-12）</h4>
@@ -5421,6 +5428,13 @@ describe('M-D01 client', () =&gt; {
 <td>イベントの既定</td>
 <td>クエリなし</td>
 <td><code>queryStringParameters</code> なし、<code>requestId</code> は UUID</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-S01-11</td>
+<td>HEAD の API</td>
+<td><code>HEAD /api/health</code></td>
+<td>200、ヘッダーは返し本文は送らない（シンプル監視は HEAD で見る）</td>
 <td>同</td>
 </tr>
 </tbody>
@@ -7439,7 +7453,7 @@ describe('M-D01 client', () =&gt; {
 <td>5.1 API共通仕様、3.5 DB起動待ち</td>
 <td>2.4.4、3.3 M-D01・M-D02、4.6、6.1</td>
 <td>errors、db/client、tx、server/http、api.js</td>
-<td>MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜10、MT-F02-02〜03</td>
+<td>MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜11、MT-F02-02〜03</td>
 </tr>
 <tr>
 <td>5.4 CSV出力</td>

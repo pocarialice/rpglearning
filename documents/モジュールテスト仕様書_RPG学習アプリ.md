@@ -735,6 +735,7 @@ describe('M-D01 client', () => {
 | MT-H01-10 | コースが未選択 | `current_course_id = null` で `GET /api/home` | 409 `COURSE_REQUIRED` | 状 |
 | MT-H01-11 | トークンがない・壊れた本文 | authorizer なし／本文が `{x` | 401／400。`.` を含むパスは文字どおりに比べる | 異 |
 | MT-H01-12 | event がないときの既定 | `main(undefined, {log})`、イベントが空 | 404。ログに route・status・durationMs | 境 |
+| MT-H01-13 | HEAD は GET のルートで答える | `HEAD /api/health`（authorizer なし）、`HEAD /api/home`、`HEAD /api/me/profile` | 200／GET のルートに一致／null（PUT だけのルート） | 同 |
 
 #### M-H02 `routes/me.js`（A-01〜A-04、A-12）
 
@@ -1072,6 +1073,7 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-S01-08 | 5xx が続いたら知らせる | 窓1秒・基準3回で、0・500・900ミリ秒に1回ずつ、そのあと5秒後 | 3回目で `alert('api-5xx', 'API のエラーが続いています', …)` を1回。窓の外の1回では知らせない（本番の値は5分・5回） | 境 |
 | MT-S01-09 | API の 5xx を数える | API が 503 を返す | 応答はそのまま、5xx として数える | 同 |
 | MT-S01-10 | イベントの既定 | クエリなし | `queryStringParameters` なし、`requestId` は UUID | 同 |
+| MT-S01-11 | HEAD の API | `HEAD /api/health` | 200、ヘッダーは返し本文は送らない（シンプル監視は HEAD で見る） | 同 |
 
 #### M-S02 `server/worker.mjs`
 
@@ -1464,7 +1466,7 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | 4.9 説明の採点、2.5 非同期方式    | 3.7、4.3、4.7、5.2 A-07b・A-09・A-10、7.3・7.6 | grading-worker、gradings、prompts、jobs、server/worker | MT-W01-01〜14、MT-H07-01〜11、MT-A02、MT-A04、MT-D04-01〜03、MT-S02-01〜06   |
 | 4.10 問題取り込み            | 4.4、5.3 A-13〜A-16、7.4 | import-worker、admin-imports、admin-questions | MT-W02-01〜20、MT-H09-01〜09、MT-H10              |
 | 4.11 アカウント管理、6.3 物理削除  | 5.3 A-19・A-20・A-21b、4.5.1 | admin-users、purge-users、s13-users         | MT-H12-01〜11、MT-W03-09・15、MT-F21-11                 |
-| 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01・M-D02、4.6、6.1 | errors、db/client、tx、server/http、api.js          | MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜10、MT-F02-02〜03          |
+| 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01・M-D02、4.6、6.1 | errors、db/client、tx、server/http、api.js          | MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜11、MT-F02-02〜03          |
 | 5.4 CSV出力              | 5.3 A-17・A-18       | admin-dashboard                 | MT-H11-01〜08                              |
 | 5.5 AI連携          | 3.6、7章              | ai/client、sakura、bedrock、json-guard、persona、prompts | MT-A01〜MT-A06                            |
 | 5.6 メール、6.2 送信方式       | 3.8、4.5、4.7、9.2             | build-notify、mail/smtp、templates、server/worker      | MT-W03-12、MT-W04-01〜07、MT-M01-01〜09、MT-S02-07〜11      |

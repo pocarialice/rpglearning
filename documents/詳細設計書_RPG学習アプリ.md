@@ -673,7 +673,7 @@ flowchart TD
 
 | No   | メソッド・パス                                     | ハンドラ（routes/）                 | ロール            |
 | ---- | ------------------------------------------- | ------------------------------ | -------------- |
-| A-00 | `GET /api/health`                           | `health.get`（DBに `SELECT 1`）    | 不要（コンテナのヘルスチェック・シンプル監視・配置後の確認） |
+| A-00 | `GET /api/health`                           | `health.get`（DBに `SELECT 1`）    | 不要（コンテナのヘルスチェック・シンプル監視・配置後の確認）。シンプル監視は HEAD で見に来るため、HEAD は GET のルートで答える |
 | A-01 | `GET /api/me`                               | `me.get`                       | 全員             |
 | A-02 | `PUT /api/me/profile`                       | `me.putProfile`                | learner        |
 | A-03 | `PUT /api/me/partner`                       | `me.putPartner`                | learner        |
