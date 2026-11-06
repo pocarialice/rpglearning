@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第2.1版（ドラフト：第1〜6章、HTML版あり。第1.9版でアカウント作成（A-36・A-37、S-01）のテスト14件を載せた。第2.0版でコースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せる。第2.1版で HEAD のテスト2件（MT-H01-13・MT-S01-11）を載せる）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02、第2.0版：2026-11-03、第2.1版：2026-11-04）</b></li>
+      <li>版数<b>第2.2版（ドラフト：第1〜6章、HTML版あり。第1.9版でアカウント作成（A-36・A-37、S-01）のテスト14件を載せた。第2.0版でコースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せる。第2.1版で HEAD のテスト2件（MT-H01-13・MT-S01-11）を載せた。第2.2版でひとことの時間帯のテスト2件（MT-A04-14・MT-H03-09）を載せ、MT-A04-05・MT-H03-01〜03・07 を直す）</b></li>
+      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02、第2.0版：2026-11-03、第2.1版：2026-11-04、第2.2版：2026-11-06）</b></li>
       <li>入力文書<b>詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
@@ -3068,9 +3068,9 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-A04-05</td>
-<td>ひとことに個人情報を入れない</td>
-<td><code>buildDailyMessagePrompt({reviewCount:5, ...})</code></td>
-<td>渡した数値は入り、氏名・メールのキーを受け付けない（渡すと例外）</td>
+<td>ひとことに個人情報・復習数を入れない</td>
+<td><code>buildDailyMessagePrompt({timeSlot:'night', todayAnswers:0, yesterdayAnswers:12, ...})</code>、定型文</td>
+<td>system に「夜にホームを開いた」「復習の話はしない」、user に「伝える数字：昨日の解答数 12問」、復習の語なし。<code>reviewCount</code>・氏名・メールのキーと知らない時間帯は例外。定型文は3つずつで復習の語なし</td>
 <td>異</td>
 </tr>
 <tr>
@@ -3121,6 +3121,13 @@ describe('M-D01 client', () =&gt; {
 <td>励まし型・scope <code>course</code>、コース名に閉じタグ、<code>extra</code> に冒険の回数・網羅率</td>
 <td>system に「1つのコースのこれまでの学習全体」と「<code>&lt;weak&gt;</code>・<code>&lt;course&gt;</code> などのタグ」の指示。user は先頭に <code>&lt;course&gt;</code>（閉じタグは <code>&lt;\/course&gt;</code>）、学習時間・数のあとに <code>extra</code> を並べ、最後に <code>&lt;weak&gt;</code></td>
 <td>同</td>
+</tr>
+<tr>
+<td>MT-A04-14</td>
+<td>ひとことの時間帯と伝える数字</td>
+<td>JST 4・5・10・11・16・17・23・0時／解答数・EXP の組み合わせ</td>
+<td>夜・朝・朝・昼・昼・夜・夜・夜。0:00〜4:59 は前日の日付の夜（JST 4:30・翌0:00 → 前日の夜、5:00 → 当日の朝）。今日の解答数 → 昨日の解答数 → 今週のEXP → レベルの順に1以上のものを選ぶ</td>
+<td>境</td>
 </tr>
 <tr>
 <td>MT-A04-12</td>
@@ -3753,22 +3760,22 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-H03-01</td>
 <td>ひとことの使い回し</td>
-<td><code>daily_message_on = '2026-10-20'</code>（今日）</td>
+<td><code>daily_message_on = '2026-10-20'</code>（今日）・<code>daily_message_slot = 'morning'</code>、JST 10:00</td>
 <td>Bedrock を呼ばず、保存済みのひとことを返す</td>
 <td>状</td>
 </tr>
 <tr>
 <td>MT-H03-02</td>
 <td>ひとことの生成</td>
-<td><code>daily_message_on = '2026-10-19'</code></td>
-<td>Haiku（<code>MODEL_LIGHT</code>）を1回呼び、<code>setDailyMessage(15, 文, '2026-10-20')</code></td>
+<td><code>daily_message_on = '2026-10-19'</code>、今日の解答数12</td>
+<td>Haiku（<code>MODEL_LIGHT</code>）を1回呼び、user に「時間帯：朝」「伝える数字：今日の解答数 12問」（復習の語なし）。<code>setDailyMessage(15, 文, '2026-10-20', 'morning')</code></td>
 <td>状</td>
 </tr>
 <tr>
 <td>MT-H03-03</td>
 <td>ひとことの失敗</td>
 <td>Bedrock が <code>AI_TIMEOUT</code></td>
-<td>励まし型の定型文のどれかを返し、保存しない。応答は200</td>
+<td>励まし型の定型文（今日の解答数12）のどれかを返し、保存しない。応答は200</td>
 <td>異</td>
 </tr>
 <tr>
@@ -3805,6 +3812,13 @@ describe('M-D01 client', () =&gt; {
 <td>受講中 c_3（問題120・学んだ択一42）／コースの行なし</td>
 <td><code>findProgress(3, 15)</code> を呼び、<code>course: {id:'c_3', name, certification, questionCount:120, coveragePct:35}</code>／<code>course: null</code></td>
 <td>同</td>
+</tr>
+<tr>
+<td>MT-H03-09</td>
+<td>時間帯が変わったら作り直す</td>
+<td><code>daily_message_slot = 'morning'</code>、JST 13:00</td>
+<td>Bedrock を1回呼び、system に「昼にホームを開いた」。<code>setDailyMessage(15, 文, '2026-10-20', 'day')</code></td>
+<td>状</td>
 </tr>
 </tbody>
 </table></div>

@@ -44,7 +44,7 @@ export const CHECKS = {
   'daily-message': {
     model: 'MODEL_LIGHT', ai: DAILY_MESSAGE_AI,
     prompt: () => {
-      const p = buildDailyMessagePrompt({ persona: 'logic', name: 'セージ', reviewCount: 5, yesterdayAnswers: 12, weeklyExp: 340, level: 4 })
+      const p = buildDailyMessagePrompt({ persona: 'logic', name: 'セージ', timeSlot: 'morning', todayAnswers: 0, yesterdayAnswers: 12, weeklyExp: 340, level: 4 })
       return text(p.system, p.user)
     },
     judge: notEmpty

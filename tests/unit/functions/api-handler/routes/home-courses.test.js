@@ -24,7 +24,8 @@ import { NOW } from '../../../../helpers/clock.js'
 import { learner } from '../../../../fixtures/users.js'
 const br = bedrockMock()
 const call = (opts) => main(httpEvent(opts), { log: memoryLogger(), now: NOW })
-const fallbackTexts = (persona, n) => FALLBACK_MESSAGES[persona].map((f) => f(n))
+const fallbackTexts = (persona, h) => FALLBACK_MESSAGES[persona].map((f) => f(h))
+const TODAY_12 = { label: '今日の解答数', value: 12, unit: '問' }
 describe('M-H03 home（A-05）', () => {
   beforeEach(() => {
     br.reset()
@@ -36,19 +37,31 @@ describe('M-H03 home（A-05）', () => {
     exp.weeklyTotalForUser.mockResolvedValue(340)
   })
   it('MT-H03-01 ひとことの使い回し', async () => {
-    users.findBySub.mockResolvedValue({ ...learner, dailyMessageOn: '2026-10-20', dailyMessage: '保存済みのひとこと' })
+    users.findBySub.mockResolvedValue({ ...learner, dailyMessageOn: '2026-10-20', dailyMessageSlot: 'morning', dailyMessage: '保存済みのひとこと' })
     const body = parse(await call({ path: '/api/home' }))
     expect(body.message).toEqual({ partnerName: 'ミナ', persona: 'encourage', text: '保存済みのひとこと' })
     expect(br.commandCalls(ConverseCommand)).toHaveLength(0)
+  })
+  it('MT-H03-09 時間帯が変わったら作り直す', async () => {
+    users.findBySub.mockResolvedValue({ ...learner, dailyMessageOn: '2026-10-20', dailyMessageSlot: 'morning', dailyMessage: '朝のひとこと' })
+    const body = parse(await main(httpEvent({ path: '/api/home' }), { log: memoryLogger(), now: new Date('2026-10-20T04:00:00Z') }))
+    const input = br.commandCalls(ConverseCommand)[0].args[0].input
+    expect(input.system[0].text).toContain('昼にホームを開いた')
+    expect(users.setDailyMessage).toHaveBeenCalledWith(15, '昨日より3問多く解けてるよ。今日もいこう', '2026-10-20', 'day')
+    expect(body.message.text).toBe('昨日より3問多く解けてるよ。今日もいこう')
   })
   it('MT-H03-02 ひとことの生成', async () => {
     const body = parse(await call({ path: '/api/home' }))
     const calls = br.commandCalls(ConverseCommand)
     expect(calls).toHaveLength(1)
     expect(calls[0].args[0].input.modelId).toBe('model-light')
-    expect(calls[0].args[0].input.messages[0].content[0].text).toContain('今日の復習数：5')
+    const text = calls[0].args[0].input.messages[0].content[0].text
+    expect(text).toContain('時間帯：朝')
+    expect(text).toContain('伝える数字：今日の解答数 12問')
+    expect(text).not.toContain('復習')
+    expect(answers.countOnDate).toHaveBeenCalledWith(15, '2026-10-20')
     expect(answers.countOnDate).toHaveBeenCalledWith(15, '2026-10-19')
-    expect(users.setDailyMessage).toHaveBeenCalledWith(15, '昨日より3問多く解けてるよ。今日もいこう', '2026-10-20')
+    expect(users.setDailyMessage).toHaveBeenCalledWith(15, '昨日より3問多く解けてるよ。今日もいこう', '2026-10-20', 'morning')
     expect(body.message.text).toBe('昨日より3問多く解けてるよ。今日もいこう')
   })
   it('MT-H03-03 ひとことの失敗', async () => {
@@ -58,7 +71,7 @@ describe('M-H03 home（A-05）', () => {
     await vi.advanceTimersByTimeAsync(5000)
     const res = await p
     expect(res.statusCode).toBe(200)
-    expect(fallbackTexts('encourage', 5)).toContain(parse(res).message.text)
+    expect(fallbackTexts('encourage', TODAY_12)).toContain(parse(res).message.text)
     expect(users.setDailyMessage).not.toHaveBeenCalled()
   })
   it('MT-H03-07 空の応答・パートナー未設定でも定型文', async () => {
@@ -66,11 +79,11 @@ describe('M-H03 home（A-05）', () => {
     users.findBySub.mockResolvedValue({ ...learner, partnerPersona: null, partnerName: null })
     const body = parse(await call({ path: '/api/home' }))
     expect(body.message.persona).toBe('encourage')
-    expect(fallbackTexts('encourage', 5)).toContain(body.message.text)
+    expect(fallbackTexts('encourage', TODAY_12)).toContain(body.message.text)
     br.on(ConverseCommand).rejects(awsError('ThrottlingException'))
     users.findBySub.mockResolvedValue({ ...learner, partnerPersona: 'rival', partnerName: 'レン', streakDays: 4 })
     const b2 = parse(await call({ path: '/api/home' }))
-    expect(fallbackTexts('rival', 5)).toContain(b2.message.text)
+    expect(fallbackTexts('rival', TODAY_12)).toContain(b2.message.text)
     expect(b2.streakDays).toBe(4)
   })
   it('MT-H03-04 今日の復習数', async () => {
