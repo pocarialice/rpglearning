@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.5版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007））</b></li>
-      <li>作成日<b>2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06）</b></li>
+      <li>版数<b>第1.6版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加）</b></li>
+      <li>作成日<b>2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06、第1.6版：2026-11-06）</b></li>
       <li>入力文書<b>要件定義書 第1.2版（ドラフト）、外部設計書 第1.3版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
       <li>関連文書<b>モジュールテスト仕様書_RPG学習アプリ（本書のモジュール単位の試験を定める）</b></li>
@@ -698,7 +698,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 │  ├─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
 │  ├─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
 │  ├─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
-│  └─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
+│  ├─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
+│  └─ V008__google_login.sql      # Googleでログイン（8.4.6）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -1160,6 +1161,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>アクセストークンの署名の鍵（32文字以上。漏れたら作り直す＝全員がログインし直す）</td>
 </tr>
 <tr>
+<td><code>GOOGLE_CLIENT_ID</code></td>
+<td>api</td>
+<td>Googleでログインの OAuth クライアントID（公開してよい値）。空なら Google のボタンを出さない</td>
+</tr>
+<tr>
 <td><code>AI_PROVIDER</code></td>
 <td>すべて</td>
 <td><code>sakura</code>（既定）・<code>bedrock</code></td>
@@ -1449,6 +1455,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>auth/token.js</code></td>
 <td>トークン</td>
 <td><code>signToken</code>、<code>verifyToken</code>、<code>newOpaqueToken</code>、<code>sha256</code></td>
+</tr>
+<tr>
+<td>M-K03</td>
+<td><code>auth/google.js</code></td>
+<td>Google の ID トークン</td>
+<td><code>verifyGoogleIdToken</code>、<code>googleClientId</code>、<code>allowsDuplicate</code>、<code>resetJwksCache</code></td>
 </tr>
 <tr>
 <td>-</td>
@@ -2141,6 +2153,22 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>利用者の sub</td>
 <td>登録時に UUID を振る（<code>users.auth_sub</code>）。メールアドレスを変えてもトークンの持ち主が変わらないようにするため</td>
 </tr>
+<tr>
+<td>Googleでログイン</td>
+<td><code>GOOGLE_CLIENT_ID</code>（Google Cloud の OAuth クライアントID「ウェブアプリケーション」）があるときだけ使える。画面は Google Identity Services のボタンで ID トークン（<code>credential</code>）を受け取り、A-39 に送る。アプリのトークン（アクセス・リフレッシュ）はパスワードのときと同じものを出す</td>
+</tr>
+<tr>
+<td>Google の ID トークンの確認</td>
+<td><code>verifyGoogleIdToken</code>（M-K03）：Google の公開鍵（<code>https://www.googleapis.com/oauth2/v3/certs</code>、<code>Cache-Control: max-age</code> の間キャッシュ。知らない <code>kid</code> は5分に1回まで取り直す）で RS256 の署名を確かめ、<code>iss</code>（<code>accounts.google.com</code>）・<code>aud</code>（<code>GOOGLE_CLIENT_ID</code>）・<code>exp</code>／<code>iat</code>（ずれ60秒まで）・<code>email_verified</code>（true）を見る。合わなければ null。ライブラリは使わず <code>node:crypto</code> だけで確かめる</td>
+</tr>
+<tr>
+<td>Google の利用者の決め方</td>
+<td>① <code>users.google_sub</code> が一致する利用者 → ② 同じメールアドレスの利用者がいれば結びつける（仮パスワードのままなら仮パスワードを消し、以後は Google でログイン）→ ③ いなければ学習者（<code>learner</code>）として新しく登録（氏名は Google の名前、なければメールの @ より前、50文字まで。パスワードなし。操作記録 <code>user.signup</code>、<code>method: 'google'</code>）。だれでも登録でき、ドメインの制限はない。メールの確認リンク（A-36・A-37）はいらない（Google がメールアドレスを確認済み）。削除予定の利用者は <code>401 LOGIN_FAILED</code></td>
+</tr>
+<tr>
+<td>検証用の重複アドレス</td>
+<td><code>DUPLICATE_EMAILS</code>（<code>pocarialice7148@gmail.com</code>）だけは②で結びつけず、同じメールアドレスでも別の利用者を作る（パスワードの利用者と Google の利用者を並べて確かめるため）。DB の <code>users_email_uq</code> もこのアドレスを除く部分インデックスにする（8.4.6）。2つの値は必ず同じにする。A-30・A-34・A-36 で同じアドレスが複数あるときは、パスワードのある利用者を使う</td>
+</tr>
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch4"><h2><i class="fa-solid fa-bolt h-ico" aria-hidden="true"></i>4. 処理の入口設計（コンテナ）</h2>
@@ -2451,6 +2479,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>auth.login</code>・<code>.newPassword</code>・<code>.refresh</code>・<code>.logout</code>・<code>.forgot</code>・<code>.reset</code>・<code>.signup</code>・<code>.signupVerify</code></td>
 <td>不要（ログイン前に呼ぶ）</td>
 </tr>
+<tr>
+<td>A-38・A-39</td>
+<td><code>GET /api/auth/google/config</code>・<code>POST /api/auth/google</code></td>
+<td><code>auth.googleConfig</code>・<code>.google</code></td>
+<td>不要（ログイン前に呼ぶ）</td>
+</tr>
 </tbody>
 </table></div>
 <ul>
@@ -2713,7 +2747,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   <div class="vis-grid tiles4">
     <div class="tile strong"><p class="tile-num">12</p><p class="tile-cap">学習者API（A-01〜A-12）</p></div>
     <div class="tile"><p class="tile-num">12</p><p class="tile-cap">管理API（A-13〜A-22、A-13b・A-21b）</p></div>
-    <div class="tile"><p class="tile-num">8</p><p class="tile-cap">ログインAPI（A-30〜A-37）</p></div>
+    <div class="tile"><p class="tile-num">10</p><p class="tile-cap">ログインAPI（A-30〜A-39）</p></div>
     <div class="tile"><p class="tile-num sm">30<small>秒</small></p><p class="tile-cap">採点の上限（超えたら504）</p></div>
   </div>
 </div>
@@ -3063,7 +3097,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <ul>
 <li>キーに日時を入れて毎回名前を変えるため、画面・Service Worker のキャッシュを消す必要はない。画像は api コンテナの <code>/partners/*</code> が配信する（4.6）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 ログインAPI（A-30〜A-37）</h3>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 ログインAPI（A-30〜A-39）</h3>
 <p>トークンなしで呼べる（4.2.2）。応答の形は外部設計書 5.1。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -3114,13 +3148,38 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>{ token }</code></td>
 <td>確認待ちを使用済みにして中身を取り出す（使えない → <code>400</code>、<code>details: [{ field: 'token', code: 'INVALID' }]</code>）。1つのトランザクションで <code>users.create</code>（ロール <code>learner</code>、通知設定も作る）・<code>auth.setPassword</code>（<code>mustChange: false</code>）・操作記録 <code>user.signup</code>（操作者は本人）。メールアドレスが先に登録されていたら（一意制約 <code>23505</code>）<code>409 CONFLICT</code>。成功したら A-30 と同じトークンの組を <code>201</code> で返す</td>
 </tr>
+<tr>
+<td>A-38 <code>GET /api/auth/google/config</code></td>
+<td>なし</td>
+<td><code>200 { clientId }</code>。<code>GOOGLE_CLIENT_ID</code> がなければ <code>clientId: null</code>（画面は Google のボタンを出さない）</td>
+</tr>
+<tr>
+<td>A-39 <code>POST /api/auth/google</code></td>
+<td><code>{ credential }</code></td>
+<td>ID トークンを確かめ（3.10。だめなら <code>401 LOGIN_FAILED</code>「Googleでログインできませんでした。もう一度お試しください」）、利用者を決めて（3.10）、A-30 と同じ <code>200 { idToken, refreshToken, expiresIn: 3600 }</code>。別の Google アカウントと結びついたメールアドレス → <code>409 CONFLICT</code>。同時に同じ人を登録しかけたとき（一意制約）は、先に作られた利用者を使う。<code>GOOGLE_CLIENT_ID</code> がなければ <code>404</code></td>
+</tr>
 </tbody>
 </table></div>
+<div class="vis">
+  <p class="vis-label">Googleでログイン（A-38・A-39）の流れ</p>
+  <ol class="flow">
+    <li><b><i class="fa-solid fa-gear fi"></i>A-38 設定を読む</b>clientId がなければボタンを出さない</li>
+    <li><b><i class="fa-brands fa-google fi"></i>Google のボタン</b>ID トークン（credential）を受け取る</li>
+    <li><b><i class="fa-solid fa-shield-halved fi"></i>A-39 で確かめる</b>公開鍵で RS256・aud・exp・メール確認済み</li>
+    <li><b><i class="fa-solid fa-user-check fi"></i>利用者を決める</b>google_sub → 同じメールに結びつけ → 新しく登録</li>
+    <li class="hl"><b><i class="fa-solid fa-ticket fi"></i>アプリのトークン</b>パスワードのときと同じ</li>
+  </ol>
+  <div class="cgrid">
+    <div class="card"><h5><i class="fa-solid fa-door-open"></i>だれでも登録</h5><p class="sub">初めての人は学習者（learner）。ドメインの制限なし・確認メールなし</p></div>
+    <div class="card"><h5><i class="fa-solid fa-link"></i>同じメールは同じ人</h5><p class="sub">招待・登録済みの人に結びつけ、仮パスワードは消す</p></div>
+    <div class="card"><h5><i class="fa-solid fa-flask"></i>検証用アドレス</h5><p class="sub">pocarialice7148@gmail.com だけは別の利用者を作る</p></div>
+  </div>
+</div>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-mobile-screen h-ico" aria-hidden="true"></i>6. 画面モジュール設計（web）</h2>
 <div class="vis">
   <p class="vis-label">ログインから最初の画面まで</p>
   <ol class="flow">
-    <li><b><i class="fa-solid fa-right-to-bracket fi"></i>S-01 ログイン</b>A-30</li>
+    <li><b><i class="fa-solid fa-right-to-bracket fi"></i>S-01 ログイン</b>A-30／Google は A-39</li>
     <li><b><i class="fa-solid fa-key fi"></i>仮パスワードなら</b>新しいパスワード A-31</li>
     <li><b><i class="fa-solid fa-ticket fi"></i>トークン受け取り</b>1時間・期限5分前に A-32</li>
     <li><b><i class="fa-solid fa-box-archive fi"></i>トークン保管</b>メモリと sessionStorage</li>
@@ -3154,6 +3213,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
       B-&gt;&gt;L: リンクを開く
       L-&gt;&gt;API: POST /api/auth/signup/verify（A-37）
     end
+    opt Googleでログイン（A-38・A-39）
+      L-&gt;&gt;API: GET /api/auth/google/config
+      L-&gt;&gt;B: Google のボタン（ID トークンを受け取る）
+      L-&gt;&gt;API: POST /api/auth/google
+    end
     API--&gt;&gt;AU: IDトークン・リフレッシュトークン
     AU-&gt;&gt;B: 読み込み直す
   end
@@ -3172,13 +3236,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td><code>core/auth.js</code></td>
-<td><code>ensureLogin</code>、<code>signIn</code>、<code>completeNewPassword</code>、<code>refresh</code>、<code>login</code>、<code>getIdToken</code>、<code>logout</code>、<code>forgot</code>、<code>resetPassword</code>、<code>signUp</code>、<code>verifySignup</code></td>
-<td>A-30〜A-37 を呼ぶ（<code>verifySignup</code> は返ってきたトークンを保存する）。トークンはメモリと <code>sessionStorage</code>（キー <code>rpg.auth</code>）だけに置く。期限の5分前に <code>refresh</code>（A-32）。失敗したら消して読み込み直し、ログイン画面へ。<code>logout</code> は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする）</td>
+<td><code>ensureLogin</code>、<code>signIn</code>、<code>completeNewPassword</code>、<code>refresh</code>、<code>login</code>、<code>getIdToken</code>、<code>logout</code>、<code>forgot</code>、<code>resetPassword</code>、<code>signUp</code>、<code>verifySignup</code>、<code>googleConfig</code>、<code>signInWithGoogle</code></td>
+<td>A-30〜A-39 を呼ぶ（<code>verifySignup</code> は返ってきたトークンを保存する）。トークンはメモリと <code>sessionStorage</code>（キー <code>rpg.auth</code>）だけに置く。期限の5分前に <code>refresh</code>（A-32）。失敗したら消して読み込み直し、ログイン画面へ。<code>logout</code> は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする）</td>
 </tr>
 <tr>
 <td><code>pages/login.js</code></td>
 <td><code>renderLogin</code>、<code>renderSignIn</code>、<code>signupOk</code></td>
-<td>S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（<code>#/reset?token=…</code>）・アカウントを作る・アカウントの登録（<code>#/signup?token=…</code>。開いたらすぐ A-37 を呼び、できたら URL を <code>/</code> に戻して読み込み直す）の6つの表示を切り替える。<code>main.js</code> は <code>#/reset?</code>・<code>#/signup?</code> のときログイン中でもこの画面を出す。アカウントを作る表示は、名前・メールアドレスの形・パスワードの決まり・2回の一致がそろうまでボタンを押せない（<code>signupOk</code>）。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED）</td>
+<td>S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（<code>#/reset?token=…</code>）・アカウントを作る・アカウントの登録（<code>#/signup?token=…</code>。開いたらすぐ A-37 を呼び、できたら URL を <code>/</code> に戻して読み込み直す）の6つの表示を切り替える。<code>main.js</code> は <code>#/reset?</code>・<code>#/signup?</code> のときログイン中でもこの画面を出す。アカウントを作る表示は、名前・メールアドレスの形・パスワードの決まり・2回の一致がそろうまでボタンを押せない（<code>signupOk</code>）。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED）。A-38 で <code>clientId</code> が返ったときだけ、Google Identity Services（<code>https://accounts.google.com/gsi/client</code>、1回だけ読み込む）の「Googleでログイン」ボタンを「または」の下に出し、受け取った ID トークンを A-39 に送って読み込み直す。失敗したら M_GOOGLE_FAILED（サーバーの文言があればそれ）</td>
 </tr>
 <tr>
 <td><code>core/api.js</code></td>
@@ -4498,6 +4562,15 @@ INSERT INTO schema_migrations (version, description) VALUES ('V006', 'signup') O
 
 INSERT INTO schema_migrations (version, description) VALUES ('V007', 'daily message slot') ON CONFLICT DO NOTHING;
 </code></pre>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>8.4.6 Googleでログイン（<code>db/migrations/V008__google_login.sql</code>）</h4>
+<p><code>users.google_sub</code> で Google アカウントを利用者に結びつける。メールアドレスの重複禁止は、検証用のアドレスだけを除く部分インデックスにする（3.10）。</p>
+<pre><code class="language-sql">ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
+CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_uq ON users (google_sub) WHERE google_sub IS NOT NULL;
+DROP INDEX IF EXISTS users_email_uq;
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_uq ON users (lower(email))
+  WHERE lower(email) NOT IN ('pocarialice7148@gmail.com');
+INSERT INTO schema_migrations (version, description) VALUES ('V008', 'google login') ON CONFLICT DO NOTHING;
+</code></pre>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.5 初期データ（<code>db/migrations/V002__seed_masters.sql</code>）</h3>
 <pre><code class="language-sql">INSERT INTO partners (persona, label, default_name) VALUES
   ('encourage', '励まし型', 'ミナ'),
@@ -4712,6 +4785,11 @@ ORDER BY last_studied_on DESC NULLS LAST, c.course_id LIMIT 100;
 <td>なりすまし</td>
 <td><code>server/http.mjs</code> が IDトークン（HS256）の署名・期限・発行者・用途を検証し、通ったクレームだけをルートに渡す（AWS 版の API Gateway の役割）。署名の鍵 <code>AUTH_SECRET</code> は <code>.env</code> だけに置く</td>
 <td><code>server/http.mjs</code>、<code>auth/token.js</code>、<code>util/authz.js</code></td>
+</tr>
+<tr>
+<td>Google のなりすまし</td>
+<td>Google の ID トークンは Google の公開鍵で RS256 の署名を確かめ、宛先（<code>aud</code>）が自分のクライアントIDであること・メールアドレスが確認済みであることを見てから利用者を決める。ID トークンそのものはログに出さない</td>
+<td><code>auth/google.js</code>、<code>routes/auth.js</code></td>
 </tr>
 <tr>
 <td>パスワードの推測・漏えい</td>
@@ -5452,7 +5530,7 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.5版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007））</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.6版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

@@ -1,4 +1,4 @@
-// ログインとトークンの管理（詳細設計書 6.1）。アプリの API（A-30〜A-37）を使う。トークンはメモリと sessionStorage だけに置く
+// ログインとトークンの管理（詳細設計書 6.1）。アプリの API（A-30〜A-39）を使う。トークンはメモリと sessionStorage だけに置く
 export const TOKEN_KEY = 'rpg.auth'
 export const REFRESH_BEFORE_MS = 5 * 60 * 1000
 export class AuthError extends Error {
@@ -33,9 +33,12 @@ export function createAuth({
     storage.removeItem(TOKEN_KEY)
   }
   async function post(path, body) {
+    return send(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  }
+  async function send(path, init) {
     let res
     try {
-      res = await fetchFn(`${base}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      res = await fetchFn(`${base}${path}`, init)
     } catch (err) {
       throw new AuthError('NETWORK', 0, err?.message)
     }
@@ -66,6 +69,15 @@ export function createAuth({
     if (data.challenge) return { challenge: data.challenge, session: data.session }
     save(data)
     return { done: true }
+  }
+  // A-38。Googleでログインが使えないときは clientId が null
+  async function googleConfig() {
+    const data = await send('/auth/google/config', { method: 'GET' })
+    return { clientId: data?.clientId ?? null }
+  }
+  // A-39。Google が出した ID トークン（credential）を渡してログインする
+  async function signInWithGoogle(credential) {
+    save(await post('/auth/google', { credential }))
   }
   // A-31
   async function completeNewPassword(session, newPassword) {
@@ -103,5 +115,5 @@ export function createAuth({
   async function verifySignup(token) {
     save(await post('/auth/signup/verify', { token }))
   }
-  return { ensureLogin, signIn, completeNewPassword, refresh, login, getIdToken, logout, forgot, resetPassword, signUp, verifySignup }
+  return { ensureLogin, signIn, completeNewPassword, refresh, login, getIdToken, logout, forgot, resetPassword, signUp, verifySignup, googleConfig, signInWithGoogle }
 }

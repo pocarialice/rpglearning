@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderLogin, passwordOk, signupOk, M_LOGIN_FAILED, M_FORGOT_SENT, M_RESET_DONE, M_RESET_INVALID, M_NETWORK, M_SIGNUP_SENT, M_SIGNUP_INVALID, M_SIGNUP_VERIFYING } from '../../../../web/js/pages/login.js'
+import { renderLogin, loadGsi, GSI_SRC, M_GOOGLE_FAILED, passwordOk, signupOk, M_LOGIN_FAILED, M_FORGOT_SENT, M_RESET_DONE, M_RESET_INVALID, M_NETWORK, M_SIGNUP_SENT, M_SIGNUP_INVALID, M_SIGNUP_VERIFYING } from '../../../../web/js/pages/login.js'
 import { AuthError } from '../../../../web/js/core/auth.js'
 let root, auth, win
 function setup(hash = '', patch = () => {}) {
@@ -205,5 +205,77 @@ describe('M-F23 S-01 ログイン', () => {
     expect(signupOk({ ...v, email: 'a@x' })).toBe(false)
     expect(signupOk({ ...v, password: 'guild2026', password2: 'guild2026' })).toBe(false)
     expect(signupOk({ ...v, password2: 'Guild2027' })).toBe(false)
+  })
+})
+describe('M-F23 S-01 Googleでログイン', () => {
+  let gsi, cb
+  function setupGoogle({ clientId = 'cid', google = true } = {}) {
+    root = document.createElement('div')
+    document.body.replaceChildren(root)
+    gsi = { initialize: vi.fn((o) => { cb = o.callback }), renderButton: vi.fn() }
+    auth = { signIn: vi.fn(), googleConfig: vi.fn(async () => ({ clientId })), signInWithGoogle: vi.fn(async () => {}) }
+    win = { location: { hash: '', pathname: '/', reload: vi.fn() }, history: { replaceState: vi.fn() }, document }
+    if (google) win.google = { accounts: { id: gsi } }
+    renderLogin(root, { auth, win })
+  }
+  it('MT-F23-14 クライアントIDがあればボタンを出し、押したらログインして読み込み直す', async () => {
+    setupGoogle()
+    await flush()
+    expect(q('.app-google').hidden).toBe(false)
+    expect(gsi.initialize).toHaveBeenCalledWith(expect.objectContaining({ client_id: 'cid' }))
+    expect(gsi.renderButton.mock.calls[0][0]).toBe(q('.app-google-button'))
+    await cb({ credential: 'cred' })
+    expect(auth.signInWithGoogle).toHaveBeenCalledWith('cred')
+    expect(win.location.reload).toHaveBeenCalledTimes(1)
+  })
+  it('MT-F23-15 失敗したらメッセージを出す', async () => {
+    setupGoogle()
+    await flush()
+    auth.signInWithGoogle.mockRejectedValueOnce(new AuthError('LOGIN_FAILED', 401))
+    await cb({ credential: 'x' })
+    expect(errorText()).toBe(M_GOOGLE_FAILED)
+    auth.signInWithGoogle.mockRejectedValueOnce(new AuthError('NETWORK', 0, 'offline'))
+    await cb({})
+    expect(errorText()).toBe(M_NETWORK)
+    auth.signInWithGoogle.mockRejectedValueOnce(new AuthError('CONFLICT', 409, 'このメールアドレスは別のGoogleアカウントと結びついています'))
+    await cb({ credential: 'x' })
+    expect(errorText()).toBe('このメールアドレスは別のGoogleアカウントと結びついています')
+    expect(win.location.reload).not.toHaveBeenCalled()
+  })
+  it('MT-F23-16 クライアントIDがない・設定を読めないときはボタンを出さない', async () => {
+    setupGoogle({ clientId: null })
+    await flush()
+    expect(q('.app-google').hidden).toBe(true)
+    expect(gsi.initialize).not.toHaveBeenCalled()
+    setupGoogle()
+    auth.googleConfig.mockRejectedValueOnce(new Error('x'))
+    renderLogin(root, { auth, win })
+    await flush()
+    expect(q('.app-google').hidden).toBe(true)
+  })
+  it('MT-F23-17 Google のスクリプトを1回だけ読み込む', async () => {
+    setupGoogle({ google: false })
+    await flush()
+    const script = document.head.querySelector(`script[src="${GSI_SRC}"]`)
+    expect(script.async).toBe(true)
+    const again = loadGsi(win)
+    expect(document.head.querySelectorAll(`script[src="${GSI_SRC}"]`)).toHaveLength(1)
+    win.google = { accounts: { id: gsi } }
+    script.onload()
+    await again
+    await flush()
+    expect(gsi.renderButton).toHaveBeenCalledTimes(1)
+    // 読み込めなければボタンを出さず、次はもう一度読み込む
+    const w2 = { document }
+    const p = loadGsi(w2)
+    document.head.lastElementChild.onerror()
+    await expect(p).rejects.toThrow('gsi load failed')
+    expect(w2.__gsiLoading).toBeNull()
+  })
+  it('MT-F23-18 ほかの画面に移ったあとはボタンを出さない', async () => {
+    setupGoogle()
+    root.remove()
+    await flush()
+    expect(gsi.renderButton).not.toHaveBeenCalled()
   })
 })

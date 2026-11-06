@@ -130,3 +130,21 @@ describe('M-F01 core/auth', () => {
     expect(JSON.parse(sessionStorage.getItem(TOKEN_KEY)).expiresAt).toBeGreaterThan(Date.now() + 3500 * 1000)
   })
 })
+describe('M-F01 core/auth Googleでログイン', () => {
+  it('MT-F01-12 A-38 の設定を読む', async () => {
+    fetchFn = vi.fn(async () => res(200, { clientId: 'cid' }))
+    expect(await make().googleConfig()).toEqual({ clientId: 'cid' })
+    expect(fetchFn.mock.calls[0]).toEqual(['/api/auth/google/config', { method: 'GET' }])
+    fetchFn = vi.fn(async () => res(200, {}))
+    expect(await make().googleConfig()).toEqual({ clientId: null })
+  })
+  it('MT-F01-13 A-39 で ID トークンを送ってトークンを保存する', async () => {
+    const auth = make()
+    await auth.signInWithGoogle('cred')
+    expect(fetchFn.mock.calls[0][0]).toBe('/api/auth/google')
+    expect(bodyOf(0)).toEqual({ credential: 'cred' })
+    expect(await auth.getIdToken()).toBe('id1')
+    fetchFn = vi.fn(async () => res(401, { error: { code: 'LOGIN_FAILED', message: 'x' } }))
+    await expect(make().signInWithGoogle('bad')).rejects.toMatchObject({ code: 'LOGIN_FAILED', status: 401 })
+  })
+})

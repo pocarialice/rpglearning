@@ -53,6 +53,21 @@ describe('M-D04 auth（ログインの記録）', () => {
     expect(await auth.findByEmail('a@x.jp', fakeDb({ rows: [] }))).toBeNull()
     expect(await auth.findById(1, fakeDb({ rows: [{ user_id: 1, roles: ['learner'] }] }))).toMatchObject({ roles: ['learner'] })
   })
+  it('MT-D04-11 Googleでログイン（探す・結びつける・Google だけにする）', async () => {
+    expect(await auth.findByGoogleSub('g', fakeDb({ rows: [{ user_id: 2, roles: '["learner"]' }] }))).toMatchObject({ userId: 2, roles: ['learner'] })
+    const db = fakeDb({ updated: 1 })
+    expect(await auth.linkGoogle(2, 'g', db)).toBe(true)
+    expect(db.execute.mock.calls[0][0]).toContain('google_sub IS NULL')
+    expect(db.execute.mock.calls[0][0]).toContain('CASE WHEN must_change_password THEN NULL ELSE password_hash END')
+    expect(db.execute.mock.calls[0][1]).toEqual({ userId: 2, googleSub: 'g' })
+    expect(await auth.linkGoogle(2, 'g', fakeDb({ updated: 0 }))).toBe(false)
+    await auth.setGoogleOnly(2, 'g', db)
+    expect(db.execute.mock.calls[1][0]).toContain('password_hash = NULL, must_change_password = false')
+    // 検証用の重複アドレスでは、パスワードのある利用者を先に返す
+    const q = fakeDb({ rows: [] })
+    await auth.findByEmail('a@x.jp', q)
+    expect(q.query.mock.calls[0][0]).toContain('ORDER BY (u.password_hash IS NULL), u.user_id LIMIT 1')
+  })
   it('MT-D04-06 失敗の回数とロック', async () => {
     const db = fakeDb()
     await auth.recordFailure(1, db)

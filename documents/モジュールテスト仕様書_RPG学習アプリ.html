@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第2.2版（ドラフト：第1〜6章、HTML版あり。第1.9版でアカウント作成（A-36・A-37、S-01）のテスト14件を載せた。第2.0版でコースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せる。第2.1版で HEAD のテスト2件（MT-H01-13・MT-S01-11）を載せた。第2.2版でひとことの時間帯のテスト2件（MT-A04-14・MT-H03-09）を載せ、MT-A04-05・MT-H03-01〜03・07 を直す）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02、第2.0版：2026-11-03、第2.1版：2026-11-04、第2.2版：2026-11-06）</b></li>
+      <li>版数<b>第2.3版（ドラフト：第1〜6章、HTML版あり。第1.9版でアカウント作成（A-36・A-37、S-01）のテスト14件を載せた。第2.0版でコースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せる。第2.1版で HEAD のテスト2件（MT-H01-13・MT-S01-11）を載せた。第2.2版でひとことの時間帯のテスト2件（MT-A04-14・MT-H03-09）を載せ、MT-A04-05・MT-H03-01〜03・07 を直す。第2.3版で Googleでログイン（A-38・A-39、S-01）のテスト23件を MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18 として載せる）</b></li>
+      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02、第2.0版：2026-11-03、第2.1版：2026-11-04、第2.2版：2026-11-06、第2.3版：2026-11-06）</b></li>
       <li>入力文書<b>詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
@@ -429,8 +429,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <div class="lv"><b>受け入れ確認</b>dev・コース管理者</div>
   </div>
   <div class="vis-grid tiles4">
-    <div class="tile strong"><p class="tile-num">732</p><p class="tile-cap">テストケース</p></div>
-    <div class="tile"><p class="tile-num">73</p><p class="tile-cap">対象モジュール（ID単位）</p></div>
+    <div class="tile strong"><p class="tile-num">777</p><p class="tile-cap">テストケース</p></div>
+    <div class="tile"><p class="tile-num">74</p><p class="tile-cap">対象モジュール（ID単位）</p></div>
     <div class="tile"><p class="tile-num sm">Vitest</p><p class="tile-cap">リリースごとに全件実行</p></div>
     <div class="tile"><p class="tile-num sm">MT-G01-04</p><p class="tile-cap">ID＝モジュール＋連番</p></div>
   </div>
@@ -877,9 +877,9 @@ describe('M-D01 client', () =&gt; {
   <div class="bars">
     <div class="bar-row"><span class="bl"><i class="fa-solid fa-toolbox"></i> util（M-U01〜U08）</span><div class="bt"><span style="width:100%"></span></div><b>79</b></div>
     <div class="bar-row"><span class="bl"><i class="fa-solid fa-chess-board"></i> domain（M-G01〜G07）</span><div class="bt"><span style="width:87%"></span></div><b>69</b></div>
-    <div class="bar-row"><span class="bl"><i class="fa-solid fa-database"></i> db（M-D01〜D05）</span><div class="bt"><span style="width:84%"></span></div><b>66</b></div>
+    <div class="bar-row"><span class="bl"><i class="fa-solid fa-database"></i> db（M-D01〜D05）</span><div class="bt"><span style="width:85%"></span></div><b>67</b></div>
     <div class="bar-row"><span class="bl"><i class="fa-solid fa-robot"></i> ai（M-A01〜A06）</span><div class="bt"><span style="width:47%"></span></div><b>37</b></div>
-    <div class="bar-row"><span class="bl"><i class="fa-solid fa-key"></i> auth（M-K01〜K02）</span><div class="bt"><span style="width:11%"></span></div><b>9</b></div>
+    <div class="bar-row"><span class="bl"><i class="fa-solid fa-key"></i> auth（M-K01〜K03）</span><div class="bt"><span style="width:20%"></span></div><b>16</b></div>
     <div class="bar-row"><span class="bl"><i class="fa-solid fa-envelope"></i> mail・storage（M-M01・M-O01）</span><div class="bt"><span style="width:16%"></span></div><b>13</b></div>
   </div>
   <div class="banner"><i class="fa-solid fa-bullseye banner-ico"></i><div><p class="banner-h">境界値をとくに厚く</p><p class="note">説明文 49／50／200／201／400／401文字、JSTの0:00、月曜0:00、復習予定日の前日と当日、レベルアップの境界（99／100 EXP）。</p></div></div>
@@ -2153,6 +2153,13 @@ describe('M-D01 client', () =&gt; {
 <td>直近60秒の受付の有無（メールアドレスは大文字小文字を区別しない）、24時間を保存、使うと <code>{email, fullName, passwordHash}</code>／null。期限内・未使用・パスワードありだけを使う</td>
 <td>状</td>
 </tr>
+<tr>
+<td>MT-D04-11</td>
+<td>Googleでログイン</td>
+<td><code>findByGoogleSub</code>・<code>linkGoogle</code>（結びつけた／すでに別の Google）・<code>setGoogleOnly</code>・<code>findByEmail</code> の並べ方</td>
+<td>利用者とロール、<code>google_sub IS NULL</code> のときだけ結びつけ仮パスワードを消す（true／false）、パスワードなしにする、パスワードのある利用者を先に返す</td>
+<td>状</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-D05 <code>db/migrate.js</code></h4>
@@ -2171,7 +2178,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-D05-01</td>
 <td>ファイルの並べ方</td>
 <td>テスト用のフォルダ（<code>V002</code>・<code>V001</code>・<code>.down.sql</code>・ほかのファイル）、リポジトリの <code>db/migrations</code></td>
-<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V006</code></td>
+<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V008</code></td>
 <td>同</td>
 </tr>
 <tr>
@@ -3468,14 +3475,78 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-K03 <code>auth/google.js</code></h4>
+<p>テスト用の RSA 鍵で ID トークンを作り、Google の公開鍵の取得は <code>fetchFn</code> で差し替える（本物の Google には接続しない）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>観点</th>
+<th>入力・前提</th>
+<th>期待結果</th>
+<th>技法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MT-K03-01</td>
+<td>正しい ID トークン</td>
+<td>既定のクレーム／<code>iss</code> が <code>accounts.google.com</code>・<code>aud</code> が配列・<code>email_verified:'true'</code>・<code>name</code> が文字でない</td>
+<td><code>{ sub, email, name }</code>／<code>name:''</code></td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-K03-02</td>
+<td>署名・形式</td>
+<td>別の鍵で署名／<code>alg:HS256</code>／知らない <code>kid</code>／3つに分かれない／壊れた JSON／空／クライアントIDなし</td>
+<td>すべて null</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-K03-03</td>
+<td>クレーム</td>
+<td>発行者・宛先が違う、期限切れ（61秒前）・<code>exp</code> が数でない、<code>iat</code> が2分先、<code>sub</code>・<code>email</code> なし、メール未確認／期限の30秒あと</td>
+<td>すべて null／通す（ずれ60秒まで）</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-K03-04</td>
+<td>公開鍵のキャッシュ</td>
+<td><code>max-age=100</code> で0秒・50秒・200秒</td>
+<td>取得は1回目と200秒のときだけ</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-K03-05</td>
+<td>鍵の入れ替え</td>
+<td>知らない <code>kid</code> を0秒・60秒・400秒（400秒で新しい鍵）</td>
+<td>5分たつまで取り直さない。取り直した鍵で通す（RSA 以外・<code>kid</code> なしの鍵は使わない）</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-K03-06</td>
+<td>公開鍵を取れない</td>
+<td>JWKS が 500</td>
+<td>例外（HTTP 500）</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-K03-07</td>
+<td>検証用アドレス・クライアントID</td>
+<td><code>PocariAlice7148@gmail.com</code>・ほかのアドレス・なし／<code>GOOGLE_CLIENT_ID</code> なし・前後に空白</td>
+<td>true・false・false／null・空白を除いた値</td>
+<td>同</td>
+</tr>
+</tbody>
+</table></div>
 </section><section class="chapter" id="ch5"><h2><i class="fa-solid fa-bolt h-ico" aria-hidden="true"></i>5. テストケース（API・ワーカー・コンテナの入口・画面）</h2>
 <div class="vis">
   <p class="vis-label">API・ワーカー・コンテナの入口・画面のテストケース数</p>
   <div class="bars">
-    <div class="bar-row"><span class="bl"><i class="fa-solid fa-route"></i> api-handler（M-H01〜H15）</span><div class="bt"><span style="width:100%"></span></div><b>136</b></div>
+    <div class="bar-row"><span class="bl"><i class="fa-solid fa-route"></i> api-handler（M-H01〜H15）</span><div class="bt"><span style="width:100%"></span></div><b>144</b></div>
     <div class="bar-row"><span class="bl"><i class="fa-solid fa-gears"></i> ワーカー（M-W01〜W04）</span><div class="bt"><span style="width:40%"></span></div><b>54</b></div>
     <div class="bar-row"><span class="bl"><i class="fa-solid fa-server"></i> コンテナの入口（M-S01〜S03）</span><div class="bt"><span style="width:19%"></span></div><b>26</b></div>
-    <div class="bar-row"><span class="bl"><i class="fa-solid fa-mobile-screen"></i> 画面（M-F01〜F23）</span><div class="bt"><span style="width:99%"></span></div><b>135</b></div>
+    <div class="bar-row"><span class="bl"><i class="fa-solid fa-mobile-screen"></i> 画面（M-F01〜F23）</span><div class="bt"><span style="width:99%"></span></div><b>142</b></div>
   </div>
   <p class="vis-label" style="margin-top:8px !important">採点ジョブの状態遷移（M-H07・M-W01 で確認）</p>
   <ol class="flow">
@@ -4550,7 +4621,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H15 <code>routes/auth.js</code>（A-30〜A-37）</h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H15 <code>routes/auth.js</code>（A-30〜A-39）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -4687,6 +4758,62 @@ describe('M-D01 client', () =&gt; {
 <td>使用済み・期限切れのリンク／token なし／先に同じメールアドレスが登録された（<code>23505</code>）</td>
 <td>400（<code>details:[{field:'token', code:'INVALID'}]</code>）で利用者を作らない／409 <code>CONFLICT</code> でロールバック、トークンを出さない</td>
 <td>異</td>
+</tr>
+<tr>
+<td>MT-H15-19</td>
+<td>Googleの設定（A-38）</td>
+<td><code>GOOGLE_CLIENT_ID</code> あり／なし（A-39 も）</td>
+<td><code>{clientId}</code>／<code>{clientId:null}</code>・A-39 は 404</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-H15-20</td>
+<td>Googleでログイン（結びついた人）</td>
+<td><code>google_sub</code> が一致</td>
+<td>200 でトークン（その人の sub）。メールで探さず登録もしない。ログに ID トークンを出さない</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-H15-21</td>
+<td>同じメールの利用者に結びつける</td>
+<td>同じメールの利用者あり／すでに別の Google／削除予定</td>
+<td>200・<code>linkGoogle(21,'g-100')</code>／409 <code>CONFLICT</code>／401 <code>LOGIN_FAILED</code></td>
+<td>DT</td>
+</tr>
+<tr>
+<td>MT-H15-22</td>
+<td>初めての人の登録</td>
+<td>だれもいない</td>
+<td>200。学習者として作り（氏名は Google の名前）、Google だけの利用者にして操作記録 <code>user.signup</code>、1回コミット</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-H15-23</td>
+<td>検証用アドレス</td>
+<td><code>PocariAlice7148@gmail.com</code> で同じメールの利用者あり</td>
+<td>メールで探さず、結びつけず、別の利用者を作る</td>
+<td>DT</td>
+</tr>
+<tr>
+<td>MT-H15-24</td>
+<td>同時の登録</td>
+<td>作るときに一意制約（23505）→ 先の利用者あり／なし、ほかのエラー</td>
+<td>先の利用者でトークン（ロールバック1回）／409／500</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H15-25</td>
+<td>Googleでログインできない</td>
+<td>ID トークンが正しくない／<code>credential</code> なし／削除予定の利用者</td>
+<td>401 <code>LOGIN_FAILED</code>「Googleでログインできませんでした。もう一度お試しください」</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-H15-26</td>
+<td>氏名の決め方</td>
+<td>前後に空白の名前／名前なし／@ より前もなし／60文字（サロゲートペア）</td>
+<td>空白を除く／<code>hanako</code>／<code>ゲスト</code>／50文字</td>
+<td>境</td>
 </tr>
 </tbody>
 </table></div>
@@ -5682,6 +5809,20 @@ describe('M-D01 client', () =&gt; {
 <td>アカウント作成（A-36・A-37）</td>
 <td><code>signUp</code>、<code>verifySignup</code>（成功／400）</td>
 <td><code>POST /api/auth/signup</code>（トークンは保存しない）、<code>/api/auth/signup/verify</code> のトークンを保存、400 は <code>AuthError</code> を投げる</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F01-12</td>
+<td>Googleの設定（A-38）</td>
+<td><code>{clientId:'cid'}</code>／<code>{}</code></td>
+<td>GET <code>/api/auth/google/config</code>、<code>{clientId:'cid'}</code>／<code>{clientId:null}</code></td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F01-13</td>
+<td>Googleでログイン（A-39）</td>
+<td>成功／401</td>
+<td><code>{credential}</code> を送ってトークンを保存／<code>AuthError</code>（<code>LOGIN_FAILED</code>・401）</td>
 <td>同</td>
 </tr>
 </tbody>
@@ -7057,6 +7198,41 @@ describe('M-D01 client', () =&gt; {
 <td>そろったときだけ true</td>
 <td>境</td>
 </tr>
+<tr>
+<td>MT-F23-14</td>
+<td>Googleのボタン</td>
+<td>クライアントIDあり、ボタンからの ID トークン</td>
+<td>ボタンを出し <code>initialize({client_id})</code>・<code>renderButton</code>、<code>signInWithGoogle('cred')</code> のあと読み込み直す</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F23-15</td>
+<td>Googleでログインの失敗</td>
+<td>401／通信エラー／サーバーの文言あり（409）</td>
+<td>M_GOOGLE_FAILED／M_NETWORK／サーバーの文言。読み込み直さない</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F23-16</td>
+<td>ボタンを出さない</td>
+<td>クライアントIDなし／設定を読めない</td>
+<td>ボタンの欄は隠したまま</td>
+<td>異</td>
+</tr>
+<tr>
+<td>MT-F23-17</td>
+<td>スクリプトの読み込み</td>
+<td>Google のスクリプトがない／2回呼ぶ／読み込めない</td>
+<td><code>async</code> の script を1つだけ足し、読み込めたらボタン／読み込めなければ次はやり直す</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F23-18</td>
+<td>画面を離れたあと</td>
+<td>設定が返る前に画面から外す</td>
+<td>ボタンを出さない</td>
+<td>状</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F24 <code>sw.js</code>（Service Worker）</h4>
@@ -7489,9 +7665,9 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>8.1 認証・権限、3.7 S-01 ログイン</td>
-<td>3.2 M-U04、3.10、5.4 A-30〜A-37、6.1</td>
-<td>authz、router、auth/password・token、routes/auth、repositories/auth、core/auth.js、pages/login.js</td>
-<td>MT-U04-01〜10、MT-H01-06〜07、MT-K01・MT-K02、MT-H15-01〜18、MT-D04-05〜10、MT-F01-01〜11、MT-F23-01〜13</td>
+<td>3.2 M-U04、3.10、5.4 A-30〜A-39、6.1</td>
+<td>authz、router、auth/password・token・google、routes/auth、repositories/auth、core/auth.js、pages/login.js</td>
+<td>MT-U04-01〜10、MT-H01-06〜07、MT-K01〜MT-K03、MT-H15-01〜26、MT-D04-05〜11、MT-F01-01〜13、MT-F23-01〜18</td>
 </tr>
 <tr>
 <td>8.2 データ保護</td>
@@ -7693,7 +7869,7 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>5</td>
 <td>コンテナの起動時のマイグレーションと、worker の定期処理が1日を通して動く</td>
-<td>初回の起動で V001〜V003 が入ること、翌日 0:00 の daily と、メールを有効にしたときの送信の枠が <code>schedule_runs</code> に記録されることを確かめる</td>
+<td>初回の起動で V001〜V008 が入ること、翌日 0:00 の daily と、メールを有効にしたときの送信の枠が <code>schedule_runs</code> に記録されることを確かめる</td>
 <td>テーブルがない・日次処理が動かない（ランキング・クエストが更新されない）</td>
 </tr>
 </tbody>

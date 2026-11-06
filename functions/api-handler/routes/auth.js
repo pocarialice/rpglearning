@@ -1,9 +1,10 @@
-// A-30〜A-37 ログインとアカウント作成（詳細設計書 5.4）。Cognito の代わりにアプリでパスワードとトークンを扱う。認証なしで呼べる
+// A-30〜A-39 ログイン・アカウント作成・Googleでログイン（詳細設計書 5.4）。Cognito の代わりにアプリでパスワードとトークンを扱う。認証なしで呼べる
 import { randomUUID } from 'node:crypto'
 import { AppError } from '../../shared/util/errors.js'
 import { ok, noContent } from '../../shared/util/http.js'
 import { hashPassword, verifyPassword, passwordProblems } from '../../shared/auth/password.js'
 import { signToken, verifyToken, newOpaqueToken, sha256, ACCESS_TTL_SECONDS } from '../../shared/auth/token.js'
+import { verifyGoogleIdToken, googleClientId, allowsDuplicate } from '../../shared/auth/google.js'
 import * as auth from '../../shared/db/repositories/auth.js'
 import * as users from '../../shared/db/repositories/users.js'
 import * as audit from '../../shared/db/repositories/audit.js'
@@ -154,4 +155,64 @@ export async function signupVerify(ctx) {
   }
   ctx.log.info({ msg: 'auth.signup', userId })
   return ok(await issue({ userId, authSub: sub, roles: ['learner'] }, ctx.now), 201)
+}
+// A-38 Googleでログインの設定（画面がボタンを出すかどうかに使う）。GOOGLE_CLIENT_ID がなければ null
+export async function googleConfig() {
+  return ok({ clientId: googleClientId() })
+}
+export const M_GOOGLE_FAILED = 'Googleでログインできませんでした。もう一度お試しください'
+const FULL_NAME_MAX = 50
+// Google の名前が空なら、メールアドレスの @ より前を使う（氏名は1〜50文字）
+export function fullNameFrom({ name, email }) {
+  const base = String(name ?? '').trim() || String(email).split('@')[0] || 'ゲスト'
+  return [...base].slice(0, FULL_NAME_MAX).join('')
+}
+async function createGoogleUser(claims) {
+  return withTx(async (tx) => {
+    const id = await users.create({ sub: randomUUID(), email: claims.email, fullName: fullNameFrom(claims), roles: ['learner'] }, tx)
+    await auth.setGoogleOnly(id, claims.sub, tx)
+    await audit.write(id, 'user.signup', { type: 'user', id }, { roles: ['learner'], method: 'google' }, tx)
+    return id
+  })
+}
+// Google アカウントに当たる利用者を探す。なければ結びつけるか新しく作る
+async function resolveGoogleUser(claims, log) {
+  const linked = await auth.findByGoogleSub(claims.sub)
+  if (linked) return linked
+  // 検証用のアドレスは、同じメールアドレスの利用者がいても結びつけずに別の利用者を作る
+  if (!allowsDuplicate(claims.email)) {
+    const byEmail = await auth.findByEmail(claims.email)
+    if (byEmail) {
+      if (byEmail.status === 'deleted') throw new AppError('LOGIN_FAILED', M_GOOGLE_FAILED)
+      if (!(await auth.linkGoogle(byEmail.userId, claims.sub))) throw new AppError('CONFLICT', 'このメールアドレスは別のGoogleアカウントと結びついています')
+      log.info({ msg: 'auth.google_linked', userId: byEmail.userId })
+      return auth.findById(byEmail.userId)
+    }
+  }
+  try {
+    const userId = await createGoogleUser(claims)
+    log.info({ msg: 'auth.google_signup', userId })
+    return auth.findById(userId)
+  } catch (err) {
+    // 同じ Google アカウントで同時にログインしたとき（一意制約）。先に作られた方を使う
+    if (err?.code !== '23505') throw err
+    const again = await auth.findByGoogleSub(claims.sub)
+    if (again) return again
+    throw new AppError('CONFLICT', 'このメールアドレスはすでに登録されています')
+  }
+}
+// A-39 Googleでログイン。ID トークン（credential）を確かめ、いつものトークンを出す。初めてなら学習者として登録する
+export async function google(ctx) {
+  const clientId = googleClientId()
+  if (!clientId) throw new AppError('NOT_FOUND', 'Googleでログインは使えません')
+  const credential = str(ctx.body().credential)
+  const claims = credential ? await verifyGoogleIdToken(credential, { clientId, now: ctx.now }) : null
+  if (!claims) {
+    ctx.log.info({ msg: 'auth.google_failed' })
+    throw new AppError('LOGIN_FAILED', M_GOOGLE_FAILED)
+  }
+  const user = await resolveGoogleUser(claims, ctx.log)
+  if (!user || user.status === 'deleted') throw new AppError('LOGIN_FAILED', M_GOOGLE_FAILED)
+  ctx.log.info({ msg: 'auth.login', userId: user.userId, method: 'google' })
+  return ok(await issue(user, ctx.now))
 }

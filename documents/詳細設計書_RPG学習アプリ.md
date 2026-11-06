@@ -3,8 +3,8 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.5版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007））      |
-| 作成日    | 2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06）                                                 |
+| 版数     | 第1.5版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加）      |
+| 作成日    | 2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06、第1.6版：2026-11-06）                                                 |
 | 入力文書   | 要件定義書 第1.2版（ドラフト）、外部設計書 第1.3版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は `aws/documents/` に退避                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
@@ -139,7 +139,8 @@ rpglearning/
 │  ├─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
 │  ├─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
 │  ├─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
-│  └─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
+│  ├─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
+│  └─ V008__google_login.sql      # Googleでログイン（8.4.6）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -302,6 +303,7 @@ rpglearning/
 | `DATABASE_URL`・`DATABASE_SSL`・`DB_POOL_MAX` | すべて          | DB の接続先（`postgres://ユーザー:パスワード@IPアドレス:5432/rpg`）、TLS（`require`）、接続の数                          |
 | `MIGRATE_ON_START` | api                           | `true` なら起動時にマイグレーションを流す（compose.yaml で api だけに付ける）  |
 | `AUTH_SECRET`      | api                           | アクセストークンの署名の鍵（32文字以上。漏れたら作り直す＝全員がログインし直す）     |
+| `GOOGLE_CLIENT_ID` | api                           | Googleでログインの OAuth クライアントID（公開してよい値）。空なら Google のボタンを出さない |
 | `AI_PROVIDER`      | すべて                           | `sakura`（既定）・`bedrock`                 |
 | `AI_BASE_URL`・`AI_API_KEY` | すべて（sakura のとき）       | さくらのAI Engine の URL（既定 `https://api.ai.sakura.ad.jp/v1`）とアカウントトークン |
 | `AI_REASONING_EFFORT` | すべて（sakura のとき・任意） | 推論モデルの考える深さ（`low`＝既定・`medium`・`high`）。空にすると送らない（M-A05） |
@@ -357,6 +359,7 @@ rpglearning/
 | M-O01 | `storage/object-storage.js` | オブジェクトストレージ | `putObject`、`getBytes`、`getText`、`getStream`、`deleteObject`、`presignPut` |
 | M-K01 | `auth/password.js` | パスワード | `hashPassword`、`verifyPassword`、`passwordProblems`、`generateTempPassword` |
 | M-K02 | `auth/token.js` | トークン | `signToken`、`verifyToken`、`newOpaqueToken`、`sha256` |
+| M-K03 | `auth/google.js` | Google の ID トークン | `verifyGoogleIdToken`、`googleClientId`、`allowsDuplicate`、`resetJwksCache` |
 | -     | `services/answer-recorder.js` | 解答の記録 | `loadAnswerContext(tx, a)`、`computeOutcome(ctx, a)`、`writeOutcome(tx, outcome, ctx, a)`、`outcomeView(outcome)` |
 
 ### 3.2 util
@@ -622,6 +625,10 @@ AWS 版の Cognito の代わり。外部設計書 3.7 S-01・8.1。
 | 再設定リンク | 32バイトの乱数。DB には SHA-256 だけを保存（60分・1回だけ）。同じ利用者には60秒に1通まで。登録の有無に関わらず同じ応答を返す |
 | アカウント作成の確認リンク | 32バイトの乱数。DB（`signup_requests`）には SHA-256 と、名前・メールアドレス・パスワードのハッシュを保存（24時間・1回だけ）。同じメールアドレスへは60秒に1通まで。登録済みのメールアドレスでも同じ応答を返し、パスワードのハッシュは置かずに「すでに登録されています」の案内だけを送る。リンクを開いたら `learner` のロールで `users` を作る（状態は `invited`。最初の API で `active`） |
 | 利用者の sub | 登録時に UUID を振る（`users.auth_sub`）。メールアドレスを変えてもトークンの持ち主が変わらないようにするため |
+| Googleでログイン | `GOOGLE_CLIENT_ID`（Google Cloud の OAuth クライアントID「ウェブアプリケーション」）があるときだけ使える。画面は Google Identity Services のボタンで ID トークン（`credential`）を受け取り、A-39 に送る。アプリのトークン（アクセス・リフレッシュ）はパスワードのときと同じものを出す |
+| Google の ID トークンの確認 | `verifyGoogleIdToken`（M-K03）：Google の公開鍵（`https://www.googleapis.com/oauth2/v3/certs`、`Cache-Control: max-age` の間キャッシュ。知らない `kid` は5分に1回まで取り直す）で RS256 の署名を確かめ、`iss`（`accounts.google.com`）・`aud`（`GOOGLE_CLIENT_ID`）・`exp`／`iat`（ずれ60秒まで）・`email_verified`（true）を見る。合わなければ null。ライブラリは使わず `node:crypto` だけで確かめる |
+| Google の利用者の決め方 | ① `users.google_sub` が一致する利用者 → ② 同じメールアドレスの利用者がいれば結びつける（仮パスワードのままなら仮パスワードを消し、以後は Google でログイン）→ ③ いなければ学習者（`learner`）として新しく登録（氏名は Google の名前、なければメールの @ より前、50文字まで。パスワードなし。操作記録 `user.signup`、`method: 'google'`）。だれでも登録でき、ドメインの制限はない。メールの確認リンク（A-36・A-37）はいらない（Google がメールアドレスを確認済み）。削除予定の利用者は `401 LOGIN_FAILED` |
+| 検証用の重複アドレス | `DUPLICATE_EMAILS`（`pocarialice7148@gmail.com`）だけは②で結びつけず、同じメールアドレスでも別の利用者を作る（パスワードの利用者と Google の利用者を並べて確かめるため）。DB の `users_email_uq` もこのアドレスを除く部分インデックスにする（8.4.6）。2つの値は必ず同じにする。A-30・A-34・A-36 で同じアドレスが複数あるときは、パスワードのある利用者を使う |
 
 ## 4. 処理の入口設計（コンテナ）
 
@@ -706,6 +713,7 @@ flowchart TD
 | A-21 | `GET・POST /api/admin/courses`、`PUT /api/admin/courses/{id}` | `adminCourses.list`・`.create`・`.update` | system_admin   |
 | A-22 | `GET・PUT・DELETE /api/admin/partners/{persona}/image` | `adminPartners.get`・`.put`・`.delete` | system_admin   |
 | A-30〜A-37 | `POST /api/auth/login`・`new-password`・`refresh`・`logout`・`forgot`・`reset`・`signup`・`signup/verify` | `auth.login`・`.newPassword`・`.refresh`・`.logout`・`.forgot`・`.reset`・`.signup`・`.signupVerify` | 不要（ログイン前に呼ぶ） |
+| A-38・A-39 | `GET /api/auth/google/config`・`POST /api/auth/google` | `auth.googleConfig`・`.google` | 不要（ログイン前に呼ぶ） |
 
 - `course_admin` のルートは `system_admin` も使える（`requireRole(auth, 'course_admin', 'system_admin')`）
 - パスの `{id}` は router が取り出し、ハンドラの中で `decodeId` する
@@ -1109,7 +1117,7 @@ AWS 版の「S3 のイベント通知 → SQS」の代わり。画面が署名�
 
 - キーに日時を入れて毎回名前を変えるため、画面・Service Worker のキャッシュを消す必要はない。画像は api コンテナの `/partners/*` が配信する（4.6）
 
-### 5.4 ログインAPI（A-30〜A-37）
+### 5.4 ログインAPI（A-30〜A-39）
 
 トークンなしで呼べる（4.2.2）。応答の形は外部設計書 5.1。
 
@@ -1123,6 +1131,8 @@ AWS 版の「S3 のイベント通知 → SQS」の代わり。画面が署名�
 | A-35 `POST /api/auth/reset` | `{ token, newPassword }` | パスワードの決まりを確かめ、リンクを使用済みにして保存し、ロックを解いて、その人のリフレッシュトークンをすべて無効にする → `204`。リンクが使えない・利用者が削除予定 → `400`（`details: [{ field: 'token', code: 'INVALID' }]`） |
 | A-36 `POST /api/auth/signup` | `{ email, fullName, password }` | メールアドレス（254文字まで）・名前（前後の空白を除いて1〜50文字）・パスワードの決まりを確かめる（だめなら `400`、`details` の `field` は `email`・`fullName`・`password`）。登録の有無に関わらずパスワードのハッシュを計算して応答時間をそろえる。同じメールアドレスで60秒以内に受け付けていれば何もしない。未登録なら確認待ち（24時間）を保存して確認メール（`signupMail`）、登録済み（削除予定を含む）ならパスワードのハッシュなしで記録だけして案内（`signupExistsMail`）を送る。メールを送れなくても `202`（ログに `auth.signup_mail_failed`）。どの場合も `202 { status: 'accepted' }` |
 | A-37 `POST /api/auth/signup/verify` | `{ token }` | 確認待ちを使用済みにして中身を取り出す（使えない → `400`、`details: [{ field: 'token', code: 'INVALID' }]`）。1つのトランザクションで `users.create`（ロール `learner`、通知設定も作る）・`auth.setPassword`（`mustChange: false`）・操作記録 `user.signup`（操作者は本人）。メールアドレスが先に登録されていたら（一意制約 `23505`）`409 CONFLICT`。成功したら A-30 と同じトークンの組を `201` で返す |
+| A-38 `GET /api/auth/google/config` | なし | `200 { clientId }`。`GOOGLE_CLIENT_ID` がなければ `clientId: null`（画面は Google のボタンを出さない） |
+| A-39 `POST /api/auth/google` | `{ credential }` | ID トークンを確かめ（3.10。だめなら `401 LOGIN_FAILED`「Googleでログインできませんでした。もう一度お試しください」）、利用者を決めて（3.10）、A-30 と同じ `200 { idToken, refreshToken, expiresIn: 3600 }`。別の Google アカウントと結びついたメールアドレス → `409 CONFLICT`。同時に同じ人を登録しかけたとき（一意制約）は、先に作られた利用者を使う。`GOOGLE_CLIENT_ID` がなければ `404` |
 
 ---
 
@@ -1152,6 +1162,11 @@ sequenceDiagram
       B->>L: リンクを開く
       L->>API: POST /api/auth/signup/verify（A-37）
     end
+    opt Googleでログイン（A-38・A-39）
+      L->>API: GET /api/auth/google/config
+      L->>B: Google のボタン（ID トークンを受け取る）
+      L->>API: POST /api/auth/google
+    end
     API-->>AU: IDトークン・リフレッシュトークン
     AU->>B: 読み込み直す
   end
@@ -1162,8 +1177,8 @@ sequenceDiagram
 
 | モジュール               | 公開関数                                                   | 処理                                                                                                    |
 | ------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `core/auth.js`      | `ensureLogin`、`signIn`、`completeNewPassword`、`refresh`、`login`、`getIdToken`、`logout`、`forgot`、`resetPassword`、`signUp`、`verifySignup` | A-30〜A-37 を呼ぶ（`verifySignup` は返ってきたトークンを保存する）。トークンはメモリと `sessionStorage`（キー `rpg.auth`）だけに置く。期限の5分前に `refresh`（A-32）。失敗したら消して読み込み直し、ログイン画面へ。`logout` は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする） |
-| `pages/login.js`    | `renderLogin`、`renderSignIn`、`signupOk`                           | S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（`#/reset?token=…`）・アカウントを作る・アカウントの登録（`#/signup?token=…`。開いたらすぐ A-37 を呼び、できたら URL を `/` に戻して読み込み直す）の6つの表示を切り替える。`main.js` は `#/reset?`・`#/signup?` のときログイン中でもこの画面を出す。アカウントを作る表示は、名前・メールアドレスの形・パスワードの決まり・2回の一致がそろうまでボタンを押せない（`signupOk`）。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED） |
+| `core/auth.js`      | `ensureLogin`、`signIn`、`completeNewPassword`、`refresh`、`login`、`getIdToken`、`logout`、`forgot`、`resetPassword`、`signUp`、`verifySignup`、`googleConfig`、`signInWithGoogle` | A-30〜A-39 を呼ぶ（`verifySignup` は返ってきたトークンを保存する）。トークンはメモリと `sessionStorage`（キー `rpg.auth`）だけに置く。期限の5分前に `refresh`（A-32）。失敗したら消して読み込み直し、ログイン画面へ。`logout` は先に消してから A-33 を呼ぶ（A-33 が失敗してもログアウトする） |
+| `pages/login.js`    | `renderLogin`、`renderSignIn`、`signupOk`                           | S-01。ログイン・新しいパスワード（仮パスワードのとき）・パスワードを忘れたとき・再設定（`#/reset?token=…`）・アカウントを作る・アカウントの登録（`#/signup?token=…`。開いたらすぐ A-37 を呼び、できたら URL を `/` に戻して読み込み直す）の6つの表示を切り替える。`main.js` は `#/reset?`・`#/signup?` のときログイン中でもこの画面を出す。アカウントを作る表示は、名前・メールアドレスの形・パスワードの決まり・2回の一致がそろうまでボタンを押せない（`signupOk`）。パスワードの決まり（8文字以上・数字・大文字・小文字）は画面でも確かめる。ログインの失敗はどの理由でも同じ文言（M_LOGIN_FAILED）。A-38 で `clientId` が返ったときだけ、Google Identity Services（`https://accounts.google.com/gsi/client`、1回だけ読み込む）の「Googleでログイン」ボタンを「または」の下に出し、受け取った ID トークンを A-39 に送って読み込み直す。失敗したら M_GOOGLE_FAILED（サーバーの文言があればそれ） |
 | `core/api.js`       | `apiGet`、`apiPost`、`apiPut`、`apiDelete`                 | `/api` に `Authorization: Bearer` を付ける。`503 DB_RESUMING` は2・4・8秒あけて最大3回やり直し、その間 M-01 を表示。`401` は1回だけ `refresh` してやり直す。そのほかは `ApiError(code, status)` を投げる |
 | `core/router.js`    | `register(path, page, roles)`、`start`、`go(path)`        | `#/home` などのハッシュで画面モジュールを選び `render(root, params)` を呼ぶ。知らないハッシュは `#/home` にする。ロールが足りなければ M-11。初回の流れ（ニックネーム→コース→パートナー）が終わるまでほかの画面へ行かせない（管理局 `/admin/…` は除く。管理者は学習者の初回の流れを済ませなくても管理の作業ができる） |
 | `core/store.js`     | `getState`、`setState`、`subscribe`                      | 利用者・現在のコース・冒険ID などを持つ                                                                              |
@@ -1961,6 +1976,32 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_message_slot text CHECK (daily_
 INSERT INTO schema_migrations (version, description) VALUES ('V007', 'daily message slot') ON CONFLICT DO NOTHING;
 ```
 
+#### 8.4.6 Googleでログイン（`db/migrations/V008__google_login.sql`）
+
+`users.google_sub` で Google アカウントを利用者に結びつける。メールアドレスの重複禁止は、検証用のアドレスだけを除く部分インデックスにする（3.10）。
+
+```sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
+CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_uq ON users (google_sub) WHERE google_sub IS NOT NULL;
+DROP INDEX IF EXISTS users_email_uq;
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_uq ON users (lower(email))
+  WHERE lower(email) NOT IN ('pocarialice7148@gmail.com');
+INSERT INTO schema_migrations (version, description) VALUES ('V008', 'google login') ON CONFLICT DO NOTHING;
+```
+
+```mermaid
+erDiagram
+  users {
+    bigint user_id PK
+    text auth_sub UK "アプリのトークンの sub"
+    text email "lower(email) は一意（検証用アドレスを除く）"
+    text password_hash "Google だけの人は NULL"
+    text google_sub UK "Google の ID トークンの sub"
+  }
+  users ||--o{ user_roles : "learner など"
+  users ||--o{ auth_refresh_tokens : "パスワードでも Google でも同じ"
+```
+
 ### 8.5 初期データ（`db/migrations/V002__seed_masters.sql`）
 
 ```sql
@@ -2149,6 +2190,7 @@ ORDER BY last_studied_on DESC NULLS LAST, c.course_id LIMIT 100;
 | 脅威・要件               | 対策                                                                                         | 実装箇所                              |
 | ------------------- | ------------------------------------------------------------------------------------------ | --------------------------------- |
 | なりすまし               | `server/http.mjs` が IDトークン（HS256）の署名・期限・発行者・用途を検証し、通ったクレームだけをルートに渡す（AWS 版の API Gateway の役割）。署名の鍵 `AUTH_SECRET` は `.env` だけに置く                                     | `server/http.mjs`、`auth/token.js`、`util/authz.js`       |
+| Google のなりすまし        | Google の ID トークンは Google の公開鍵で RS256 の署名を確かめ、宛先（`aud`）が自分のクライアントIDであること・メールアドレスが確認済みであることを見てから利用者を決める。ID トークンそのものはログに出さない | `auth/google.js`、`routes/auth.js` |
 | パスワードの推測・漏えい        | scrypt（N=16384・r=8・p=1、ソルト16バイト）でハッシュだけを保存。5回続けて間違えたら15分ロック。いない人でも同じ時間をかけて照合し、失敗の理由を画面で区別しない。リフレッシュトークン・再設定リンク・アカウント作成の確認リンクは値の SHA-256 だけを保存し、使い捨て | `auth/password.js`、`routes/auth.js`、`repositories/auth.js` |
 | 通信の盗み見              | Caddy が HTTPS を終端（Let's Encrypt）し、HSTS を付ける。DB・ワーカーはローカルスイッチの中だけで話し、インターネットに出さない（パケットフィルタで 80・443・SSH だけ開ける） | `Caddyfile`、構築手順書 3.2 |
 | 権限外の操作              | すべてのルートでロールを確認。コース管理者は `assertCourseAdmin` で担当コースだけ                                          | `router.js`、`util/authz.js`       |

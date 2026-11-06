@@ -768,6 +768,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>3.8</td>
 </tr>
 <tr>
+<td>V-16</td>
+<td><code>GOOGLE_CLIENT_ID</code>（Googleでログインの OAuth クライアントID。使わないなら空）</td>
+<td><code>&lt;番号&gt;-xxxx.apps.googleusercontent.com</code></td>
+<td>dev と別のクライアントID</td>
+<td>3.8.1</td>
+</tr>
+<tr>
 <td>V-20</td>
 <td>コンテナレジストリのドメイン</td>
 <td><code>&lt;レジストリ名&gt;.sakuracr.jp</code></td>
@@ -1391,6 +1398,7 @@ APP_URL=https://&lt;V-01&gt;
 DATABASE_URL=postgres://rpgadmin:&lt;V-07&gt;@192.168.10.21:5432/rpg
 DATABASE_SSL=
 AUTH_SECRET=&lt;V-15&gt;
+GOOGLE_CLIENT_ID=&lt;V-16。使わないなら空&gt;
 S3_ENDPOINT=https://s3.isk01.sakurastorage.jp
 S3_REGION=jp-north-1
 S3_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt;
@@ -1418,6 +1426,31 @@ MAIL_SCHEDULE_ENABLED=false
 <li>DB のパスワードに <code>@</code>・<code>/</code>・<code>:</code> が入っているときは URL エンコードする（例：<code>@</code> → <code>%40</code>）</li>
 <li><code>.env</code> は Git に入れない。変えたら <code>docker compose up -d</code> で反映する</li>
 <li>api は起動するときに値を確かめ、<code>MAIL_FROM</code>・<code>SMTP_HOST</code>・<code>AI_API_KEY</code>・S3 のキーなどが空だと止まる（ログに <code>環境変数がありません</code> と出る）。SMTP や AI がまだのときは仮の値を入れれば起動はできる（メールと AI の採点は失敗する）</li>
+</ul>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>3.8.1 Googleでログイン（使うときだけ）</h4>
+<p><code>GOOGLE_CLIENT_ID</code> を空にしておけば、ログイン画面に Google のボタンは出ない（パスワードだけで使える）。</p>
+<div class="vis">
+  <p class="vis-label">Google の OAuth クライアントIDを用意する流れ</p>
+  <ol class="flow">
+    <li><b><i class="fa-brands fa-google fi"></i>プロジェクト</b>rpg-login</li>
+    <li><b><i class="fa-solid fa-id-card fi"></i>OAuth 同意画面</b>外部・公開</li>
+    <li><b><i class="fa-solid fa-key fi"></i>クライアントID</b>ウェブアプリケーション</li>
+    <li><b><i class="fa-solid fa-globe fi"></i>JavaScript 生成元</b>https://V-01</li>
+    <li class="hl"><b><i class="fa-solid fa-file-pen fi"></i>.env に V-16</b>S-01 にボタンが出る</li>
+  </ol>
+</div>
+<ol>
+<li>Google Cloud コンソール（<code>https://console.cloud.google.com/</code>）で、プロジェクト <code>rpg-login</code> を作る（dev・prod で共用してよい）</li>
+<li>「API とサービス」→「OAuth 同意画面」。ユーザーの種類は「外部」、アプリ名 <code>RPG学習アプリ</code>、サポートメール、デベロッパーの連絡先を入れる。スコープは既定（<code>openid</code>・<code>email</code>・<code>profile</code>）のまま。テスト中は「テストユーザー」に入れた人しかログインできないため、だれでも使えるようにするときは「アプリを公開」にする</li>
+<li>「認証情報」→「認証情報を作成」→「OAuth クライアントID」。種類は「ウェブアプリケーション」、名前は <code>rpg-dev</code></li>
+<li>「承認済みの JavaScript 生成元」に <code>https://&lt;V-01&gt;</code>（例 <code>https://rpg-dev.&lt;ドメイン&gt;</code>）を入れる。リダイレクト URI は使わない（空のまま）</li>
+<li>表示されたクライアントID（<code>…apps.googleusercontent.com</code>）を V-16 に控える。クライアントシークレットは使わない</li>
+<li><code>.env</code> の <code>GOOGLE_CLIENT_ID=</code> に V-16 を入れ、<code>docker compose up -d</code> で入れ直す</li>
+<li>確かめる：<code>curl -s https://&lt;V-01&gt;/api/auth/google/config</code> が <code>{"clientId":"&lt;V-16&gt;"}</code> を返し、ログイン画面に「Googleでログイン」ボタンが出る</li>
+</ol>
+<ul>
+<li>api コンテナから <code>https://www.googleapis.com</code>（Google の公開鍵）へ HTTPS で出られる必要がある。パケットフィルタ（3.2）は外向きを止めていないので追加の設定はいらない</li>
+<li>検証用：<code>pocarialice7148@gmail.com</code> は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.9 初回の起動と確認</h3>
 <ol>
@@ -1655,6 +1688,10 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 <tr>
 <td>3.8</td>
 <td>サーバー <code>rpg-prod-app</code>、ローカルIPアドレス <code>192.168.20.11</code>、<code>.env</code> は <code>APP_ENV=prod</code>・<code>SITE_ADDRESS=rpg.&lt;ドメイン&gt;</code>・<code>MAIL_SCHEDULE_ENABLED=true</code>・prod のバケット・キー・<code>AUTH_SECRET</code>（dev と別）</td>
+</tr>
+<tr>
+<td>3.8.1</td>
+<td>クライアントIDは <code>rpg-prod</code> を作り、JavaScript 生成元は <code>https://rpg.&lt;ドメイン&gt;</code>。OAuth 同意画面は「公開」にしておく</td>
 </tr>
 <tr>
 <td>3.10</td>

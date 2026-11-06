@@ -103,6 +103,7 @@ flowchart TD
 | V-13 | 送信元のメールアドレス（`MAIL_FROM`） | `no-reply@mail.<ドメイン>` | 同じ | 3.6 |
 | V-14 | 監視のお知らせの宛先（`ALERT_EMAIL`） | 開発者 | システム管理者・開発者 | 3.6 |
 | V-15 | `AUTH_SECRET`（ログインの署名の鍵） | （管理ツールへ） | （管理ツールへ。dev と別の値） | 3.8 |
+| V-16 | `GOOGLE_CLIENT_ID`（Googleでログインの OAuth クライアントID。使わないなら空） | `<番号>-xxxx.apps.googleusercontent.com` | dev と別のクライアントID | 3.8.1 |
 | V-20 | コンテナレジストリのドメイン | `<レジストリ名>.sakuracr.jp` | dev と同じ | 3.7 |
 | V-21 | レジストリの push 用ユーザー・パスワード | （管理ツールへ） | 同じ | 3.7 |
 | V-22 | レジストリの pull 用ユーザー・パスワード | （管理ツールへ） | 同じ | 3.7 |
@@ -435,6 +436,7 @@ APP_URL=https://<V-01>
 DATABASE_URL=postgres://rpgadmin:<V-07>@192.168.10.21:5432/rpg
 DATABASE_SSL=
 AUTH_SECRET=<V-15>
+GOOGLE_CLIENT_ID=<V-16。使わないなら空>
 S3_ENDPOINT=https://s3.isk01.sakurastorage.jp
 S3_REGION=jp-north-1
 S3_ACCESS_KEY_ID=<V-10 のアクセスキー>
@@ -464,6 +466,30 @@ chmod 600 /opt/rpg/.env
 - DB のパスワードに `@`・`/`・`:` が入っているときは URL エンコードする（例：`@` → `%40`）
 - `.env` は Git に入れない。変えたら `docker compose up -d` で反映する
 - api は起動するときに値を確かめ、`MAIL_FROM`・`SMTP_HOST`・`AI_API_KEY`・S3 のキーなどが空だと止まる（ログに `環境変数がありません` と出る）。SMTP や AI がまだのときは仮の値を入れれば起動はできる（メールと AI の採点は失敗する）
+
+#### 3.8.1 Googleでログイン（使うときだけ）
+
+`GOOGLE_CLIENT_ID` を空にしておけば、ログイン画面に Google のボタンは出ない（パスワードだけで使える）。
+
+```mermaid
+flowchart LR
+  A["Google Cloud コンソール<br>プロジェクト rpg-login"] --> B["OAuth 同意画面<br>外部・公開"]
+  B --> C["認証情報<br>OAuth クライアントID<br>ウェブアプリケーション"]
+  C --> D["承認済みの JavaScript 生成元<br>https://V-01"]
+  D --> E[".env の GOOGLE_CLIENT_ID<br>V-16"]
+  E --> F["docker compose up -d<br>S-01 にボタンが出る"]
+```
+
+1. Google Cloud コンソール（`https://console.cloud.google.com/`）で、プロジェクト `rpg-login` を作る（dev・prod で共用してよい）
+2. 「API とサービス」→「OAuth 同意画面」。ユーザーの種類は「外部」、アプリ名 `RPG学習アプリ`、サポートメール、デベロッパーの連絡先を入れる。スコープは既定（`openid`・`email`・`profile`）のまま。テスト中は「テストユーザー」に入れた人しかログインできないため、だれでも使えるようにするときは「アプリを公開」にする
+3. 「認証情報」→「認証情報を作成」→「OAuth クライアントID」。種類は「ウェブアプリケーション」、名前は `rpg-dev`
+4. 「承認済みの JavaScript 生成元」に `https://<V-01>`（例 `https://rpg-dev.<ドメイン>`）を入れる。リダイレクト URI は使わない（空のまま）
+5. 表示されたクライアントID（`…apps.googleusercontent.com`）を V-16 に控える。クライアントシークレットは使わない
+6. `.env` の `GOOGLE_CLIENT_ID=` に V-16 を入れ、`docker compose up -d` で入れ直す
+7. 確かめる：`curl -s https://<V-01>/api/auth/google/config` が `{"clientId":"<V-16>"}` を返し、ログイン画面に「Googleでログイン」ボタンが出る
+
+- api コンテナから `https://www.googleapis.com`（Google の公開鍵）へ HTTPS で出られる必要がある。パケットフィルタ（3.2）は外向きを止めていないので追加の設定はいらない
+- 検証用：`pocarialice7148@gmail.com` は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す
 
 ### 3.9 初回の起動と確認
 
@@ -617,6 +643,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 | 3.6 | `ALERT_EMAIL` はシステム管理者と開発者 |
 | 3.7 | レジストリは作らない（dev と共用）。GitHub の Environment `prod` に Variables・Secrets を入れる。イメージはタグ `release-YYYYMMDD-NN` を付けて承認すると作られる |
 | 3.8 | サーバー `rpg-prod-app`、ローカルIPアドレス `192.168.20.11`、`.env` は `APP_ENV=prod`・`SITE_ADDRESS=rpg.<ドメイン>`・`MAIL_SCHEDULE_ENABLED=true`・prod のバケット・キー・`AUTH_SECRET`（dev と別） |
+| 3.8.1 | クライアントIDは `rpg-prod` を作り、JavaScript 生成元は `https://rpg.<ドメイン>`。OAuth 同意画面は「公開」にしておく |
 | 3.10 | 本番のシステム管理者を作る。確認用の利用者は `[確認用]` を名前に付ける |
 | 3.12 | 監視の通知先にシステム管理者を入れる |
 

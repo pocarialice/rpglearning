@@ -15,6 +15,8 @@ export const M_SIGNUP_INPUT = '名前・メールアドレス・パスワード�
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export const signupOk = ({ fullName, email, password, password2 }) => fullName.trim() !== '' && [...fullName.trim()].length <= 50
   && EMAIL_RE.test(email.trim()) && passwordOk(password) && password === password2
+export const M_GOOGLE_FAILED = 'Googleでログインできませんでした。もう一度お試しください'
+export const GSI_SRC = 'https://accounts.google.com/gsi/client'
 // 画面の決まり（サーバーと同じ）。ボタンを押せるかどうかに使う
 export const passwordOk = (v) => [...v].length >= 8 && /[0-9]/.test(v) && /[A-Z]/.test(v) && /[a-z]/.test(v)
 const field = (id, label, type, autocomplete, extra = '') => `<label class="label" for="${id}">${label}</label>
@@ -40,9 +42,11 @@ ${field('login-password', 'パスワード', 'password', 'current-password')}
 <div class="app-error-slot"></div>
 ${button({ label: 'ログイン', variant: 'primary', block: true, attrs: 'data-action="login"' })}
 ${button({ label: 'パスワードを忘れたとき', variant: 'quiet', block: true, attrs: 'data-action="forgot"' })}
+<div class="app-google" hidden><p class="meta app-google-or">または</p><div class="app-google-button"></div></div>
 <p class="body app-login-divider">はじめての方は</p>
 ${button({ label: 'アカウントを作る', variant: 'secondary', block: true, attrs: 'data-action="signup"' })}`)
   const slot = root.querySelector('.app-error-slot')
+  setupGoogle(root.querySelector('.app-google'), { auth, win, slot })
   const submit = root.querySelector('[data-action="login"]')
   submit.addEventListener('click', async () => {
     const email = root.querySelector('#login-email').value.trim()
@@ -190,4 +194,48 @@ ${button({ label: 'ログインに戻る', variant: 'quiet', block: true, attrs:
       renderSignIn(root, { auth, win })
     })
   }
+}
+// Google Identity Services のスクリプトを1回だけ読み込む
+export function loadGsi(win) {
+  if (win.google?.accounts?.id) return Promise.resolve(win.google)
+  const doc = win.document ?? document
+  win.__gsiLoading ??= new Promise((resolve, reject) => {
+    const script = doc.createElement('script')
+    script.src = GSI_SRC
+    script.async = true
+    script.onload = () => resolve(win.google)
+    script.onerror = () => {
+      win.__gsiLoading = null
+      reject(new Error('gsi load failed'))
+    }
+    doc.head.appendChild(script)
+  })
+  return win.__gsiLoading
+}
+// A-38 で使えるときだけ「Googleでログイン」のボタンを出す。押したら A-39 でログインして読み込み直す
+export async function setupGoogle(box, { auth, win, slot }) {
+  if (!box || typeof auth.googleConfig !== 'function') return
+  let google
+  try {
+    const { clientId } = await auth.googleConfig()
+    if (!clientId) return
+    google = await loadGsi(win)
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async ({ credential } = {}) => {
+        slot.innerHTML = ''
+        try {
+          await auth.signInWithGoogle(credential)
+          win.location.reload()
+        } catch (err) {
+          slot.innerHTML = errorBand(err?.code === 'NETWORK' || !err?.message || err.message === err.code ? (err?.code === 'NETWORK' ? M_NETWORK : M_GOOGLE_FAILED) : err.message)
+        }
+      }
+    })
+  } catch {
+    return
+  }
+  if (!box.isConnected) return
+  box.hidden = false
+  google.accounts.id.renderButton(box.querySelector('.app-google-button'), { type: 'standard', theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'ja', width: 280 })
 }
