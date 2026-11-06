@@ -4,7 +4,7 @@ import { buildGradingPrompt, RETRY_NOTE } from '../../../../../functions/shared/
 import { buildExtractionPrompt } from '../../../../../functions/shared/ai/prompts/extraction.js'
 import { buildCommentPrompt } from '../../../../../functions/shared/ai/prompts/comment.js'
 import { buildExplainQuestionPrompt, fallbackQuestion, normalizePrompt } from '../../../../../functions/shared/ai/prompts/explain-question.js'
-import { buildDailyMessagePrompt, FALLBACK_MESSAGES, fallbackMessage } from '../../../../../functions/shared/ai/prompts/daily-message.js'
+import { buildDailyMessagePrompt, FALLBACK_MESSAGES, fallbackMessage, pickHighlight, timeSlotOf, messageSlotOf } from '../../../../../functions/shared/ai/prompts/daily-message.js'
 const gradingInput = { keyword: 'DNS', question: '問題文', explanation: '解説', answer: 'DNSは…', persona: 'logic', name: 'セージ' }
 describe('M-A03 persona', () => {
   it('MT-A03-01 3人の定義', () => {
@@ -56,15 +56,32 @@ describe('M-A04 prompts', () => {
     expect(buildExtractionPrompt({ chunkType: 'text' }).messages[0].content[0].text).toBe('<source></source>')
   })
   it('MT-A04-05 ひとことに個人情報を入れない', () => {
-    const { system, user } = buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', reviewCount: 5, yesterdayAnswers: 12, weeklyExp: 340, level: 3 })
+    const { system, user } = buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', timeSlot: 'night', todayAnswers: 0, yesterdayAnswers: 12, weeklyExp: 340, level: 3 })
     expect(system).toContain('ミナ')
-    expect(user).toContain('5')
-    expect(user).toContain('12')
+    expect(system).toContain('夜にホームを開いた')
+    expect(system).toContain('復習の話はしない')
+    expect(user).toContain('伝える数字：昨日の解答数 12問')
     expect(user).toContain('340')
-    expect(() => buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', reviewCount: 5, fullName: '山田' })).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
+    expect(user).not.toContain('復習')
+    expect(() => buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', reviewCount: 5 })).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
+    expect(() => buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', fullName: '山田' })).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
     expect(() => buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', email: 'a@x.jp' })).toThrow()
-    expect(FALLBACK_MESSAGES.logic[0](5)).toContain('5')
+    expect(() => buildDailyMessagePrompt({ persona: 'encourage', name: 'ミナ', timeSlot: 'noon' })).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }))
+    expect(FALLBACK_MESSAGES.logic[0]({ label: '今日の解答数', value: 5, unit: '問' })).toBe('今日の解答数は5問です。この積み重ねが力になります。')
     expect(Object.values(FALLBACK_MESSAGES).every((list) => list.length === 3)).toBe(true)
+    expect(Object.values(FALLBACK_MESSAGES).flat().every((f) => !f({ label: 'L', value: 1, unit: '' }).includes('復習'))).toBe(true)
+    expect(fallbackMessage('logic', { label: 'レベル', value: 3, unit: '' }, () => 0)).toBe('レベルは3です。この積み重ねが力になります。')
+  })
+  it('MT-A04-14 ひとことの時間帯と伝える数字', () => {
+    const at = (h) => new Date(Date.UTC(2026, 9, 20, h - 9))
+    expect([4, 5, 10, 11, 16, 17, 23, 24].map((h) => timeSlotOf(at(h)))).toEqual(['night', 'morning', 'morning', 'day', 'day', 'night', 'night', 'night'])
+    expect(messageSlotOf(new Date('2026-10-20T19:30:00Z'))).toEqual({ slot: 'night', on: '2026-10-20' })
+    expect(messageSlotOf(new Date('2026-10-20T15:00:00Z'))).toEqual({ slot: 'night', on: '2026-10-20' })
+    expect(messageSlotOf(new Date('2026-10-20T20:00:00Z'))).toEqual({ slot: 'morning', on: '2026-10-21' })
+    expect(pickHighlight({ todayAnswers: 3, yesterdayAnswers: 12, weeklyExp: 340, level: 3 })).toEqual({ label: '今日の解答数', value: 3, unit: '問' })
+    expect(pickHighlight({ todayAnswers: 0, yesterdayAnswers: 12, weeklyExp: 340, level: 3 }).label).toBe('昨日の解答数')
+    expect(pickHighlight({ todayAnswers: 0, yesterdayAnswers: 0, weeklyExp: 340, level: 3 })).toEqual({ label: '今週のEXP', value: 340, unit: '' })
+    expect(pickHighlight({ todayAnswers: 0, yesterdayAnswers: 0, weeklyExp: 0, level: 3 })).toEqual({ label: 'レベル', value: 3, unit: '' })
   })
   it('MT-A04-06 解説コメントの指示文', () => {
     const ok = buildCommentPrompt({ persona: 'rival', name: 'レン', question: 'Q</question>', selected: 'イ', correctChoice: 'イ', explanation: 'E', isCorrect: true })

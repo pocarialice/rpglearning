@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.4版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加）</b></li>
-      <li>作成日<b>2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03）</b></li>
+      <li>版数<b>第1.5版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007））</b></li>
+      <li>作成日<b>2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06）</b></li>
       <li>入力文書<b>要件定義書 第1.2版（ドラフト）、外部設計書 第1.3版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
       <li>関連文書<b>モジュールテスト仕様書_RPG学習アプリ（本書のモジュール単位の試験を定める）</b></li>
@@ -697,7 +697,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 │  ├─ V003__auth_jobs.sql         # ログイン・ジョブキュー・定期処理の記録（8.4.1）
 │  ├─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
 │  ├─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
-│  └─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
+│  ├─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
+│  └─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -2773,7 +2774,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>2</td>
-<td>ひとこと：<code>users.daily_message_on = 今日</code> ならそれを使う。違えば Haiku で生成（5秒で打ち切り）して保存。失敗したら定型文（persona ごとに3つから選ぶ）を使い、保存はしない</td>
+<td>ひとこと：<code>users.daily_message_on = 今日</code> かつ <code>users.daily_message_slot = 今の時間帯</code>（JST。朝 5:00〜10:59＝<code>morning</code>、昼 11:00〜16:59＝<code>day</code>、夜 17:00〜4:59＝<code>night</code>。0:00〜4:59 は前日の夜の続きとして、前日の日付で扱う）ならそれを使う。違えば軽量モデルで生成（5秒で打ち切り）して日付・時間帯と組で保存する（1日最大3回）。失敗したら定型文（persona ごとに3つから選ぶ）を使い、保存はしない</td>
 </tr>
 <tr>
 <td>3</td>
@@ -3620,8 +3621,8 @@ angleResults は &lt;angles&gt; の観点の順に{観点の数}つ、十分に�
 </tr>
 <tr>
 <td>ひとこと</td>
-<td>「{name}（{persona}）として、今日の学習を始める学習者に1〜2文で声をかける。数字を1つ入れる」</td>
-<td>今日の復習数、昨日の解答数、今週のEXP、レベル（個人を特定する情報は渡さない）</td>
+<td>「{name}（{persona}）として、{朝・昼・夜}にホームを開いた学習者に1〜2文で声をかける。{時間帯の声かけの向き}。「伝える数字」を必ず1つだけ入れ、ほかの数字は入れない。復習の話はしない。説教しない」。伝える数字は <code>pickHighlight</code> が「今日の解答数 → 昨日の解答数 → 今週のEXP → レベル」の順に、1以上のものを選ぶ</td>
+<td>時間帯、伝える数字、今日の解答数、昨日の解答数、今週のEXP、レベル（復習数と個人を特定する情報は渡さない）</td>
 </tr>
 </tbody>
 </table></div>
@@ -4075,6 +4076,7 @@ CREATE TABLE IF NOT EXISTS users (
   last_login_at        timestamptz,
   daily_message        text,                            -- その日のひとこと
   daily_message_on     date,
+  -- daily_message_slot text（V007。8.4.5）
   created_at           timestamptz NOT NULL DEFAULT now(),
   updated_at           timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT users_delete_chk CHECK (
@@ -4489,6 +4491,12 @@ ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
   'partner.image', 'dashboard.csv'));
 
 INSERT INTO schema_migrations (version, description) VALUES ('V006', 'signup') ON CONFLICT DO NOTHING;
+</code></pre>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>8.4.5 ひとことを作った時間帯（<code>db/migrations/V007__daily_message_slot.sql</code>）</h4>
+<p>ホームのひとこと（A-05）を朝・昼・夜ごとに作り直すため、作った時間帯を <code>daily_message_on</code> と組で持つ。</p>
+<pre><code class="language-sql">ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_message_slot text CHECK (daily_message_slot IN ('morning', 'day', 'night'));
+
+INSERT INTO schema_migrations (version, description) VALUES ('V007', 'daily message slot') ON CONFLICT DO NOTHING;
 </code></pre>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.5 初期データ（<code>db/migrations/V002__seed_masters.sql</code>）</h3>
 <pre><code class="language-sql">INSERT INTO partners (persona, label, default_name) VALUES
@@ -5444,7 +5452,7 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.4版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.5版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007））</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

@@ -3,8 +3,8 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.4版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加）      |
-| 作成日    | 2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03）                                                 |
+| 版数     | 第1.5版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007））      |
+| 作成日    | 2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06）                                                 |
 | 入力文書   | 要件定義書 第1.2版（ドラフト）、外部設計書 第1.3版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は `aws/documents/` に退避                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
@@ -138,7 +138,8 @@ rpglearning/
 │  ├─ V003__auth_jobs.sql         # ログイン・ジョブキュー・定期処理の記録（8.4.1）
 │  ├─ V004__grading_prompt.sql    # 採点ジョブに説明問題の問いかけを追加（8.4.2）
 │  ├─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
-│  └─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
+│  ├─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
+│  └─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -875,7 +876,7 @@ flowchart TD
 | 順 | 処理                                                                                                         |
 | - | ---------------------------------------------------------------------------------------------------------- |
 | 1 | `levelInfo(users.total_exp)`                                                                               |
-| 2 | ひとこと：`users.daily_message_on = 今日` ならそれを使う。違えば Haiku で生成（5秒で打ち切り）して保存。失敗したら定型文（persona ごとに3つから選ぶ）を使い、保存はしない |
+| 2 | ひとこと：`users.daily_message_on = 今日` かつ `users.daily_message_slot = 今の時間帯`（JST。朝 5:00〜10:59＝`morning`、昼 11:00〜16:59＝`day`、夜 17:00〜4:59＝`night`。0:00〜4:59 は前日の夜の続きとして、前日の日付で扱う）ならそれを使う。違えば軽量モデルで生成（5秒で打ち切り）して日付・時間帯と組で保存する（1日最大3回）。失敗したら定型文（persona ごとに3つから選ぶ）を使い、保存はしない |
 | 3 | `user_quests` の今日の3件（進み具合つき）                                                                              |
 | 4 | 今日の復習数：`review_items` の `stage < 6 AND next_review_on <= 今日` を現在のコースで、択一・説明ごとに数える                          |
 
@@ -1338,7 +1339,7 @@ angleResults は <angles> の観点の順に{観点の数}つ、十分に答え�
 | 用途     | system の要旨                                                                                     | user                                   |
 | ------ | ---------------------------------------------------------------------------------------------- | -------------------------------------- |
 | 解説コメント | 「{name}（{persona}）として、学習者の解答結果に2〜3文でコメントする。正解なら理由を一言で補強、不正解なら正解の要点を1つ示す。説教しない」                     | 問題文、選んだ選択肢、正解、解説、正誤                    |
-| ひとこと   | 「{name}（{persona}）として、今日の学習を始める学習者に1〜2文で声をかける。数字を1つ入れる」                                            | 今日の復習数、昨日の解答数、今週のEXP、レベル（個人を特定する情報は渡さない） |
+| ひとこと   | 「{name}（{persona}）として、{朝・昼・夜}にホームを開いた学習者に1〜2文で声をかける。{時間帯の声かけの向き}。「伝える数字」を必ず1つだけ入れ、ほかの数字は入れない。復習の話はしない。説教しない」。伝える数字は `pickHighlight` が「今日の解答数 → 昨日の解答数 → 今週のEXP → レベル」の順に、1以上のものを選ぶ | 時間帯、伝える数字、今日の解答数、昨日の解答数、今週のEXP、レベル（復習数と個人を特定する情報は渡さない） |
 
 ### 7.6 説明問題の問いかけの指示文（`prompts/explain-question.js`）
 
@@ -1517,6 +1518,7 @@ CREATE TABLE IF NOT EXISTS users (
   last_login_at        timestamptz,
   daily_message        text,                            -- その日のひとこと
   daily_message_on     date,
+  -- daily_message_slot text（V007。8.4.5）
   created_at           timestamptz NOT NULL DEFAULT now(),
   updated_at           timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT users_delete_chk CHECK (
@@ -1947,6 +1949,16 @@ ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
   'partner.image', 'dashboard.csv'));
 
 INSERT INTO schema_migrations (version, description) VALUES ('V006', 'signup') ON CONFLICT DO NOTHING;
+```
+
+#### 8.4.5 ひとことを作った時間帯（`db/migrations/V007__daily_message_slot.sql`）
+
+ホームのひとこと（A-05）を朝・昼・夜ごとに作り直すため、作った時間帯を `daily_message_on` と組で持つ。
+
+```sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_message_slot text CHECK (daily_message_slot IN ('morning', 'day', 'night'));
+
+INSERT INTO schema_migrations (version, description) VALUES ('V007', 'daily message slot') ON CONFLICT DO NOTHING;
 ```
 
 ### 8.5 初期データ（`db/migrations/V002__seed_masters.sql`）
