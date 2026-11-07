@@ -3,11 +3,6 @@ variable "env" {
   type    = string
   default = "dev"
 }
-variable "network_prefix" {
-  description = "V-03 スイッチのネットワーク（/24 の先頭3つ）"
-  type        = string
-  default     = "192.168.10"
-}
 variable "ssh_public_keys" {
   description = "作業PCの公開鍵（~/.ssh/id_ed25519.pub の中身）。PC ごとに1行。足しても、いまのサーバーには入らない（README）"
   type        = list(string)
@@ -89,4 +84,23 @@ variable "tailscale_auth_key" {
   type        = string
   sensitive   = true
   default     = ""
+}
+variable "idle_stop_minutes" {
+  description = "この分数アクセスがなければ、DB をバックアップしてサーバーの電源を切る（3.13）。0 なら止めない。いまのサーバーは rpg-deploy env IDLE_STOP_MINUTES <分> で変える"
+  type        = number
+  default     = 60
+  validation {
+    condition     = var.idle_stop_minutes == 0 || var.idle_stop_minutes >= 15
+    error_message = "idle_stop_minutes は 0（止めない）か 15 以上にしてください（起動してすぐ止まらないように）"
+  }
+}
+variable "tools_repo" {
+  description = "サーバーを作るときに rpg-deploy・rpg-db・rpg-idle-stop を取る GitHub のリポジトリ（公開のもの）"
+  type        = string
+  default     = "pocarialice/rpglearning"
+}
+variable "tools_ref" {
+  description = "rpg-deploy などを取るブランチかコミット。手元のファイルの sha256 と同じでないとサーバーの準備が止まるため、push 済みのものにする"
+  type        = string
+  default     = "main"
 }

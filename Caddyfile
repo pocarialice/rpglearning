@@ -5,5 +5,10 @@
 	request_body {
 		max_size 2MB
 	}
+	# アクセスのログ（標準出力に JSON で出す）。rpg-idle-stop が「最後にアクセスがあった時刻」を知るのに使う
+	log {
+		output stdout
+		format json
+	}
 	reverse_proxy api:8080
 }

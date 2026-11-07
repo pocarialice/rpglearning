@@ -79,7 +79,7 @@ prune_history() {
   awk -v drop="$drop" -v key="# 前回 $name=" 'index($0, key) == 1 && n < drop { n++; next } { print }' "$file" > "$file.p" && mv "$file.p" "$file"
 }
 # rpg-deploy env で画面に出してよい設定（鍵・パスワードは入れない）
-PUBLIC_ENV="SITE_ADDRESS APP_ENV APP_URL GOOGLE_CLIENT_ID MAIL_FROM SMTP_HOST SMTP_PORT SMTP_SECURE SMTP_USER AI_PROVIDER AI_BASE_URL AI_REASONING_EFFORT MODEL_HIGH MODEL_LIGHT MAIL_SCHEDULE_ENABLED IMPORT_BUCKET ASSETS_BUCKET NOTIFY_BUCKET S3_ENDPOINT S3_REGION"
+PUBLIC_ENV="SITE_ADDRESS APP_ENV APP_URL GOOGLE_CLIENT_ID MAIL_FROM SMTP_HOST SMTP_PORT SMTP_SECURE SMTP_USER AI_PROVIDER AI_BASE_URL AI_REASONING_EFFORT MODEL_HIGH MODEL_LIGHT MAIL_SCHEDULE_ENABLED IDLE_STOP_MINUTES COMPOSE_PROFILES BACKUP_BUCKET BACKUP_KEEP IMPORT_BUCKET ASSETS_BUCKET NOTIFY_BUCKET S3_ENDPOINT S3_REGION"
 is_public() { case " $PUBLIC_ENV " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 show_env() {
   local name=$1 value
@@ -159,6 +159,8 @@ deploy() {
   fi
   echo "🚀 $(current_image | sed 's/.*://') → $tag"
   docker pull -q "$new" > /dev/null || die "$new を取れません"
+  # DB をこのサーバーに置いているときは、マイグレーションの前にバックアップする（戻すときは rpg-db restore）
+  if [ "$(env_value COMPOSE_PROFILES)" = localdb ] && command -v rpg-db > /dev/null; then rpg-db backup || die "バックアップに失敗したため反映しません"; fi
   set_image "$new"
   docker compose up -d
   check

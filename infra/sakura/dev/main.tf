@@ -1,16 +1,11 @@
-# dev 環境（構築手順書 3.2・3.3・3.8・3.9・3.12）。バケット・AI Engine・SMTP は画面で作り、キーだけを変数で受け取る
+# dev 環境（構築手順書 3.2・3.3・3.8・3.9・3.13）。バケット・AI Engine・SMTP は画面で作り、キーだけを変数で受け取る
+# 費用を抑えるため、DB はサーバーの中の db コンテナに置き、アクセスがない時間が続いたらサーバーの電源を切る（3.13）
 locals {
-  prefix    = "rpg-${var.env}"
-  tags      = ["rpg", var.env]
-  server_ip = "${var.network_prefix}.11"
-  db_ip     = "${var.network_prefix}.21"
-  shared    = data.terraform_remote_state.shared.outputs
+  prefix = "rpg-${var.env}"
+  tags   = ["rpg", var.env]
+  shared = data.terraform_remote_state.shared.outputs
 }
-# --- スイッチとパケットフィルタ（3.2） ---
-resource "sakuracloud_switch" "main" {
-  name = "${local.prefix}-sw"
-  tags = local.tags
-}
+# --- パケットフィルタ（3.2） ---
 resource "sakuracloud_packet_filter" "main" {
   name = "${local.prefix}-pf"
   expression {
@@ -61,30 +56,10 @@ resource "sakuracloud_packet_filter" "main" {
     description = "ほかはすべて拒否"
   }
 }
-# --- データベースアプライアンス（3.3） ---
+# --- DB のパスワード（3.3）。DB はサーバーの中の db コンテナ（compose.yaml）で、データはサーバーのディスクとオブジェクトストレージのバックアップ ---
 resource "random_password" "db" {
   length  = 24
   special = false
-}
-resource "sakuracloud_database" "main" {
-  name          = "${local.prefix}-db"
-  database_type = "postgres"
-  plan          = "10g"
-  username      = "rpgadmin"
-  password      = random_password.db.result
-  tags          = local.tags
-  network_interface {
-    switch_id     = sakuracloud_switch.main.id
-    ip_address    = local.db_ip
-    netmask       = 24
-    gateway       = "${var.network_prefix}.1"
-    port          = 5432
-    source_ranges = ["${var.network_prefix}.0/24"]
-  }
-  backup {
-    time     = "03:00"
-    weekdays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-  }
 }
 # --- サーバー（3.8） ---
 resource "random_password" "auth_secret" {
@@ -110,8 +85,12 @@ locals {
     "SITE_ADDRESS=${var.site_address}",
     "APP_ENV=${var.env}",
     "APP_URL=https://${var.site_address}",
-    "DATABASE_URL=postgres://rpgadmin:${random_password.db.result}@${local.db_ip}:5432/rpg",
+    "COMPOSE_PROFILES=localdb",
+    "DB_PASSWORD=${random_password.db.result}",
+    "DATABASE_URL=postgres://rpgadmin:${random_password.db.result}@db:5432/rpg",
     "DATABASE_SSL=",
+    "BACKUP_BUCKET=${local.prefix}-backup",
+    "IDLE_STOP_MINUTES=${var.idle_stop_minutes}",
     "AUTH_SECRET=${random_password.auth_secret.result}",
     "GOOGLE_CLIENT_ID=${var.google_client_id}",
     "S3_ENDPOINT=https://s3.isk01.sakurastorage.jp",
@@ -137,14 +116,11 @@ locals {
     "",
   ])
 }
-# 初回の起動で1回だけ動くスタートアップスクリプト（OS の設定・Docker・/opt/rpg の用意・DB の作成・起動）
+# 初回の起動で1回だけ動くスタートアップスクリプト（OS の設定・Docker・/opt/rpg の用意・バックアップからの復元・起動・自動停止のタイマー）
 resource "sakuracloud_note" "setup" {
   name = "${local.prefix}-setup"
   tags = local.tags
   content = templatefile("${path.module}/setup.sh.tftpl", {
-    server_cidr   = "${local.server_ip}/24"
-    db_ip         = local.db_ip
-    db_password   = random_password.db.result
     registry      = local.shared.registry
     registry_user = local.shared.registry_pull_user
     registry_pass = local.shared.registry_pull_password
@@ -153,7 +129,8 @@ resource "sakuracloud_note" "setup" {
     compose_gz         = base64gzip(file("${path.module}/../../../compose.yaml"))
     caddyfile_gz       = base64gzip(file("${path.module}/../../../Caddyfile"))
     dotenv_gz          = base64gzip(local.dotenv)
-    rpg_deploy_gz      = base64gzip(file("${path.module}/rpg-deploy.sh"))
+    tools_base         = "https://raw.githubusercontent.com/${var.tools_repo}/${var.tools_ref}/infra/sakura/dev"
+    tools              = { for n in ["deploy", "db", "idle-stop"] : n => filesha256("${path.module}/rpg-${n}.sh") }
     tailscale_hostname = local.prefix
     tailscale_auth_key = var.tailscale_auth_key
   })
@@ -178,9 +155,6 @@ resource "sakuracloud_server" "app" {
     upstream         = "shared"
     packet_filter_id = sakuracloud_packet_filter.main.id
   }
-  network_interface {
-    upstream = sakuracloud_switch.main.id
-  }
   disk_edit_parameter {
     hostname        = "${local.prefix}-app"
     ssh_key_ids     = sakuracloud_ssh_key.admin[*].id
@@ -193,7 +167,6 @@ resource "sakuracloud_server" "app" {
   lifecycle {
     ignore_changes = [disk_edit_parameter]
   }
-  depends_on = [sakuracloud_database.main]
 }
 # --- DNS の A レコード（2.2）。ゾーンは画面で作り、site_address のホスト名をサーバーの IP アドレスに向ける ---
 locals {
@@ -218,26 +191,4 @@ moved {
   from = sakuracloud_dns_record.app
   to   = sakuracloud_dns_record.app[0]
 }
-# --- シンプル監視（3.12）。通知はさくらのクラウドの会員のメールアドレスに届く ---
-resource "sakuracloud_simple_monitor" "ping" {
-  target     = sakuracloud_server.app.ip_address
-  delay_loop = 300
-  tags       = local.tags
-  health_check {
-    protocol = "ping"
-  }
-  notify_email_enabled = true
-}
-resource "sakuracloud_simple_monitor" "site" {
-  count      = var.site_address != "" ? 1 : 0
-  target     = var.site_address
-  delay_loop = 300
-  tags       = local.tags
-  health_check {
-    protocol = "https"
-    path     = "/api/health"
-    status   = 200
-    sni      = true
-  }
-  notify_email_enabled = true
-}
+# --- シンプル監視はやめた（3.12）。アクセスがないとサーバーが止まるため、止まるたびに「つながらない」のお知らせが来てしまう ---

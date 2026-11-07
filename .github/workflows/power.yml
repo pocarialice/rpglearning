@@ -1,0 +1,30 @@
+# dev サーバーの電源（構築手順書 3.13）。アクセスがない時間が続くとサーバーは自動で止まるため、使う前にここで起動する
+# GitHub のアプリからも「Run workflow」で動かせる。Environment dev の Secrets に SAKURACLOUD_ACCESS_TOKEN・SAKURACLOUD_ACCESS_TOKEN_SECRET、Variables に SITE_URL を入れる
+name: power
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'start（起動）・status（状態を見る）・stop（止める。バックアップは取らない）'
+        type: choice
+        options: [start, status, stop]
+        default: start
+permissions:
+  contents: read
+concurrency:
+  group: power-dev
+  cancel-in-progress: false
+jobs:
+  power:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - name: ${{ inputs.action }}
+        env:
+          SAKURACLOUD_ACCESS_TOKEN: ${{ secrets.SAKURACLOUD_ACCESS_TOKEN }}
+          SAKURACLOUD_ACCESS_TOKEN_SECRET: ${{ secrets.SAKURACLOUD_ACCESS_TOKEN_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          bash scripts/sakura-power.sh "${{ inputs.action }}" | tee -a "$GITHUB_STEP_SUMMARY"

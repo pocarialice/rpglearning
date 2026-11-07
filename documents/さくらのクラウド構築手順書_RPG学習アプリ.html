@@ -118,6 +118,15 @@ figure.diagram {
   margin: 0 0 32px; display: grid; gap: 16px;
 }
 .vis p { margin: 0; }
+ol.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 12px; counter-reset: flow; }
+ol.flow li { position: relative; background: #fff; border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 12px; font-size: 14px; color: var(--gray-700); counter-increment: flow; }
+ol.flow li b { display: block; color: var(--blue-900); font-size: 15px; margin-bottom: 4px; }
+ol.flow li b::before { content: counter(flow) ". "; }
+ol.flow li .fi { margin-right: 6px; }
+ol.flow li:not(:last-child)::after { content: "\25B6"; position: absolute; right: -11px; top: 50%; transform: translateY(-50%); color: var(--blue-700); font-size: 10px; }
+ol.flow li.hl { background: var(--blue-900); border-color: var(--blue-900); color: #fff; }
+ol.flow li.hl b { color: #fff; }
+@media (max-width: 720px) { ol.flow { grid-auto-flow: row; } ol.flow li:not(:last-child)::after { content: none; } }
 .vis-grid { display: grid; gap: 16px; }
 .vis-grid.c1 { grid-template-columns: minmax(220px, 1fr) 2fr; }
 .vis-grid.c2 { grid-template-columns: 1fr 1fr; }
@@ -520,7 +529,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">さくらのクラウド構築手順書</span>
     <h1><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>RPG学習アプリ さくらのクラウド構築手順書</h1>
     <ul class="meta">
-      <li>版数<b>第0.1版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）</b></li>
+      <li>版数<b>第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）</b></li>
       <li>作成日<b>2026-10-27</b></li>
       <li>入力文書<b>外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章）</b></li>
       <li>対象<b>Phase 1（MVP）のパイロット環境。dev・prod の2環境</b></li>
@@ -621,7 +630,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     CA["caddy&lt;br&gt;HTTPS"] --&gt; API["api&lt;br&gt;画面と /api/*"]
     WK["worker&lt;br&gt;採点・取り込み・定期処理"]
   end
-  SV --&gt;|"スイッチ（ローカル）"| DB[("データベース&lt;br&gt;PostgreSQL")]
+  SV --&gt;|"prod：スイッチ（ローカル）"| DB[("prod：データベース&lt;br&gt;アプライアンス")]
+  SV -.-|"dev：サーバーの中の db コンテナ&lt;br&gt;（バックアップはオブジェクトストレージ）"| SV
   API --&gt; OS["オブジェクトストレージ&lt;br&gt;import・assets・notify"]
   WK --&gt; OS
   API --&gt; AI["さくらのAI Engine&lt;br&gt;（あとで Bedrock）"]
@@ -630,7 +640,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   WK --&gt; SM
   GH["GitHub Actions"] --&gt;|"push"| CR["コンテナレジストリ"]
   CR --&gt;|"pull"| SV
-  MON["シンプル監視"] --&gt;|"/api/health"| SV
+  MON["シンプル監視（prod）"] --&gt;|"/api/health"| SV
+  GHP["GitHub Actions power（dev）"] --&gt;|"電源を入れる"| SV
 </div></figure>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.5 構築の順番</h3>
 <figure class="diagram"><div class="mermaid">flowchart TD
@@ -647,6 +658,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     E9 --&gt; E10["3.10 最初のシステム管理者"]
     E10 --&gt; E11["3.11 リリースの反映"]
     E11 --&gt; E12["3.12 シンプル監視・バックアップ"]
+    E12 --&gt; E13["3.13 自動停止と起動（dev）"]
   end
   E12 --&gt; OP["第5章 運用&lt;br&gt;OS更新・バックアップ・Bedrock への切り替え"]
 </div></figure>
@@ -679,21 +691,21 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>V-03</td>
 <td>スイッチのネットワーク</td>
-<td><code>192.168.10.0/24</code></td>
+<td>（使わない）</td>
 <td><code>192.168.20.0/24</code></td>
 <td>3.2</td>
 </tr>
 <tr>
 <td>V-04</td>
 <td>サーバーのローカルIPアドレス</td>
-<td><code>192.168.10.11</code></td>
+<td>（使わない）</td>
 <td><code>192.168.20.11</code></td>
 <td>3.8</td>
 </tr>
 <tr>
 <td>V-05</td>
 <td>DB のIPアドレス</td>
-<td><code>192.168.10.21</code></td>
+<td>（使わない。compose の <code>db</code>）</td>
 <td><code>192.168.20.21</code></td>
 <td>3.3</td>
 </tr>
@@ -768,6 +780,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>3.8</td>
 </tr>
 <tr>
+<td>V-17</td>
+<td>DB のバックアップのバケット（<code>BACKUP_BUCKET</code>）</td>
+<td><code>rpg-dev-backup</code></td>
+<td>（使わない。アプライアンスのバックアップ）</td>
+<td>3.4</td>
+</tr>
+<tr>
+<td>V-18</td>
+<td>自動停止までの分数（<code>IDLE_STOP_MINUTES</code>）</td>
+<td><code>60</code></td>
+<td>（使わない。止めない）</td>
+<td>3.13</td>
+</tr>
+<tr>
 <td>V-16</td>
 <td><code>GOOGLE_CLIENT_ID</code>（Googleでログインの OAuth クライアントID。使わないなら空）</td>
 <td><code>&lt;番号&gt;-xxxx.apps.googleusercontent.com</code></td>
@@ -814,18 +840,23 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>2コア・4GB・ディスク40GB（利用者が増えたら4コア・8GB）</td>
 </tr>
 <tr>
+<td>サーバーの動く時間</td>
+<td>使うときだけ（アクセスがない時間が60分続くと止まる。3.13）</td>
+<td>24時間</td>
+</tr>
+<tr>
 <td>スイッチ</td>
-<td>1</td>
+<td>なし</td>
 <td>1</td>
 </tr>
 <tr>
 <td>データベースアプライアンス</td>
-<td>10GB プラン（1コア・2GB）</td>
+<td>なし（サーバーの中の db コンテナ）</td>
 <td>30GB プラン（2コア・4GB）</td>
 </tr>
 <tr>
 <td>オブジェクトストレージ</td>
-<td>バケット3つ</td>
+<td>バケット4つ（DB のバックアップを含む）</td>
 <td>バケット3つ</td>
 </tr>
 <tr>
@@ -835,11 +866,15 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>シンプル監視</td>
-<td>2つ（HTTPS・ping）</td>
+<td>なし（止まるたびにお知らせが来るため）</td>
 <td>2つ（HTTPS・ping）</td>
 </tr>
 </tbody>
 </table></div>
+<ul>
+<li>さくらのクラウドのサーバーは、電源を切っているあいだはサーバーの料金がかからない（ディスクの料金はかかる）。データベースアプライアンスは止めても料金がかかるため、dev は DB をサーバーの中に置き、サーバーごと止める（2026-11-07 に変更）</li>
+<li>料金の決まりは変わることがあるため、構築のときに料金表で確かめる</li>
+</ul>
 </section><section class="chapter" id="ch2"><h2><i aria-hidden="true" class="fa-solid fa-user-shield h-ico"></i>2. アカウントで1回だけ行う作業</h2>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 プロジェクト</h3>
 <ol>
@@ -885,7 +920,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 スイッチとパケットフィルタ</h3>
-<p><strong>スイッチ</strong></p>
+<p><strong>スイッチ</strong>（prod だけ。dev は DB をサーバーの中に置くため作らない）</p>
 <ol>
 <li>「ネットワーク」→「スイッチ」→「追加」</li>
 <li>名前 <code>rpg-dev-sw</code>、タグ <code>rpg</code>・<code>dev</code>。ルータは付けない（サーバーと DB を内側でつなぐだけ）</li>
@@ -996,7 +1031,36 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>SSH は作業場所のIPアドレスだけに開ける。IPアドレスが変わる環境なら、作業のときだけルール3を足す</li>
 <li>サーバーの中でも ufw で 22・80・443 だけを開ける（3.8）。二重に守る</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 データベースアプライアンス</h3>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 データベース</h3>
+<p><strong>dev：サーバーの中の db コンテナ</strong></p>
+<p>dev は、データベースアプライアンスを作らない。DB は <code>compose.yaml</code> の <code>db</code>（PostgreSQL 16）で、<code>.env</code> に <code>COMPOSE_PROFILES=localdb</code> があるときだけ動く。データはサーバーのディスク（Docker のボリューム <code>pg_data</code>）に置き、オブジェクトストレージのバケット V-17 にバックアップする（3.4・5.3）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ユーザー名・パスワード</td>
+<td>V-06（<code>rpgadmin</code>）・V-07（Terraform が作る。<code>infra/sakura/tf.sh dev output -raw database_password</code>）</td>
+</tr>
+<tr>
+<td>データベース</td>
+<td><code>rpg</code>（db コンテナが最初の起動で作る）</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td><code>COMPOSE_PROFILES=localdb</code>・<code>DB_PASSWORD=&lt;V-07&gt;</code>・<code>DATABASE_URL=postgres://rpgadmin:&lt;V-07&gt;@db:5432/rpg</code></td>
+</tr>
+<tr>
+<td>バックアップ</td>
+<td><code>rpg-db backup</code>。毎日 3:00、自動停止の前、<code>rpg-deploy</code> の反映の前に動き、30個残す</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>prod：データベースアプライアンス</strong></p>
 <ol>
 <li>「アプライアンス」→「データベース」→「追加」</li>
 <li>次のとおり入れる</li>
@@ -1087,11 +1151,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>通知メールの送信リスト（日次処理が作る）</td>
 <td>非公開</td>
 </tr>
+<tr>
+<td><code>rpg-dev-backup</code></td>
+<td>DB のバックアップ（<code>rpg-db</code> が <code>db/</code> に置く。V-17。dev だけ）</td>
+<td>非公開</td>
+</tr>
 </tbody>
 </table></div>
 <p><strong>アクセスキー</strong></p>
 <ol start="2">
-<li>「パーミッション」（アクセスキー）を作り、上の3つのバケットに「読み取り・書き込み」を付ける。名前 <code>rpg-dev-app</code></li>
+<li>「パーミッション」（アクセスキー）を作り、上のバケットすべてに「読み取り・書き込み」を付ける。名前 <code>rpg-dev-app</code>（あとから <code>rpg-dev-backup</code> を作ったときは、このパーミッションに足す）</li>
 <li>表示されたアクセスキーとシークレットキーを V-10 に控える（シークレットキーはあとで表示できない）</li>
 <li>エンドポイントとリージョンを V-08 に控える（画面に出る値を優先する）</li>
 </ol>
@@ -1330,7 +1399,7 @@ docker compose exec api node -e "import('./functions/shared/mail/smtp.js').then(
 </tr>
 <tr>
 <td>NIC 2</td>
-<td>スイッチ <code>rpg-dev-sw</code>（追加の NIC。作成後に「NIC」タブで足してもよい）</td>
+<td>prod だけ：スイッチ <code>rpg-prod-sw</code>（追加の NIC。dev は付けない）</td>
 </tr>
 <tr>
 <td>公開鍵</td>
@@ -1355,7 +1424,7 @@ sudo timedatectl set-timezone Asia/Tokyo
 sudo ufw allow 22/tcp &amp;&amp; sudo ufw allow 80/tcp &amp;&amp; sudo ufw allow 443/tcp &amp;&amp; sudo ufw --force enable
 </code></pre>
 <ol start="5">
-<li>NIC 2（スイッチ側）にローカルIPアドレス V-04 を付ける。<code>/etc/netplan/60-switch.yaml</code> を作る（インターフェース名は <code>ip link</code> で確かめる。例 <code>ens4</code>）</li>
+<li>prod だけ：NIC 2（スイッチ側）にローカルIPアドレス V-04 を付ける。<code>/etc/netplan/60-switch.yaml</code> を作る（インターフェース名は <code>ip link</code> で確かめる。例 <code>ens4</code>）</li>
 </ol>
 <pre><code class="language-yaml">network:
   version: 2
@@ -1395,8 +1464,12 @@ curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/Caddy
 SITE_ADDRESS=&lt;V-01&gt;
 APP_ENV=dev
 APP_URL=https://&lt;V-01&gt;
-DATABASE_URL=postgres://rpgadmin:&lt;V-07&gt;@192.168.10.21:5432/rpg
+COMPOSE_PROFILES=localdb
+DB_PASSWORD=&lt;V-07&gt;
+DATABASE_URL=postgres://rpgadmin:&lt;V-07&gt;@db:5432/rpg
 DATABASE_SSL=
+BACKUP_BUCKET=&lt;V-17&gt;
+IDLE_STOP_MINUTES=&lt;V-18&gt;
 AUTH_SECRET=&lt;V-15&gt;
 GOOGLE_CLIENT_ID=&lt;V-16。使わないなら空&gt;
 S3_ENDPOINT=https://s3.isk01.sakurastorage.jp
@@ -1455,7 +1528,7 @@ MAIL_SCHEDULE_ENABLED=false
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.9 初回の起動と確認</h3>
 <ol>
-<li>データベース <code>rpg</code> を作る（一度だけ）</li>
+<li>prod だけ：データベース <code>rpg</code> を作る（一度だけ。dev は db コンテナが作る）</li>
 </ol>
 <pre><code class="language-bash">docker run --rm -it postgres:16 psql &quot;postgres://rpgadmin:&lt;V-07&gt;@192.168.10.21:5432/postgres&quot; -c &quot;CREATE DATABASE rpg;&quot;
 </code></pre>
@@ -1625,7 +1698,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 <li>api が <code>connect EHOSTUNREACH &lt;V-05&gt;:5432</code> で起動しなおしを繰り返し、サーバーから DB へ ping は届くのに 5432 だけ届かないときは、DB の中で通信がはじかれている。コントロールパネルで DB を「再起動」すると直る（2026-10-30 に dev で発生）。再起動のあいだのエラーは、api が自動で起動しなおすため気にしなくてよい</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.12 シンプル監視とバックアップ</h3>
-<p><strong>シンプル監視</strong></p>
+<p><strong>シンプル監視</strong>（prod だけ。dev はアクセスがないと止まるため作らない）</p>
 <ol>
 <li>「シンプル監視」→「追加」を2つ</li>
 </ol>
@@ -1661,8 +1734,92 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 </ol>
 <p><strong>バックアップ</strong></p>
 <ol start="3">
-<li>データベースの「バックアップ」タブで自動バックアップ（毎日 3:00・8世代）が動いていることを翌日に確かめる</li>
+<li>prod：データベースの「バックアップ」タブで自動バックアップ（毎日 3:00・8世代）が動いていることを翌日に確かめる。dev：<code>rpg-db list</code> にバックアップが並んでいることを確かめる</li>
 <li>サーバーは、<code>/opt/rpg</code>（<code>.env</code>・<code>compose.yaml</code>・<code>Caddyfile</code>）だけが手で作ったもの。<code>.env</code> の中身はパスワード管理ツールに控えてあるため、サーバーのバックアップは取らない（壊れたら 3.8 で作り直す）</li>
+</ol>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.13 自動停止と起動（dev）</h3>
+<p>dev のサーバーは、アクセスがない時間が V-18（60分）続くと、DB をバックアップしてから電源を切る。電源を切っているあいだはサーバーの料金がかからない。使うときは GitHub Actions の power で電源を入れる。</p>
+<div class="vis">
+  <p class="vis-label">dev のサーバーが止まってから、また使えるようになるまで</p>
+  <ol class="flow">
+    <li><b><i class="fa-solid fa-user-clock fi"></i>アクセスがない</b>/api/* が60分なし</li>
+    <li><b><i class="fa-solid fa-database fi"></i>バックアップ</b>rpg-db backup → rpg-dev-backup</li>
+    <li><b><i class="fa-solid fa-power-off fi"></i>電源を切る</b>サーバーの料金が止まる</li>
+    <li><b><i class="fa-brands fa-github fi"></i>power で start</b>GitHub Actions（スマホでも）</li>
+    <li class="hl"><b><i class="fa-solid fa-circle-check fi"></i>使える</b>1〜3分で /api/health が返る</li>
+  </ol>
+</div>
+<figure class="diagram"><div class="mermaid">flowchart TD
+  T["rpg-idle-stop.timer&lt;br&gt;5分ごと"] --&gt; C{"止めない理由がある？"}
+  C --&gt;|"直近60分に /api/* のアクセス&lt;br&gt;採点・取り込みのジョブ&lt;br&gt;SSH で入っている人&lt;br&gt;起動して60分たっていない&lt;br&gt;rpg-idle-stop pause"| W["何もしない"]
+  C --&gt;|"ない"| B["rpg-db backup&lt;br&gt;（オブジェクトストレージへ）"]
+  B --&gt;|"失敗"| W
+  B --&gt;|"成功"| P["電源を切る&lt;br&gt;（サーバーの料金が止まる）"]
+  G["GitHub Actions power&lt;br&gt;start"] --&gt;|"さくらのクラウド API"| ON["電源を入れる"]
+  ON --&gt; UP["Docker が db・api・worker・caddy を起動&lt;br&gt;日次処理の取りこぼしも動く"]
+</div></figure>
+<p><strong>数えるアクセス</strong></p>
+<ul>
+<li><code>/api/</code> で始まるものだけを数える。<code>/api/health</code>（死活確認）と <code>/api/auth/refresh</code>（開きっぱなしのタブが自動で行うトークンの更新）は数えない</li>
+<li>画面のファイル（<code>/</code>・<code>/js/…</code>）も数えない。インターネットを見回るボットが来ても止まるようにするため。使う人はログインや画面の表示で必ず <code>/api/</code> を呼ぶ</li>
+</ul>
+<p><strong>準備（1回だけ）</strong></p>
+<ol>
+<li>3.4 でバケット <code>rpg-dev-backup</code>（V-17）を作り、パーミッション <code>rpg-dev-app</code> に「読み取り・書き込み」を足す</li>
+<li>GitHub の Environment <code>dev</code> に、Secrets <code>SAKURACLOUD_ACCESS_TOKEN</code>・<code>SAKURACLOUD_ACCESS_TOKEN_SECRET</code>（APIキー。アクセスレベルは「作成・削除」か、電源の操作ができるもの）と、Variables <code>SITE_URL</code>（<code>https://&lt;V-01&gt;</code>）を入れる</li>
+</ol>
+<p><strong>使うとき</strong></p>
+<ol start="3">
+<li>GitHub（スマホのアプリでもよい）の Actions →「power」→「Run workflow」で <code>start</code> を選ぶ。<code>✅ 使えます</code> が出たら画面を開く（電源を入れてから1〜3分）</li>
+<li>使い終わったら何もしなくてよい。60分たつと自動で止まる</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>コマンド（サーバー）</th>
+<th>すること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rpg-idle-stop status</code></td>
+<td>いま止めない理由（アクセスの件数・ジョブ・ログイン中の人など）</td>
+</tr>
+<tr>
+<td><code>sudo rpg-idle-stop pause</code></td>
+<td>自動停止を休む（長い作業のとき）。<code>sudo rpg-idle-stop resume</code> で再開</td>
+</tr>
+<tr>
+<td><code>rpg-deploy env IDLE_STOP_MINUTES &lt;分&gt;</code></td>
+<td>止めるまでの分数を変える。<code>0</code> で止めない</td>
+</tr>
+<tr>
+<td><code>scripts/sakura-power.sh start\|stop\|status</code>（PC）</td>
+<td>GitHub を使わずに電源を操作する（APIキーを環境変数に入れる）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>止めた記録はサーバーの <code>/var/log/rpg-idle-stop.log</code></li>
+<li>止まっているあいだはサイトにつながらない。夜 0:00 の日次処理は、次に電源を入れたときに動く（ワーカーがその日の枠を見て動かす）</li>
+<li><code>stop</code> は DB のバックアップを取らずに止める。ふだんは自動停止に任せる</li>
+</ul>
+<p><strong>データベースアプライアンスからの引っ越し（1回だけ。2026-11 の dev）</strong></p>
+<ol start="5">
+<li>いまのサーバーで、アプライアンスの DB をファイルに書き出してバケットに置く（<code>&lt;V-07&gt;</code> はアプライアンスのパスワード、<code>&lt;V-10&gt;</code> は 3.4 のキー）</li>
+</ol>
+<pre><code class="language-bash">cd /opt/rpg
+docker run --rm postgres:16 pg_dump "postgres://rpgadmin:&lt;V-07&gt;@192.168.10.21:5432/rpg" -Fc &gt; /tmp/rpg.dump
+docker run --rm -i -e AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; -e AWS_SECRET_ACCESS_KEY=&lt;V-10 のシークレットキー&gt; -e AWS_REQUEST_CHECKSUM_CALCULATION=when_required amazon/aws-cli:2.22.35 --endpoint-url https://s3.isk01.sakurastorage.jp --region jp-north-1 s3 cp - s3://rpg-dev-backup/db/rpg-$(date +%Y%m%d-%H%M).dump &lt; /tmp/rpg.dump
+</code></pre>
+<ol start="6">
+<li>変更を main に入れてから（スタートアップスクリプトが <code>rpg-db</code> などを GitHub から取るため）、Tailscale の認証キーを <code>TF_VAR_tailscale_auth_key</code> に入れ、サーバーを作り直す。アプライアンスとスイッチは消える</li>
+</ol>
+<pre><code class="language-bash">infra/sakura/tf.sh dev apply -replace=sakuracloud_disk.app -replace=sakuracloud_server.app
+</code></pre>
+<ol start="7">
+<li>新しいサーバーの初回の起動で、<code>rpg-db restore-if-empty</code> が 5. のファイルを戻してからアプリを起動する。<code>/var/log/rpg-setup.log</code> に <code>✅ 戻しました</code> が出ていること、画面にログインしてデータが残っていることを確かめる</li>
+<li>サーバーのグローバルIPアドレスが変わる。DNS の A レコードは Terraform が直す。パケットフィルタの SSH の許可はそのまま使える</li>
 </ol>
 </section><section class="chapter" id="ch4"><h2><i aria-hidden="true" class="fa-solid fa-rocket h-ico"></i>4. prod 環境の構築<span class="env-badge env-prod">prod・本番</span></h2>
 <p>右上のプロジェクトで <code>rpg-prod</code> を選び、第3章を上から同じ順で行う。違うところだけを書く。</p>
@@ -1714,6 +1871,10 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 <td>3.12</td>
 <td>監視の通知先にシステム管理者を入れる</td>
 </tr>
+<tr>
+<td>3.13</td>
+<td>行わない。prod は24時間動かし、DB はデータベースアプライアンス（<code>.env</code> の <code>COMPOSE_PROFILES</code> は空、<code>DATABASE_URL</code> はアプライアンスのIPアドレス）</td>
+</tr>
 </tbody>
 </table></div>
 <ul>
@@ -1753,8 +1914,8 @@ cd /opt/rpg &amp;&amp; docker compose ps                       # restart: unless
 </tr>
 <tr>
 <td>DB の容量</td>
-<td>データベースの「リソースモニタ」</td>
-<td>70%を超えたらプランを上げる（5.3 の復元で作り直す）</td>
+<td>prod：データベースの「リソースモニタ」。dev：<code>df -h</code>（DB はサーバーのディスク）</td>
+<td>70%を超えたらプランを上げる（5.3 の復元で作り直す）。dev はディスクを大きくする</td>
 </tr>
 <tr>
 <td>AI の使った量</td>
@@ -1770,6 +1931,7 @@ cd /opt/rpg &amp;&amp; docker compose ps                       # restart: unless
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 バックアップと復元</h3>
 <ul>
+<li>dev：<code>rpg-db list</code> で一覧、<code>rpg-db restore &lt;名前&gt;</code>（<code>latest</code> でいちばん新しいもの）で戻す。<strong>今のデータが巻き戻る</strong>。サーバーを作り直したときは、初回の起動でいちばん新しいバックアップが自動で戻る（3.13）</li>
 <li>リリースで DB の変更があるときは、prod へ反映する前にデータベースの「バックアップ」→「追加」で手動のバックアップを取る（詳細設計書 11.6）</li>
 <li>復元は、データベースの「バックアップ」タブで世代を選んで「復元」。<strong>今のデータが巻き戻る</strong>ため、システム管理者の判断で行う</li>
 <li>プランを上げるときは、手動のバックアップを取ってから新しいプランで作り直し、そのバックアップから復元する（IPアドレスは同じにする）</li>
@@ -1850,7 +2012,7 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.1版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

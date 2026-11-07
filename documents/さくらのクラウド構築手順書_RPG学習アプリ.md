@@ -3,7 +3,7 @@
 | 項目   | 内容 |
 | ---- | --- |
 | 文書名  | RPG学習アプリ さくらのクラウド構築手順書 |
-| 版数   | 第0.1版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避） |
+| 版数   | 第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13） |
 | 作成日  | 2026-10-27 |
 | 入力文書 | 外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章） |
 | 対象   | Phase 1（MVP）のパイロット環境。dev・prod の2環境 |
@@ -51,7 +51,8 @@ flowchart LR
     CA["caddy<br>HTTPS"] --> API["api<br>画面と /api/*"]
     WK["worker<br>採点・取り込み・定期処理"]
   end
-  SV -->|"スイッチ（ローカル）"| DB[("データベース<br>PostgreSQL")]
+  SV -->|"prod：スイッチ（ローカル）"| DB[("prod：データベース<br>アプライアンス")]
+  SV -.-|"dev：サーバーの中の db コンテナ<br>（バックアップはオブジェクトストレージ）"| SV
   API --> OS["オブジェクトストレージ<br>import・assets・notify"]
   WK --> OS
   API --> AI["さくらのAI Engine<br>（あとで Bedrock）"]
@@ -60,7 +61,8 @@ flowchart LR
   WK --> SM
   GH["GitHub Actions"] -->|"push"| CR["コンテナレジストリ"]
   CR -->|"pull"| SV
-  MON["シンプル監視"] -->|"/api/health"| SV
+  MON["シンプル監視（prod）"] -->|"/api/health"| SV
+  GHP["GitHub Actions power（dev）"] -->|"電源を入れる"| SV
 ```
 
 ### 1.5 構築の順番
@@ -80,6 +82,7 @@ flowchart TD
     E9 --> E10["3.10 最初のシステム管理者"]
     E10 --> E11["3.11 リリースの反映"]
     E11 --> E12["3.12 シンプル監視・バックアップ"]
+    E12 --> E13["3.13 自動停止と起動（dev）"]
   end
   E12 --> OP["第5章 運用<br>OS更新・バックアップ・Bedrock への切り替え"]
 ```
@@ -90,9 +93,9 @@ flowchart TD
 | --- | --- | --- | --- | --- |
 | V-01 | サイトのドメイン名（`SITE_ADDRESS`） | `rpg-dev.<ドメイン>` | `rpg.<ドメイン>` | 2.2 |
 | V-02 | サーバーのグローバルIPアドレス | | | 3.8 |
-| V-03 | スイッチのネットワーク | `192.168.10.0/24` | `192.168.20.0/24` | 3.2 |
-| V-04 | サーバーのローカルIPアドレス | `192.168.10.11` | `192.168.20.11` | 3.8 |
-| V-05 | DB のIPアドレス | `192.168.10.21` | `192.168.20.21` | 3.3 |
+| V-03 | スイッチのネットワーク | （使わない） | `192.168.20.0/24` | 3.2 |
+| V-04 | サーバーのローカルIPアドレス | （使わない） | `192.168.20.11` | 3.8 |
+| V-05 | DB のIPアドレス | （使わない。compose の `db`） | `192.168.20.21` | 3.3 |
 | V-06 | DB のユーザー名 | `rpgadmin` | `rpgadmin` | 3.3 |
 | V-07 | DB のパスワード | （管理ツールへ） | （管理ツールへ） | 3.3 |
 | V-08 | オブジェクトストレージのエンドポイント・リージョン | `https://s3.isk01.sakurastorage.jp`・`jp-north-1` | 同じ | 3.4 |
@@ -103,6 +106,8 @@ flowchart TD
 | V-13 | 送信元のメールアドレス（`MAIL_FROM`） | `no-reply@mail.<ドメイン>` | 同じ | 3.6 |
 | V-14 | 監視のお知らせの宛先（`ALERT_EMAIL`） | 開発者 | システム管理者・開発者 | 3.6 |
 | V-15 | `AUTH_SECRET`（ログインの署名の鍵） | （管理ツールへ） | （管理ツールへ。dev と別の値） | 3.8 |
+| V-17 | DB のバックアップのバケット（`BACKUP_BUCKET`） | `rpg-dev-backup` | （使わない。アプライアンスのバックアップ） | 3.4 |
+| V-18 | 自動停止までの分数（`IDLE_STOP_MINUTES`） | `60` | （使わない。止めない） | 3.13 |
 | V-16 | `GOOGLE_CLIENT_ID`（Googleでログインの OAuth クライアントID。使わないなら空） | `<番号>-xxxx.apps.googleusercontent.com` | dev と別のクライアントID | 3.8.1 |
 | V-20 | コンテナレジストリのドメイン | `<レジストリ名>.sakuracr.jp` | dev と同じ | 3.7 |
 | V-21 | レジストリの push 用ユーザー・パスワード | （管理ツールへ） | 同じ | 3.7 |
@@ -115,11 +120,15 @@ flowchart TD
 | リソース | dev | prod |
 | --- | --- | --- |
 | サーバー | 1コア・2GB・ディスク40GB | 2コア・4GB・ディスク40GB（利用者が増えたら4コア・8GB） |
-| スイッチ | 1 | 1 |
-| データベースアプライアンス | 10GB プラン（1コア・2GB） | 30GB プラン（2コア・4GB） |
-| オブジェクトストレージ | バケット3つ | バケット3つ |
+| サーバーの動く時間 | 使うときだけ（アクセスがない時間が60分続くと止まる。3.13） | 24時間 |
+| スイッチ | なし | 1 |
+| データベースアプライアンス | なし（サーバーの中の db コンテナ） | 30GB プラン（2コア・4GB） |
+| オブジェクトストレージ | バケット4つ（DB のバックアップを含む） | バケット3つ |
 | コンテナレジストリ | 1つを dev・prod で共用 | （共用） |
-| シンプル監視 | 2つ（HTTPS・ping） | 2つ（HTTPS・ping） |
+| シンプル監視 | なし（止まるたびにお知らせが来るため） | 2つ（HTTPS・ping） |
+
+- さくらのクラウドのサーバーは、電源を切っているあいだはサーバーの料金がかからない（ディスクの料金はかかる）。データベースアプライアンスは止めても料金がかかるため、dev は DB をサーバーの中に置き、サーバーごと止める（2026-11-07 に変更）
+- 料金の決まりは変わることがあるため、構築のときに料金表で確かめる
 
 ---
 
@@ -159,7 +168,7 @@ flowchart TD
 
 ### 3.2 スイッチとパケットフィルタ
 
-**スイッチ**
+**スイッチ**（prod だけ。dev は DB をサーバーの中に置くため作らない）
 
 1. 「ネットワーク」→「スイッチ」→「追加」
 2. 名前 `rpg-dev-sw`、タグ `rpg`・`dev`。ルータは付けない（サーバーと DB を内側でつなぐだけ）
@@ -185,7 +194,20 @@ flowchart TD
 - SSH は作業場所のIPアドレスだけに開ける。IPアドレスが変わる環境なら、作業のときだけルール3を足す
 - サーバーの中でも ufw で 22・80・443 だけを開ける（3.8）。二重に守る
 
-### 3.3 データベースアプライアンス
+### 3.3 データベース
+
+**dev：サーバーの中の db コンテナ**
+
+dev は、データベースアプライアンスを作らない。DB は `compose.yaml` の `db`（PostgreSQL 16）で、`.env` に `COMPOSE_PROFILES=localdb` があるときだけ動く。データはサーバーのディスク（Docker のボリューム `pg_data`）に置き、オブジェクトストレージのバケット V-17 にバックアップする（3.4・5.3）。
+
+| 項目 | 値 |
+| --- | --- |
+| ユーザー名・パスワード | V-06（`rpgadmin`）・V-07（Terraform が作る。`infra/sakura/tf.sh dev output -raw database_password`） |
+| データベース | `rpg`（db コンテナが最初の起動で作る） |
+| `.env` | `COMPOSE_PROFILES=localdb`・`DB_PASSWORD=<V-07>`・`DATABASE_URL=postgres://rpgadmin:<V-07>@db:5432/rpg` |
+| バックアップ | `rpg-db backup`。毎日 3:00、自動停止の前、`rpg-deploy` の反映の前に動き、30個残す |
+
+**prod：データベースアプライアンス**
 
 1. 「アプライアンス」→「データベース」→「追加」
 2. 次のとおり入れる
@@ -219,10 +241,11 @@ flowchart TD
 | `rpg-dev-import` | 問題の取り込みの原本（PDF・画像・テキスト） | 非公開 |
 | `rpg-dev-assets` | パートナーの画像（api コンテナの `/partners/*` が配信する） | 非公開 |
 | `rpg-dev-notify` | 通知メールの送信リスト（日次処理が作る） | 非公開 |
+| `rpg-dev-backup` | DB のバックアップ（`rpg-db` が `db/` に置く。V-17。dev だけ） | 非公開 |
 
 **アクセスキー**
 
-2. 「パーミッション」（アクセスキー）を作り、上の3つのバケットに「読み取り・書き込み」を付ける。名前 `rpg-dev-app`
+2. 「パーミッション」（アクセスキー）を作り、上のバケットすべてに「読み取り・書き込み」を付ける。名前 `rpg-dev-app`（あとから `rpg-dev-backup` を作ったときは、このパーミッションに足す）
 3. 表示されたアクセスキーとシークレットキーを V-10 に控える（シークレットキーはあとで表示できない）
 4. エンドポイントとリージョンを V-08 に控える（画面に出る値を優先する）
 
@@ -366,7 +389,7 @@ docker compose exec api node -e "import('./functions/shared/mail/smtp.js').then(
 | プラン | 1コア・2GB（prod は2コア・4GB） |
 | ディスク | 40GB（SSD）、アーカイブ「Ubuntu Server 24.04 LTS」 |
 | NIC 1 | インターネット（共有セグメント）、パケットフィルタ `rpg-dev-pf` |
-| NIC 2 | スイッチ `rpg-dev-sw`（追加の NIC。作成後に「NIC」タブで足してもよい） |
+| NIC 2 | prod だけ：スイッチ `rpg-prod-sw`（追加の NIC。dev は付けない） |
 | 公開鍵 | `rpg-admin`（パスワードでのログインは無効にする） |
 | ホスト名・名前・タグ | `rpg-dev-app`・`rpg`・`dev` |
 
@@ -383,7 +406,7 @@ sudo timedatectl set-timezone Asia/Tokyo
 sudo ufw allow 22/tcp && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw --force enable
 ```
 
-5. NIC 2（スイッチ側）にローカルIPアドレス V-04 を付ける。`/etc/netplan/60-switch.yaml` を作る（インターフェース名は `ip link` で確かめる。例 `ens4`）
+5. prod だけ：NIC 2（スイッチ側）にローカルIPアドレス V-04 を付ける。`/etc/netplan/60-switch.yaml` を作る（インターフェース名は `ip link` で確かめる。例 `ens4`）
 
 ```yaml
 network:
@@ -433,8 +456,12 @@ IMAGE=<V-20>/rpg-app:<3.7 で控えたリリース番号>
 SITE_ADDRESS=<V-01>
 APP_ENV=dev
 APP_URL=https://<V-01>
-DATABASE_URL=postgres://rpgadmin:<V-07>@192.168.10.21:5432/rpg
+COMPOSE_PROFILES=localdb
+DB_PASSWORD=<V-07>
+DATABASE_URL=postgres://rpgadmin:<V-07>@db:5432/rpg
 DATABASE_SSL=
+BACKUP_BUCKET=<V-17>
+IDLE_STOP_MINUTES=<V-18>
 AUTH_SECRET=<V-15>
 GOOGLE_CLIENT_ID=<V-16。使わないなら空>
 S3_ENDPOINT=https://s3.isk01.sakurastorage.jp
@@ -494,7 +521,7 @@ flowchart LR
 
 ### 3.9 初回の起動と確認
 
-1. データベース `rpg` を作る（一度だけ）
+1. prod だけ：データベース `rpg` を作る（一度だけ。dev は db コンテナが作る）
 
 ```bash
 docker run --rm -it postgres:16 psql "postgres://rpgadmin:<V-07>@192.168.10.21:5432/postgres" -c "CREATE DATABASE rpg;"
@@ -616,7 +643,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 
 ### 3.12 シンプル監視とバックアップ
 
-**シンプル監視**
+**シンプル監視**（prod だけ。dev はアクセスがないと止まるため作らない）
 
 1. 「シンプル監視」→「追加」を2つ
 
@@ -629,8 +656,68 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 
 **バックアップ**
 
-3. データベースの「バックアップ」タブで自動バックアップ（毎日 3:00・8世代）が動いていることを翌日に確かめる
+3. prod：データベースの「バックアップ」タブで自動バックアップ（毎日 3:00・8世代）が動いていることを翌日に確かめる。dev：`rpg-db list` にバックアップが並んでいることを確かめる
 4. サーバーは、`/opt/rpg`（`.env`・`compose.yaml`・`Caddyfile`）だけが手で作ったもの。`.env` の中身はパスワード管理ツールに控えてあるため、サーバーのバックアップは取らない（壊れたら 3.8 で作り直す）
+
+### 3.13 自動停止と起動（dev）
+
+dev のサーバーは、アクセスがない時間が V-18（60分）続くと、DB をバックアップしてから電源を切る。電源を切っているあいだはサーバーの料金がかからない。使うときは GitHub Actions の power で電源を入れる。
+
+```mermaid
+flowchart TD
+  T["rpg-idle-stop.timer<br>5分ごと"] --> C{"止めない理由がある？"}
+  C -->|"直近60分に /api/* のアクセス<br>採点・取り込みのジョブ<br>SSH で入っている人<br>起動して60分たっていない<br>rpg-idle-stop pause"| W["何もしない"]
+  C -->|"ない"| B["rpg-db backup<br>（オブジェクトストレージへ）"]
+  B -->|"失敗"| W
+  B -->|"成功"| P["電源を切る<br>（サーバーの料金が止まる）"]
+  G["GitHub Actions power<br>start"] -->|"さくらのクラウド API"| ON["電源を入れる"]
+  ON --> UP["Docker が db・api・worker・caddy を起動<br>日次処理の取りこぼしも動く"]
+```
+
+**数えるアクセス**
+
+- `/api/` で始まるものだけを数える。`/api/health`（死活確認）と `/api/auth/refresh`（開きっぱなしのタブが自動で行うトークンの更新）は数えない
+- 画面のファイル（`/`・`/js/…`）も数えない。インターネットを見回るボットが来ても止まるようにするため。使う人はログインや画面の表示で必ず `/api/` を呼ぶ
+
+**準備（1回だけ）**
+
+1. 3.4 でバケット `rpg-dev-backup`（V-17）を作り、パーミッション `rpg-dev-app` に「読み取り・書き込み」を足す
+2. GitHub の Environment `dev` に、Secrets `SAKURACLOUD_ACCESS_TOKEN`・`SAKURACLOUD_ACCESS_TOKEN_SECRET`（APIキー。アクセスレベルは「作成・削除」か、電源の操作ができるもの）と、Variables `SITE_URL`（`https://<V-01>`）を入れる
+
+**使うとき**
+
+3. GitHub（スマホのアプリでもよい）の Actions →「power」→「Run workflow」で `start` を選ぶ。`✅ 使えます` が出たら画面を開く（電源を入れてから1〜3分）
+4. 使い終わったら何もしなくてよい。60分たつと自動で止まる
+
+| コマンド（サーバー） | すること |
+| --- | --- |
+| `rpg-idle-stop status` | いま止めない理由（アクセスの件数・ジョブ・ログイン中の人など） |
+| `sudo rpg-idle-stop pause` | 自動停止を休む（長い作業のとき）。`sudo rpg-idle-stop resume` で再開 |
+| `rpg-deploy env IDLE_STOP_MINUTES <分>` | 止めるまでの分数を変える。`0` で止めない |
+| `scripts/sakura-power.sh start\|stop\|status`（PC） | GitHub を使わずに電源を操作する（APIキーを環境変数に入れる） |
+
+- 止めた記録はサーバーの `/var/log/rpg-idle-stop.log`
+- 止まっているあいだはサイトにつながらない。夜 0:00 の日次処理は、次に電源を入れたときに動く（ワーカーがその日の枠を見て動かす）
+- `stop` は DB のバックアップを取らずに止める。ふだんは自動停止に任せる
+
+**データベースアプライアンスからの引っ越し（1回だけ。2026-11 の dev）**
+
+5. いまのサーバーで、アプライアンスの DB をファイルに書き出してバケットに置く（`<V-07>` はアプライアンスのパスワード、`<V-10>` は 3.4 のキー）
+
+```bash
+cd /opt/rpg
+docker run --rm postgres:16 pg_dump "postgres://rpgadmin:<V-07>@192.168.10.21:5432/rpg" -Fc > /tmp/rpg.dump
+docker run --rm -i -e AWS_ACCESS_KEY_ID=<V-10 のアクセスキー> -e AWS_SECRET_ACCESS_KEY=<V-10 のシークレットキー> -e AWS_REQUEST_CHECKSUM_CALCULATION=when_required amazon/aws-cli:2.22.35 --endpoint-url https://s3.isk01.sakurastorage.jp --region jp-north-1 s3 cp - s3://rpg-dev-backup/db/rpg-$(date +%Y%m%d-%H%M).dump < /tmp/rpg.dump
+```
+
+6. 変更を main に入れてから（スタートアップスクリプトが `rpg-db` などを GitHub から取るため）、Tailscale の認証キーを `TF_VAR_tailscale_auth_key` に入れ、サーバーを作り直す。アプライアンスとスイッチは消える
+
+```bash
+infra/sakura/tf.sh dev apply -replace=sakuracloud_disk.app -replace=sakuracloud_server.app
+```
+
+7. 新しいサーバーの初回の起動で、`rpg-db restore-if-empty` が 5. のファイルを戻してからアプリを起動する。`/var/log/rpg-setup.log` に `✅ 戻しました` が出ていること、画面にログインしてデータが残っていることを確かめる
+8. サーバーのグローバルIPアドレスが変わる。DNS の A レコードは Terraform が直す。パケットフィルタの SSH の許可はそのまま使える
 
 ---
 
@@ -650,6 +737,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 | 3.8.1 | クライアントIDは `rpg-prod` を作り、JavaScript 生成元は `https://rpg.<ドメイン>`。OAuth 同意画面は「公開」にしておく |
 | 3.10 | 本番のシステム管理者を作る。確認用の利用者は `[確認用]` を名前に付ける |
 | 3.12 | 監視の通知先にシステム管理者を入れる |
+| 3.13 | 行わない。prod は24時間動かし、DB はデータベースアプライアンス（`.env` の `COMPOSE_PROFILES` は空、`DATABASE_URL` はアプライアンスのIPアドレス） |
 
 - prod の `.env` を dev からコピーして直すときは、**キー・パスワード・`AUTH_SECRET` をすべて prod の値に替えた**ことを2人で確かめる
 
@@ -677,12 +765,13 @@ cd /opt/rpg && docker compose ps                       # restart: unless-stopped
 | --- | --- | --- |
 | サーバーの CPU・メモリ | コントロールパネルの「リソースモニタ」、`docker stats` | CPU が常に70%を超える、メモリが足りない → プランを上げる |
 | ディスク | `df -h`、`docker system df` | 70%を超えたら `docker image prune -a`（使っていない古いイメージを消す） |
-| DB の容量 | データベースの「リソースモニタ」 | 70%を超えたらプランを上げる（5.3 の復元で作り直す） |
+| DB の容量 | prod：データベースの「リソースモニタ」。dev：`df -h`（DB はサーバーのディスク） | 70%を超えたらプランを上げる（5.3 の復元で作り直す）。dev はディスクを大きくする |
 | AI の使った量 | AI Engine の利用状況 | 予算を超えそうなら相談する |
 | 監視メール | `ALERT_EMAIL` の受信箱 | 届いたものの原因を確かめたか |
 
 ### 5.3 バックアップと復元
 
+- dev：`rpg-db list` で一覧、`rpg-db restore <名前>`（`latest` でいちばん新しいもの）で戻す。**今のデータが巻き戻る**。サーバーを作り直したときは、初回の起動でいちばん新しいバックアップが自動で戻る（3.13）
 - リリースで DB の変更があるときは、prod へ反映する前にデータベースの「バックアップ」→「追加」で手動のバックアップを取る（詳細設計書 11.6）
 - 復元は、データベースの「バックアップ」タブで世代を選んで「復元」。**今のデータが巻き戻る**ため、システム管理者の判断で行う
 - プランを上げるときは、手動のバックアップを取ってから新しいプランで作り直し、そのバックアップから復元する（IPアドレスは同じにする）
