@@ -6,6 +6,9 @@
 #   rpg-deploy rollback         前回の IMAGE に戻す
 #   rpg-deploy status           いまの版とコンテナの状態
 #   rpg-deploy list             レジストリのタグ（新しい順に10個）
+#   rpg-deploy env <名前> <値>   .env の設定を変えて入れ直す（例 rpg-deploy env GOOGLE_CLIENT_ID xxx.apps.googleusercontent.com）
+#   rpg-deploy env <名前> -      値を画面に出さずに入れる（鍵やパスワード。打った値がシェルの履歴に残らない）
+#   rpg-deploy env <名前>        いまの値を見る（公開してよい値だけ出し、ほかは長さだけ）
 set -euo pipefail
 SELF=$(readlink -f "$0")
 APP_DIR=${RPG_APP_DIR:-/opt/rpg}
@@ -67,12 +70,63 @@ set_image() {
   cat "$tmp" > "$ENV_FILE"   # 上書きで中身だけ変える（持ち主と 600 をそのままにする）
   rm -f "$tmp"
 }
+# 「# 前回 <名前>=」の行を KEEP_HISTORY 個まで残す（古いものから消す）
 prune_history() {
-  local file=$1 total drop
-  total=$(grep -c '^# 前回 IMAGE=' "$file" || true)
+  local file=$1 name=${2:-IMAGE} total drop
+  total=$(grep -c "^# 前回 $name=" "$file" || true)
   drop=$(( total > KEEP_HISTORY ? total - KEEP_HISTORY : 0 ))
   [ "$drop" -gt 0 ] || return 0
-  awk -v drop="$drop" '/^# 前回 IMAGE=/ && n < drop { n++; next } { print }' "$file" > "$file.p" && mv "$file.p" "$file"
+  awk -v drop="$drop" -v key="# 前回 $name=" 'index($0, key) == 1 && n < drop { n++; next } { print }' "$file" > "$file.p" && mv "$file.p" "$file"
+}
+# rpg-deploy env で画面に出してよい設定（鍵・パスワードは入れない）
+PUBLIC_ENV="SITE_ADDRESS APP_ENV APP_URL GOOGLE_CLIENT_ID MAIL_FROM SMTP_HOST SMTP_PORT SMTP_SECURE SMTP_USER AI_PROVIDER AI_BASE_URL AI_REASONING_EFFORT MODEL_HIGH MODEL_LIGHT MAIL_SCHEDULE_ENABLED IMPORT_BUCKET ASSETS_BUCKET NOTIFY_BUCKET S3_ENDPOINT S3_REGION"
+is_public() { case " $PUBLIC_ENV " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
+show_env() {
+  local name=$1 value
+  grep -qE "^$name=" "$ENV_FILE" || { echo "ℹ️ $name は .env にありません"; return 0; }
+  value=$(env_value "$name")
+  if [ -z "$value" ]; then echo "ℹ️ $name は空です"
+  elif is_public "$name"; then echo "$name=$value"
+  else echo "$name は設定されています（${#value} 文字。値は出しません）"
+  fi
+}
+# .env の <名前>= の行を書き換える。前の行は「# 前回 <名前>=」で残す。なければ末尾に足す
+set_env() {
+  local name=$1 value=$2 tmp
+  tmp=$(mktemp)
+  awk -v key="$name=" -v old="# 前回 $name=" 'index($0, key) == 1 { print old substr($0, length(key) + 1); next } { print }' "$ENV_FILE" > "$tmp"
+  printf '%s=%s\n' "$name" "$value" >> "$tmp"
+  prune_history "$tmp" "$name"
+  cat "$tmp" > "$ENV_FILE"   # 上書きで中身だけ変える（持ち主と 600 をそのままにする）
+  rm -f "$tmp"
+}
+env_cmd() {
+  local name=${1:-} value
+  [ -n "$name" ] || die "使い方：rpg-deploy env <名前> [<値>|-]"
+  [[ "$name" =~ ^[A-Z][A-Z0-9_]*$ ]] || die "名前は英大文字・数字・_ で書いてください：$name"
+  [ "$name" != IMAGE ] || die "IMAGE は rpg-deploy <タグ> で変えてください"
+  if [ $# -lt 2 ]; then show_env "$name"; return 0; fi
+  value=$2
+  if [ "$value" = - ]; then
+    read -r -s -p "$name の値：" value; echo
+  fi
+  [[ "$value" != *$'\n'* && "$value" != *$'\r'* ]] || die "値に改行は入れられません"
+  if [ "$name" = GOOGLE_CLIENT_ID ] && [ -n "$value" ] && [[ "$value" != *.apps.googleusercontent.com ]]; then
+    die "GOOGLE_CLIENT_ID は …apps.googleusercontent.com の形です（クライアントシークレットではありません）"
+  fi
+  if grep -qE "^$name=" "$ENV_FILE" && [ "$(env_value "$name")" = "$value" ]; then
+    echo "ℹ️ $name はすでにその値です"
+    return 0
+  fi
+  set_env "$name" "$value"
+  echo "📝 $name を書き換えました（前の値は「# 前回 $name=」で残しています）"
+  docker compose up -d
+  check
+  if [ "$name" = GOOGLE_CLIENT_ID ]; then
+    echo "--- Googleでログインの設定（A-38）"
+    curl -fsS --max-time 10 --resolve "$(env_value SITE_ADDRESS):443:127.0.0.1" "https://$(env_value SITE_ADDRESS)/api/auth/google/config" || echo "（取れませんでした）"
+    echo
+  fi
 }
 # api が healthy になるまで待って、Caddy 越しに /api/health を確かめる
 check() {
@@ -134,8 +188,12 @@ case "${1:-}" in
   list)
     dev_tags_newest_first | head -n 10
     ;;
+  env)
+    shift
+    env_cmd "$@"
+    ;;
   -h|--help|help)
-    sed -n '2,8p' "$SELF" | sed 's/^# \{0,1\}//'
+    sed -n '2,11p' "$SELF" | sed 's/^# \{0,1\}//'
     ;;
   -*)
     die "知らないオプションです：$1（rpg-deploy help）"

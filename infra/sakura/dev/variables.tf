@@ -43,6 +43,15 @@ variable "s3_secret_access_key" {
   sensitive   = true
   default     = ""
 }
+variable "google_client_id" {
+  description = "V-16 Googleでログインの OAuth クライアントID（公開してよい値。空なら Google のボタンを出さない）"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.google_client_id == "" || endswith(var.google_client_id, ".apps.googleusercontent.com")
+    error_message = "google_client_id は …apps.googleusercontent.com の形にしてください（クライアントシークレットではありません）。"
+  }
+}
 variable "ai_api_key" {
   description = "V-11 さくらのAI Engine のアカウントトークン"
   type        = string

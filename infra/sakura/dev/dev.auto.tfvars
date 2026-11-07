@@ -7,6 +7,8 @@ ssh_allowed_cidrs = ["112.70.171.129", "203.140.83.25"]
 site_address      = "rpg-dev.rpglearning.net"
 image             = "rpglearning.sakuracr.jp/rpg-app:dev-20261107-21"
 mail_from         = "no-reply@mail.rpglearning.net"
+# Googleでログインの OAuth クライアントID（構築手順書 3.8.1。公開してよい値）。いまのサーバーへは rpg-deploy env GOOGLE_CLIENT_ID <値> で入れる
+google_client_id  = ""
 # alert_email は個人のアドレスのため、ここに書かず環境変数 TF_VAR_alert_email で渡す（リポジトリが公開のため）
 smtp = {
   host   = "www2160.sakura.ne.jp"
