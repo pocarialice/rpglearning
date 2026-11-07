@@ -1,5 +1,5 @@
 # dev サーバーの電源（構築手順書 3.13）。アクセスがない時間が続くとサーバーは自動で止まるため、使う前にここで起動する
-# GitHub のアプリからも「Run workflow」で動かせる。Environment dev の Secrets に SAKURACLOUD_ACCESS_TOKEN・SAKURACLOUD_ACCESS_TOKEN_SECRET、Variables に SITE_URL を入れる
+# GitHub のアプリからも「Run workflow」で動かせる。Environment dev の Secrets に SAKURACLOUD_ACCESS_TOKEN・SAKURACLOUD_ACCESS_TOKEN_SECRET、Variables に SITE_URL（https://rpglearning.net）を入れる
 name: power
 on:
   workflow_dispatch:

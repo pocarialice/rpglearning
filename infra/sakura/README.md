@@ -1,5 +1,7 @@
 # さくらのクラウドの Terraform
 
+> 2026-11 から prod の構築は凍結し、dev を本番としてテスターに `https://rpglearning.net` で公開している（`www.rpglearning.net`・`rpg-dev.rpglearning.net` は転送するだけ。手順書 1.8・5.6）。名前の `dev` はそのまま
+
 構築手順書（`documents/さくらのクラウド構築手順書_RPG学習アプリ.md`）の第3章のうち、API で作れるものを Terraform にしたもの。
 
 | ディレクトリ | 作るもの | 手順書 |
@@ -57,6 +59,6 @@ infra/sakura/tf.sh dev output fqdn                              # DNS の A レ�
 
 ## アクセスで起こす（dev。手順書 3.14）
 
-- `rpglearning.net` の DNS を Cloudflare に移し、`dev.auto.tfvars` に `dns_provider = "cloudflare"`・`cloudflare_zone_id` を書くと、Terraform は `rpg-dev` の A レコードを Cloudflare にプロキシ付きで作る（さくらのクラウド DNS のレコードは消す）。プロバイダーを足したため、最初だけ `infra/sakura/tf.sh dev init -upgrade`
-- `rpg-dev.rpglearning.net/*` は Cloudflare Worker `rpg-dev-wake`（`workers/wake`）を通る。サーバーにつながらなければ、起動中ページを返してさくらのクラウド API で電源を入れる。デプロイは GitHub Actions の `wake-worker`
+- `rpglearning.net` の DNS を Cloudflare に移し、`dev.auto.tfvars` に `dns_provider = "cloudflare"`・`cloudflare_zone_id` を書くと、Terraform は `site_address` と `redirect_addresses` の A レコード（ドメインそのものは `@`）を Cloudflare にプロキシ付きで作る（さくらのクラウド DNS のレコードは消す）。プロバイダーを足したため、最初だけ `infra/sakura/tf.sh dev init -upgrade`
+- `rpglearning.net/*`・`www.rpglearning.net/*`・`rpg-dev.rpglearning.net/*` は Cloudflare Worker `rpg-dev-wake`（`workers/wake`）を通る。`www` と `rpg-dev` は Worker が `https://rpglearning.net` へ 301 で移す。サーバーにつながらなければ、起動中ページを返してさくらのクラウド API で電源を入れる。デプロイは GitHub Actions の `wake-worker`
 - 起こすのは、起動中ページの JavaScript（`POST /__wake`）と、ログイン中の画面からの `/api/*` だけ。ボットの見回りでは起きない

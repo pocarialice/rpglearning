@@ -109,12 +109,21 @@ p{margin:0 0 8px;color:var(--sub);line-height:1.7}
   msg.textContent = '時間がかかっています。少したってから開き直してください。'
 })()
 </script></body></html>`
+// 本体のドメイン（CANONICAL_HOST）でなければ、そこへ移す Response。本体なら null
+export function canonicalRedirect(url, env) {
+  const host = env.CANONICAL_HOST
+  if (!host || url.hostname === host) return null
+  return new Response(null, { status: 301, headers: { Location: `https://${host}${url.pathname}${url.search}`, 'Cache-Control': 'max-age=3600' } })
+}
 // --- 入口 ---
 export async function handle(request, env, { fetchFn = fetch, cache = caches.default, waitUntil = () => {} } = {}) {
   const url = new URL(request.url)
   // 証明書の更新（Let's Encrypt）はそのまま渡す。起こさない
   if (url.pathname.startsWith('/.well-known/acme-challenge/')) return fetchFn(request)
   if (url.pathname.startsWith('/__wake-state/')) return new Response(null, { status: 404 })
+  // www・前の rpg-dev などは、サーバーを通さずに本体（CANONICAL_HOST）へ 301 で移す（サーバーが止まっていても移せる）
+  const canonical = canonicalRedirect(url, env)
+  if (canonical) return canonical
   const wake = shouldWake(request)
   if (url.pathname === '/__wake') {
     if (wake) waitUntil(tryWake(env, fetchFn, cache, url.origin))

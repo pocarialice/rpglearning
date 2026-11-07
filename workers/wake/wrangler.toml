@@ -4,11 +4,15 @@ name = "rpg-dev-wake"
 main = "src/index.js"
 compatibility_date = "2025-09-01"
 workers_dev = false
+# 本体（テスターに公開する rpglearning.net）と、本体へ転送するだけの www・前の rpg-dev（Terraform の site_address・redirect_addresses と合わせる）
 routes = [
+  { pattern = "rpglearning.net/*", zone_name = "rpglearning.net" },
+  { pattern = "www.rpglearning.net/*", zone_name = "rpglearning.net" },
   { pattern = "rpg-dev.rpglearning.net/*", zone_name = "rpglearning.net" }
 ]
 [vars]
 SAKURACLOUD_ZONE = "is1b"
 SERVER_NAME = "rpg-dev-app"
+CANONICAL_HOST = "rpglearning.net"
 [observability]
 enabled = true

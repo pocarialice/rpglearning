@@ -529,7 +529,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">さくらのクラウド構築手順書</span>
     <h1><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>RPG学習アプリ さくらのクラウド構築手順書</h1>
     <ul class="meta">
-      <li>版数<b>第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）</b></li>
+      <li>版数<b>第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）。第0.4版で、prod の構築を凍結し、dev を本番としてテスターに <code>rpglearning.net</code> で公開することにした（1.8）</b></li>
       <li>作成日<b>2026-10-27</b></li>
       <li>入力文書<b>外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章）</b></li>
       <li>対象<b>Phase 1（MVP）のパイロット環境。dev・prod の2環境</b></li>
@@ -553,6 +553,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <section class="chapter" id="ch1"><h2><i aria-hidden="true" class="fa-solid fa-book-open h-ico"></i>1. はじめに</h2>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 この手順書の使い方</h3>
 <ul>
+<li><strong>2026-11 から prod の構築は凍結している</strong>（1.8）。dev を本番としてテスターに公開する。第4章は凍結を解くときに使う</li>
 <li>第2章（アカウントで1回だけ行う作業）を最初に行い、そのあと <strong>dev → prod の順</strong> に第3〜4章を進める</li>
 <li>第4章（prod）は第3章と同じ手順のため、値の違いだけを書いている</li>
 <li>手順の中の <code>&lt;DBのパスワード&gt;</code> などの山かっこは、自分の環境の値に置き換える</li>
@@ -679,9 +680,16 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>V-01</td>
-<td>サイトのドメイン名（<code>SITE_ADDRESS</code>）</td>
-<td><code>rpg-dev.&lt;ドメイン&gt;</code></td>
-<td><code>rpg.&lt;ドメイン&gt;</code></td>
+<td>サイトのドメイン名（<code>SITE_ADDRESS</code>。テスターに公開する名前）</td>
+<td><code>rpglearning.net</code>（ドメインそのもの）</td>
+<td><code>rpg.&lt;ドメイン&gt;</code>（凍結中）</td>
+<td>2.2</td>
+</tr>
+<tr>
+<td>V-23</td>
+<td>転送するだけのドメイン名（<code>REDIRECT_ADDRESSES</code>）</td>
+<td><code>www.rpglearning.net</code>・<code>rpg-dev.rpglearning.net</code></td>
+<td>（なし）</td>
 <td>2.2</td>
 </tr>
 <tr>
@@ -797,10 +805,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>3.13</td>
 </tr>
 <tr>
-<td>3.14</td>
-<td>行わない。prod の A レコードは Cloudflare で「DNS only」（プロキシを通さない）にする</td>
-</tr>
-<tr>
 <td>V-19</td>
 <td>Cloudflare のゾーンID（<code>cloudflare_zone_id</code>）</td>
 <td><code>rpglearning.net</code> のゾーンID</td>
@@ -894,6 +898,53 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>さくらのクラウドのサーバーは、電源を切っているあいだはサーバーの料金がかからない（ディスクの料金はかかる）。データベースアプライアンスは止めても料金がかかるため、dev は DB をサーバーの中に置き、サーバーごと止める（2026-11-07 に変更）</li>
 <li>料金の決まりは変わることがあるため、構築のときに料金表で確かめる</li>
 </ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.8 運用の方針（2026-11 から）</h3>
+<div class="vis">
+  <p class="vis-label">テスターに公開するドメイン</p>
+  <ol class="flow">
+    <li><b><i class="fa-solid fa-globe fi"></i>www.rpglearning.net</b>301 で本体へ</li>
+    <li><b><i class="fa-solid fa-clock-rotate-left fi"></i>rpg-dev.rpglearning.net</b>前の名前。301 で本体へ</li>
+    <li class="hl"><b><i class="fa-solid fa-house fi"></i>rpglearning.net</b>本体（中身は dev 環境）</li>
+  </ol>
+</div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>方針</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>prod</td>
+<td><strong>軌道に乗るまで構築を凍結する</strong>。第4章の手順と <code>rpg-prod</code> の名前は残すが、リソースは作らない</td>
+</tr>
+<tr>
+<td>本番</td>
+<td>いまの dev 環境を本番として、テスターに公開する。リソースやプロジェクトの名前（<code>rpg-dev-*</code>）、<code>APP_ENV=dev</code>、GitHub の Environment <code>dev</code> は変えない</td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>テスターに公開するのは <code>rpglearning.net</code>（サブドメインなし。V-01）。<code>www.rpglearning.net</code> と前の <code>rpg-dev.rpglearning.net</code> は <code>https://rpglearning.net</code> へ 301 で転送する（V-23）</td>
+</tr>
+<tr>
+<td>自動停止</td>
+<td>3.13 のとおり60分アクセスがなければ止める。テスターは、開いてから1〜3分待つことがある（3.14）</td>
+</tr>
+<tr>
+<td>通知メール</td>
+<td>送る（<code>MAIL_SCHEDULE_ENABLED=true</code>）</td>
+</tr>
+<tr>
+<td>リリース</td>
+<td>GitHub Actions の release（main で手動）で作った <code>dev-*</code> の版を <code>rpg-deploy</code> で反映する（3.11）。テスターに使ってもらっているため、反映の前に dev の画面で確かめる手順を飛ばさない</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>転送は2か所で行う。Cloudflare の Worker（3.14。サーバーが止まっていても移せる）と、サーバーの Caddy（<code>Caddyfile</code> の <code>REDIRECT_ADDRESSES</code>。DNS がさくらのクラウドのときに使う）</li>
+<li>切り替えの手順は 5.6</li>
+</ul>
 </section><section class="chapter" id="ch2"><h2><i aria-hidden="true" class="fa-solid fa-user-shield h-ico"></i>2. アカウントで1回だけ行う作業</h2>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 プロジェクト</h3>
 <ol>
@@ -904,7 +955,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 ドメインと DNS</h3>
 <ol>
 <li>使うドメインを決める（さくらのドメインで取る場合は「ドメイン取得」）。DNS は、さくらのクラウドの「DNS」アプライアンス、またはドメインの管理会社の DNS を使う</li>
-<li>名前を決めて V-01 に書く（<code>rpg-dev.&lt;ドメイン&gt;</code>・<code>rpg.&lt;ドメイン&gt;</code>）。A レコードはサーバーを作ったあと（3.8）に登録する</li>
+<li>名前を決めて V-01・V-23 に書く（dev は <code>rpglearning.net</code>、転送は <code>www.rpglearning.net</code>・<code>rpg-dev.rpglearning.net</code>。prod は凍結中）。A レコードは Terraform がサーバーを作ったあとに作る（ドメインそのものは名前 <code>@</code>）</li>
 <li>送信元のドメインの SPF・DKIM は 3.6 で登録する</li>
 </ol>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 GitHub の設定</h3>
@@ -1431,7 +1482,7 @@ docker compose exec api node -e "import('./functions/shared/mail/smtp.js').then(
 </tbody>
 </table></div>
 <ol start="2">
-<li>作成後、グローバルIPアドレスを V-02 に控え、DNS に A レコード <code>&lt;V-01&gt;</code> → V-02 を登録する</li>
+<li>作成後、グローバルIPアドレスを V-02 に控え、DNS に A レコード <code>&lt;V-01&gt;</code>（ドメインそのものなら名前 <code>@</code>）と V-23 の名前 → V-02 を登録する（Terraform で作るときは自動）</li>
 <li>SSH でログインする：<code>ssh ubuntu@&lt;V-02&gt;</code></li>
 </ol>
 <p><strong>OS の設定</strong></p>
@@ -1481,6 +1532,7 @@ curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/Caddy
 </ol>
 <pre><code class="language-bash">IMAGE=&lt;V-20&gt;/rpg-app:&lt;3.7 で控えたリリース番号&gt;
 SITE_ADDRESS=&lt;V-01&gt;
+REDIRECT_ADDRESSES=&lt;V-23 をカンマ区切りで。例 www.rpglearning.net, rpg-dev.rpglearning.net&gt;
 APP_ENV=dev
 APP_URL=https://&lt;V-01&gt;
 COMPOSE_PROFILES=localdb
@@ -1510,7 +1562,7 @@ AI_BASE_URL=https://api.ai.sakura.ad.jp/v1
 AI_API_KEY=&lt;V-11&gt;
 MODEL_HIGH=gpt-oss-120b
 MODEL_LIGHT=gpt-oss-120b
-MAIL_SCHEDULE_ENABLED=false
+MAIL_SCHEDULE_ENABLED=true
 </code></pre>
 <pre><code class="language-bash">chmod 600 /opt/rpg/.env
 </code></pre>
@@ -1535,7 +1587,7 @@ MAIL_SCHEDULE_ENABLED=false
 <li>Google Cloud コンソール（<code>https://console.cloud.google.com/</code>）で、プロジェクト <code>rpg-login</code> を作る（dev・prod で共用してよい）</li>
 <li>「API とサービス」→「OAuth 同意画面」。ユーザーの種類は「外部」、アプリ名 <code>RPG学習アプリ</code>、サポートメール、デベロッパーの連絡先を入れる。スコープは既定（<code>openid</code>・<code>email</code>・<code>profile</code>）のまま。テスト中は「テストユーザー」に入れた人しかログインできないため、だれでも使えるようにするときは「アプリを公開」にする</li>
 <li>「認証情報」→「認証情報を作成」→「OAuth クライアントID」。種類は「ウェブアプリケーション」、名前は <code>rpg-dev</code></li>
-<li>「承認済みの JavaScript 生成元」に <code>https://&lt;V-01&gt;</code>（例 <code>https://rpg-dev.&lt;ドメイン&gt;</code>）を入れる。リダイレクト URI は使わない（空のまま）</li>
+<li>「承認済みの JavaScript 生成元」に <code>https://&lt;V-01&gt;</code>（例 <code>https://rpglearning.net</code>。転送するだけの V-23 は入れなくてよい）を入れる。リダイレクト URI は使わない（空のまま）</li>
 <li>表示されたクライアントID（<code>…apps.googleusercontent.com</code>）を V-16 に控える。クライアントシークレットは使わない</li>
 <li>入れる：dev は <code>rpg-dev</code> に入って <code>rpg-deploy env GOOGLE_CLIENT_ID &lt;V-16&gt;</code> を打つ（<code>.env</code> を書き換えて入れ直し、最後に A-38 の結果を出す。前の値は <code># 前回 GOOGLE_CLIENT_ID=</code> で残る）。あわせて <code>infra/sakura/dev/dev.auto.tfvars</code> の <code>google_client_id</code> にも V-16 を書いておく（サーバーを作り直しても消えないように。公開してよい値なので Git に入れてよい）。手で入れるときは <code>.env</code> の <code>GOOGLE_CLIENT_ID=</code> に V-16 を入れ、<code>docker compose up -d</code> で入れ直す</li>
 <li>確かめる：<code>curl -s https://&lt;V-01&gt;/api/auth/google/config</code> が <code>{"clientId":"&lt;V-16&gt;"}</code> を返し、ログイン画面に「Googleでログイン」ボタンが出る</li>
@@ -1844,7 +1896,7 @@ docker run --rm -i -e AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; -e AW
 <li>サーバーのグローバルIPアドレスが変わる。DNS の A レコードは Terraform が直す。パケットフィルタの SSH の許可はそのまま使える</li>
 </ol>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.14 アクセスで起こす（dev・Cloudflare）</h3>
-<p>3.13 で止まった dev のサーバーを、サイトを開くだけで起こす。<code>rpglearning.net</code> の DNS を Cloudflare に移し、<code>rpg-dev.&lt;ドメイン&gt;</code> へのアクセスを Cloudflare Worker <code>rpg-dev-wake</code>（<code>workers/wake</code>）に通す。サーバーが動いていれば、Worker はリクエストをそのままサーバーへ渡すだけ。</p>
+<p>3.13 で止まった dev のサーバーを、サイトを開くだけで起こす。<code>rpglearning.net</code> の DNS を Cloudflare に移し、<code>&lt;V-01&gt;</code> と V-23 へのアクセスを Cloudflare Worker <code>rpg-dev-wake</code>（<code>workers/wake</code>）に通す。サーバーが動いていれば、Worker はリクエストをそのままサーバーへ渡すだけ。</p>
 <div class="vis">
   <p class="vis-label">止まっている dev のサイトを開いたとき</p>
   <ol class="flow">
@@ -1860,7 +1912,7 @@ docker run --rm -i -e AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; -e AW
   participant W as Worker rpg-dev-wake
   participant S as サーバー rpg-dev-app
   participant A as さくらのクラウド API
-  B-&gt;&gt;W: https://rpg-dev.&lt;ドメイン&gt;/
+  B-&gt;&gt;W: https://rpglearning.net/
   W-&gt;&gt;S: そのまま渡す
   S--xW: つながらない（止まっている。Cloudflare の 521・522）
   W--&gt;&gt;B: 起動中ページ（503）
@@ -1901,6 +1953,10 @@ docker run --rm -i -e AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; -e AW
 <td><code>/.well-known/acme-challenge/*</code></td>
 <td>そのまま渡す（Let's Encrypt の証明書の更新）</td>
 </tr>
+<tr>
+<td>V-23（<code>www</code>・<code>rpg-dev</code>）へのアクセス</td>
+<td>サーバーに渡さず、<code>https://&lt;V-01&gt;</code> へ 301 で移す（<code>CANONICAL_HOST</code>）</td>
+</tr>
 </tbody>
 </table></div>
 <ul>
@@ -1910,7 +1966,7 @@ docker run --rm -i -e AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; -e AW
 <p><strong>DNS を Cloudflare に移す（1回だけ）</strong></p>
 <ol>
 <li>Cloudflare のアカウントを作り、「Add a domain」で <code>rpglearning.net</code> を Free プランで足す。さくらのクラウド DNS のレコードが読み込まれるので、<strong>すべて</strong>あるかを見比べる。特にメール（<code>mail.rpglearning.net</code> の MX・SPF の TXT・DKIM・DMARC）は、プロキシを「DNS only」（灰色の雲）にする</li>
-<li>足りないレコードは、さくらのクラウドの「DNS」→ ゾーン <code>rpglearning.net</code> のレコードを見て手で足す。<code>rpg-dev</code> の A レコードは Terraform が作るため、読み込まれていたら消す</li>
+<li>足りないレコードは、さくらのクラウドの「DNS」→ ゾーン <code>rpglearning.net</code> のレコードを見て手で足す。<code>rpglearning.net</code>（<code>@</code>）・<code>www</code>・<code>rpg-dev</code> の A レコードは Terraform が作るため、読み込まれていたら消す</li>
 <li>さくらのドメインの会員メニューで、<code>rpglearning.net</code> のネームサーバーを Cloudflare が示す2つに替える。切り替わるまで数時間〜1日。Cloudflare の画面が「Active」になるまで待つ</li>
 <li>Cloudflare の「SSL/TLS」を <strong>Full (strict)</strong> にする（サーバーの Caddy は Let's Encrypt の証明書を持っている）。「Always Use HTTPS」はオンでよい</li>
 <li>ゾーンの「概要」の右下のゾーンIDを V-19 に控え、<code>infra/sakura/dev/dev.auto.tfvars</code> に <code>dns_provider = "cloudflare"</code>・<code>cloudflare_zone_id = "&lt;V-19&gt;"</code> を書く</li>
@@ -1929,11 +1985,12 @@ infra/sakura/tf.sh dev apply
 <li>確かめる：サーバーで <code>sudo rpg-idle-stop</code> が止めるのを待つ（または <code>scripts/sakura-power.sh stop</code>）。ブラウザで <code>https://&lt;V-01&gt;/</code> を開き、起動中ページのあと1〜3分で画面が開くこと。Cloudflare の Worker の「Logs」に <code>{"msg":"wake","result":"started"}</code> が出ること</li>
 </ol>
 <ul>
-<li>Worker のルートは <code>rpg-dev.rpglearning.net/*</code>（<code>workers/wake/wrangler.toml</code>）。ドメインを変えたらここも直す</li>
+<li>Worker のルートは <code>rpglearning.net/*</code>・<code>www.rpglearning.net/*</code>・<code>rpg-dev.rpglearning.net/*</code>、本体のドメインは <code>CANONICAL_HOST</code>（<code>workers/wake/wrangler.toml</code>）。ドメインを変えたらここも直す</li>
 <li>証明書の更新が失敗するとき（<code>docker compose logs caddy</code> に <code>challenge failed</code>）は、Cloudflare の「Always Use HTTPS」を一度オフにして Caddy を <code>docker compose restart caddy</code> する。それでもだめなら、Cloudflare の Origin CA 証明書を Caddy に置く方法に替える（6章 No.7）</li>
 <li>サーバーの IP アドレスが変わったとき（作り直したとき）は、Terraform が Cloudflare の A レコードを直す</li>
 </ul>
 </section><section class="chapter" id="ch4"><h2><i aria-hidden="true" class="fa-solid fa-rocket h-ico"></i>4. prod 環境の構築<span class="env-badge env-prod">prod・本番</span></h2>
+<div class="vis"><p><strong><i class="fa-solid fa-snowflake h-ico" aria-hidden="true"></i>2026-11 から凍結中（1.8）</strong>。軌道に乗るまでこの章は行わない。凍結を解くときは、dev を本番にしていたあいだの決まり（ドメイン <code>rpglearning.net</code> を prod に移すか、転送の向きなど）を先に決め直す</p></div>
 <p>右上のプロジェクトで <code>rpg-prod</code> を選び、第3章を上から同じ順で行う。違うところだけを書く。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -2072,6 +2129,62 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <ul>
 <li>切り替えでコードは変えない（詳細設計書 7章）。画像の取り込みは Bedrock のときだけ使える</li>
 </ul>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.6 ドメインの切り替え（2026-11。<code>rpg-dev.rpglearning.net</code> → <code>rpglearning.net</code>、1回だけ）</h3>
+<ol>
+<li><code>dev.auto.tfvars</code> の <code>site_address</code>・<code>redirect_addresses</code>・<code>dns_zone</code>・<code>mail_schedule_enabled</code> が 1.8 のとおりであることを確かめ、apply する。A レコード（<code>@</code>・<code>www</code>・<code>rpg-dev</code>）ができる。3.13 の引っ越しでサーバーを作り直すときは、その apply で一緒に行う</li>
+<li>Google Cloud の OAuth クライアントID <code>rpg-dev</code> の「承認済みの JavaScript 生成元」に <code>https://rpglearning.net</code> を足す（3.8.1。前の <code>https://rpg-dev.rpglearning.net</code> は、転送を確かめてから消す）</li>
+<li>オブジェクトストレージの CORS（3.4 の <code>cors.json</code>）の <code>AllowedOrigins</code> を <code>https://rpglearning.net</code> にして、<code>rpg-dev-import</code>・<code>rpg-dev-assets</code> に入れ直す</li>
+<li>サーバーを作り直さないときは、いまのサーバーで <code>.env</code> を替え、<code>compose.yaml</code>・<code>Caddyfile</code> を置き直す（3.8 の 8.）</li>
+</ol>
+<pre><code class="language-bash">rpg-deploy env SITE_ADDRESS rpglearning.net
+rpg-deploy env APP_URL https://rpglearning.net
+rpg-deploy env REDIRECT_ADDRESSES "www.rpglearning.net, rpg-dev.rpglearning.net"
+rpg-deploy env MAIL_SCHEDULE_ENABLED true
+</code></pre>
+<ol start="5">
+<li>Cloudflare の Worker を使っているときは、GitHub Actions の wake-worker でデプロイし直す（ルートが3つになる）</li>
+<li>確かめる</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>確認</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>https://rpglearning.net/api/health</code></td>
+<td><code>{"status":"ok"}</code>（証明書のエラーが出ない）</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>https://www.rpglearning.net/s/01</code>・<code>https://rpg-dev.rpglearning.net/s/01</code></td>
+<td><code>https://rpglearning.net/s/01</code> に移る（301）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Googleでログイン</td>
+<td>ログインできる</td>
+</tr>
+<tr>
+<td>4</td>
+<td>問題の取り込み（PDF）と、パートナーの画像のアップロード</td>
+<td>アップロードできる（CORS）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>通知メール（6:00〜22:30 の30分ごと）</td>
+<td>送る時刻を決めた利用者に届く。届いたメールのリンクが <code>https://rpglearning.net/</code> になっている</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><code>APP_URL</code> はメールのリンクと、パスワードの再設定などに使う。替え忘れると、メールのリンクが前のドメインになる（転送されるので開けはする）</li>
+<li>通知メールは、サーバーが動いているときにしか送られない。3.13 の自動停止で止まっている時刻の分は送られない（6章 No.8）</li>
+</ul>
 </section><section class="chapter" id="ch6"><h2><i aria-hidden="true" class="fa-solid fa-circle-question h-ico"></i>6. 確認したいこと（未決事項）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -2125,12 +2238,18 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <td>Caddy の Let's Encrypt（HTTP-01）を Cloudflare のプロキシ越しに通す。dev で90日後の更新が通るかを見る。通らなければ Cloudflare の Origin CA 証明書に替える</td>
 <td>2027-02（初回の更新）</td>
 </tr>
+<tr>
+<td>8</td>
+<td>自動停止と通知メール・日次処理</td>
+<td>サーバーが止まっていると、0:00 の日次処理（通知の送信リストを作る）と、30分ごとの通知メールが動かない。日次処理は次に起動したときに動くが、その日の送信リストができるまでの通知と、止まっている時刻の通知は送られない。Cloudflare Worker の定期実行（Cron Triggers）で 0:00 と送信がある時刻の少し前にサーバーを起こすかなどを決める</td>
+<td>テスターへの公開前</td>
+</tr>
 </tbody>
 </table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.3版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.4版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

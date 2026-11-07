@@ -1,9 +1,9 @@
 // Cloudflare Worker（起こす係。workers/wake）
 import { describe, it, expect, beforeEach } from 'vitest'
-import { handle, shouldWake, powerOn, resetCache, isUnreachable, stateUrl, wokeUrl } from '../../../workers/wake/src/wake.js'
-const SITE = 'https://rpg-dev.example.jp'
+import { handle, shouldWake, powerOn, resetCache, isUnreachable, stateUrl, wokeUrl, canonicalRedirect } from '../../../workers/wake/src/wake.js'
+const SITE = 'https://example.jp'
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1'
-const env = { SAKURACLOUD_ACCESS_TOKEN: 't', SAKURACLOUD_ACCESS_TOKEN_SECRET: 's', SAKURACLOUD_ZONE: 'is1b', SERVER_NAME: 'rpg-dev-app' }
+const env = { SAKURACLOUD_ACCESS_TOKEN: 't', SAKURACLOUD_ACCESS_TOKEN_SECRET: 's', SAKURACLOUD_ZONE: 'is1b', SERVER_NAME: 'rpg-dev-app', CANONICAL_HOST: 'example.jp' }
 const req = (path, { method = 'GET', headers = {} } = {}) => new Request(SITE + path, { method, headers: { 'user-agent': UA, ...headers } })
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 // Cache API の代わり（max-age は見ない）
@@ -161,5 +161,23 @@ describe('handle', () => {
     const f = fakeFetch({ origin: () => new Response('token') })
     expect(await (await run(req('/.well-known/acme-challenge/abc'), { fetchFn: f, cache: memCache() })).text()).toBe('token')
     expect((await run(req('/__wake-state/woke'), { fetchFn: f, cache: memCache() })).status).toBe(404)
+  })
+})
+describe('canonicalRedirect', () => {
+  it('www・前のドメインは、パスとクエリをそのままに本体へ 301 で移す（サーバーにも API にも行かない）', async () => {
+    const f = fakeFetch()
+    const res = await run(new Request('https://www.example.jp/s/06?x=1', { headers: { 'user-agent': UA } }), { fetchFn: f, cache: memCache() })
+    expect(res.status).toBe(301)
+    expect(res.headers.get('Location')).toBe('https://example.jp/s/06?x=1')
+    expect(f.calls).toHaveLength(0)
+  })
+  it('本体のドメインと、CANONICAL_HOST がないときは移さない', () => {
+    expect(canonicalRedirect(new URL('https://example.jp/'), env)).toBeNull()
+    expect(canonicalRedirect(new URL('https://www.example.jp/'), {})).toBeNull()
+  })
+  it('www の Let\'s Encrypt の確認は、移さずにサーバーへ渡す', async () => {
+    const f = fakeFetch({ origin: () => new Response('token') })
+    const res = await run(new Request('https://www.example.jp/.well-known/acme-challenge/abc'), { fetchFn: f, cache: memCache() })
+    expect(await res.text()).toBe('token')
   })
 })

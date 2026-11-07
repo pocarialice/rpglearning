@@ -83,6 +83,7 @@ locals {
   dotenv = join("\n", [
     "IMAGE=${var.image}",
     "SITE_ADDRESS=${var.site_address}",
+    "REDIRECT_ADDRESSES=${join(", ", var.redirect_addresses)}",
     "APP_ENV=${var.env}",
     "APP_URL=https://${var.site_address}",
     "COMPOSE_PROFILES=localdb",
@@ -112,7 +113,7 @@ locals {
     "AI_API_KEY=${var.ai_api_key}",
     "MODEL_HIGH=gpt-oss-120b",
     "MODEL_LIGHT=gpt-oss-120b",
-    "MAIL_SCHEDULE_ENABLED=false",
+    "MAIL_SCHEDULE_ENABLED=${var.mail_schedule_enabled}",
     "",
   ])
 }
@@ -168,39 +169,45 @@ resource "sakuracloud_server" "app" {
     ignore_changes = [disk_edit_parameter]
   }
 }
-# --- DNS の A レコード（2.2・3.14）。ゾーンは画面で作り、site_address のホスト名をサーバーの IP アドレスに向ける ---
+# --- DNS の A レコード（2.2・3.14）。ゾーンは画面で作り、site_address と redirect_addresses をサーバーの IP アドレスに向ける ---
 # dns_provider = cloudflare のときは Cloudflare に作り、プロキシを通す（止まっているサーバーを起こす Worker を前に置くため）
+# ゾーンそのもの（例 rpglearning.net）のレコードは名前を @ にする
 locals {
-  dns_host = split(".", var.site_address)[0]
-  dns_zone = join(".", slice(split(".", var.site_address), 1, length(split(".", var.site_address))))
+  dns_zone  = var.dns_zone != "" ? var.dns_zone : join(".", slice(split(".", var.site_address), 1, length(split(".", var.site_address))))
+  dns_names = var.site_address != "" ? toset(concat([var.site_address], var.redirect_addresses)) : toset([])
+  dns_label = { for n in local.dns_names : n => n == local.dns_zone ? "@" : trimsuffix(n, ".${local.dns_zone}") }
+  use_sakura_dns     = var.dns_provider == "sakura"
+  use_cloudflare_dns = var.dns_provider == "cloudflare"
 }
-locals {
-  use_sakura_dns     = var.site_address != "" && var.dns_provider == "sakura"
-  use_cloudflare_dns = var.site_address != "" && var.dns_provider == "cloudflare"
+check "dns_names_in_zone" {
+  assert {
+    condition     = alltrue([for n in local.dns_names : n == local.dns_zone || endswith(n, ".${local.dns_zone}")])
+    error_message = "site_address と redirect_addresses は dns_zone（${local.dns_zone}）の中の名前にしてください"
+  }
 }
 data "sakuracloud_dns" "zone" {
-  count = local.use_sakura_dns ? 1 : 0
+  count = local.use_sakura_dns && length(local.dns_names) > 0 ? 1 : 0
   filter {
     names = [local.dns_zone]
   }
 }
 resource "sakuracloud_dns_record" "app" {
-  count  = local.use_sakura_dns ? 1 : 0
-  dns_id = data.sakuracloud_dns.zone[0].id
-  name   = local.dns_host
-  type   = "A"
-  value  = sakuracloud_server.app.ip_address
-  ttl    = 300
+  for_each = local.use_sakura_dns ? local.dns_label : {}
+  dns_id   = data.sakuracloud_dns.zone[0].id
+  name     = each.value
+  type     = "A"
+  value    = sakuracloud_server.app.ip_address
+  ttl      = 300
 }
 resource "cloudflare_record" "app" {
-  count   = local.use_cloudflare_dns ? 1 : 0
-  zone_id = var.cloudflare_zone_id
-  name    = local.dns_host
-  type    = "A"
-  content = sakuracloud_server.app.ip_address
-  proxied = true
-  ttl     = 1
-  comment = "rpg-dev（Terraform。前に Worker rpg-dev-wake）"
+  for_each = local.use_cloudflare_dns ? local.dns_label : {}
+  zone_id  = var.cloudflare_zone_id
+  name     = each.value
+  type     = "A"
+  content  = sakuracloud_server.app.ip_address
+  proxied  = true
+  ttl      = 1
+  comment  = "${local.prefix}（Terraform。前に Worker rpg-dev-wake）"
   lifecycle {
     precondition {
       condition     = var.cloudflare_zone_id != ""
@@ -208,8 +215,13 @@ resource "cloudflare_record" "app" {
     }
   }
 }
+# 前は rpg-dev.rpglearning.net の1つだけで、count で作っていた
 moved {
   from = sakuracloud_dns_record.app
   to   = sakuracloud_dns_record.app[0]
+}
+moved {
+  from = sakuracloud_dns_record.app[0]
+  to   = sakuracloud_dns_record.app["rpg-dev.rpglearning.net"]
 }
 # --- シンプル監視はやめた（3.12）。アクセスがないとサーバーが止まるため、止まるたびに「つながらない」のお知らせが来てしまう ---

@@ -3,7 +3,7 @@
 #   scripts/sakura-power.sh start  [サーバー名]   電源を入れて、サイトの /api/health が返るまで待つ（SITE_URL があるとき）
 #   scripts/sakura-power.sh stop   [サーバー名]   シャットダウンする（ふつうは rpg-idle-stop が自動で止める）
 #   scripts/sakura-power.sh status [サーバー名]   いまの状態（up / down）
-# サーバー名の既定は rpg-dev-app。環境変数 SAKURACLOUD_ACCESS_TOKEN・SAKURACLOUD_ACCESS_TOKEN_SECRET（APIキー）、SAKURACLOUD_ZONE（既定 is1b）、SITE_URL（例 https://rpg-dev.example.jp）
+# サーバー名の既定は rpg-dev-app。環境変数 SAKURACLOUD_ACCESS_TOKEN・SAKURACLOUD_ACCESS_TOKEN_SECRET（APIキー）、SAKURACLOUD_ZONE（既定 is1b）、SITE_URL（例 https://rpglearning.net）
 set -euo pipefail
 cmd=${1:-status}
 name=${2:-rpg-dev-app}

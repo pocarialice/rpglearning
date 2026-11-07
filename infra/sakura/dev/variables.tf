@@ -17,7 +17,7 @@ variable "ssh_allowed_cidrs" {
   default     = []
 }
 variable "site_address" {
-  description = "V-01 サイトのドメイン名。空なら HTTPS の監視を作らない"
+  description = "V-01 サイトのドメイン名（テスターに公開する名前。例 rpglearning.net）。空なら DNS のレコードを作らない"
   type        = string
   default     = ""
 }
@@ -123,4 +123,19 @@ variable "cloudflare_api_token" {
   type        = string
   sensitive   = true
   default     = ""
+}
+variable "redirect_addresses" {
+  description = "V-23 site_address へ転送するだけのドメイン名（www や前の名前）。Caddy が 301 で移し、Worker も同じように移す"
+  type        = list(string)
+  default     = []
+}
+variable "dns_zone" {
+  description = "DNS のゾーン（例 rpglearning.net）。空なら site_address の先頭のラベルを外したもの"
+  type        = string
+  default     = ""
+}
+variable "mail_schedule_enabled" {
+  description = "通知メールを 6:00〜22:30 の30分ごとに送る（MAIL_SCHEDULE_ENABLED）。いまのサーバーは rpg-deploy env MAIL_SCHEDULE_ENABLED true で変える"
+  type        = bool
+  default     = false
 }
