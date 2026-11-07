@@ -476,7 +476,7 @@ flowchart LR
   A["Google Cloud コンソール<br>プロジェクト rpg-login"] --> B["OAuth 同意画面<br>外部・公開"]
   B --> C["認証情報<br>OAuth クライアントID<br>ウェブアプリケーション"]
   C --> D["承認済みの JavaScript 生成元<br>https://V-01"]
-  D --> E[".env の GOOGLE_CLIENT_ID<br>V-16"]
+  D --> E["rpg-deploy env<br>GOOGLE_CLIENT_ID V-16"]
   E --> F["docker compose up -d<br>S-01 にボタンが出る"]
 ```
 
@@ -485,9 +485,10 @@ flowchart LR
 3. 「認証情報」→「認証情報を作成」→「OAuth クライアントID」。種類は「ウェブアプリケーション」、名前は `rpg-dev`
 4. 「承認済みの JavaScript 生成元」に `https://<V-01>`（例 `https://rpg-dev.<ドメイン>`）を入れる。リダイレクト URI は使わない（空のまま）
 5. 表示されたクライアントID（`…apps.googleusercontent.com`）を V-16 に控える。クライアントシークレットは使わない
-6. `.env` の `GOOGLE_CLIENT_ID=` に V-16 を入れ、`docker compose up -d` で入れ直す
+6. 入れる：dev は `rpg-dev` に入って `rpg-deploy env GOOGLE_CLIENT_ID <V-16>` を打つ（`.env` を書き換えて入れ直し、最後に A-38 の結果を出す。前の値は `# 前回 GOOGLE_CLIENT_ID=` で残る）。あわせて `infra/sakura/dev/dev.auto.tfvars` の `google_client_id` にも V-16 を書いておく（サーバーを作り直しても消えないように。公開してよい値なので Git に入れてよい）。手で入れるときは `.env` の `GOOGLE_CLIENT_ID=` に V-16 を入れ、`docker compose up -d` で入れ直す
 7. 確かめる：`curl -s https://<V-01>/api/auth/google/config` が `{"clientId":"<V-16>"}` を返し、ログイン画面に「Googleでログイン」ボタンが出る
 
+- `rpg-deploy env` は `rpg-deploy`（3.11）を直したあとのものにある。いまのサーバーに入っている `rpg-deploy` が古いときは、3.11 の「スマホから入れるようにする」の 3. の `scp` と `install` をやり直してから打つ
 - api コンテナから `https://www.googleapis.com`（Google の公開鍵）へ HTTPS で出られる必要がある。パケットフィルタ（3.2）は外向きを止めていないので追加の設定はいらない
 - 検証用：`pocarialice7148@gmail.com` は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す
 
@@ -553,6 +554,9 @@ docker compose exec api node scripts/create-admin.mjs <メールアドレス> <�
 | `rpg-deploy rollback` | 1つ前の版に戻す。もう一度打つと、戻す前の版に戻る |
 | `rpg-deploy status` | いまの版とコンテナの状態 |
 | `rpg-deploy list` | レジストリの dev の版（新しい順に10個） |
+| `rpg-deploy env <名前> <値>` | `.env` の設定を変えて入れ直す（例 `rpg-deploy env GOOGLE_CLIENT_ID <V-16>`）。前の値は `# 前回 <名前>=` で残す（10個まで）。`IMAGE` は変えられない（`rpg-deploy <リリース番号>` を使う） |
+| `rpg-deploy env <名前> -` | 値を画面に出さずに入れる（鍵・パスワード。打った値がシェルの履歴に残らない） |
+| `rpg-deploy env <名前>` | いまの値を見る。公開してよい値（`GOOGLE_CLIENT_ID`・`SITE_ADDRESS` など）だけ出し、鍵・パスワードは長さだけ出す |
 
 - `rpg-deploy` は、下の「手で反映する」と同じことをする。`.env` の前の行は `# 前回 IMAGE=` で残し（10個まで）、api が healthy になるのを待ってから、migrate・ERROR のログと `/api/health` の結果を出す
 - `❌ api が正常になりません` と出たら、`rpg-deploy rollback` で戻してから、PC で `docker compose logs api` を見る

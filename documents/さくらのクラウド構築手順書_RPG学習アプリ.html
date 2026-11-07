@@ -1436,7 +1436,7 @@ MAIL_SCHEDULE_ENABLED=false
     <li><b><i class="fa-solid fa-id-card fi"></i>OAuth 同意画面</b>外部・公開</li>
     <li><b><i class="fa-solid fa-key fi"></i>クライアントID</b>ウェブアプリケーション</li>
     <li><b><i class="fa-solid fa-globe fi"></i>JavaScript 生成元</b>https://V-01</li>
-    <li class="hl"><b><i class="fa-solid fa-file-pen fi"></i>.env に V-16</b>S-01 にボタンが出る</li>
+    <li class="hl"><b><i class="fa-solid fa-terminal fi"></i>rpg-deploy env</b>GOOGLE_CLIENT_ID に V-16。S-01 にボタンが出る</li>
   </ol>
 </div>
 <ol>
@@ -1445,10 +1445,11 @@ MAIL_SCHEDULE_ENABLED=false
 <li>「認証情報」→「認証情報を作成」→「OAuth クライアントID」。種類は「ウェブアプリケーション」、名前は <code>rpg-dev</code></li>
 <li>「承認済みの JavaScript 生成元」に <code>https://&lt;V-01&gt;</code>（例 <code>https://rpg-dev.&lt;ドメイン&gt;</code>）を入れる。リダイレクト URI は使わない（空のまま）</li>
 <li>表示されたクライアントID（<code>…apps.googleusercontent.com</code>）を V-16 に控える。クライアントシークレットは使わない</li>
-<li><code>.env</code> の <code>GOOGLE_CLIENT_ID=</code> に V-16 を入れ、<code>docker compose up -d</code> で入れ直す</li>
+<li>入れる：dev は <code>rpg-dev</code> に入って <code>rpg-deploy env GOOGLE_CLIENT_ID &lt;V-16&gt;</code> を打つ（<code>.env</code> を書き換えて入れ直し、最後に A-38 の結果を出す。前の値は <code># 前回 GOOGLE_CLIENT_ID=</code> で残る）。あわせて <code>infra/sakura/dev/dev.auto.tfvars</code> の <code>google_client_id</code> にも V-16 を書いておく（サーバーを作り直しても消えないように。公開してよい値なので Git に入れてよい）。手で入れるときは <code>.env</code> の <code>GOOGLE_CLIENT_ID=</code> に V-16 を入れ、<code>docker compose up -d</code> で入れ直す</li>
 <li>確かめる：<code>curl -s https://&lt;V-01&gt;/api/auth/google/config</code> が <code>{"clientId":"&lt;V-16&gt;"}</code> を返し、ログイン画面に「Googleでログイン」ボタンが出る</li>
 </ol>
 <ul>
+<li><code>rpg-deploy env</code> は <code>rpg-deploy</code>（3.11）を直したあとのものにある。いまのサーバーに入っている <code>rpg-deploy</code> が古いときは、3.11 の「スマホから入れるようにする」の 3. の <code>scp</code> と <code>install</code> をやり直してから打つ</li>
 <li>api コンテナから <code>https://www.googleapis.com</code>（Google の公開鍵）へ HTTPS で出られる必要がある。パケットフィルタ（3.2）は外向きを止めていないので追加の設定はいらない</li>
 <li>検証用：<code>pocarialice7148@gmail.com</code> は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す</li>
 </ul>
@@ -1556,6 +1557,18 @@ docker compose exec api node scripts/create-admin.mjs &lt;メールアドレス&
 <tr>
 <td><code>rpg-deploy list</code></td>
 <td>レジストリの dev の版（新しい順に10個）</td>
+</tr>
+<tr>
+<td><code>rpg-deploy env &lt;名前&gt; &lt;値&gt;</code></td>
+<td><code>.env</code> の設定を変えて入れ直す（例 <code>rpg-deploy env GOOGLE_CLIENT_ID &lt;V-16&gt;</code>）。前の値は <code># 前回 &lt;名前&gt;=</code> で残す（10個まで）。<code>IMAGE</code> は変えられない（<code>rpg-deploy &lt;リリース番号&gt;</code> を使う）</td>
+</tr>
+<tr>
+<td><code>rpg-deploy env &lt;名前&gt; -</code></td>
+<td>値を画面に出さずに入れる（鍵・パスワード。打った値がシェルの履歴に残らない）</td>
+</tr>
+<tr>
+<td><code>rpg-deploy env &lt;名前&gt;</code></td>
+<td>いまの値を見る。公開してよい値（<code>GOOGLE_CLIENT_ID</code>・<code>SITE_ADDRESS</code> など）だけ出し、鍵・パスワードは長さだけ出す</td>
 </tr>
 </tbody>
 </table></div>

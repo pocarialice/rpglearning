@@ -113,6 +113,7 @@ locals {
     "DATABASE_URL=postgres://rpgadmin:${random_password.db.result}@${local.db_ip}:5432/rpg",
     "DATABASE_SSL=",
     "AUTH_SECRET=${random_password.auth_secret.result}",
+    "GOOGLE_CLIENT_ID=${var.google_client_id}",
     "S3_ENDPOINT=https://s3.isk01.sakurastorage.jp",
     "S3_REGION=jp-north-1",
     "S3_ACCESS_KEY_ID=${var.s3_access_key_id}",
