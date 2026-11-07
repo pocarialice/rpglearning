@@ -525,8 +525,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.4版（ドラフト：第1〜10章、HTML版あり。第1.1版で AWS からさくらのクラウドへ切り替え、第1.2版でログイン画面からのアカウント作成を追加、第1.3版でコースごとの実績を追加、第1.4版でホームのひとことを時間帯ごとに作り直すようにする）</b></li>
-      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27、第1.2版：2026-11-02、第1.3版：2026-11-03、第1.4版：2026-11-06）</b></li>
+      <li>版数<b>第1.5版（ドラフト：第1〜10章、HTML版あり。第1.1版で AWS からさくらのクラウドへ切り替え、第1.2版でログイン画面からのアカウント作成を追加、第1.3版でコースごとの実績を追加、第1.4版でホームのひとことを時間帯ごとに作り直すようにする、第1.5版で Googleでログインを追加）</b></li>
+      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27、第1.2版：2026-11-02、第1.3版：2026-11-03、第1.4版：2026-11-06、第1.5版：2026-11-06）</b></li>
       <li>入力文書<b>RPG学習アプリ 要件定義書 第1.2版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
@@ -917,7 +917,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>ログイン</td>
-<td>アプリのログイン画面（S-01）でメールアドレスとパスワードを入れ、API（A-30）でトークンを受け取る。仮パスワードのときは、続けて新しいパスワードを決める</td>
+<td>アプリのログイン画面（S-01）でメールアドレスとパスワードを入れ、API（A-30）でトークンを受け取る。仮パスワードのときは、続けて新しいパスワードを決める。または「Googleでログイン」（A-39）で、Google アカウントのまま入る（初めてなら学習者として登録される）</td>
 </tr>
 <tr>
 <td>トークン保管</td>
@@ -1134,7 +1134,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>S-01</td>
-<td>ログイン（パスワードの設定・再設定を含む）</td>
+<td>ログイン（パスワードの設定・再設定、アカウント作成、Googleでログインを含む）</td>
 <td>全員</td>
 <td>ログインしていないとき（再設定は <code>#/reset?token=</code>）</td>
 <td>共通</td>
@@ -1289,7 +1289,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <h4>3.3.1 学習者</h4>
 <p>初回ログイン時は「はじめての冒険」として、ニックネーム登録 → コース選択 → AIパートナー選択の3段階を済ませてからホームに進む。</p>
 <figure class="diagram"><div class="mermaid">flowchart TD
-  S01["S-01 ログイン"] --&gt; J{初回ログイン}
+  S01["S-01 ログイン&lt;br&gt;パスワード／Google"] --&gt; J{初回ログイン}
   S01 --&gt;|"アカウントを作る"| SU["アカウント作成&lt;br&gt;名前・メール・パスワード"]
   SU --&gt;|"確認メールのリンク"| J
   J --&gt;|"はい"| NN["ニックネーム登録&lt;br&gt;S-08の編集ダイアログ"]
@@ -1641,11 +1641,27 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>確認メールのリンク（24時間・1回だけ）を開くと、学習者として登録してそのままログインし、「はじめての冒険」（ニックネーム登録から）に進む。期限切れ・使用済みのときは M-14 と「ログインに戻る」を出す</td>
 </tr>
 <tr>
+<td>Googleでログイン</td>
+<td>「パスワードを忘れたとき」の下に「または」と Google の「Googleでログイン」ボタンを出す（環境に Google のクライアントIDを設定したときだけ）。Google アカウントを選ぶとそのままログインする。だれでも使え、メールアドレスのドメインの制限はなく、確認のメールもいらない。初めての人は学習者として登録され、「はじめての冒険」（ニックネーム登録など）から始まる。管理者が招待した人・自分で登録した人は、同じメールアドレスなら同じ利用者として入れる（仮パスワードはそこで使えなくなる）。失敗したら「Googleでログインできませんでした。もう一度お試しください」</td>
+</tr>
+<tr>
+<td>検証用のアドレス</td>
+<td><code>pocarialice7148@gmail.com</code> だけは、同じメールアドレスの利用者がいても Google では別の利用者になる（パスワードの利用者と Google の利用者を並べて確かめるため）</td>
+</tr>
+<tr>
 <td>ログイン後</td>
 <td>画面を読み込み直してホーム（管理者は管理局）を開く。ログアウトは S-08 から</td>
 </tr>
 </tbody>
 </table></div>
+<div class="vis">
+  <p class="vis-label">S-01 のログインの方法</p>
+  <div class="cgrid">
+    <div class="card"><h5><i class="fa-solid fa-key"></i>パスワード</h5><p class="sub">招待（仮パスワード）か、自分でアカウントを作る（確認メール）</p></div>
+    <div class="card"><h5><i class="fa-brands fa-google"></i>Googleでログイン</h5><p class="sub">だれでも使える。初めてなら学習者として登録し「はじめての冒険」へ</p></div>
+    <div class="card"><h5><i class="fa-solid fa-link"></i>同じメールアドレス</h5><p class="sub">登録済みの人は同じ利用者として入れる（検証用アドレスを除く）</p></div>
+  </div>
+</div>
 <h4>S-02 ホーム</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -3132,7 +3148,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>認証</td>
-<td><code>Authorization: Bearer &lt;アクセストークン&gt;</code>。api コンテナが署名と期限を確かめる（ログイン A-30〜A-37 とヘルスチェックはトークンなし）</td>
+<td><code>Authorization: Bearer &lt;アクセストークン&gt;</code>。api コンテナが署名と期限を確かめる（ログイン A-30〜A-39 とヘルスチェックはトークンなし）</td>
 </tr>
 <tr>
 <td>権限</td>
@@ -3490,6 +3506,20 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>POST</td>
 <td><code>/auth/signup/verify</code></td>
 <td>確認リンクからの登録（そのままログイン）</td>
+<td>全員（トークン不要）</td>
+</tr>
+<tr>
+<td>A-38</td>
+<td>GET</td>
+<td><code>/auth/google/config</code></td>
+<td>Googleでログインの設定（クライアントID。使えないときは null）</td>
+<td>全員（トークン不要）</td>
+</tr>
+<tr>
+<td>A-39</td>
+<td>POST</td>
+<td><code>/auth/google</code></td>
+<td>Googleでログイン（Google の ID トークンを渡す。初めてなら学習者として登録）</td>
 <td>全員（トークン不要）</td>
 </tr>
 </tbody>
@@ -3975,7 +4005,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>認証</td>
-<td>アプリのログイン（S-01）。パスワードは8文字以上・英大小文字と数字を含む。パスワードは scrypt のハッシュだけを保存する。5回続けて失敗したら15分ロック</td>
+<td>アプリのログイン（S-01）。パスワードは8文字以上・英大小文字と数字を含む。パスワードは scrypt のハッシュだけを保存する。5回続けて失敗したら15分ロック。Googleでログインは Google の ID トークンの署名・宛先・期限・メールの確認済みを確かめる</td>
 </tr>
 <tr>
 <td>トークン</td>

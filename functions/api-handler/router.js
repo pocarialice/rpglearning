@@ -32,6 +32,8 @@ export const ROUTES = [
   r('POST', '/api/auth/reset', authRoutes.reset, null),
   r('POST', '/api/auth/signup', authRoutes.signup, null),
   r('POST', '/api/auth/signup/verify', authRoutes.signupVerify, null),
+  r('GET', '/api/auth/google/config', authRoutes.googleConfig, null),
+  r('POST', '/api/auth/google', authRoutes.google, null),
   r('GET', '/api/me', me.get, ALL),
   r('PUT', '/api/me/profile', me.putProfile, LEARNER),
   r('PUT', '/api/me/partner', me.putPartner, LEARNER),

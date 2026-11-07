@@ -11,8 +11,29 @@ function withRoles(row) {
 export async function findByEmail(email, db = defaultDb) {
   const rows = await db.query(`SELECT u.user_id, u.auth_sub, u.email, u.full_name, u.status, u.password_hash, u.must_change_password,
       u.temp_password_expires_at, u.failed_login_count, u.locked_until, (u.locked_until > now()) AS locked, ${ROLES}
-    FROM users u WHERE lower(u.email) = lower(:email)`, { email })
+    FROM users u WHERE lower(u.email) = lower(:email)
+    ORDER BY (u.password_hash IS NULL), u.user_id LIMIT 1`, { email })
   return withRoles(rows[0])
+}
+// Googleでログイン（A-37）：Google アカウントの sub から利用者を探す
+export async function findByGoogleSub(googleSub, db = defaultDb) {
+  const rows = await db.query(`SELECT u.user_id, u.auth_sub, u.email, u.full_name, u.status, u.must_change_password, ${ROLES}
+    FROM users u WHERE u.google_sub = :googleSub`, { googleSub })
+  return withRoles(rows[0])
+}
+// 既存の利用者に Google アカウントを結びつける。仮パスワードのままなら仮パスワードは消す（以後は Google でログイン）
+export async function linkGoogle(userId, googleSub, db = defaultDb) {
+  const r = await db.execute(`UPDATE users SET google_sub = :googleSub,
+      password_hash = CASE WHEN must_change_password THEN NULL ELSE password_hash END,
+      temp_password_expires_at = CASE WHEN must_change_password THEN NULL ELSE temp_password_expires_at END,
+      must_change_password = false, failed_login_count = 0, locked_until = NULL, updated_at = now()
+    WHERE user_id = :userId AND google_sub IS NULL`, { userId, googleSub })
+  return r.numberOfRecordsUpdated === 1
+}
+// Google だけで登録した利用者（パスワードなし）にする
+export async function setGoogleOnly(userId, googleSub, db = defaultDb) {
+  await db.execute(`UPDATE users SET google_sub = :googleSub, password_hash = NULL, must_change_password = false,
+      temp_password_expires_at = NULL, updated_at = now() WHERE user_id = :userId`, { userId, googleSub })
 }
 export async function findById(userId, db = defaultDb) {
   const rows = await db.query(`SELECT u.user_id, u.auth_sub, u.email, u.full_name, u.status, u.must_change_password, ${ROLES}
