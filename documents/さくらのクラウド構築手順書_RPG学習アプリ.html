@@ -529,7 +529,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">さくらのクラウド構築手順書</span>
     <h1><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>RPG学習アプリ さくらのクラウド構築手順書</h1>
     <ul class="meta">
-      <li>版数<b>第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）。第0.4版で、prod の構築を凍結し、dev を本番としてテスターに <code>rpglearning.net</code> で公開することにした（1.8）</b></li>
+      <li>版数<b>第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）。第0.4版で、prod の構築を凍結し、dev を本番としてテスターに <code>rpglearning.net</code> で公開することにした（1.8）。第0.5版で、通知メールを機能ごと削除した</b></li>
       <li>作成日<b>2026-10-27</b></li>
       <li>入力文書<b>外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章）</b></li>
       <li>対象<b>Phase 1（MVP）のパイロット環境。dev・prod の2環境</b></li>
@@ -635,7 +635,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   end
   SV --&gt;|"prod：スイッチ（ローカル）"| DB[("prod：データベース&lt;br&gt;アプライアンス")]
   SV -.-|"dev：サーバーの中の db コンテナ&lt;br&gt;（バックアップはオブジェクトストレージ）"| SV
-  API --&gt; OS["オブジェクトストレージ&lt;br&gt;import・assets・notify"]
+  API --&gt; OS["オブジェクトストレージ&lt;br&gt;import・assets・backup"]
   WK --&gt; OS
   API --&gt; AI["さくらのAI Engine&lt;br&gt;（あとで Bedrock）"]
   WK --&gt; AI
@@ -743,8 +743,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>V-09</td>
-<td>バケット名（取り込み・画像・通知）</td>
-<td><code>rpg-dev-import</code>・<code>rpg-dev-assets</code>・<code>rpg-dev-notify</code></td>
+<td>バケット名（取り込み・画像）</td>
+<td><code>rpg-dev-import</code>・<code>rpg-dev-assets</code></td>
 <td><code>rpg-prod-*</code></td>
 <td>3.4</td>
 </tr>
@@ -841,6 +841,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
+<ul>
+<li>2026-11-07 に通知メールを機能ごと削除した。前に作った <code>rpg-dev-notify</code> は使わないため、中身を消してからバケットごと消してよい。DB の通知設定（<code>notify_settings</code>）は、次の反映で api がマイグレーション V009 を流して消す</li>
+</ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.7 費用の目安</h3>
 <p>月額の料金は構築時にさくらのクラウドの料金表で確かめ、外部設計書のコストの表に書く（詳細設計書 12 No.14）。AI は、さくらのAI Engine の従量課金で prod が月に約400円の見込み（1か月の採点・抽出の回数から計算）。</p>
 <div class="table-wrap"><table>
@@ -874,8 +877,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>オブジェクトストレージ</td>
-<td>バケット4つ（DB のバックアップを含む）</td>
-<td>バケット3つ</td>
+<td>バケット3つ（DB のバックアップを含む）</td>
+<td>バケット2つ</td>
 </tr>
 <tr>
 <td>コンテナレジストリ</td>
@@ -933,7 +936,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>通知メール</td>
-<td>送る（<code>MAIL_SCHEDULE_ENABLED=true</code>）</td>
+<td>送らない（2026-11-07 に機能ごと削除した）</td>
 </tr>
 <tr>
 <td>リリース</td>
@@ -1217,11 +1220,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>非公開</td>
 </tr>
 <tr>
-<td><code>rpg-dev-notify</code></td>
-<td>通知メールの送信リスト（日次処理が作る）</td>
-<td>非公開</td>
-</tr>
-<tr>
 <td><code>rpg-dev-backup</code></td>
 <td>DB のバックアップ（<code>rpg-db</code> が <code>db/</code> に置く。V-17。dev だけ）</td>
 <td>非公開</td>
@@ -1263,7 +1261,7 @@ done
 </ul>
 <p><strong>古いファイルの削除</strong>（任意）</p>
 <ol start="7">
-<li><code>rpg-dev-import</code> の <code>uploads/</code> は取り込みが終われば使わないため、ライフサイクルで30日後に消す。<code>rpg-dev-notify</code> の <code>notify/</code> は7日後に消す（S3 互換 API の <code>put-bucket-lifecycle-configuration</code>。使えなければ手で年に数回消す）</li>
+<li><code>rpg-dev-import</code> の <code>uploads/</code> は取り込みが終われば使わないため、ライフサイクルで30日後に消す（S3 互換 API の <code>put-bucket-lifecycle-configuration</code>。使えなければ手で年に数回消す）</li>
 </ol>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 さくらのAI Engine</h3>
 <ol>
@@ -1549,7 +1547,6 @@ S3_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt;
 S3_SECRET_ACCESS_KEY=&lt;V-10 のシークレットキー&gt;
 IMPORT_BUCKET=rpg-dev-import
 ASSETS_BUCKET=rpg-dev-assets
-NOTIFY_BUCKET=rpg-dev-notify
 SMTP_HOST=&lt;V-12&gt;
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -1562,7 +1559,6 @@ AI_BASE_URL=https://api.ai.sakura.ad.jp/v1
 AI_API_KEY=&lt;V-11&gt;
 MODEL_HIGH=gpt-oss-120b
 MODEL_LIGHT=gpt-oss-120b
-MAIL_SCHEDULE_ENABLED=true
 </code></pre>
 <pre><code class="language-bash">chmod 600 /opt/rpg/.env
 </code></pre>
@@ -2010,7 +2006,7 @@ infra/sakura/tf.sh dev apply
 </tr>
 <tr>
 <td>3.4</td>
-<td>バケット <code>rpg-prod-import</code>・<code>rpg-prod-assets</code>・<code>rpg-prod-notify</code>、アクセスキー <code>rpg-prod-app</code>（dev のバケットには権限を付けない）、CORS の <code>AllowedOrigins</code> は <code>https://rpg.&lt;ドメイン&gt;</code></td>
+<td>バケット <code>rpg-prod-import</code>・<code>rpg-prod-assets</code>、アクセスキー <code>rpg-prod-app</code>（dev のバケットには権限を付けない）、CORS の <code>AllowedOrigins</code> は <code>https://rpg.&lt;ドメイン&gt;</code></td>
 </tr>
 <tr>
 <td>3.5</td>
@@ -2026,7 +2022,7 @@ infra/sakura/tf.sh dev apply
 </tr>
 <tr>
 <td>3.8</td>
-<td>サーバー <code>rpg-prod-app</code>、ローカルIPアドレス <code>192.168.20.11</code>、<code>.env</code> は <code>APP_ENV=prod</code>・<code>SITE_ADDRESS=rpg.&lt;ドメイン&gt;</code>・<code>MAIL_SCHEDULE_ENABLED=true</code>・prod のバケット・キー・<code>AUTH_SECRET</code>（dev と別）</td>
+<td>サーバー <code>rpg-prod-app</code>、ローカルIPアドレス <code>192.168.20.11</code>、<code>.env</code> は <code>APP_ENV=prod</code>・<code>SITE_ADDRESS=rpg.&lt;ドメイン&gt;</code>・prod のバケット・キー・<code>AUTH_SECRET</code>（dev と別）</td>
 </tr>
 <tr>
 <td>3.8.1</td>
@@ -2139,7 +2135,6 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <pre><code class="language-bash">rpg-deploy env SITE_ADDRESS rpglearning.net
 rpg-deploy env APP_URL https://rpglearning.net
 rpg-deploy env REDIRECT_ADDRESSES "www.rpglearning.net, rpg-dev.rpglearning.net"
-rpg-deploy env MAIL_SCHEDULE_ENABLED true
 </code></pre>
 <ol start="5">
 <li>Cloudflare の Worker を使っているときは、GitHub Actions の wake-worker でデプロイし直す（ルートが3つになる）</li>
@@ -2174,16 +2169,10 @@ rpg-deploy env MAIL_SCHEDULE_ENABLED true
 <td>問題の取り込み（PDF）と、パートナーの画像のアップロード</td>
 <td>アップロードできる（CORS）</td>
 </tr>
-<tr>
-<td>5</td>
-<td>通知メール（6:00〜22:30 の30分ごと）</td>
-<td>送る時刻を決めた利用者に届く。届いたメールのリンクが <code>https://rpglearning.net/</code> になっている</td>
-</tr>
 </tbody>
 </table></div>
 <ul>
 <li><code>APP_URL</code> はメールのリンクと、パスワードの再設定などに使う。替え忘れると、メールのリンクが前のドメインになる（転送されるので開けはする）</li>
-<li>通知メールは、サーバーが動いているときにしか送られない。3.13 の自動停止で止まっている時刻の分は送られない（6章 No.8）</li>
 </ul>
 </section><section class="chapter" id="ch6"><h2><i aria-hidden="true" class="fa-solid fa-circle-question h-ico"></i>6. 確認したいこと（未決事項）</h2>
 <div class="table-wrap"><table>
@@ -2240,16 +2229,16 @@ rpg-deploy env MAIL_SCHEDULE_ENABLED true
 </tr>
 <tr>
 <td>8</td>
-<td>自動停止と通知メール・日次処理</td>
-<td>サーバーが止まっていると、0:00 の日次処理（通知の送信リストを作る）と、30分ごとの通知メールが動かない。日次処理は次に起動したときに動くが、その日の送信リストができるまでの通知と、止まっている時刻の通知は送られない。Cloudflare Worker の定期実行（Cron Triggers）で 0:00 と送信がある時刻の少し前にサーバーを起こすかなどを決める</td>
-<td>テスターへの公開前</td>
+<td>自動停止と日次処理</td>
+<td><strong>決定（2026-11-07）</strong>：通知メールを機能ごと削除したため、自動停止とぶつかるものはなくなった。0:00 の日次処理は、止まっていた日も次に起動したときに動く</td>
+<td>決定済み</td>
 </tr>
 </tbody>
 </table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.4版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

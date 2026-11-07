@@ -3,7 +3,7 @@
 | 項目   | 内容 |
 | ---- | --- |
 | 文書名  | RPG学習アプリ さくらのクラウド構築手順書 |
-| 版数   | 第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）。第0.4版で、prod の構築を凍結し、dev を本番としてテスターに `rpglearning.net` で公開することにした（1.8） |
+| 版数   | 第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）。第0.4版で、prod の構築を凍結し、dev を本番としてテスターに `rpglearning.net` で公開することにした（1.8）。第0.5版で、通知メールを機能ごと削除した |
 | 作成日  | 2026-10-27 |
 | 入力文書 | 外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章） |
 | 対象   | Phase 1（MVP）のパイロット環境。dev・prod の2環境 |
@@ -56,7 +56,7 @@ flowchart LR
   end
   SV -->|"prod：スイッチ（ローカル）"| DB[("prod：データベース<br>アプライアンス")]
   SV -.-|"dev：サーバーの中の db コンテナ<br>（バックアップはオブジェクトストレージ）"| SV
-  API --> OS["オブジェクトストレージ<br>import・assets・notify"]
+  API --> OS["オブジェクトストレージ<br>import・assets・backup"]
   WK --> OS
   API --> AI["さくらのAI Engine<br>（あとで Bedrock）"]
   WK --> AI
@@ -104,7 +104,7 @@ flowchart TD
 | V-06 | DB のユーザー名 | `rpgadmin` | `rpgadmin` | 3.3 |
 | V-07 | DB のパスワード | （管理ツールへ） | （管理ツールへ） | 3.3 |
 | V-08 | オブジェクトストレージのエンドポイント・リージョン | `https://s3.isk01.sakurastorage.jp`・`jp-north-1` | 同じ | 3.4 |
-| V-09 | バケット名（取り込み・画像・通知） | `rpg-dev-import`・`rpg-dev-assets`・`rpg-dev-notify` | `rpg-prod-*` | 3.4 |
+| V-09 | バケット名（取り込み・画像） | `rpg-dev-import`・`rpg-dev-assets` | `rpg-prod-*` | 3.4 |
 | V-10 | オブジェクトストレージのアクセスキー・シークレットキー | （管理ツールへ） | （管理ツールへ） | 3.4 |
 | V-11 | さくらのAI Engine のアカウントトークン | （管理ツールへ） | （管理ツールへ。dev と分ける） | 3.5 |
 | V-12 | SMTP のホスト・ポート・ユーザー・パスワード | | | 3.6 |
@@ -129,7 +129,7 @@ flowchart TD
 | サーバーの動く時間 | 使うときだけ（アクセスがない時間が60分続くと止まる。3.13） | 24時間 |
 | スイッチ | なし | 1 |
 | データベースアプライアンス | なし（サーバーの中の db コンテナ） | 30GB プラン（2コア・4GB） |
-| オブジェクトストレージ | バケット4つ（DB のバックアップを含む） | バケット3つ |
+| オブジェクトストレージ | バケット3つ（DB のバックアップを含む） | バケット2つ |
 | コンテナレジストリ | 1つを dev・prod で共用 | （共用） |
 | シンプル監視 | なし（止まるたびにお知らせが来るため） | 2つ（HTTPS・ping） |
 | Cloudflare | Free プラン（DNS・プロキシ・Workers。Workers は1日10万リクエストまで無料） | DNS だけ（プロキシと Worker は通さない） |
@@ -145,7 +145,7 @@ flowchart TD
 | 本番 | いまの dev 環境を本番として、テスターに公開する。リソースやプロジェクトの名前（`rpg-dev-*`）、`APP_ENV=dev`、GitHub の Environment `dev` は変えない |
 | ドメイン | テスターに公開するのは `rpglearning.net`（サブドメインなし。V-01）。`www.rpglearning.net` と前の `rpg-dev.rpglearning.net` は `https://rpglearning.net` へ 301 で転送する（V-23） |
 | 自動停止 | 3.13 のとおり60分アクセスがなければ止める。テスターは、開いてから1〜3分待つことがある（3.14） |
-| 通知メール | 送る（`MAIL_SCHEDULE_ENABLED=true`） |
+| 通知メール | 送らない（2026-11-07 に機能ごと削除した） |
 | リリース | GitHub Actions の release（main で手動）で作った `dev-*` の版を `rpg-deploy` で反映する（3.11）。テスターに使ってもらっているため、反映の前に dev の画面で確かめる手順を飛ばさない |
 
 - 転送は2か所で行う。Cloudflare の Worker（3.14。サーバーが止まっていても移せる）と、サーバーの Caddy（`Caddyfile` の `REDIRECT_ADDRESSES`。DNS がさくらのクラウドのときに使う）
@@ -261,8 +261,9 @@ dev は、データベースアプライアンスを作らない。DB は `compo
 | --- | --- | --- |
 | `rpg-dev-import` | 問題の取り込みの原本（PDF・画像・テキスト） | 非公開 |
 | `rpg-dev-assets` | パートナーの画像（api コンテナの `/partners/*` が配信する） | 非公開 |
-| `rpg-dev-notify` | 通知メールの送信リスト（日次処理が作る） | 非公開 |
 | `rpg-dev-backup` | DB のバックアップ（`rpg-db` が `db/` に置く。V-17。dev だけ） | 非公開 |
+
+- 2026-11-07 に通知メールを機能ごと削除した。前に作った `rpg-dev-notify` は使わないため、中身を消してからバケットごと消してよい。DB の通知設定（`notify_settings`）は、次の反映で api がマイグレーション V009 を流して消す
 
 **アクセスキー**
 
@@ -301,7 +302,7 @@ done
 
 **古いファイルの削除**（任意）
 
-7. `rpg-dev-import` の `uploads/` は取り込みが終われば使わないため、ライフサイクルで30日後に消す。`rpg-dev-notify` の `notify/` は7日後に消す（S3 互換 API の `put-bucket-lifecycle-configuration`。使えなければ手で年に数回消す）
+7. `rpg-dev-import` の `uploads/` は取り込みが終われば使わないため、ライフサイクルで30日後に消す（S3 互換 API の `put-bucket-lifecycle-configuration`。使えなければ手で年に数回消す）
 
 ### 3.5 さくらのAI Engine
 
@@ -492,7 +493,6 @@ S3_ACCESS_KEY_ID=<V-10 のアクセスキー>
 S3_SECRET_ACCESS_KEY=<V-10 のシークレットキー>
 IMPORT_BUCKET=rpg-dev-import
 ASSETS_BUCKET=rpg-dev-assets
-NOTIFY_BUCKET=rpg-dev-notify
 SMTP_HOST=<V-12>
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -505,7 +505,6 @@ AI_BASE_URL=https://api.ai.sakura.ad.jp/v1
 AI_API_KEY=<V-11>
 MODEL_HIGH=gpt-oss-120b
 MODEL_LIGHT=gpt-oss-120b
-MAIL_SCHEDULE_ENABLED=true
 ```
 
 ```bash
@@ -819,11 +818,11 @@ infra/sakura/tf.sh dev apply
 | --- | --- |
 | 3.2 | スイッチ `rpg-prod-sw`（`192.168.20.0/24`）、パケットフィルタ `rpg-prod-pf` |
 | 3.3 | プラン 30GB（2コア・4GB）、IPアドレス `192.168.20.21`、送信元 `192.168.20.0/24`、パスワードは dev と別 |
-| 3.4 | バケット `rpg-prod-import`・`rpg-prod-assets`・`rpg-prod-notify`、アクセスキー `rpg-prod-app`（dev のバケットには権限を付けない）、CORS の `AllowedOrigins` は `https://rpg.<ドメイン>` |
+| 3.4 | バケット `rpg-prod-import`・`rpg-prod-assets`、アクセスキー `rpg-prod-app`（dev のバケットには権限を付けない）、CORS の `AllowedOrigins` は `https://rpg.<ドメイン>` |
 | 3.5 | アカウントトークン `rpg-prod`（dev と分け、使った量を分けて見られるようにする） |
 | 3.6 | `ALERT_EMAIL` はシステム管理者と開発者 |
 | 3.7 | レジストリは作らない（dev と共用）。GitHub の Environment `prod` に Variables・Secrets を入れる。イメージはタグ `release-YYYYMMDD-NN` を付けて承認すると作られる |
-| 3.8 | サーバー `rpg-prod-app`、ローカルIPアドレス `192.168.20.11`、`.env` は `APP_ENV=prod`・`SITE_ADDRESS=rpg.<ドメイン>`・`MAIL_SCHEDULE_ENABLED=true`・prod のバケット・キー・`AUTH_SECRET`（dev と別） |
+| 3.8 | サーバー `rpg-prod-app`、ローカルIPアドレス `192.168.20.11`、`.env` は `APP_ENV=prod`・`SITE_ADDRESS=rpg.<ドメイン>`・prod のバケット・キー・`AUTH_SECRET`（dev と別） |
 | 3.8.1 | クライアントIDは `rpg-prod` を作り、JavaScript 生成元は `https://rpg.<ドメイン>`。OAuth 同意画面は「公開」にしておく |
 | 3.10 | 本番のシステム管理者を作る。確認用の利用者は `[確認用]` を名前に付ける |
 | 3.12 | 監視の通知先にシステム管理者を入れる |
@@ -905,7 +904,6 @@ MODEL_LIGHT=<Haiku のモデルID>
 rpg-deploy env SITE_ADDRESS rpglearning.net
 rpg-deploy env APP_URL https://rpglearning.net
 rpg-deploy env REDIRECT_ADDRESSES "www.rpglearning.net, rpg-dev.rpglearning.net"
-rpg-deploy env MAIL_SCHEDULE_ENABLED true
 ```
 
 5. Cloudflare の Worker を使っているときは、GitHub Actions の wake-worker でデプロイし直す（ルートが3つになる）
@@ -917,10 +915,8 @@ rpg-deploy env MAIL_SCHEDULE_ENABLED true
 | 2 | `https://www.rpglearning.net/s/01`・`https://rpg-dev.rpglearning.net/s/01` | `https://rpglearning.net/s/01` に移る（301） |
 | 3 | Googleでログイン | ログインできる |
 | 4 | 問題の取り込み（PDF）と、パートナーの画像のアップロード | アップロードできる（CORS） |
-| 5 | 通知メール（6:00〜22:30 の30分ごと） | 送る時刻を決めた利用者に届く。届いたメールのリンクが `https://rpglearning.net/` になっている |
 
 - `APP_URL` はメールのリンクと、パスワードの再設定などに使う。替え忘れると、メールのリンクが前のドメインになる（転送されるので開けはする）
-- 通知メールは、サーバーが動いているときにしか送られない。3.13 の自動停止で止まっている時刻の分は送られない（6章 No.8）
 
 ---
 
@@ -935,4 +931,4 @@ rpg-deploy env MAIL_SCHEDULE_ENABLED true
 | 5 | AWS に残っている dev のリソース | **2026-10-27 に費用がかかるものを止めた**：Aurora Serverless v2 を削除（最終スナップショットなし。DB のシークレットも削除）、EventBridge のスケジュール2つを無効化。CloudFront は Free プラン（月0円）のため API で無効にできず、そのまま残した。S3・Cognito・API Gateway・SQS・SNS・CloudWatch のアラームとロググループ・IAM ロールは、ほぼ0円のため残した（Lambda は一覧を見る権限がなく、さわっていない）。アカウント共通のもの（CloudTrail・予算・GitHub OIDC）も残した。残りをすべて消すかは、Bedrock の切り替え（5.5）のときに決める | Bedrock の切り替え時 |
 | 6 | サーバーの SSH を開ける範囲 | 作業場所のIPアドレスだけ。テレワークで IPアドレスが変わる場合の運用を決める | dev 構築時 |
 | 7 | Cloudflare の後ろでの証明書の更新 | Caddy の Let's Encrypt（HTTP-01）を Cloudflare のプロキシ越しに通す。dev で90日後の更新が通るかを見る。通らなければ Cloudflare の Origin CA 証明書に替える | 2027-02（初回の更新） |
-| 8 | 自動停止と通知メール・日次処理 | サーバーが止まっていると、0:00 の日次処理（通知の送信リストを作る）と、30分ごとの通知メールが動かない。日次処理は次に起動したときに動くが、その日の送信リストができるまでの通知と、止まっている時刻の通知は送られない。Cloudflare Worker の定期実行（Cron Triggers）で 0:00 と送信がある時刻の少し前にサーバーを起こすかなどを決める | テスターへの公開前 |
+| 8 | 自動停止と日次処理 | **決定（2026-11-07）**：通知メールを機能ごと削除したため、自動停止とぶつかるものはなくなった。0:00 の日次処理は、止まっていた日も次に起動したときに動く | 決定済み |

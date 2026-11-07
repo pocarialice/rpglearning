@@ -525,8 +525,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.5版（ドラフト：第1〜10章、HTML版あり。第1.1版で AWS からさくらのクラウドへ切り替え、第1.2版でログイン画面からのアカウント作成を追加、第1.3版でコースごとの実績を追加、第1.4版でホームのひとことを時間帯ごとに作り直すようにする、第1.5版で Googleでログインを追加）</b></li>
-      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27、第1.2版：2026-11-02、第1.3版：2026-11-03、第1.4版：2026-11-06、第1.5版：2026-11-06）</b></li>
+      <li>版数<b>第1.6版（ドラフト：第1〜10章、HTML版あり。第1.1版で AWS からさくらのクラウドへ切り替え、第1.2版でログイン画面からのアカウント作成を追加、第1.3版でコースごとの実績を追加、第1.4版でホームのひとことを時間帯ごとに作り直すようにする、第1.5版で Googleでログインを追加、第1.6版で通知メール（S-10・B-03）を機能ごと削除）</b></li>
+      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27、第1.2版：2026-11-02、第1.3版：2026-11-03、第1.4版：2026-11-06、第1.5版：2026-11-06、第1.6版：2026-11-07）</b></li>
       <li>入力文書<b>RPG学習アプリ 要件定義書 第1.2版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
@@ -626,11 +626,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>説明問題の入力</td>
 <td>50〜400文字（改行・空白を除く）。小見出しなどの書き方の決まりはない。200文字を超えたら【】の小見出しで区切るのは、AIが書く模範説明のほう</td>
 <td>3.4</td>
-</tr>
-<tr>
-<td>通知時刻</td>
-<td>学習者が6:00〜22:00の30分刻みで選ぶ（初期値7:30）</td>
-<td>5.3</td>
 </tr>
 <tr>
 <td>ゲームルール</td>
@@ -811,7 +806,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>オブジェクトストレージ</td>
 <td>ファイル</td>
-<td>S3 互換。バケットは取り込み原本（90日で削除）・キャラクター画像・通知の送信リスト（7日で削除）の3つ。すべて非公開。アップロードは署名付きURL</td>
+<td>S3 互換。バケットは取り込み原本（90日で削除）・キャラクター画像の2つ。すべて非公開。アップロードは署名付きURL</td>
 </tr>
 <tr>
 <td>さくらのAI Engine</td>
@@ -820,7 +815,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>メール送信（SMTP）</td>
-<td>通知・招待・パスワード再設定・監視のお知らせ</td>
+<td>招待・パスワード再設定・アカウント作成の確認・削除予定の通知・監視のお知らせ</td>
 <td>社内の SMTP サーバー、またはさくらのメールボックスなど。送信ドメインの認証（SPF・DKIM）を設定する</td>
 </tr>
 <tr>
@@ -925,7 +920,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>PWA</td>
-<td><code>manifest.webmanifest</code> と Service Worker を配置。ホーム画面に追加できる。Phase 2のプッシュ通知の土台</td>
+<td><code>manifest.webmanifest</code> と Service Worker を配置。ホーム画面に追加できる。ホーム画面に追加したときの起動を速くする</td>
 </tr>
 <tr>
 <td>対応ブラウザ</td>
@@ -1197,10 +1192,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>S-10</td>
-<td>通知設定</td>
-<td>学習者</td>
-<td><code>#/settings/notify</code></td>
-<td>学習者</td>
+<td>（欠番。通知設定を削除）</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>S-11</td>
@@ -1271,7 +1266,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     S16["S-16 コースごとの実績"]
     S17["S-17 コースの実績"]
     S09["S-09 AIパートナー選択"]
-    S10["S-10 通知設定"]
   end
   subgraph ADMIN["ギルド管理局エリア"]
     S11["S-11 問題取り込み・レビュー&lt;br&gt;コース管理者"]
@@ -1314,7 +1308,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   S16 --&gt;|"戻る"| S08
   S08 --&gt; S03["S-03 コース選択"]
   S08 --&gt; S09["S-09 AIパートナー選択"]
-  S08 --&gt; S10["S-10 通知設定"]
 </div></figure>
 <h4>3.3.2 管理者</h4>
 <p>ログイン後はロールで初期画面を決める。管理者も学習者として学習できるため、ヘッダーで両エリアを切り替えられる。</p>
@@ -2153,7 +2146,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>メニュー</td>
-<td>コースごとの実績（S-16）、コース選択、AIパートナー選択、通知設定、ログアウト</td>
+<td>コースごとの実績（S-16）、コース選択、AIパートナー選択、ログアウト</td>
 <td><code>Button quiet</code></td>
 </tr>
 </tbody>
@@ -2362,33 +2355,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h4>S-10 通知設定</h4>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>項目</th>
-<th>内容</th>
-<th>Phase</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>メール通知</td>
-<td>オン／オフ、送信時刻（学習者が選ぶ。6:00〜22:00の30分刻み、初期値7:30）</td>
-<td>1</td>
-</tr>
-<tr>
-<td>プッシュ通知</td>
-<td>オン／オフ（ブラウザの許可を求める）</td>
-<td>2（Phase 1では「準備中」と表示）</td>
-</tr>
-<tr>
-<td>通知内容</td>
-<td>その日の復習対象数、デイリークエスト</td>
-<td>1</td>
-</tr>
-</tbody>
-</table></div>
+<h4>S-10（欠番）</h4>
+<p>通知設定は第1.6版で通知メールと一緒に削除した。</p>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.8 管理画面（ギルド管理局）</h3>
 <h4>S-11 問題取り込み・レビュー</h4>
 <div class="table-wrap"><table>
@@ -2623,10 +2591,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>F-13</td>
-<td>通知</td>
-<td>S-10</td>
-<td><code>PUT /api/me/notify</code></td>
-<td>メールのみ</td>
+<td>（欠番）</td>
+<td>-</td>
+<td>-</td>
+<td>通知を削除したため使わない（第1.6版）</td>
 </tr>
 <tr>
 <td>F-14</td>
@@ -3258,10 +3226,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>A-04</td>
-<td>GET／PUT</td>
-<td><code>/me/notify</code></td>
-<td>通知設定の取得・変更（送信時刻を含む）</td>
-<td>学習者</td>
+<td>-</td>
+<td>-</td>
+<td>（欠番。通知設定を削除）</td>
+<td>-</td>
 </tr>
 <tr>
 <td>A-05</td>
@@ -3741,12 +3709,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>すでに登録されていること、ログインURL、「パスワードを忘れたとき」の案内</td>
 </tr>
 <tr>
-<td>学習のお知らせ</td>
-<td>学習者が選んだ時刻</td>
-<td>【RPG学習アプリ】今日の依頼が届いています</td>
-<td>今日の復習数、今日のクエスト3つ、パートナーのひとこと（定型文）</td>
-</tr>
-<tr>
 <td>削除予定の通知</td>
 <td>論理削除時（本人宛）</td>
 <td>【RPG学習アプリ】アカウント停止のお知らせ</td>
@@ -3762,7 +3724,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </table></div>
 <ul>
 <li>送信元：<code>no-reply@app.example.co.jp</code>（ドメイン決定後に確定）</li>
-<li>配信停止：本文末尾に通知設定画面（S-10）へのリンクを入れる</li>
 <li>送信は SMTP サーバー（社内のもの、またはさくらのメールボックスなど）を使う。送信ドメインの SPF・DKIM を設定し、迷惑メールに入らないようにする（手順書に記載）</li>
 <li>dev では件名の先頭に <code>[dev]</code> を付ける</li>
 </ul>
@@ -3784,7 +3745,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>日次処理</td>
 <td>毎日 0:00</td>
 <td>使う</td>
-<td>クエストの割り当て、継続バッジの判定、物理削除、その日の通知内容の作成</td>
+<td>クエストの割り当て、継続バッジの判定、物理削除</td>
 </tr>
 <tr>
 <td>B-02</td>
@@ -3795,10 +3756,10 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>B-03</td>
-<td>メール送信</td>
-<td>毎日 6:00〜22:00 の30分ごと</td>
-<td><strong>使わない</strong></td>
-<td>その時刻の送信リストをオブジェクトストレージから読み、SMTPで送る</td>
+<td>（欠番）</td>
+<td>-</td>
+<td>-</td>
+<td>通知メールを削除したため使わない（第1.6版）</td>
 </tr>
 </tbody>
 </table></div>
@@ -3807,23 +3768,14 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   dateFormat HH:mm
   axisFormat %H:%M
   section 毎日 DBを使う
-  日次処理 クエスト更新・物理削除・通知準備 :a1, 00:00, 15m
+  日次処理 クエスト更新・物理削除 :a1, 00:00, 15m
   section 毎週月曜 DBを使う
   ランキング締め・リセット 日次処理の中で実行 :b1, 00:00, 15m
-  section 毎日 DBを使わない
-  メール送信 30分ごとの送信枠 :c1, 06:00, 16h
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 メール送信の方式</h3>
-<p>学習者が送信時刻を選べるため、メールは1日に何度も送る。送信の処理を軽く・やり直しやすくするため、次の方式にする（AWS 版で DB の自動停止と両立させるために決めた方式を、そのまま使う）。</p>
-<ol>
-<li>B-01（0:00）で、通知オンの学習者ごとに「送信時刻・宛先・復習数・クエスト」を作る</li>
-<li>送信時刻ごとのファイル（例：<code>notify/2026-10-20/0730.json</code>）にしてオブジェクトストレージに置く</li>
-<li>B-03（30分ごと）は、その時刻のファイルだけを読んで SMTP で送る。DBにはアクセスしない</li>
-</ol>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 定期処理の動かし方</h3>
 <ul>
-<li>0:00より後に通知設定を変えた場合は、翌日の送信から反映する（S-10に注記を表示）</li>
-<li>送信に失敗した宛先は1回だけやり直し、結果をログに記録する</li>
 <li>定期処理は worker コンテナが時刻（Asia/Tokyo）を見て動かす。同じ枠を二重に動かさないよう、動かした枠を DB に記録する。worker が止まっていた日は、起動したときにその日の日次処理を動かす</li>
+<li>学習者への通知メール（第1.5版までの B-03 と、その送信方式）は第1.6版で削除した</li>
 </ul>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.3 処理ごとのルール</h3>
 <div class="table-wrap"><table>
@@ -3881,7 +3833,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   USERS }o--|| PARTNERS : 選択
   COURSES ||--o{ WEEKLY_RANKINGS : 週ごと
   WEEKLY_RANKINGS }o--|| USERS : 順位
-  USERS ||--|| NOTIFY_SETTINGS : 設定
 </div></figure>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 主なデータ項目</h3>
 <div class="table-wrap"><table>
@@ -3937,10 +3888,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>性格（encourage・logic・rival）、初期名、画像のオブジェクトストレージのキー（なければ空）</td>
 </tr>
 <tr>
-<td><code>NOTIFY_SETTINGS</code></td>
-<td>利用者ID、メール通知オン／オフ、送信時刻、プッシュ通知オン／オフ（Phase 2）</td>
-</tr>
-<tr>
 <td><code>AUTH_REFRESH_TOKENS</code>・<code>PASSWORD_RESETS</code></td>
 <td>リフレッシュトークン・再設定リンクのハッシュ、利用者ID、期限、使った日時（値そのものは保存しない）</td>
 </tr>
@@ -3978,10 +3925,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td>採点ジョブ</td>
 <td>30日で削除（結果は <code>ANSWER_LOGS</code> に残る）</td>
-</tr>
-<tr>
-<td>通知の送信リスト（オブジェクトストレージ）</td>
-<td>7日で自動削除</td>
 </tr>
 <tr>
 <td>ジョブキュー・トークン</td>
@@ -4208,8 +4151,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>M-09</td>
-<td>通知時刻の反映</td>
-<td>変更は明日の通知から反映されます</td>
+<td>（欠番）</td>
+<td>通知設定を削除したため使わない（第1.6版）</td>
 </tr>
 <tr>
 <td>M-10</td>
@@ -4305,8 +4248,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>10</td>
-<td>通知メールの文言（5.6）</td>
-<td>パートナーの定型のひとこと（persona ごとに1文。例：励まし型「今日もいっしょにがんばろうね！」）と、削除予定の通知の問い合わせ先（「所属部署の学習推進担当（社内ポータルの問い合わせ窓口）」）を仮置き</td>
+<td>メールの文言（5.6）</td>
+<td>削除予定の通知の問い合わせ先（「所属部署の学習推進担当（社内ポータルの問い合わせ窓口）」）を仮置き</td>
 <td>パイロット開始前</td>
 </tr>
 <tr>

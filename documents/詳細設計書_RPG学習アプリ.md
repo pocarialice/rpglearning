@@ -3,8 +3,8 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.5版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加）      |
-| 作成日    | 2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06、第1.6版：2026-11-06）                                                 |
+| 版数     | 第1.7版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加。第1.7版で通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009））      |
+| 作成日    | 2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06、第1.6版：2026-11-06、第1.7版：2026-11-07）                                                 |
 | 入力文書   | 要件定義書 第1.2版（ドラフト）、外部設計書 第1.3版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は `aws/documents/` に退避                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
@@ -140,7 +140,8 @@ rpglearning/
 │  ├─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
 │  ├─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
 │  ├─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
-│  └─ V008__google_login.sql      # Googleでログイン（8.4.6）
+│  ├─ V008__google_login.sql      # Googleでログイン（8.4.6）
+│  └─ V009__drop_notify_settings.sql # 通知設定を削除（8.4.7）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -153,7 +154,7 @@ rpglearning/
 │  │  │  ├─ tx.js                 # トランザクション
 │  │  │  ├─ migrate.js            # マイグレーションの適用
 │  │  │  └─ repositories/         # users・courses・questions・reviews・exp・quests・badges・rankings
-│  │  │                           # gradings・imports・adventures・audit・notify・partners
+│  │  │                           # gradings・imports・adventures・audit・partners
 │  │  │                           # auth・jobs・schedules（さくら版で追加）
 │  │  ├─ domain/                  # review・exp・quest・badge・ranking・picker・answer-flow
 │  │  ├─ ai/
@@ -249,7 +250,6 @@ rpglearning/
 | `todayJst(now)`         | JST日付                            | `2026-10-21`                |
 | `addDays(dateStr, n)`   | JST日付にn日足す                       | `addDays('2026-10-31', 1)` → `2026-11-01` |
 | `weekStartJst(now)`     | その週の月曜日のJST日付                    | `2026-10-19`                |
-| `jstSlot(now)`          | 30分刻みの送信枠（`HHMM`）               | `0030`                      |
 | `toIsoJst(date)`        | `+09:00` 付きの文字列                  | `2026-10-21T00:30:00+09:00` |
 
 #### 2.4.4 エラー処理（`util/errors.js`）
@@ -313,10 +313,8 @@ rpglearning/
 | `S3_ENDPOINT`・`S3_REGION`・`S3_ACCESS_KEY_ID`・`S3_SECRET_ACCESS_KEY` | すべて | オブジェクトストレージの接続先 |
 | `IMPORT_BUCKET`    | api、worker     | 取り込み原本の置き場（`uploads/` の下）              |
 | `ASSETS_BUCKET`    | api                   | キャラクター画像の置き場（`partners/` の下）               |
-| `NOTIFY_BUCKET`    | worker                  | 通知の送信リスト（`notify/` の下）                 |
 | `SMTP_HOST`・`SMTP_PORT`・`SMTP_SECURE`・`SMTP_USER`・`SMTP_PASS`・`MAIL_FROM` | すべて | メールの送信 |
 | `ALERT_EMAIL`      | すべて                           | 監視のお知らせの宛先（なければ送らない）                 |
-| `MAIL_SCHEDULE_ENABLED` | worker                   | `true` のときだけ B-03（30分ごとのメール送信）を動かす（dev は確認のときだけ） |
 | `WORKER_GRADING_CONCURRENCY`・`WORKER_IMPORT_CONCURRENCY` | worker | 同時に処理する採点（既定2）・取り込み（既定1）の数 |
 | `PORT`・`WEB_ROOT` | api                           | 待ち受けるポート（既定 8080）、画面のファイルの場所（コンテナでは `/app/web`） |
 
@@ -330,11 +328,11 @@ rpglearning/
 | ----- | ----------------------------- | -------------------------------------- | -------------------------------------------------------------- |
 | M-U01 | `util/errors.js`              | エラーの型と応答への変換                           | `AppError`、`toErrorResponse(err)`                              |
 | M-U02 | `util/ids.js`                 | 公開IDの変換                                | `encodeId`、`decodeId`                                          |
-| M-U03 | `util/date-jst.js`            | JST日付                                  | `todayJst`、`addDays`、`weekStartJst`、`jstSlot`、`toIsoJst`、`diffDays` |
+| M-U03 | `util/date-jst.js`            | JST日付                                  | `todayJst`、`addDays`、`weekStartJst`、`toIsoJst`、`diffDays` |
 | M-U04 | `util/authz.js`               | 認証情報と権限                                | `getAuth(event)`、`requireRole(auth, role)`、`loadUser(db, auth)`、`assertCourseAdmin(...)` |
 | M-U05 | `util/logger.js`              | ログ                                     | `createLogger(fn, ctx)`                                       |
 | M-U06 | `util/http.js`                | 応答・本文                                  | `ok(body, status)`、`csv(text, filename)`、`parseBody(event)`   |
-| M-U07 | `logic/validators.js`（共用）     | 入力チェック                                 | `validateExplanation`、`validateNickname`、`validatePartnerName`、`validateNotifyTime`、`validateImportRequest`、`validateQuestionDraft` |
+| M-U07 | `logic/validators.js`（共用）     | 入力チェック                                 | `validateExplanation`、`validateNickname`、`validatePartnerName`、`validateImportRequest`、`validateQuestionDraft` |
 | M-U08 | `util/alert.js` | 監視のお知らせメール | `alert(key, subject, lines, opts)`（同じ key は1時間に1通） |
 | M-D01 | `db/client.js`              | SQL実行（PostgreSQL）                                  | `query(sql, params, opts)`、`execute(...)`、`toPositional`、`getPool`・`setPool`                     |
 | M-D02 | `db/tx.js`                    | トランザクション                               | `withTx(fn)`                                            |
@@ -355,7 +353,7 @@ rpglearning/
 | M-A02 | `ai/json-guard.js`            | 出力JSONの取り出しと検証                         | `extractJson(text)`、`validateShape(obj, schema)`              |
 | M-A03 | `ai/persona.js`               | パートナーの性格                               | `PERSONAS`、`personaInstruction(persona, name)`               |
 | M-A04 | `ai/prompts/*.js`             | 指示文の組み立て                               | `buildGradingPrompt`、`buildExtractionPrompt`、`buildCommentPrompt`、`buildDailyMessagePrompt`、`buildSummaryCommentPrompt`・`fallbackSummaryComment` |
-| M-M01 | `mail/smtp.js`・`templates.js`  | メール                                    | `sendMail({to, subject, text})`、`setTransport`、`notifyMail(item)`、`deletionMail(user)`、`inviteMail(…)`、`resetMail(…)`、`signupMail(…)`、`signupExistsMail(…)` |
+| M-M01 | `mail/smtp.js`・`templates.js`  | メール                                    | `sendMail({to, subject, text})`、`setTransport`、`deletionMail(user)`、`inviteMail(…)`、`resetMail(…)`、`signupMail(…)`、`signupExistsMail(…)` |
 | M-O01 | `storage/object-storage.js` | オブジェクトストレージ | `putObject`、`getBytes`、`getText`、`getStream`、`deleteObject`、`presignPut` |
 | M-K01 | `auth/password.js` | パスワード | `hashPassword`、`verifyPassword`、`passwordProblems`、`generateTempPassword` |
 | M-K02 | `auth/token.js` | トークン | `signToken`、`verifyToken`、`newOpaqueToken`、`sha256` |
@@ -380,7 +378,7 @@ rpglearning/
 
 戻り値は `{ ok: true }` または `{ ok: false, code: 'M-03', field, params }`。サーバー側は `ok:false` を `VALIDATION_ERROR` に変換する。
 
-`code` は画面のメッセージID（`M-03`・`M-04`・`M-12`）。メッセージIDのない入力エラー（ニックネーム・パートナー名・通知時刻・取り込み）は `code: 'INVALID'` とし、`field`（`nickname`・`partnerName`・`sendTime`・`sourceType`・`fileName`・`contentType`・`size`・`text`）と `params`（上限・下限・文字数など）で画面が文言を組み立てる。サーバー側は `assertValid(result)`（`util/validators.js`）で変換する。
+`code` は画面のメッセージID（`M-03`・`M-04`・`M-12`）。メッセージIDのない入力エラー（ニックネーム・パートナー名・取り込み）は `code: 'INVALID'` とし、`field`（`nickname`・`partnerName`・`sourceType`・`fileName`・`contentType`・`size`・`text`）と `params`（上限・下限・文字数など）で画面が文言を組み立てる。サーバー側は `assertValid(result)`（`util/validators.js`）で変換する。
 
 | 関数                          | ルール（外部設計書の根拠）                                                                                     |
 | --------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -388,7 +386,6 @@ rpglearning/
 | `validateExplanation(text)` | 50文字未満 → M-03、400文字超 → M-04。小見出しなどの書き方は確かめない（3.7 S-05） |
 | `validateNickname(s)`       | 前後の空白を除いて2〜12文字。ひらがな・カタカナ・漢字・英数字・`_`・`-` のみ（`/^[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ーA-Za-z0-9_-]+$/u`）。絵文字は不可（S-08） |
 | `validatePartnerName(s)`    | 空文字は「初期名を使う」として ok。1〜10文字。ひらがな・カタカナ・漢字・英数字のみ（3.6.2）                                            |
-| `validateNotifyTime(hhmm)`  | `HH:MM` 形式、06:00〜22:00、分は00か30（S-10）                                                             |
 | `validateImportRequest(r)`  | `sourceType` は pdf・image・text。pdf・image はファイル名・`contentType`（`application/pdf`・`image/png`・`image/jpeg`）・サイズ20MB以下。text は1〜20,000文字（4.10） |
 | `validateQuestionDraft(q)`  | 公開の条件：問題文あり、選択肢がちょうど4つで空でない、正解が1〜4、解説あり、キーワード0〜3個・各1〜50文字（4.10、M-12）                         |
 
@@ -437,7 +434,6 @@ rpglearning/
 | `summaries.js`  | `listForAdventure(userId, adventureId)`・`listForDate(userId, day)`（学習サマリの解答の一覧。解いた順。8.6） |
 | `course-records.js` | `listForUser(userId)`（受講したコースと解答したコース。最後に学習した日が新しい順）、`findForUser(userId, courseId)`（1コース分。なければ null）、`detailCounts(userId, courseId, today)`、`listWeak(userId, courseId, limit)`（コースごとの実績。8.6） |
 | `audit.js`      | `write(actorId, action, target, detail)`                                                              |
-| `notify.js`     | `get`、`put`、`listForSlotBuild(today)`                                                                 |
 | `partners.js` | `get`、`list`、`setImage`（キャラクター画像のキー。null で外す） |
 | `auth.js`（さくら版） | `findByEmail`（大文字小文字を区別しない）、`findById`、`recordFailure`（5回で15分ロック）、`recordSuccess`、`setPassword`（仮パスワードは期限つき）、`tempPasswordExpired`、`saveRefreshToken`、`consumeRefreshToken`（使い捨て）、`revokeRefreshToken`、`revokeAllForUser`、`recentResetExists`、`saveReset`、`consumeReset`、`recentSignupExists`（同じメールアドレスで60秒以内）、`saveSignup`、`consumeSignup`（期限内・未使用・パスワードありのときだけ使用済みにして中身を返す）、`deleteExpired`（トークン・再設定リンク・確認待ち） |
 | `jobs.js`（さくら版） | `enqueue(kind, payload)`、`claimNext(kinds, lockSeconds)`、`complete`、`retry(jobId, error, delaySeconds)`、`fail`、`countFailedSince`、`deleteFinishedBefore` |
@@ -607,7 +603,7 @@ AWS 版の「Lambda の非同期呼び出し（採点）」「S3 のイベント
 | 接続 | `@aws-sdk/client-s3` の `S3Client` を S3 互換 API として使う（`S3_ENDPOINT`、`S3_REGION`、パス形式 `forcePathStyle: true`、`S3_ACCESS_KEY_ID`・`S3_SECRET_ACCESS_KEY`） |
 | 関数 | `putObject(bucket, key, body, contentType)`、`getBytes`、`getText`（ないときは null）、`getStream`（キャラクター画像の配信用。ないときは null）、`deleteObject`、`presignPut(bucket, key, contentType)` |
 | 署名付きURL | PUT・15分・`content-type` を署名に含める（AWS 版と同じ）。画面はこの URL へ直接ファイルを置く。バケットの CORS で画面のドメインからの PUT を許す（構築手順書） |
-| バケットの中 | `uploads/{importId}/{ファイル名}`（取り込み原本）、`partners/{persona}-{yyyyMMddHHmmss}.{png|webp}`（キャラクター画像）、`notify/{日付}/{HHMM}.json`（送信リスト）。AWS 版と同じ |
+| バケットの中 | `uploads/{importId}/{ファイル名}`（取り込み原本）、`partners/{persona}-{yyyyMMddHHmmss}.{png\|webp}`（キャラクター画像）。AWS 版と同じ |
 
 ### 3.10 ログイン（`auth/`・`db/repositories/auth.js`・`routes/auth.js`）
 
@@ -685,7 +681,7 @@ flowchart TD
 | A-01 | `GET /api/me`                               | `me.get`                       | 全員             |
 | A-02 | `PUT /api/me/profile`                       | `me.putProfile`                | learner        |
 | A-03 | `PUT /api/me/partner`                       | `me.putPartner`                | learner        |
-| A-04 | `GET・PUT /api/me/notify`                    | `me.getNotify`・`me.putNotify`  | learner        |
+| A-04 | （欠番。通知設定を削除） | - | - |
 | A-05 | `GET /api/home`                             | `home.get`                     | learner        |
 | A-06 | `GET /api/courses`、`POST /api/enrollments`  | `courses.list`・`courses.enroll` | learner        |
 | A-07 | `GET /api/quests/next?adventureId=`         | `quests.next`                  | learner        |
@@ -796,7 +792,7 @@ flowchart TD
 
 ### 4.5 batch-runner
 
-入力：`{"job":"daily"}`（毎日0:00以降に1回）または `{"job":"mail"}`（6:00〜22:30の30分ごと。`MAIL_SCHEDULE_ENABLED=true` のときだけ）。worker のスケジューラ（4.7）が呼ぶ。
+入力：`{"job":"daily"}`（毎日0:00以降に1回）。worker のスケジューラ（4.7）が呼ぶ。
 
 #### 4.5.1 daily（B-01・B-02）
 
@@ -809,22 +805,12 @@ flowchart TD
 | 3 | `assign-quests.js`      | 有効な学習者ごとに、0:00時点の復習対象数（全コース）を数え、`pickDailyQuests` で3つ選んで `user_quests` に入れる                                     | `UNIQUE (user_id, quest_on, quest_code)`。今日の行がある利用者は飛ばす          |
 | 4 | `purge-users.js`        | `delete_scheduled_on <= 今日` の利用者を `DELETE FROM users` で消す（関連テーブル・トークン・再設定リンクはCASCADE）。操作記録 `user.purge`（操作者は NULL）を残す。あわせて期限の切れたトークン・再設定リンク・アカウント作成の確認待ちを消す（`auth.deleteExpired`）        | 条件付きDELETEなので何度でも同じ                 |
 | 5 | `cleanup-gradings.js`   | 作成から30日を過ぎた `grading_jobs` と、終わってから30日を過ぎた `jobs` を削除                                                                            | 条件付きDELETEなので何度でも同じ                                          |
-| 6 | `build-notify.js`       | メール通知オンの有効な学習者について、送信時刻ごとに送信リストを作り、オブジェクトストレージ `notify/{今日}/{HHMM}.json` に置く                                             | 同じキーに上書き                                                      |
-
-**送信リストの形（`notify/2026-10-20/0730.json`）**
-
-```json
-{"date":"2026-10-20","slot":"0730","items":[{"to":"taro@example.co.jp","nickname":"たろう","partnerName":"ミナ","persona":"encourage","reviewCount":5,"quests":["今日の復習をすべて終える","択一を5問解く","キーワード説明を1問合格する"]}]}
-```
 
 - 各ステップの開始・終了・件数を `INFO` で出す（メールアドレスは出さない）
 
-#### 4.5.2 mail（B-03、DBを使わない）
+#### 4.5.2（欠番）
 
-1. `jstSlot(now)` で送信枠（例：`0730`）を求める。分が0〜29なら `00`、30〜59なら `30`
-2. オブジェクトストレージから `notify/{今日}/{枠}.json` を取得する。ないときは件数0で正常終了（22:30 の枠など）
-3. 1件ずつ `notifyMail(item)` で本文を作り、SMTP で送る。失敗したら1回だけやり直し、それでも失敗したら `WARN` で件数を出して次へ
-4. 送信件数・失敗件数を `INFO` で出す。例外は投げない（メールの再送で二重送信しないため。スケジューラのやり直しは起きない）
+学習者への通知メール（B-03）は第1.7版で削除した。
 
 ### 4.6 HTTP サーバー（`server/http.mjs`）
 
@@ -844,9 +830,9 @@ flowchart TD
 | --- | --- |
 | ジョブの見回り（`jobLoop`） | 種類（grading・import）ごとに決めた数だけ動かす。`claimNext` で1件取り、`runGradingJob`・`runImportJob` を呼ぶ。待ちがなければ1秒休む |
 | 結果の扱い（`runOnce`） | `done` → `complete`。`retry` → `retry`（既定60秒後）。`failed` → `fail`（取り込みなら監視のお知らせ）。本体が例外を投げたら、回数が残っていれば `retry`、なければ `fail`。取り戻したジョブ（落ちたワーカーのもの）が回数を使い切っていたら、処理せずに `fail` |
-| 定期処理（`createScheduler`） | 30秒ごとに、今の時刻で動かすべき枠（`dueSlots`）を見る。daily は `YYYY-MM-DD`（その日の0:00以降に1回）、mail は `YYYY-MM-DDTHHMM`（6:00〜22:30、`MAIL_SCHEDULE_ENABLED=true` のとき）。`schedules.claim` で枠を取れたら `batch-runner` の `main` を呼び、`finish` で結果を残す |
+| 定期処理（`createScheduler`） | 30秒ごとに、今の時刻で動かすべき枠（`dueSlots`）を見る。daily は `YYYY-MM-DD`（その日の0:00以降に1回）。`schedules.claim` で枠を取れたら `batch-runner` の `main` を呼び、`finish` で結果を残す |
 | 定期処理の失敗 | 枠を `release` して次の見回りでやり直す。同じ枠で3回失敗したらやめて監視のお知らせ（`schedule-{name}`） |
-| 止まっていた日 | worker が0:00に止まっていても、起動したときにその日の daily を動かす（その日の枠がまだないため）。メールは今の枠だけを動かし、過ぎた枠は送らない |
+| 止まっていた日 | worker が0:00に止まっていても、起動したときにその日の daily を動かす（その日の枠がまだないため） |
 
 
 ---
@@ -1092,7 +1078,7 @@ AWS 版の「S3 のイベント通知 → SQS」の代わり。画面が署名�
 
 | 操作            | DB（1つのトランザクション）                                                       | ログイン・メール（AWS 版では Cognito）                                                              |
 | ------------- | -------------------------------------------------------- | -------------------------------------------------------------------- |
-| 登録（POST）      | `users`（`invited`、`auth_sub` に UUID）・`user_roles`・`notify_settings`（初期値）を追加し、仮パスワードのハッシュと期限（7日）を保存 | トランザクションの中で招待メール（仮パスワード）を送る。送れなければ登録ごと取り消して `500`（「招待メールを送れませんでした。メールの設定を確認してください」）。メールアドレスの重複（一意制約 `23505`）は `409` |
+| 登録（POST）      | `users`（`invited`、`auth_sub` に UUID）・`user_roles` を追加し、仮パスワードのハッシュと期限（7日）を保存 | トランザクションの中で招待メール（仮パスワード）を送る。送れなければ登録ごと取り消して `500`（「招待メールを送れませんでした。メールの設定を確認してください」）。メールアドレスの重複（一意制約 `23505`）は `409` |
 | ロール変更（PUT）    | `user_roles` を置き換え                                       | なし（次の API から効く。トークンの `groups` は次の更新で変わる）         |
 | 論理削除          | `status='deleted'`、`delete_scheduled_on = 今日＋30日`、`deleted_at`。リフレッシュトークンをすべて無効にする | ログインできなくなる（A-30 が `LOGIN_FAILED` を返す）。本人に削除予定の通知メールを送る（失敗してもログだけ）                                     |
 | 復活            | `status='active'`、削除予定日を空に                               | もとのパスワードでログインできる                                                    |
@@ -1206,7 +1192,7 @@ sequenceDiagram
 | S-17 | `learner/s17-course-record.js`  | A-12d（詳細）、A-12e        | `#/profile/course?id=c_3`（`id` がなければ S-16 へ）。実績・内訳・苦手な問題を出してから A-12e を呼ぶ。待つ間は `partnerBubble({ thinking: true })`、`comment` が null なら案内文、失敗したらコメントの欄だけ「もう一度読み込む」。本文は `aiText` |
 | （部品） | `parts/summary-panel.js`      | A-12b／A-12c              | `mountSummaryPanel(el, { api, path, label, withDate, today })`：`details` のアコーディオン。`toggle` で開いたとき1回だけ読み込む（失敗したら「もう一度読み込む」）。日付を変えたら、開いていれば読み直し、閉じていれば次に開いたとき読み直す。古い読み込みの結果は捨てる。Markdown は `pre` に `textContent` で入れる。`copyText(text)`：`navigator.clipboard.writeText`、使えなければ `textarea` を選んで `execCommand('copy')` |
 | S-09 | `learner/s09-partner.js`      | A-03                     | `validatePartnerName`                                      |
-| S-10 | `learner/s10-notify.js`       | A-04                     | 6:00〜22:00 の30分刻みの選択肢、M-09 の注記                            |
+| S-10 | （欠番。通知設定を削除） | - | - |
 | S-11 | `admin/s11-import.js`         | A-13、A-13b、A-14、A-15、A-15b、A-16、A-16b | 署名付きURLへ `PUT` でアップロードし、終わったら A-13b。取り込み状況は5秒ごとに再取得（完了・失敗で止める）。登録済みの問題（下書きも含む）を A-15b で一覧にし、チェックした問題を A-16b でまとめて公開・削除。修正はダイアログで行い、学習者の見え方（`choiceOption` と S-04・S-06 と同じ組み方）を横に出し、保存・公開・削除のあとは次の下書き・要確認へ進む             |
 | S-12 | `admin/s12-dashboard.js`      | A-17、A-18                | 並べ替えは画面で行う。CSVは `Blob` にしてダウンロード                            |
 | S-13 | `admin/s13-users.js`          | A-19、A-20、A-21、A-21b     | 削除の確認ダイアログ（M-10）。招待中の利用者に「招待メールを送り直す」                                           |
@@ -1412,7 +1398,6 @@ angles には選んだ観点を、それぞれ2〜8文字の名詞で書く。
 ```mermaid
 erDiagram
   USERS ||--o{ USER_ROLES : ロール
-  USERS ||--|| NOTIFY_SETTINGS : 通知
   USERS ||--o{ LOGIN_LOGS : ログイン
   USERS }o--o| PARTNERS : 選択
   USERS ||--o{ ENROLLMENTS : 受講
@@ -1448,7 +1433,7 @@ erDiagram
 | T-01 | `partners`          | パートナー      | `persona`                           | 3                 | PARTNERS       |
 | T-02 | `users`             | 利用者        | `user_id`                           | 1,000             | USERS          |
 | T-03 | `user_roles`        | 利用者のロール    | `user_id, role`                     | 1,100             | 追加（認可の正） |
-| T-04 | `notify_settings`   | 通知設定       | `user_id`                           | 1,000             | NOTIFY_SETTINGS |
+| T-04 | （欠番） | 通知設定（V009 で削除） | - | - | - |
 | T-05 | `login_logs`        | ログイン記録     | `login_id`                          | 30万               | 追加（直近7日のログイン回数） |
 | T-06 | `courses`           | コース        | `course_id`                         | 30                | COURSES        |
 | T-07 | `enrollments`       | 受講         | `user_id, course_id`                | 1,500             | ENROLLMENTS    |
@@ -1551,7 +1536,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
   PRIMARY KEY (user_id, role)
 );
 
--- T-04 通知設定
+-- T-04 通知設定（V009 で削除した。8.4.7）
 CREATE TABLE IF NOT EXISTS notify_settings (
   user_id        bigint      PRIMARY KEY REFERENCES users (user_id) ON DELETE CASCADE,
   email_enabled  boolean     NOT NULL DEFAULT true,
@@ -2002,6 +1987,15 @@ erDiagram
   users ||--o{ auth_refresh_tokens : "パスワードでも Google でも同じ"
 ```
 
+#### 8.4.7 通知設定の削除（`db/migrations/V009__drop_notify_settings.sql`）
+
+通知メール（S-10・A-04・B-03）を機能ごと削除したため、`notify_settings`（T-04）を消す。送信時刻などの設定は戻せない（dev のテスト用のデータだけだった）。
+
+```sql
+DROP TABLE IF EXISTS notify_settings;
+INSERT INTO schema_migrations (version, description) VALUES ('V009', 'drop notify settings') ON CONFLICT DO NOTHING;
+```
+
 ### 8.5 初期データ（`db/migrations/V002__seed_masters.sql`）
 
 ```sql
@@ -2209,7 +2203,6 @@ ORDER BY last_studied_on DESC NULLS LAST, c.course_id LIMIT 100;
 
 | 関数                  | 件名                           | 本文の組み立て                                                                                    |
 | ------------------- | ---------------------------- | ------------------------------------------------------------------------------------------ |
-| `notifyMail(item)`  | 【RPG学習アプリ】今日の依頼が届いています       | 「{nickname}さん」→ パートナーの定型のひとこと（persona ごと）→ 今日の復習数 → クエスト3つ → `APP_URL/#/home` → 末尾に通知設定 `APP_URL/#/notify` |
 | `deletionMail(u)`   | 【RPG学習アプリ】アカウント停止のお知らせ       | 30日後（`delete_scheduled_on`）に学習履歴を含めて完全に削除されること、問い合わせ先                                       |
 | `inviteMail(x)`     | 【RPG学習アプリ】ギルドへの招待       | ログインの URL `APP_URL/`、メールアドレス、仮パスワード、有効期限（7日）、初回ログインで新しいパスワードに変えること（AWS 版では Cognito が送っていた） |
 | `resetMail(x)`      | 【RPG学習アプリ】パスワードの再設定       | 再設定の URL `APP_URL/#/reset?token=…`、有効期限（60分・1回だけ）、心当たりがなければ何もしなくてよいこと |
@@ -2389,7 +2382,6 @@ flowchart LR
 | 項目 | dev | prod |
 | --- | --- | --- |
 | イメージを作るきっかけ | `main` で手動 | タグ＋承認 |
-| `MAIL_SCHEDULE_ENABLED` | `false`（確かめるときだけ `true`） | `true` |
 | サーバー・DB の大きさ | 構築手順書 3.3・3.8 | 構築手順書 4 |
 | DB のバックアップ | 自動バックアップ（1日1回） | 自動バックアップ（1日1回）＋リリース前の手動 |
 
@@ -2420,7 +2412,7 @@ flowchart LR
 | 6  | リリースの自動化                        | **決定（2026-10-27）**：イメージの作成は GitHub Actions、サーバーへの反映は人が SSH で行う（第11章）。サーバーへの反映の自動化（サーバーで定期的に pull するなど）は、リリースの頻度が増えたら検討 | Phase 2 の計画時     |
 | 7  | 依存ライブラリのライセンス確認     | pdf-lib（MIT）、pg（MIT）、nodemailer（MIT-0）、unpdf（MIT）（2026-10-27 確認）。追加のたびに確認                                       | ライブラリ追加時        |
 | 8  | GitHub のリポジトリ名・承認者               | `<オーナー>/rpg-learning-app`。prod の承認者はシステム管理者と開発リーダーの2名を仮置き     | dev 構築前         |
-| 9  | 通知メールの文言                       | パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を `mail/templates.js` に仮置き。外部設計書 10 No.10 で確定する | パイロット開始前        |
+| 9  | メールの文言                       | 問い合わせ先（「所属部署の学習推進担当」）を `mail/templates.js` に仮置き。外部設計書 10 No.10 で確定する | パイロット開始前        |
 | 10 | stg 環境を作り直すか                    | **決定（2026-10-21）**：コスト削減のため Phase 1 では作らない（外部設計書 10 No.11）。受け入れ確認は dev で行い（11.1）、prod は DB の変更があるリリースの前にバックアップを取る。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める | Phase 3 の計画時     |
 | 11 | Bedrock への切り替え                   | Bedrock が使えるようになったら、AI だけを `AI_PROVIDER=bedrock` に切り替える（7章・11.5）。採点の質とコストを dev で比べてから prod を切り替える | AWS の制限が解けたとき |
 | 12 | 画像の取り込み                         | さくらのAI Engine では使えない（7章）。Bedrock に切り替えたら使える。それまでは S-11 で画像を選ぶと「失敗」になる | Bedrock の切り替え時 |
