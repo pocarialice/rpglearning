@@ -15,7 +15,6 @@ import * as gradings from '../../../../../../functions/shared/db/repositories/gr
 import * as imports from '../../../../../../functions/shared/db/repositories/imports.js'
 import * as adventures from '../../../../../../functions/shared/db/repositories/adventures.js'
 import * as audit from '../../../../../../functions/shared/db/repositories/audit.js'
-import * as notify from '../../../../../../functions/shared/db/repositories/notify.js'
 import * as partners from '../../../../../../functions/shared/db/repositories/partners.js'
 const D = (d) => ({ date: d })
 describe('M-D03 users', () => {
@@ -54,7 +53,7 @@ describe('M-D03 users', () => {
     const db = fakeDb({ rows: [{ user_id: 20 }] })
     expect(await users.create({ sub: 's', email: 'a@x.jp', fullName: '山田', roles: ['learner', 'course_admin'] }, db)).toBe(20)
     expect(db.execute.mock.calls.filter((c) => c[0].includes('INSERT INTO user_roles'))).toHaveLength(2)
-    expect(db.execute.mock.calls.at(-1)[0]).toContain('notify_settings')
+    expect(db.execute.mock.calls.some((c) => c[0].includes('notify_settings'))).toBe(false)
     expect(await users.markDeleted(20, '2026-11-19', db)).toBe(true)
     expect(db.execute.mock.calls.at(-1)[1]).toEqual({ userId: 20, deleteOn: D('2026-11-19') })
     expect(await users.restore(20, fakeDb({ updated: 0 }))).toBe(false)
@@ -244,7 +243,7 @@ describe('M-D03 第2弾で追加した関数', () => {
     expect(await partners.get('x', fakeDb())).toBeNull()
   })
 })
-describe('M-D03 gradings・imports・adventures・audit・notify', () => {
+describe('M-D03 gradings・imports・adventures・audit', () => {
   it('MT-D03-29 gradings の各関数', async () => {
     const db = fakeDb({ rows: [{ grading_id: 456, result: '{"score":72}', created_at: 'x' }] })
     expect(await gradings.create({ userId: 15, courseId: 3, keywordId: 9, explanationText: 't' }, db)).toEqual({ gradingId: 456, result: '{"score":72}', createdAt: 'x' })
@@ -309,13 +308,5 @@ describe('M-D03 gradings・imports・adventures・audit・notify', () => {
     expect(db.execute.mock.calls[0][1]).toEqual({ actorId: 2, action: 'question.publish', targetType: 'question', targetId: 42, detail: { json: { status: 'published' } } })
     await audit.write(2, 'dashboard.csv', { type: 'course' }, undefined, db)
     expect(db.execute.mock.calls[1][1]).toMatchObject({ targetId: null, detail: { json: {} } })
-  })
-  it('MT-D03-33 notify の各関数', async () => {
-    const db = fakeDb({ rows: [{ email_enabled: true, send_time: '07:30' }] })
-    expect(await notify.get(15, db)).toEqual({ emailEnabled: true, sendTime: '07:30' })
-    await notify.put(15, { emailEnabled: false, sendTime: '21:00' }, db)
-    expect(db.execute.mock.calls[0][1]).toEqual({ userId: 15, emailEnabled: false, sendTime: '21:00' })
-    await notify.listForSlotBuild('2026-10-20', db)
-    expect(db.query.mock.calls.at(-1)[1]).toEqual({ today: D('2026-10-20') })
   })
 })

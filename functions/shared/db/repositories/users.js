@@ -67,7 +67,6 @@ export async function create({ sub, email, fullName, roles }, db = defaultDb) {
     { sub, email, fullName })
   const userId = rows[0].user_id
   await setRoles(userId, roles, db)
-  await db.execute('INSERT INTO notify_settings (user_id) VALUES (:userId) ON CONFLICT DO NOTHING', { userId })
   return userId
 }
 export async function setRoles(userId, roles, db = defaultDb) {

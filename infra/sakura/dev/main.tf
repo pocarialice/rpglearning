@@ -100,7 +100,6 @@ locals {
     "S3_SECRET_ACCESS_KEY=${var.s3_secret_access_key}",
     "IMPORT_BUCKET=${local.prefix}-import",
     "ASSETS_BUCKET=${local.prefix}-assets",
-    "NOTIFY_BUCKET=${local.prefix}-notify",
     "SMTP_HOST=${var.smtp.host}",
     "SMTP_PORT=${var.smtp.port}",
     "SMTP_SECURE=${var.smtp.secure}",
@@ -113,7 +112,6 @@ locals {
     "AI_API_KEY=${var.ai_api_key}",
     "MODEL_HIGH=gpt-oss-120b",
     "MODEL_LIGHT=gpt-oss-120b",
-    "MAIL_SCHEDULE_ENABLED=${var.mail_schedule_enabled}",
     "",
   ])
 }

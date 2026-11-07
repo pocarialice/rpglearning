@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { todayJst, addDays, weekStartJst, jstSlot, toIsoJst, diffDays } from '../../../../../functions/shared/util/date-jst.js'
+import { todayJst, addDays, weekStartJst, toIsoJst, diffDays } from '../../../../../functions/shared/util/date-jst.js'
 const jst = (s) => new Date(`${s}+09:00`)
 describe('M-U03 date-jst', () => {
   it('MT-U03-01 JSTの日付（0:00直前）', () => {
@@ -29,12 +29,6 @@ describe('M-U03 date-jst', () => {
   })
   it('MT-U03-09 週の開始（次の月曜）', () => {
     expect(weekStartJst(new Date('2026-10-25T15:00:00Z'))).toBe('2026-10-26')
-  })
-  it('MT-U03-10 送信枠', () => {
-    expect(jstSlot(jst('2026-10-20T07:29:59'))).toBe('0700')
-    expect(jstSlot(jst('2026-10-20T07:30:00'))).toBe('0730')
-    expect(jstSlot(jst('2026-10-20T22:59:00'))).toBe('2230')
-    expect(jstSlot(jst('2026-10-20T00:10:00'))).toBe('0000')
   })
   it('MT-U03-11 ISO文字列', () => {
     expect(toIsoJst(new Date('2026-10-20T15:30:00Z'))).toBe('2026-10-21T00:30:00+09:00')

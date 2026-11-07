@@ -134,8 +134,3 @@ variable "dns_zone" {
   type        = string
   default     = ""
 }
-variable "mail_schedule_enabled" {
-  description = "通知メールを 6:00〜22:30 の30分ごとに送る（MAIL_SCHEDULE_ENABLED）。いまのサーバーは rpg-deploy env MAIL_SCHEDULE_ENABLED true で変える"
-  type        = bool
-  default     = false
-}

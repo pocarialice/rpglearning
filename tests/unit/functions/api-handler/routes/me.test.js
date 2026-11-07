@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('../../../../../functions/shared/db/repositories/users.js')
 vi.mock('../../../../../functions/shared/db/repositories/enrollments.js')
 vi.mock('../../../../../functions/shared/db/repositories/partners.js')
-vi.mock('../../../../../functions/shared/db/repositories/notify.js')
 vi.mock('../../../../../functions/shared/db/repositories/answers.js')
 vi.mock('../../../../../functions/shared/db/repositories/badges.js')
 vi.mock('../../../../../functions/shared/db/repositories/courses.js')
@@ -11,7 +10,6 @@ import * as courseRecords from '../../../../../functions/shared/db/repositories/
 import * as users from '../../../../../functions/shared/db/repositories/users.js'
 import * as enrollments from '../../../../../functions/shared/db/repositories/enrollments.js'
 import * as partners from '../../../../../functions/shared/db/repositories/partners.js'
-import * as notify from '../../../../../functions/shared/db/repositories/notify.js'
 import * as answers from '../../../../../functions/shared/db/repositories/answers.js'
 import * as badges from '../../../../../functions/shared/db/repositories/badges.js'
 import { main } from '../../../../../functions/api-handler/index.mjs'
@@ -105,19 +103,6 @@ describe('M-H02 me（A-01〜A-04、A-12）', () => {
     const res = await call({ method: 'PUT', path: '/api/me/partner', body })
     expect(res.statusCode).toBe(400)
     expect(users.updatePartner).not.toHaveBeenCalled()
-  })
-  it('MT-H02-10 通知設定', async () => {
-    const okRes = await call({ method: 'PUT', path: '/api/me/notify', body: { emailEnabled: true, sendTime: '21:30' } })
-    expect(okRes.statusCode).toBe(200)
-    expect(notify.put).toHaveBeenCalledWith(15, { emailEnabled: true, sendTime: '21:30' })
-    expect((await call({ method: 'PUT', path: '/api/me/notify', body: { emailEnabled: true, sendTime: '22:30' } })).statusCode).toBe(400)
-    expect((await call({ method: 'PUT', path: '/api/me/notify', body: { emailEnabled: 'yes', sendTime: '07:30' } })).statusCode).toBe(400)
-    expect(notify.put).toHaveBeenCalledTimes(1)
-  })
-  it('MT-H02-16 通知設定の取得（行がなければ初期値）', async () => {
-    notify.get.mockResolvedValueOnce({ emailEnabled: false, sendTime: '21:00' }).mockResolvedValueOnce(null)
-    expect(parse(await call({ path: '/api/me/notify' }))).toEqual({ emailEnabled: false, sendTime: '21:00' })
-    expect(parse(await call({ path: '/api/me/notify' }))).toEqual({ emailEnabled: true, sendTime: '07:30' })
   })
   it('MT-H02-11 学習記録の計算', async () => {
     answers.statsForUser.mockResolvedValue({ publishedCount: 20, answeredQuestions: 8, answerCount: 10, correctCount: 7, mastered: 2 })

@@ -5,14 +5,12 @@ import * as updateStreak from '../steps/update-streak.js'
 import * as assignQuests from '../steps/assign-quests.js'
 import * as purgeUsers from '../steps/purge-users.js'
 import * as cleanupGradings from '../steps/cleanup-gradings.js'
-import * as buildNotify from '../steps/build-notify.js'
 export const STEPS = [
   ['close-ranking', closeRanking, { mondayOnly: true }],
   ['update-streak', updateStreak, {}],
   ['assign-quests', assignQuests, {}],
   ['purge-users', purgeUsers, {}],
-  ['cleanup-gradings', cleanupGradings, {}],
-  ['build-notify', buildNotify, {}]
+  ['cleanup-gradings', cleanupGradings, {}]
 ]
 export function isMonday(today) {
   return new Date(`${today}T00:00:00Z`).getUTCDay() === 1

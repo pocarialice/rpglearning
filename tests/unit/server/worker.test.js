@@ -78,17 +78,14 @@ describe('M-S02 server/worker（ジョブ）', () => {
 describe('M-S02 server/worker（定期処理）', () => {
   const at = (s) => new Date(`2026-10-20T${s}+09:00`)
   it('MT-S02-07 動かす枠', () => {
-    expect(dueSlots(at('00:00:30'), { mailEnabled: true })).toEqual([{ name: 'daily', slot: '2026-10-20', event: { job: 'daily' } }])
-    expect(dueSlots(at('07:44:00'), { mailEnabled: true }).map((s) => s.slot)).toEqual(['2026-10-20', '2026-10-20T0730'])
-    expect(dueSlots(at('22:30:00'), { mailEnabled: true })[1].slot).toBe('2026-10-20T2230')
-    expect(dueSlots(at('23:00:00'), { mailEnabled: true })).toHaveLength(1)
-    expect(dueSlots(at('05:59:00'), { mailEnabled: true })).toHaveLength(1)
-    expect(dueSlots(at('07:44:00'), { mailEnabled: false })).toHaveLength(1)
+    expect(dueSlots(at('00:00:30'))).toEqual([{ name: 'daily', slot: '2026-10-20', event: { job: 'daily' } }])
+    expect(dueSlots(at('07:44:00'))).toEqual([{ name: 'daily', slot: '2026-10-20', event: { job: 'daily' } }])
+    expect(dueSlots(at('23:59:59'))).toHaveLength(1)
   })
   it('MT-S02-08 枠ごとに1回だけ動かす', async () => {
     schedules.claim.mockResolvedValueOnce(true).mockResolvedValue(false)
     const runBatch = vi.fn(async (event) => ({ job: event.job }))
-    const tick = createScheduler({ log, runBatch, notify, mailEnabled: () => false })
+    const tick = createScheduler({ log, runBatch, notify })
     await tick(at('03:00:00'))
     await tick(at('03:00:30'))
     expect(runBatch).toHaveBeenCalledTimes(1)
@@ -98,26 +95,15 @@ describe('M-S02 server/worker（定期処理）', () => {
   it('MT-S02-09 失敗したら次の見回りでやり直し、3回失敗したら知らせる', async () => {
     schedules.claim.mockResolvedValue(true)
     const runBatch = vi.fn(async () => { throw Object.assign(new Error('step failed'), { code: '40P01' }) })
-    const tick = createScheduler({ log, runBatch, notify, mailEnabled: () => false })
+    const tick = createScheduler({ log, runBatch, notify })
     for (let i = 0; i < SCHEDULE_ATTEMPTS + 2; i++) await tick(at('03:00:00'))
     expect(runBatch).toHaveBeenCalledTimes(SCHEDULE_ATTEMPTS)
     expect(schedules.release).toHaveBeenCalledTimes(SCHEDULE_ATTEMPTS - 1)
     expect(notify).toHaveBeenCalledWith('schedule-daily', '定期処理（daily）が失敗しました', ['枠 2026-10-20 を 3 回試しましたが失敗しました。'], { log })
     expect(log.lines.filter((l) => l.msg === 'schedule.failed')).toHaveLength(3)
     runBatch.mockRejectedValueOnce(new Error('no code'))
-    await createScheduler({ log, runBatch, notify, mailEnabled: () => false })(at('03:00:00'))
+    await createScheduler({ log, runBatch, notify })(at('03:00:00'))
     expect(log.lines.at(-1)).toMatchObject({ msg: 'schedule.failed', code: 'INTERNAL_ERROR' })
-  })
-  it('MT-S02-10 メール送信は MAIL_SCHEDULE_ENABLED のときだけ', async () => {
-    schedules.claim.mockResolvedValue(true)
-    const runBatch = vi.fn(async () => ({}))
-    process.env.MAIL_SCHEDULE_ENABLED = 'true'
-    await createScheduler({ log, runBatch, notify })(at('07:30:00'))
-    expect(runBatch.mock.calls.map((c) => c[0].job)).toEqual(['daily', 'mail'])
-    delete process.env.MAIL_SCHEDULE_ENABLED
-    runBatch.mockClear()
-    await createScheduler({ log, runBatch, notify })(at('07:30:00'))
-    expect(runBatch.mock.calls.map((c) => c[0].job)).toEqual(['daily'])
   })
   it('MT-S02-11 起動と停止', async () => {
     jobs.claimNext.mockResolvedValue(null)

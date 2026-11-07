@@ -8,7 +8,6 @@ vi.mock('../../../../functions/shared/db/repositories/badges.js')
 vi.mock('../../../../functions/shared/db/repositories/quests.js')
 vi.mock('../../../../functions/shared/db/repositories/audit.js')
 vi.mock('../../../../functions/shared/db/repositories/gradings.js')
-vi.mock('../../../../functions/shared/db/repositories/notify.js')
 vi.mock('../../../../functions/shared/db/repositories/jobs.js')
 vi.mock('../../../../functions/shared/db/repositories/auth.js')
 import * as courses from '../../../../functions/shared/db/repositories/courses.js'
@@ -19,7 +18,6 @@ import * as badges from '../../../../functions/shared/db/repositories/badges.js'
 import * as quests from '../../../../functions/shared/db/repositories/quests.js'
 import * as audit from '../../../../functions/shared/db/repositories/audit.js'
 import * as gradings from '../../../../functions/shared/db/repositories/gradings.js'
-import * as notify from '../../../../functions/shared/db/repositories/notify.js'
 import * as jobs from '../../../../functions/shared/db/repositories/jobs.js'
 import * as auth from '../../../../functions/shared/db/repositories/auth.js'
 import { main } from '../../../../functions/batch-runner/index.mjs'
@@ -49,7 +47,6 @@ beforeEach(() => {
   track('assign-quests', quests.listAssignTargets, [])
   track('purge-users', users.listPurgeTargets, [])
   track('cleanup-gradings', gradings.deleteOlderThan, 0)
-  track('build-notify', notify.listForSlotBuild, [])
   badges.listOwned.mockResolvedValue([])
   rankings.closeWeek.mockImplementation(async (rows) => rows.length)
   track('users.purge', users.purge, true)
@@ -57,13 +54,13 @@ beforeEach(() => {
 describe('M-W03 batch-runner daily', () => {
   it('MT-W03-01 実行順', async () => {
     const res = await daily(MON)
-    expect(res.steps).toEqual(['close-ranking', 'update-streak', 'assign-quests', 'purge-users', 'cleanup-gradings', 'build-notify'])
+    expect(res.steps).toEqual(['close-ranking', 'update-streak', 'assign-quests', 'purge-users', 'cleanup-gradings'])
     expect(order).toEqual(res.steps)
     expect(res.today).toBe('2026-10-26')
   })
   it('MT-W03-02 月曜以外', async () => {
     const res = await daily(TUE)
-    expect(res.steps).toEqual(['update-streak', 'assign-quests', 'purge-users', 'cleanup-gradings', 'build-notify'])
+    expect(res.steps).toEqual(['update-streak', 'assign-quests', 'purge-users', 'cleanup-gradings'])
     expect(courses.listIds).not.toHaveBeenCalled()
   })
   it('MT-W03-03 ランキングの締め', async () => {
@@ -134,28 +131,11 @@ describe('M-W03 batch-runner daily', () => {
     expect(jobs.deleteFinishedBefore).toHaveBeenCalledWith('2026-09-20T00:00:00+09:00')
     expect(log.lines.find((l) => l.msg === 'step.end' && l.step === 'cleanup-gradings')).toMatchObject({ jobsDeleted: 7 })
   })
-  it('MT-W03-12 送信リスト', async () => {
-    const r = (userId, slot, patch = {}) => ({ userId, email: `u${userId}@example.co.jp`, nickname: `n${userId}`, partnerPersona: 'encourage', partnerName: 'ミナ', status: 'active', emailEnabled: true, slot, reviewCount: 2, quests: '["択一を5問解く"]', ...patch })
-    notify.listForSlotBuild.mockResolvedValue([r(1, '0730'), r(2, '0730'), r(3, '2100', { quests: ['キーワード説明を1問合格する'] }), r(4, '0730', { emailEnabled: false }), r(5, '0730', { status: 'deleted' })])
-    await daily()
-    const puts = s3.commandCalls(PutObjectCommand).map((c) => c.args[0].input)
-    expect(puts.map((p) => p.Key)).toEqual(['notify/2026-10-20/0730.json', 'notify/2026-10-20/2100.json'])
-    expect(puts[0].Bucket).toBe('rpg-test-notify')
-    const list = JSON.parse(puts[0].Body)
-    expect(list).toMatchObject({ date: '2026-10-20', slot: '0730' })
-    expect(list.items).toEqual([
-      { to: 'u1@example.co.jp', nickname: 'n1', partnerName: 'ミナ', persona: 'encourage', reviewCount: 2, quests: ['択一を5問解く'] },
-      { to: 'u2@example.co.jp', nickname: 'n2', partnerName: 'ミナ', persona: 'encourage', reviewCount: 2, quests: ['択一を5問解く'] }
-    ])
-    expect(JSON.parse(puts[1].Body).items).toHaveLength(1)
-    expect(JSON.stringify(log.lines)).not.toContain('@example.co.jp')
-  })
   it('MT-W03-13 ステップの失敗', async () => {
     quests.listAssignTargets.mockRejectedValue(awsError('BadRequestException'))
     await expect(daily()).rejects.toMatchObject({ name: 'BadRequestException' })
     expect(users.listPurgeTargets).not.toHaveBeenCalled()
     expect(gradings.deleteOlderThan).not.toHaveBeenCalled()
-    expect(notify.listForSlotBuild).not.toHaveBeenCalled()
   })
   it('MT-W03-14 知らないジョブ', async () => {
     await expect(main({ job: 'weekly' }, { log, now: TUE })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
