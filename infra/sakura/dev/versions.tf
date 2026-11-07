@@ -3,6 +3,7 @@ terraform {
   required_providers {
     sakuracloud = { source = "sacloud/sakuracloud", version = "~> 2.36" }
     random      = { source = "hashicorp/random", version = "~> 3.7" }
+    cloudflare  = { source = "cloudflare/cloudflare", version = "~> 4.52" }
   }
   backend "s3" {
     bucket                      = "rpg-tfstate"
@@ -19,6 +20,10 @@ terraform {
 }
 provider "sakuracloud" {
   zone = "is1b"
+}
+# DNS を Cloudflare に移したとき（dns_provider = "cloudflare"。構築手順書 3.14）だけ使う。トークンは TF_VAR_cloudflare_api_token
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token != "" ? var.cloudflare_api_token : null
 }
 # レジストリの pull 用ユーザーは shared で作ったものを使う
 data "terraform_remote_state" "shared" {

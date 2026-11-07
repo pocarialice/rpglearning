@@ -9,6 +9,9 @@ export class ApiError extends Error {
   }
 }
 export const RESUME_DELAYS_MS = [2000, 4000, 8000]
+// dev のサーバーが止まっていて、前に置いた Cloudflare Worker が起こしているとき（SERVER_WAKING。構築手順書 3.14）。起動まで1〜3分
+export const WAKE_RETRY_MS = 5000
+export const WAKE_RETRIES = 48
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // auth は { getIdToken, refresh, login } を持つ。onResuming(attempt) は M-01 の表示に使う
 export function createApi({ auth, base = '/api', fetchFn = (...a) => globalThis.fetch(...a), onResuming = () => {}, onLoginRequired = () => auth.login() } = {}) {
@@ -37,7 +40,7 @@ export function createApi({ auth, base = '/api', fetchFn = (...a) => globalThis.
   }
   async function request(method, path, body, { raw = false } = {}) {
     let refreshed = false
-    for (let resume = 0; ; ) {
+    for (let resume = 0, waking = 0; ; ) {
       const res = await send(method, path, body)
       if (res.ok) {
         if (res.status === 204) return null
@@ -58,6 +61,11 @@ export function createApi({ auth, base = '/api', fetchFn = (...a) => globalThis.
         continue
       }
       const err = await readError(res)
+      if (err.code === 'SERVER_WAKING' && waking < WAKE_RETRIES) {
+        onResuming(++waking)
+        await sleep(WAKE_RETRY_MS)
+        continue
+      }
       if (err.code === 'DB_RESUMING' && resume < RESUME_DELAYS_MS.length) {
         onResuming(resume + 1)
         await sleep(RESUME_DELAYS_MS[resume])

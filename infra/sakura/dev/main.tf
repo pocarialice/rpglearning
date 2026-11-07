@@ -168,24 +168,45 @@ resource "sakuracloud_server" "app" {
     ignore_changes = [disk_edit_parameter]
   }
 }
-# --- DNS の A レコード（2.2）。ゾーンは画面で作り、site_address のホスト名をサーバーの IP アドレスに向ける ---
+# --- DNS の A レコード（2.2・3.14）。ゾーンは画面で作り、site_address のホスト名をサーバーの IP アドレスに向ける ---
+# dns_provider = cloudflare のときは Cloudflare に作り、プロキシを通す（止まっているサーバーを起こす Worker を前に置くため）
 locals {
   dns_host = split(".", var.site_address)[0]
   dns_zone = join(".", slice(split(".", var.site_address), 1, length(split(".", var.site_address))))
 }
+locals {
+  use_sakura_dns     = var.site_address != "" && var.dns_provider == "sakura"
+  use_cloudflare_dns = var.site_address != "" && var.dns_provider == "cloudflare"
+}
 data "sakuracloud_dns" "zone" {
-  count = var.site_address != "" ? 1 : 0
+  count = local.use_sakura_dns ? 1 : 0
   filter {
     names = [local.dns_zone]
   }
 }
 resource "sakuracloud_dns_record" "app" {
-  count  = var.site_address != "" ? 1 : 0
+  count  = local.use_sakura_dns ? 1 : 0
   dns_id = data.sakuracloud_dns.zone[0].id
   name   = local.dns_host
   type   = "A"
   value  = sakuracloud_server.app.ip_address
   ttl    = 300
+}
+resource "cloudflare_record" "app" {
+  count   = local.use_cloudflare_dns ? 1 : 0
+  zone_id = var.cloudflare_zone_id
+  name    = local.dns_host
+  type    = "A"
+  content = sakuracloud_server.app.ip_address
+  proxied = true
+  ttl     = 1
+  comment = "rpg-dev（Terraform。前に Worker rpg-dev-wake）"
+  lifecycle {
+    precondition {
+      condition     = var.cloudflare_zone_id != ""
+      error_message = "dns_provider = cloudflare のときは cloudflare_zone_id を入れてください"
+    }
+  }
 }
 moved {
   from = sakuracloud_dns_record.app

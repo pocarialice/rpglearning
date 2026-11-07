@@ -1,6 +1,10 @@
 // ログインとトークンの管理（詳細設計書 6.1）。アプリの API（A-30〜A-39）を使う。トークンはメモリと sessionStorage だけに置く
 export const TOKEN_KEY = 'rpg.auth'
 export const REFRESH_BEFORE_MS = 5 * 60 * 1000
+// dev のサーバーが止まっていて起こしているとき（SERVER_WAKING。構築手順書 3.14）は、5秒ごとに4分まで待ってやり直す
+export const WAKE_RETRY_MS = 5000
+export const WAKE_RETRIES = 48
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 export class AuthError extends Error {
   constructor(code, status, message) {
     super(message ?? code)
@@ -36,6 +40,16 @@ export function createAuth({
     return send(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   }
   async function send(path, init) {
+    for (let waking = 0; ; waking++) {
+      try {
+        return await sendOnce(path, init)
+      } catch (err) {
+        if (err.code !== 'SERVER_WAKING' || waking >= WAKE_RETRIES) throw err
+        await sleep(WAKE_RETRY_MS)
+      }
+    }
+  }
+  async function sendOnce(path, init) {
     let res
     try {
       res = await fetchFn(`${base}${path}`, init)

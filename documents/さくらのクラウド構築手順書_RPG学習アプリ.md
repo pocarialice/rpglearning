@@ -3,7 +3,7 @@
 | 項目   | 内容 |
 | ---- | --- |
 | 文書名  | RPG学習アプリ さくらのクラウド構築手順書 |
-| 版数   | 第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13） |
+| 版数   | 第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14） |
 | 作成日  | 2026-10-27 |
 | 入力文書 | 外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章） |
 | 対象   | Phase 1（MVP）のパイロット環境。dev・prod の2環境 |
@@ -45,7 +45,9 @@
 
 ```mermaid
 flowchart LR
-  U["利用者のブラウザ"] -->|"HTTPS 443"| PF["パケットフィルタ"]
+  U["利用者のブラウザ"] -->|"HTTPS 443"| CF["Cloudflare（dev）<br>Worker rpg-dev-wake"]
+  CF -->|"止まっていたら電源を入れる"| SAPI["さくらのクラウド API"]
+  CF --> PF["パケットフィルタ"]
   PF --> SV
   subgraph SV["サーバー rpg-{env}-app（Ubuntu・Docker）"]
     CA["caddy<br>HTTPS"] --> API["api<br>画面と /api/*"]
@@ -83,6 +85,7 @@ flowchart TD
     E10 --> E11["3.11 リリースの反映"]
     E11 --> E12["3.12 シンプル監視・バックアップ"]
     E12 --> E13["3.13 自動停止と起動（dev）"]
+    E13 --> E14["3.14 アクセスで起こす（dev・Cloudflare）"]
   end
   E12 --> OP["第5章 運用<br>OS更新・バックアップ・Bedrock への切り替え"]
 ```
@@ -108,6 +111,7 @@ flowchart TD
 | V-15 | `AUTH_SECRET`（ログインの署名の鍵） | （管理ツールへ） | （管理ツールへ。dev と別の値） | 3.8 |
 | V-17 | DB のバックアップのバケット（`BACKUP_BUCKET`） | `rpg-dev-backup` | （使わない。アプライアンスのバックアップ） | 3.4 |
 | V-18 | 自動停止までの分数（`IDLE_STOP_MINUTES`） | `60` | （使わない。止めない） | 3.13 |
+| V-19 | Cloudflare のゾーンID（`cloudflare_zone_id`） | `rpglearning.net` のゾーンID | dev と同じゾーン | 3.14 |
 | V-16 | `GOOGLE_CLIENT_ID`（Googleでログインの OAuth クライアントID。使わないなら空） | `<番号>-xxxx.apps.googleusercontent.com` | dev と別のクライアントID | 3.8.1 |
 | V-20 | コンテナレジストリのドメイン | `<レジストリ名>.sakuracr.jp` | dev と同じ | 3.7 |
 | V-21 | レジストリの push 用ユーザー・パスワード | （管理ツールへ） | 同じ | 3.7 |
@@ -126,6 +130,7 @@ flowchart TD
 | オブジェクトストレージ | バケット4つ（DB のバックアップを含む） | バケット3つ |
 | コンテナレジストリ | 1つを dev・prod で共用 | （共用） |
 | シンプル監視 | なし（止まるたびにお知らせが来るため） | 2つ（HTTPS・ping） |
+| Cloudflare | Free プラン（DNS・プロキシ・Workers。Workers は1日10万リクエストまで無料） | DNS だけ（プロキシと Worker は通さない） |
 
 - さくらのクラウドのサーバーは、電源を切っているあいだはサーバーの料金がかからない（ディスクの料金はかかる）。データベースアプライアンスは止めても料金がかかるため、dev は DB をサーバーの中に置き、サーバーごと止める（2026-11-07 に変更）
 - 料金の決まりは変わることがあるため、構築のときに料金表で確かめる
@@ -700,6 +705,8 @@ flowchart TD
 - 止まっているあいだはサイトにつながらない。夜 0:00 の日次処理は、次に電源を入れたときに動く（ワーカーがその日の枠を見て動かす）
 - `stop` は DB のバックアップを取らずに止める。ふだんは自動停止に任せる
 
+- 3.14 の Worker を置いたあとは、サイトを開くだけで起きる。power は Worker が使えないときの予備にする
+
 **データベースアプライアンスからの引っ越し（1回だけ。2026-11 の dev）**
 
 5. いまのサーバーで、アプライアンスの DB をファイルに書き出してバケットに置く（`<V-07>` はアプライアンスのパスワード、`<V-10>` は 3.4 のキー）
@@ -718,6 +725,69 @@ infra/sakura/tf.sh dev apply -replace=sakuracloud_disk.app -replace=sakuracloud_
 
 7. 新しいサーバーの初回の起動で、`rpg-db restore-if-empty` が 5. のファイルを戻してからアプリを起動する。`/var/log/rpg-setup.log` に `✅ 戻しました` が出ていること、画面にログインしてデータが残っていることを確かめる
 8. サーバーのグローバルIPアドレスが変わる。DNS の A レコードは Terraform が直す。パケットフィルタの SSH の許可はそのまま使える
+
+
+### 3.14 アクセスで起こす（dev・Cloudflare）
+
+3.13 で止まった dev のサーバーを、サイトを開くだけで起こす。`rpglearning.net` の DNS を Cloudflare に移し、`rpg-dev.<ドメイン>` へのアクセスを Cloudflare Worker `rpg-dev-wake`（`workers/wake`）に通す。サーバーが動いていれば、Worker はリクエストをそのままサーバーへ渡すだけ。
+
+```mermaid
+sequenceDiagram
+  participant B as ブラウザ
+  participant W as Worker rpg-dev-wake
+  participant S as サーバー rpg-dev-app
+  participant A as さくらのクラウド API
+  B->>W: https://rpg-dev.<ドメイン>/
+  W->>S: そのまま渡す
+  S--xW: つながらない（止まっている。Cloudflare の 521・522）
+  W-->>B: 起動中ページ（503）
+  B->>W: POST /__wake（ページの JavaScript）
+  W->>A: 電源を入れる
+  loop 5秒ごと
+    B->>W: GET /api/health
+    W->>S: そのまま渡す
+  end
+  S-->>B: 200 → ページを読み込み直す
+```
+
+**起こすとき・起こさないとき**
+
+| アクセス | サーバーが止まっているときの Worker |
+| --- | --- |
+| 画面（`/` など）を開く | 起動中ページを返す。**ページの JavaScript** が `POST /__wake` を呼んで起こす（JavaScript を動かさないボットの見回りでは起きない） |
+| ログイン中の画面からの `/api/*`（`Authorization` ヘッダー付き）・`POST` | 起こして `503`・`SERVER_WAKING` を返す。画面は「ギルドの扉を開けています…」を出し、5秒ごとに4分まで待ってやり直す（`web/js/core/api.js`・`auth.js`） |
+| `GET /api/health`、ヘッダーのない `GET /api/*` | 起こさない（`503`・`SERVER_WAKING`） |
+| User-Agent がボット・`curl` などのもの | 起こさない |
+| `/.well-known/acme-challenge/*` | そのまま渡す（Let's Encrypt の証明書の更新） |
+
+- 一度つながらなかったら20秒はサーバーに取りに行かず、すぐ起動中を返す。電源を入れたら60秒は API を呼ばない（Cloudflare のデータセンターごと）
+- Service Worker が画面をキャッシュしている端末は、キャッシュの画面がそのまま開き、最初の API で起きる
+
+**DNS を Cloudflare に移す（1回だけ）**
+
+1. Cloudflare のアカウントを作り、「Add a domain」で `rpglearning.net` を Free プランで足す。さくらのクラウド DNS のレコードが読み込まれるので、**すべて**あるかを見比べる。特にメール（`mail.rpglearning.net` の MX・SPF の TXT・DKIM・DMARC）は、プロキシを「DNS only」（灰色の雲）にする
+2. 足りないレコードは、さくらのクラウドの「DNS」→ ゾーン `rpglearning.net` のレコードを見て手で足す。`rpg-dev` の A レコードは Terraform が作るため、読み込まれていたら消す
+3. さくらのドメインの会員メニューで、`rpglearning.net` のネームサーバーを Cloudflare が示す2つに替える。切り替わるまで数時間〜1日。Cloudflare の画面が「Active」になるまで待つ
+4. Cloudflare の「SSL/TLS」を **Full (strict)** にする（サーバーの Caddy は Let's Encrypt の証明書を持っている）。「Always Use HTTPS」はオンでよい
+5. ゾーンの「概要」の右下のゾーンIDを V-19 に控え、`infra/sakura/dev/dev.auto.tfvars` に `dns_provider = "cloudflare"`・`cloudflare_zone_id = "<V-19>"` を書く
+6. Cloudflare の「My Profile」→「API Tokens」で、ゾーン `rpglearning.net` の「DNS の編集」だけのトークンを作り、`TF_VAR_cloudflare_api_token` に入れて apply する（プロバイダーを足したため、最初だけ `init -upgrade`）
+
+```bash
+infra/sakura/tf.sh dev init -upgrade
+infra/sakura/tf.sh dev apply
+```
+
+7. メールを送って届くこと（3.6）、`https://<V-01>/api/health` が返ることを確かめる
+
+**Worker を置く（1回だけ。workers/wake を変えたときも）**
+
+8. Cloudflare で、Workers の編集とゾーンの Workers ルートの編集ができる API トークンを作る。アカウントID（「Workers & Pages」の右側）と一緒に、GitHub の Environment `dev` の Secrets `CLOUDFLARE_API_TOKEN`・`CLOUDFLARE_ACCOUNT_ID` に入れる。`SAKURACLOUD_ACCESS_TOKEN`・`SAKURACLOUD_ACCESS_TOKEN_SECRET` は 3.13 で入れたものを使う（Worker にも入る。アクセスレベルは電源の操作ができる最小のものにする）
+9. GitHub の Actions →「wake-worker」→「Run workflow」。テストのあと、Worker をデプロイしてさくらのクラウドの APIキーを Worker の secret に入れる
+10. 確かめる：サーバーで `sudo rpg-idle-stop` が止めるのを待つ（または `scripts/sakura-power.sh stop`）。ブラウザで `https://<V-01>/` を開き、起動中ページのあと1〜3分で画面が開くこと。Cloudflare の Worker の「Logs」に `{"msg":"wake","result":"started"}` が出ること
+
+- Worker のルートは `rpg-dev.rpglearning.net/*`（`workers/wake/wrangler.toml`）。ドメインを変えたらここも直す
+- 証明書の更新が失敗するとき（`docker compose logs caddy` に `challenge failed`）は、Cloudflare の「Always Use HTTPS」を一度オフにして Caddy を `docker compose restart caddy` する。それでもだめなら、Cloudflare の Origin CA 証明書を Caddy に置く方法に替える（6章 No.7）
+- サーバーの IP アドレスが変わったとき（作り直したとき）は、Terraform が Cloudflare の A レコードを直す
 
 ---
 
@@ -738,6 +808,7 @@ infra/sakura/tf.sh dev apply -replace=sakuracloud_disk.app -replace=sakuracloud_
 | 3.10 | 本番のシステム管理者を作る。確認用の利用者は `[確認用]` を名前に付ける |
 | 3.12 | 監視の通知先にシステム管理者を入れる |
 | 3.13 | 行わない。prod は24時間動かし、DB はデータベースアプライアンス（`.env` の `COMPOSE_PROFILES` は空、`DATABASE_URL` はアプライアンスのIPアドレス） |
+| 3.14 | 行わない。prod の A レコードは Cloudflare で「DNS only」（プロキシを通さない）にする |
 
 - prod の `.env` を dev からコピーして直すときは、**キー・パスワード・`AUTH_SECRET` をすべて prod の値に替えた**ことを2人で確かめる
 
@@ -815,3 +886,4 @@ MODEL_LIGHT=<Haiku のモデルID>
 | 4 | サーバーの冗長化 | Phase 1 は1台（止まると数分〜数十分使えない）。全社展開の前に2台とロードバランサにするかを決める | Phase 3 の計画時 |
 | 5 | AWS に残っている dev のリソース | **2026-10-27 に費用がかかるものを止めた**：Aurora Serverless v2 を削除（最終スナップショットなし。DB のシークレットも削除）、EventBridge のスケジュール2つを無効化。CloudFront は Free プラン（月0円）のため API で無効にできず、そのまま残した。S3・Cognito・API Gateway・SQS・SNS・CloudWatch のアラームとロググループ・IAM ロールは、ほぼ0円のため残した（Lambda は一覧を見る権限がなく、さわっていない）。アカウント共通のもの（CloudTrail・予算・GitHub OIDC）も残した。残りをすべて消すかは、Bedrock の切り替え（5.5）のときに決める | Bedrock の切り替え時 |
 | 6 | サーバーの SSH を開ける範囲 | 作業場所のIPアドレスだけ。テレワークで IPアドレスが変わる場合の運用を決める | dev 構築時 |
+| 7 | Cloudflare の後ろでの証明書の更新 | Caddy の Let's Encrypt（HTTP-01）を Cloudflare のプロキシ越しに通す。dev で90日後の更新が通るかを見る。通らなければ Cloudflare の Origin CA 証明書に替える | 2027-02（初回の更新） |

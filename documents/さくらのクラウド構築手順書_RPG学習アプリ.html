@@ -529,7 +529,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">さくらのクラウド構築手順書</span>
     <h1><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>RPG学習アプリ さくらのクラウド構築手順書</h1>
     <ul class="meta">
-      <li>版数<b>第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）</b></li>
+      <li>版数<b>第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）</b></li>
       <li>作成日<b>2026-10-27</b></li>
       <li>入力文書<b>外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章）</b></li>
       <li>対象<b>Phase 1（MVP）のパイロット環境。dev・prod の2環境</b></li>
@@ -624,7 +624,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.4 全体の構成</h3>
 <figure class="diagram wide"><div class="mermaid">flowchart LR
-  U["利用者のブラウザ"] --&gt;|"HTTPS 443"| PF["パケットフィルタ"]
+  U["利用者のブラウザ"] --&gt;|"HTTPS 443"| CF["Cloudflare（dev）&lt;br&gt;Worker rpg-dev-wake"]
+  CF --&gt;|"止まっていたら電源を入れる"| SAPI["さくらのクラウド API"]
+  CF --&gt; PF["パケットフィルタ"]
   PF --&gt; SV
   subgraph SV["サーバー rpg-{env}-app（Ubuntu・Docker）"]
     CA["caddy&lt;br&gt;HTTPS"] --&gt; API["api&lt;br&gt;画面と /api/*"]
@@ -659,6 +661,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     E10 --&gt; E11["3.11 リリースの反映"]
     E11 --&gt; E12["3.12 シンプル監視・バックアップ"]
     E12 --&gt; E13["3.13 自動停止と起動（dev）"]
+    E13 --&gt; E14["3.14 アクセスで起こす（dev・Cloudflare）"]
   end
   E12 --&gt; OP["第5章 運用&lt;br&gt;OS更新・バックアップ・Bedrock への切り替え"]
 </div></figure>
@@ -794,6 +797,17 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>3.13</td>
 </tr>
 <tr>
+<td>3.14</td>
+<td>行わない。prod の A レコードは Cloudflare で「DNS only」（プロキシを通さない）にする</td>
+</tr>
+<tr>
+<td>V-19</td>
+<td>Cloudflare のゾーンID（<code>cloudflare_zone_id</code>）</td>
+<td><code>rpglearning.net</code> のゾーンID</td>
+<td>dev と同じゾーン</td>
+<td>3.14</td>
+</tr>
+<tr>
 <td>V-16</td>
 <td><code>GOOGLE_CLIENT_ID</code>（Googleでログインの OAuth クライアントID。使わないなら空）</td>
 <td><code>&lt;番号&gt;-xxxx.apps.googleusercontent.com</code></td>
@@ -868,6 +882,11 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>シンプル監視</td>
 <td>なし（止まるたびにお知らせが来るため）</td>
 <td>2つ（HTTPS・ping）</td>
+</tr>
+<tr>
+<td>Cloudflare</td>
+<td>Free プラン（DNS・プロキシ・Workers。Workers は1日10万リクエストまで無料）</td>
+<td>DNS だけ（プロキシと Worker は通さない）</td>
 </tr>
 </tbody>
 </table></div>
@@ -1804,6 +1823,9 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 <li>止まっているあいだはサイトにつながらない。夜 0:00 の日次処理は、次に電源を入れたときに動く（ワーカーがその日の枠を見て動かす）</li>
 <li><code>stop</code> は DB のバックアップを取らずに止める。ふだんは自動停止に任せる</li>
 </ul>
+<ul>
+<li>3.14 の Worker を置いたあとは、サイトを開くだけで起きる。power は Worker が使えないときの予備にする</li>
+</ul>
 <p><strong>データベースアプライアンスからの引っ越し（1回だけ。2026-11 の dev）</strong></p>
 <ol start="5">
 <li>いまのサーバーで、アプライアンスの DB をファイルに書き出してバケットに置く（<code>&lt;V-07&gt;</code> はアプライアンスのパスワード、<code>&lt;V-10&gt;</code> は 3.4 のキー）</li>
@@ -1821,6 +1843,96 @@ docker run --rm -i -e AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; -e AW
 <li>新しいサーバーの初回の起動で、<code>rpg-db restore-if-empty</code> が 5. のファイルを戻してからアプリを起動する。<code>/var/log/rpg-setup.log</code> に <code>✅ 戻しました</code> が出ていること、画面にログインしてデータが残っていることを確かめる</li>
 <li>サーバーのグローバルIPアドレスが変わる。DNS の A レコードは Terraform が直す。パケットフィルタの SSH の許可はそのまま使える</li>
 </ol>
+<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.14 アクセスで起こす（dev・Cloudflare）</h3>
+<p>3.13 で止まった dev のサーバーを、サイトを開くだけで起こす。<code>rpglearning.net</code> の DNS を Cloudflare に移し、<code>rpg-dev.&lt;ドメイン&gt;</code> へのアクセスを Cloudflare Worker <code>rpg-dev-wake</code>（<code>workers/wake</code>）に通す。サーバーが動いていれば、Worker はリクエストをそのままサーバーへ渡すだけ。</p>
+<div class="vis">
+  <p class="vis-label">止まっている dev のサイトを開いたとき</p>
+  <ol class="flow">
+    <li><b><i class="fa-solid fa-globe fi"></i>サイトを開く</b>https://V-01/</li>
+    <li><b><i class="fa-solid fa-shield-halved fi"></i>Worker</b>サーバーにつながらない → 起動中ページ</li>
+    <li><b><i class="fa-solid fa-power-off fi"></i>電源を入れる</b>ページの JavaScript が /__wake</li>
+    <li><b><i class="fa-solid fa-heart-pulse fi"></i>待つ</b>5秒ごとに /api/health</li>
+    <li class="hl"><b><i class="fa-solid fa-circle-check fi"></i>画面が開く</b>1〜3分で自動で読み込み直す</li>
+  </ol>
+</div>
+<figure class="diagram"><div class="mermaid">sequenceDiagram
+  participant B as ブラウザ
+  participant W as Worker rpg-dev-wake
+  participant S as サーバー rpg-dev-app
+  participant A as さくらのクラウド API
+  B-&gt;&gt;W: https://rpg-dev.&lt;ドメイン&gt;/
+  W-&gt;&gt;S: そのまま渡す
+  S--xW: つながらない（止まっている。Cloudflare の 521・522）
+  W--&gt;&gt;B: 起動中ページ（503）
+  B-&gt;&gt;W: POST /__wake（ページの JavaScript）
+  W-&gt;&gt;A: 電源を入れる
+  loop 5秒ごと
+    B-&gt;&gt;W: GET /api/health
+    W-&gt;&gt;S: そのまま渡す
+  end
+  S--&gt;&gt;B: 200 → ページを読み込み直す
+</div></figure>
+<p><strong>起こすとき・起こさないとき</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>アクセス</th>
+<th>サーバーが止まっているときの Worker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>画面（<code>/</code> など）を開く</td>
+<td>起動中ページを返す。<strong>ページの JavaScript</strong> が <code>POST /__wake</code> を呼んで起こす（JavaScript を動かさないボットの見回りでは起きない）</td>
+</tr>
+<tr>
+<td>ログイン中の画面からの <code>/api/*</code>（<code>Authorization</code> ヘッダー付き）・<code>POST</code></td>
+<td>起こして <code>503</code>・<code>SERVER_WAKING</code> を返す。画面は「ギルドの扉を開けています…」を出し、5秒ごとに4分まで待ってやり直す（<code>web/js/core/api.js</code>・<code>auth.js</code>）</td>
+</tr>
+<tr>
+<td><code>GET /api/health</code>、ヘッダーのない <code>GET /api/*</code></td>
+<td>起こさない（<code>503</code>・<code>SERVER_WAKING</code>）</td>
+</tr>
+<tr>
+<td>User-Agent がボット・<code>curl</code> などのもの</td>
+<td>起こさない</td>
+</tr>
+<tr>
+<td><code>/.well-known/acme-challenge/*</code></td>
+<td>そのまま渡す（Let's Encrypt の証明書の更新）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>一度つながらなかったら20秒はサーバーに取りに行かず、すぐ起動中を返す。電源を入れたら60秒は API を呼ばない（Cloudflare のデータセンターごと）</li>
+<li>Service Worker が画面をキャッシュしている端末は、キャッシュの画面がそのまま開き、最初の API で起きる</li>
+</ul>
+<p><strong>DNS を Cloudflare に移す（1回だけ）</strong></p>
+<ol>
+<li>Cloudflare のアカウントを作り、「Add a domain」で <code>rpglearning.net</code> を Free プランで足す。さくらのクラウド DNS のレコードが読み込まれるので、<strong>すべて</strong>あるかを見比べる。特にメール（<code>mail.rpglearning.net</code> の MX・SPF の TXT・DKIM・DMARC）は、プロキシを「DNS only」（灰色の雲）にする</li>
+<li>足りないレコードは、さくらのクラウドの「DNS」→ ゾーン <code>rpglearning.net</code> のレコードを見て手で足す。<code>rpg-dev</code> の A レコードは Terraform が作るため、読み込まれていたら消す</li>
+<li>さくらのドメインの会員メニューで、<code>rpglearning.net</code> のネームサーバーを Cloudflare が示す2つに替える。切り替わるまで数時間〜1日。Cloudflare の画面が「Active」になるまで待つ</li>
+<li>Cloudflare の「SSL/TLS」を <strong>Full (strict)</strong> にする（サーバーの Caddy は Let's Encrypt の証明書を持っている）。「Always Use HTTPS」はオンでよい</li>
+<li>ゾーンの「概要」の右下のゾーンIDを V-19 に控え、<code>infra/sakura/dev/dev.auto.tfvars</code> に <code>dns_provider = "cloudflare"</code>・<code>cloudflare_zone_id = "&lt;V-19&gt;"</code> を書く</li>
+<li>Cloudflare の「My Profile」→「API Tokens」で、ゾーン <code>rpglearning.net</code> の「DNS の編集」だけのトークンを作り、<code>TF_VAR_cloudflare_api_token</code> に入れて apply する（プロバイダーを足したため、最初だけ <code>init -upgrade</code>）</li>
+</ol>
+<pre><code class="language-bash">infra/sakura/tf.sh dev init -upgrade
+infra/sakura/tf.sh dev apply
+</code></pre>
+<ol start="7">
+<li>メールを送って届くこと（3.6）、<code>https://&lt;V-01&gt;/api/health</code> が返ることを確かめる</li>
+</ol>
+<p><strong>Worker を置く（1回だけ。workers/wake を変えたときも）</strong></p>
+<ol start="8">
+<li>Cloudflare で、Workers の編集とゾーンの Workers ルートの編集ができる API トークンを作る。アカウントID（「Workers &amp; Pages」の右側）と一緒に、GitHub の Environment <code>dev</code> の Secrets <code>CLOUDFLARE_API_TOKEN</code>・<code>CLOUDFLARE_ACCOUNT_ID</code> に入れる。<code>SAKURACLOUD_ACCESS_TOKEN</code>・<code>SAKURACLOUD_ACCESS_TOKEN_SECRET</code> は 3.13 で入れたものを使う（Worker にも入る。アクセスレベルは電源の操作ができる最小のものにする）</li>
+<li>GitHub の Actions →「wake-worker」→「Run workflow」。テストのあと、Worker をデプロイしてさくらのクラウドの APIキーを Worker の secret に入れる</li>
+<li>確かめる：サーバーで <code>sudo rpg-idle-stop</code> が止めるのを待つ（または <code>scripts/sakura-power.sh stop</code>）。ブラウザで <code>https://&lt;V-01&gt;/</code> を開き、起動中ページのあと1〜3分で画面が開くこと。Cloudflare の Worker の「Logs」に <code>{"msg":"wake","result":"started"}</code> が出ること</li>
+</ol>
+<ul>
+<li>Worker のルートは <code>rpg-dev.rpglearning.net/*</code>（<code>workers/wake/wrangler.toml</code>）。ドメインを変えたらここも直す</li>
+<li>証明書の更新が失敗するとき（<code>docker compose logs caddy</code> に <code>challenge failed</code>）は、Cloudflare の「Always Use HTTPS」を一度オフにして Caddy を <code>docker compose restart caddy</code> する。それでもだめなら、Cloudflare の Origin CA 証明書を Caddy に置く方法に替える（6章 No.7）</li>
+<li>サーバーの IP アドレスが変わったとき（作り直したとき）は、Terraform が Cloudflare の A レコードを直す</li>
+</ul>
 </section><section class="chapter" id="ch4"><h2><i aria-hidden="true" class="fa-solid fa-rocket h-ico"></i>4. prod 環境の構築<span class="env-badge env-prod">prod・本番</span></h2>
 <p>右上のプロジェクトで <code>rpg-prod</code> を選び、第3章を上から同じ順で行う。違うところだけを書く。</p>
 <div class="table-wrap"><table>
@@ -2007,12 +2119,18 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <td>作業場所のIPアドレスだけ。テレワークで IPアドレスが変わる場合の運用を決める</td>
 <td>dev 構築時</td>
 </tr>
+<tr>
+<td>7</td>
+<td>Cloudflare の後ろでの証明書の更新</td>
+<td>Caddy の Let's Encrypt（HTTP-01）を Cloudflare のプロキシ越しに通す。dev で90日後の更新が通るかを見る。通らなければ Cloudflare の Origin CA 証明書に替える</td>
+<td>2027-02（初回の更新）</td>
+</tr>
 </tbody>
 </table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.2版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.3版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

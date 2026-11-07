@@ -104,3 +104,23 @@ variable "tools_ref" {
   type        = string
   default     = "main"
 }
+variable "dns_provider" {
+  description = "site_address の A レコードを置く DNS。sakura（さくらのクラウド DNS）か cloudflare（Cloudflare。前に起こす係の Worker を置く。3.14）"
+  type        = string
+  default     = "sakura"
+  validation {
+    condition     = contains(["sakura", "cloudflare"], var.dns_provider)
+    error_message = "dns_provider は sakura か cloudflare にしてください"
+  }
+}
+variable "cloudflare_zone_id" {
+  description = "Cloudflare のゾーンID（ゾーンの「概要」の右下。公開してよい値）。dns_provider = cloudflare のときに使う"
+  type        = string
+  default     = ""
+}
+variable "cloudflare_api_token" {
+  description = "Cloudflare の API トークン（ゾーンの DNS の編集だけ）。dns_provider = cloudflare のときに使う"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

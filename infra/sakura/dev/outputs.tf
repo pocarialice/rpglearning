@@ -4,7 +4,7 @@ output "server_ip" {
 }
 output "fqdn" {
   description = "V-01 サイトのドメイン名（DNS の A レコードを Terraform で作る）"
-  value       = var.site_address != "" ? "${sakuracloud_dns_record.app[0].name}.${local.dns_zone}" : null
+  value       = var.site_address != "" ? "${local.dns_host}.${local.dns_zone}" : null
 }
 output "ssh" {
   value = "ssh ubuntu@${sakuracloud_server.app.ip_address}"

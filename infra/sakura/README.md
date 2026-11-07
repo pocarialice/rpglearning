@@ -23,6 +23,7 @@
 | `TF_VAR_ai_api_key` | V-11 さくらのAI Engine のトークン |
 | `TF_VAR_smtp_password` | V-12 SMTP のパスワード |
 | `TF_VAR_alert_email` | V-14 監視のお知らせの宛先（個人のアドレスのため `dev.auto.tfvars` に書かない） |
+| `TF_VAR_cloudflare_api_token` | Cloudflare の API トークン（ゾーンの DNS の編集だけ）。`dns_provider = "cloudflare"` のときだけ |
 | `TF_VAR_tailscale_auth_key` | Tailscale の認証キー（1回しか使えないもの）。サーバーを作るときだけ使う。空なら Tailscale を入れるだけでつながない |
 
 ## 作る順番
@@ -53,3 +54,9 @@ infra/sakura/tf.sh dev output fqdn                              # DNS の A レ�
 - サーバーを作り直すと、初回の起動で `rpg-db restore-if-empty` がいちばん新しいバックアップを戻す
 - `rpg-deploy`・`rpg-db`・`rpg-idle-stop` は、スタートアップスクリプトの 10,000 文字に入らないため、サーバーを作るときに GitHub の `tools_ref`（既定 `main`）から取る。手元のファイルの sha256 と違うと止まるため、**push してから apply する**（ブランチで試すときは `-var tools_ref=<ブランチ名>`）
 - データベースアプライアンスからの引っ越しは手順書 3.13 のとおり。先にバックアップをバケットに置いてから `-replace` でサーバーを作り直す（アプライアンスとスイッチは apply で消える）
+
+## アクセスで起こす（dev。手順書 3.14）
+
+- `rpglearning.net` の DNS を Cloudflare に移し、`dev.auto.tfvars` に `dns_provider = "cloudflare"`・`cloudflare_zone_id` を書くと、Terraform は `rpg-dev` の A レコードを Cloudflare にプロキシ付きで作る（さくらのクラウド DNS のレコードは消す）。プロバイダーを足したため、最初だけ `infra/sakura/tf.sh dev init -upgrade`
+- `rpg-dev.rpglearning.net/*` は Cloudflare Worker `rpg-dev-wake`（`workers/wake`）を通る。サーバーにつながらなければ、起動中ページを返してさくらのクラウド API で電源を入れる。デプロイは GitHub Actions の `wake-worker`
+- 起こすのは、起動中ページの JavaScript（`POST /__wake`）と、ログイン中の画面からの `/api/*` だけ。ボットの見回りでは起きない

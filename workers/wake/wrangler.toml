@@ -1,0 +1,14 @@
+# dev サイトの前に置く Cloudflare Worker（構築手順書 3.14）。デプロイは GitHub Actions の wake-worker か、ここで npx wrangler@4 deploy
+# 鍵（さくらのクラウドの APIキー）は wrangler secret put SAKURACLOUD_ACCESS_TOKEN / SAKURACLOUD_ACCESS_TOKEN_SECRET で入れる（ここには書かない）
+name = "rpg-dev-wake"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = false
+routes = [
+  { pattern = "rpg-dev.rpglearning.net/*", zone_name = "rpglearning.net" }
+]
+[vars]
+SAKURACLOUD_ZONE = "is1b"
+SERVER_NAME = "rpg-dev-app"
+[observability]
+enabled = true
