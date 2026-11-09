@@ -62,7 +62,9 @@ restore_from() {
   docker compose stop api worker > /dev/null 2>&1 || true
   psql_q "DROP DATABASE IF EXISTS rpg WITH (FORCE)" postgres > /dev/null
   psql_q "CREATE DATABASE rpg" postgres > /dev/null
-  docker compose exec -T db pg_restore -U rpgadmin -d rpg --no-owner --no-privileges --exit-on-error < "$file"
+  # --clean --if-exists：データベースアプライアンスから public だけを書き出したもの（pg_dump -n public）は CREATE SCHEMA public を含むため、
+  # 空の public を消してから作り直す。このコンテナの rpg-db backup で取ったもの（public を作らない）はそのまま戻る
+  docker compose exec -T db pg_restore -U rpgadmin -d rpg --no-owner --no-privileges --clean --if-exists --exit-on-error < "$file"
   echo "✅ 戻しました：$label"
   docker compose up -d
 }
