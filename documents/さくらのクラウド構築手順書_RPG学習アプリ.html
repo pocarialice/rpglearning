@@ -1876,16 +1876,23 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 </ul>
 <p><strong>データベースアプライアンスからの引っ越し（1回だけ。2026-11 の dev）</strong></p>
 <ol start="5">
-<li>いまのサーバーで、アプライアンスの DB をファイルに書き出してバケットに置く（<code>&lt;V-07&gt;</code> はアプライアンスのパスワード、<code>&lt;V-10&gt;</code> は 3.4 のキー）</li>
+<li>いまのサーバーで、アプライアンスの DB をファイルに書き出してバケットに置く。パスワード（V-07）とオブジェクトストレージのキーは <code>.env</code> から読むため、打たなくてよい（シェルの履歴にも残らない）</li>
 </ol>
 <pre><code class="language-bash">cd /opt/rpg
-docker run --rm postgres:16 pg_dump "$(grep '^DATABASE_URL=' .env | tail -n1 | cut -d= -f2-)" -n public -T public.spatial_ref_sys -Fc &gt; /tmp/rpg.dump
-docker run --rm -i -e AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; -e AWS_SECRET_ACCESS_KEY=&lt;V-10 のシークレットキー&gt; -e AWS_REQUEST_CHECKSUM_CALCULATION=when_required amazon/aws-cli:2.22.35 --endpoint-url https://s3.isk01.sakurastorage.jp --region jp-north-1 s3 cp - s3://rpg-dev-backup/db/rpg-$(date +%Y%m%d-%H%M).dump &lt; /tmp/rpg.dump
+e() { grep "^$1=" .env | tail -n1 | cut -d= -f2-; }
+s3() { docker run --rm -i -e AWS_ACCESS_KEY_ID="$(e S3_ACCESS_KEY_ID)" -e AWS_SECRET_ACCESS_KEY="$(e S3_SECRET_ACCESS_KEY)" -e AWS_REQUEST_CHECKSUM_CALCULATION=when_required amazon/aws-cli:2.22.35 --endpoint-url "$(e S3_ENDPOINT)" --region "$(e S3_REGION)" s3 "$@"; }
+docker run --rm postgres:16 pg_dump "$(e DATABASE_URL)" -n public -T public.spatial_ref_sys -Fc &gt; /tmp/rpg.dump
+docker run --rm -i postgres:16 pg_restore -l &lt; /tmp/rpg.dump | grep -c "TABLE DATA"
+s3 cp - s3://rpg-dev-backup/db/rpg-$(date +%Y%m%d-%H%M).dump &lt; /tmp/rpg.dump
+s3 ls s3://rpg-dev-backup/db/
 </code></pre>
 <ul>
+<li><code>e</code> は <code>.env</code> の値を1つ読む（同じ名前が何行かあれば最後の行）。<code>s3</code> はオブジェクトストレージを aws-cli のコンテナで使う（サーバーに aws-cli を入れない。新しいサーバーの <code>rpg-db</code> と同じやり方）</li>
+<li><code>AWS_ACCESS_KEY_ID</code>・<code>AWS_SECRET_ACCESS_KEY</code> は aws-cli がキーを読む決まった名前で、中身はさくらのアプリ用のキー（V-10）。接続先は <code>--endpoint-url</code> のさくら（<code>S3_ENDPOINT</code>）で、AWS にはつながない。オブジェクトストレージは S3 互換のため aws-cli で読み書きできる</li>
+<li>アプリ用のキー（パーミッション <code>rpg-dev-app</code>）に <code>rpg-dev-backup</code> の読み書きの権限が要る（3.4）。ないと <code>AccessDenied</code> になる</li>
 <li><code>-n public</code> を付けて、アプリのテーブルがある <code>public</code> スキーマだけを書き出す。アプライアンスには地図用の拡張機能のスキーマ（<code>tiger</code> など）があり、<code>rpgadmin</code> には読む権限がないため、付けないと <code>permission denied for schema tiger</code> で止まる（2026-11-09 に dev で発生）。戻すとき（<code>rpg-db</code>）は <code>--clean --if-exists</code> で <code>public</code> を作り直すため、そのまま戻る</li>
-<li><code>-T public.spatial_ref_sys</code> で、同じ拡張機能（PostGIS）が <code>public</code> に置くテーブル <code>spatial_ref_sys</code> を外す。入れたままだと、新しいサーバーで戻すときに <code>relation "public.spatial_ref_sys" does not exist</code> で止まる。書き出したら <code>pg_restore -l</code> の <code>TABLE DATA</code> が29個（V001〜V008 のテーブル）になっていることを確かめる</li>
-<li>パスワード（V-07）は <code>.env</code> の <code>DATABASE_URL</code> から読むため、打たなくてよい</li>
+<li><code>-T public.spatial_ref_sys</code> で、同じ拡張機能（PostGIS）が <code>public</code> に置くテーブル <code>spatial_ref_sys</code> を外す。入れたままだと、新しいサーバーで戻すときに <code>relation "public.spatial_ref_sys" does not exist</code> で止まる</li>
+<li>4行目の <code>TABLE DATA</code> の数が29（V001〜V008 のテーブル）であることを確かめる。<code>s3 cp</code> は標準入力から上げるため何も表示しない。最後の <code>s3 ls</code> に今の時刻の <code>rpg-….dump</code> が出れば置けている</li>
 </ul>
 <ol start="6">
 <li>変更を main に入れてから（スタートアップスクリプトが <code>rpg-db</code> などを GitHub から取るため）、Tailscale の認証キーを <code>TF_VAR_tailscale_auth_key</code> に入れ、サーバーを作り直す。アプライアンスとスイッチは消える</li>
