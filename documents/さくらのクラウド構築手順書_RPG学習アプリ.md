@@ -729,11 +729,12 @@ flowchart TD
 
 ```bash
 cd /opt/rpg
-docker run --rm postgres:16 pg_dump "$(grep '^DATABASE_URL=' .env | tail -n1 | cut -d= -f2-)" -n public -Fc > /tmp/rpg.dump
+docker run --rm postgres:16 pg_dump "$(grep '^DATABASE_URL=' .env | tail -n1 | cut -d= -f2-)" -n public -T public.spatial_ref_sys -Fc > /tmp/rpg.dump
 docker run --rm -i -e AWS_ACCESS_KEY_ID=<V-10 のアクセスキー> -e AWS_SECRET_ACCESS_KEY=<V-10 のシークレットキー> -e AWS_REQUEST_CHECKSUM_CALCULATION=when_required amazon/aws-cli:2.22.35 --endpoint-url https://s3.isk01.sakurastorage.jp --region jp-north-1 s3 cp - s3://rpg-dev-backup/db/rpg-$(date +%Y%m%d-%H%M).dump < /tmp/rpg.dump
 ```
 
 - `-n public` を付けて、アプリのテーブルがある `public` スキーマだけを書き出す。アプライアンスには地図用の拡張機能のスキーマ（`tiger` など）があり、`rpgadmin` には読む権限がないため、付けないと `permission denied for schema tiger` で止まる（2026-11-09 に dev で発生）。戻すとき（`rpg-db`）は `--clean --if-exists` で `public` を作り直すため、そのまま戻る
+- `-T public.spatial_ref_sys` で、同じ拡張機能（PostGIS）が `public` に置くテーブル `spatial_ref_sys` を外す。入れたままだと、新しいサーバーで戻すときに `relation "public.spatial_ref_sys" does not exist` で止まる。書き出したら `pg_restore -l` の `TABLE DATA` が29個（V001〜V008 のテーブル）になっていることを確かめる
 - パスワード（V-07）は `.env` の `DATABASE_URL` から読むため、打たなくてよい
 
 6. 変更を main に入れてから（スタートアップスクリプトが `rpg-db` などを GitHub から取るため）、Tailscale の認証キーを `TF_VAR_tailscale_auth_key` に入れ、サーバーを作り直す。アプライアンスとスイッチは消える

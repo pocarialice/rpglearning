@@ -1879,11 +1879,12 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 <li>いまのサーバーで、アプライアンスの DB をファイルに書き出してバケットに置く（<code>&lt;V-07&gt;</code> はアプライアンスのパスワード、<code>&lt;V-10&gt;</code> は 3.4 のキー）</li>
 </ol>
 <pre><code class="language-bash">cd /opt/rpg
-docker run --rm postgres:16 pg_dump "$(grep '^DATABASE_URL=' .env | tail -n1 | cut -d= -f2-)" -n public -Fc &gt; /tmp/rpg.dump
+docker run --rm postgres:16 pg_dump "$(grep '^DATABASE_URL=' .env | tail -n1 | cut -d= -f2-)" -n public -T public.spatial_ref_sys -Fc &gt; /tmp/rpg.dump
 docker run --rm -i -e AWS_ACCESS_KEY_ID=&lt;V-10 のアクセスキー&gt; -e AWS_SECRET_ACCESS_KEY=&lt;V-10 のシークレットキー&gt; -e AWS_REQUEST_CHECKSUM_CALCULATION=when_required amazon/aws-cli:2.22.35 --endpoint-url https://s3.isk01.sakurastorage.jp --region jp-north-1 s3 cp - s3://rpg-dev-backup/db/rpg-$(date +%Y%m%d-%H%M).dump &lt; /tmp/rpg.dump
 </code></pre>
 <ul>
 <li><code>-n public</code> を付けて、アプリのテーブルがある <code>public</code> スキーマだけを書き出す。アプライアンスには地図用の拡張機能のスキーマ（<code>tiger</code> など）があり、<code>rpgadmin</code> には読む権限がないため、付けないと <code>permission denied for schema tiger</code> で止まる（2026-11-09 に dev で発生）。戻すとき（<code>rpg-db</code>）は <code>--clean --if-exists</code> で <code>public</code> を作り直すため、そのまま戻る</li>
+<li><code>-T public.spatial_ref_sys</code> で、同じ拡張機能（PostGIS）が <code>public</code> に置くテーブル <code>spatial_ref_sys</code> を外す。入れたままだと、新しいサーバーで戻すときに <code>relation "public.spatial_ref_sys" does not exist</code> で止まる。書き出したら <code>pg_restore -l</code> の <code>TABLE DATA</code> が29個（V001〜V008 のテーブル）になっていることを確かめる</li>
 <li>パスワード（V-07）は <code>.env</code> の <code>DATABASE_URL</code> から読むため、打たなくてよい</li>
 </ul>
 <ol start="6">
