@@ -37,8 +37,6 @@ export const ROUTES = [
   r('GET', '/api/me', me.get, ALL),
   r('PUT', '/api/me/profile', me.putProfile, LEARNER),
   r('PUT', '/api/me/partner', me.putPartner, LEARNER),
-  r('GET', '/api/me/notify', me.getNotify, LEARNER),
-  r('PUT', '/api/me/notify', me.putNotify, LEARNER),
   r('GET', '/api/home', home.get, LEARNER, 'course'),
   r('GET', '/api/courses', courses.list, LEARNER, 'nickname'),
   r('POST', '/api/enrollments', courses.enroll, LEARNER, 'nickname'),

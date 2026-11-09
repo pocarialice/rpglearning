@@ -4,3 +4,4 @@ release/
 coverage/
 reports/
 .env
+.wrangler

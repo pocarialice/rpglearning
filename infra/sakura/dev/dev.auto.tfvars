@@ -4,7 +4,10 @@ ssh_public_keys = [
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOyVXtR8nWtjbwmfjYIeO/GY8ptjpBHKyEtoZdUhLn3E jun-IDPW02514",
 ]
 ssh_allowed_cidrs = ["112.70.171.129", "203.140.83.25"]
-site_address      = "rpg-dev.rpglearning.net"
+# テスターに公開する名前（prod は凍結中のため、dev を本番として使う。手順書 1.1）。www と前の rpg-dev は転送するだけ
+site_address       = "rpglearning.net"
+redirect_addresses = ["www.rpglearning.net", "rpg-dev.rpglearning.net"]
+dns_zone           = "rpglearning.net"
 image             = "rpglearning.sakuracr.jp/rpg-app:dev-20261107-21"
 mail_from         = "no-reply@mail.rpglearning.net"
 # Googleでログインの OAuth クライアントID（構築手順書 3.8.1。公開してよい値）。いまのサーバーへは rpg-deploy env GOOGLE_CLIENT_ID <値> で入れる

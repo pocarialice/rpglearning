@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第2.3版（ドラフト：第1〜6章、HTML版あり。第1.9版でアカウント作成（A-36・A-37、S-01）のテスト14件を載せた。第2.0版でコースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せる。第2.1版で HEAD のテスト2件（MT-H01-13・MT-S01-11）を載せた。第2.2版でひとことの時間帯のテスト2件（MT-A04-14・MT-H03-09）を載せ、MT-A04-05・MT-H03-01〜03・07 を直す。第2.3版で Googleでログイン（A-38・A-39、S-01）のテスト23件を MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18 として載せる）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02、第2.0版：2026-11-03、第2.1版：2026-11-04、第2.2版：2026-11-06、第2.3版：2026-11-06）</b></li>
+      <li>版数<b>第2.4版（ドラフト：第1〜6章、HTML版あり。第1.9版でアカウント作成（A-36・A-37、S-01）のテスト14件を載せた。第2.0版でコースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せる。第2.1版で HEAD のテスト2件（MT-H01-13・MT-S01-11）を載せた。第2.2版でひとことの時間帯のテスト2件（MT-A04-14・MT-H03-09）を載せ、MT-A04-05・MT-H03-01〜03・07 を直す。第2.3版で Googleでログイン（A-38・A-39、S-01）のテスト23件を MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18 として載せる。第2.4版で通知メール（S-10・A-04・B-03）を機能ごと削除し、そのテスト22件（MT-U03-10・MT-U07-21〜22・MT-D03-33・MT-M01-01・MT-H02-10・16・MT-W03-12・MT-W04-01〜07・MT-S02-10・MT-F18-01〜05）を欠番にした）</b></li>
+      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02、第2.0版：2026-11-03、第2.1版：2026-11-04、第2.2版：2026-11-06、第2.3版：2026-11-06、第2.4版：2026-11-07）</b></li>
       <li>入力文書<b>詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
@@ -1075,10 +1075,10 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-U03-10</td>
-<td>送信枠</td>
-<td>JST 07:29:59 ／ 07:30:00 ／ 22:59 ／ 00:10</td>
-<td><code>'0700'</code> ／ <code>'0730'</code> ／ <code>'2230'</code> ／ <code>'0000'</code></td>
-<td>境</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-U03-11</td>
@@ -1468,7 +1468,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<p><strong>通知時刻・取り込み・問題</strong></p>
+<p><strong>取り込み・問題</strong></p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1482,17 +1482,17 @@ describe('M-D01 client', () =&gt; {
 <tbody>
 <tr>
 <td>MT-U07-21</td>
-<td>通知時刻の範囲</td>
-<td><code>'05:30'</code>／<code>'06:00'</code>／<code>'22:00'</code>／<code>'22:30'</code></td>
-<td>NG／OK／OK／NG</td>
-<td>境</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-U07-22</td>
-<td>通知時刻の刻み・形式</td>
-<td><code>'07:15'</code>、<code>'7:30'</code>、<code>'24:00'</code>、<code>null</code></td>
-<td>すべて NG</td>
-<td>異</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-U07-23</td>
@@ -1870,7 +1870,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-D03-13</td>
 <td>users：登録・ロール・削除・復活・物理削除</td>
 <td><code>create</code>（ロール2つ）、<code>markDeleted</code>、<code>restore</code>（更新0件）、<code>purge</code></td>
-<td>user_roles に2行、notify_settings に1行。削除予定日は <code>{date}</code>。更新0件は false</td>
+<td>user_roles に2行（notify_settings には書かない）。削除予定日は <code>{date}</code>。更新0件は false</td>
 <td>同</td>
 </tr>
 <tr>
@@ -2008,10 +2008,10 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-D03-33</td>
-<td>notify の各関数</td>
-<td><code>get</code>・<code>put</code>・<code>listForSlotBuild</code></td>
-<td>送信時刻は <code>HH24:MI</code>、今日は <code>{date}</code></td>
-<td>同</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-D03-34</td>
@@ -3272,10 +3272,10 @@ describe('M-D01 client', () =&gt; {
 <tbody>
 <tr>
 <td>MT-M01-01</td>
-<td>通知メールの本文</td>
-<td>送信リストの1件（たろう・ミナ・復習5・クエスト3つ）、<code>APP_ENV=prod</code></td>
-<td>件名 <code>【RPG学習アプリ】今日の依頼が届いています</code>。本文に「たろうさん」・5・クエスト3つ・<code>/#/home</code>・<code>/#/notify</code></td>
-<td>同</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-M01-02</td>
@@ -3739,10 +3739,10 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-H02-10</td>
-<td>通知設定</td>
-<td><code>PUT /api/me/notify {emailEnabled:true, sendTime:'21:30'}</code> ／ <code>'22:30'</code></td>
-<td>200 ／ 400</td>
-<td>境</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-H02-11</td>
@@ -3781,10 +3781,10 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-H02-16</td>
-<td>通知設定の取得</td>
-<td>行あり／行なし</td>
-<td>保存値／初期値（オン・07:30）</td>
-<td>境</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-H02-17</td>
@@ -4546,7 +4546,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-H12-01</td>
 <td>登録</td>
 <td><code>{email, fullName, roles:['learner']}</code></td>
-<td>1つのトランザクションで users（invited）・user_roles・notify_settings・仮パスワード（ハッシュ・期限7日）を保存し、招待メール（仮パスワード入り）を送る。操作記録 <code>user.create</code>。仮パスワードは応答・ログに出ない</td>
+<td>1つのトランザクションで users（invited）・user_roles・仮パスワード（ハッシュ・期限7日）を保存し、招待メール（仮パスワード入り）を送る。操作記録 <code>user.create</code>。仮パスワードは応答・ログに出ない</td>
 <td>同</td>
 </tr>
 <tr>
@@ -5322,7 +5322,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-W03-01</td>
 <td>実行順</td>
 <td>月曜 0:00（2026-10-26T00:00 JST）</td>
-<td>close-ranking → update-streak → assign-quests → purge-users → cleanup-gradings → build-notify の順</td>
+<td>close-ranking → update-streak → assign-quests → purge-users → cleanup-gradings の順</td>
 <td>同</td>
 </tr>
 <tr>
@@ -5397,10 +5397,10 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-W03-12</td>
-<td>送信リスト</td>
-<td>通知オン3名（07:30×2・21:00×1）、通知オフ1名、論理削除中1名</td>
-<td>オブジェクトストレージに <code>notify/2026-10-20/0730.json</code>（2件）と <code>2100.json</code>（1件）の2ファイルだけ置く</td>
-<td>同</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-W03-13</td>
@@ -5425,7 +5425,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-W04 <code>jobs/mail.js</code></h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-W04 <code>jobs/mail.js</code>（削除。第2.4版）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -5439,52 +5439,52 @@ describe('M-D01 client', () =&gt; {
 <tbody>
 <tr>
 <td>MT-W04-01</td>
-<td>送信</td>
-<td>07:30 JST、<code>0730.json</code> に3件</td>
-<td>SMTP で3通、送信3・失敗0 をログ</td>
-<td>同</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-W04-02</td>
-<td>ファイルがない</td>
-<td>22:30 JST（<code>2230.json</code> なし → <code>NoSuchKey</code>）</td>
-<td>送信0、例外なし</td>
-<td>境</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-W04-03</td>
-<td>1回失敗して成功</td>
-<td>2件目が1回失敗したあと成功</td>
-<td>2件目を2回送り、送信3・失敗0</td>
-<td>異</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-W04-04</td>
-<td>2回とも失敗</td>
-<td>2件目が2回とも失敗</td>
-<td>3件目も送る。送信2・失敗1、<code>WARN</code> ログ、例外なし</td>
-<td>異</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-W04-05</td>
-<td>DBを使わない</td>
-<td>正常に送信</td>
-<td>DB への問い合わせ・トランザクションが0回</td>
-<td>異</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-W04-06</td>
-<td>枠の丸め</td>
-<td>07:44 JST に起動（遅延）</td>
-<td><code>0730.json</code> を読む</td>
-<td>境</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-W04-07</td>
-<td>オブジェクトストレージのほかのエラー</td>
-<td><code>AccessDenied</code></td>
-<td>送信0、ERROR ログ <code>mail.read_failed</code>、例外なし</td>
-<td>異</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 </tbody>
 </table></div>
@@ -5657,10 +5657,10 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-S02-10</td>
-<td>メール送信の有効・無効</td>
-<td><code>MAIL_SCHEDULE_ENABLED</code> が <code>true</code>／なし</td>
-<td>mail の枠を動かす／動かさない</td>
-<td>DT</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-S02-11</td>
@@ -6641,7 +6641,7 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-F16-02</td>
 <td>メニュー</td>
-<td>コースごとの実績・コース・パートナー・通知設定・ログアウト</td>
+<td>コースごとの実績・コース・パートナー・ログアウト</td>
 <td>先頭が「コースごとの実績」。それぞれの画面へ移る、<code>auth.logout</code> を呼ぶ</td>
 <td>同</td>
 </tr>
@@ -6724,7 +6724,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F18 <code>pages/learner/s10-notify.js</code>（S-10 通知設定）</h4>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F18 <code>pages/learner/s10-notify.js</code>（S-10 通知設定。削除。第2.4版）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -6738,38 +6738,38 @@ describe('M-D01 client', () =&gt; {
 <tbody>
 <tr>
 <td>MT-F18-01</td>
-<td>送る時刻の選択肢</td>
-<td><code>SEND_TIMES</code></td>
-<td>33個、06:00・06:30 … 22:00</td>
-<td>境</td>
+<td>（欠番）</td>
+<td>通知メールを削除したため削除（第2.4版）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-F18-02</td>
-<td>保存</td>
-<td>オン・07:30 → 21:30 にして保存</td>
-<td>変えるまで押せない、プッシュ通知は「準備中」で押せない、A-04 のあと「保存した」と M-09、また押せなくなる</td>
-<td>状</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-F18-03</td>
-<td>メールをオフ</td>
-<td>オフにする</td>
-<td>時刻は選べない、「オフ」と表示、保存できる</td>
-<td>状</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-F18-04</td>
-<td>保存の失敗</td>
-<td>A-04 が 500</td>
-<td>「保存できませんでした」、もう一度押せる</td>
-<td>異</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>MT-F18-05</td>
-<td>戻る</td>
-<td>「プロフィールへ戻る」</td>
-<td><code>#/profile</code> へ</td>
-<td>同</td>
+<td>（欠番）</td>
+<td>同上</td>
+<td>-</td>
+<td>-</td>
 </tr>
 </tbody>
 </table></div>
@@ -7658,10 +7658,10 @@ describe('M-D01 client', () =&gt; {
 <td>MT-A01〜MT-A06</td>
 </tr>
 <tr>
-<td>5.6 メール、6.2 送信方式</td>
+<td>5.6 メール、6.2 定期処理</td>
 <td>3.8、4.5、4.7、9.2</td>
-<td>build-notify、mail/smtp、templates、server/worker</td>
-<td>MT-W03-12、MT-W04-01〜07、MT-M01-01〜09、MT-S02-07〜11</td>
+<td>mail/smtp、templates、server/worker</td>
+<td>MT-M01-02〜09、MT-S02-07〜09・11</td>
 </tr>
 <tr>
 <td>8.1 認証・権限、3.7 S-01 ログイン</td>
@@ -7688,10 +7688,10 @@ describe('M-D01 client', () =&gt; {
 <td>MT-F07-01〜13</td>
 </tr>
 <tr>
-<td>3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-10）</td>
+<td>3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-09）</td>
 <td>6.2</td>
 <td>pages/learner、parts</td>
-<td>MT-F09〜MT-F18</td>
+<td>MT-F09〜MT-F17</td>
 </tr>
 <tr>
 <td>3.8 管理画面（S-11〜S-14）</td>
@@ -7862,8 +7862,8 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>4</td>
-<td>SMTP で招待・再設定・通知のメールが届く（SPF・DKIM が通り、迷惑メールにならない）</td>
-<td>自分あてに利用者を登録し、招待・再設定・通知のメールが受信箱に届くことを確かめる</td>
+<td>SMTP で招待・再設定のメールが届く（SPF・DKIM が通り、迷惑メールにならない）</td>
+<td>自分あてに利用者を登録し、招待・再設定のメールが受信箱に届くことを確かめる</td>
 <td>新しい利用者がログインできない（仮パスワードが届かない）</td>
 </tr>
 <tr>

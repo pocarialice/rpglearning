@@ -1,13 +1,15 @@
 # さくらのクラウドの Terraform
 
+> 2026-11 から prod の構築は凍結し、dev を本番としてテスターに `https://rpglearning.net` で公開している（`www.rpglearning.net`・`rpg-dev.rpglearning.net` は転送するだけ。手順書 1.8・5.6）。名前の `dev` はそのまま
+
 構築手順書（`documents/さくらのクラウド構築手順書_RPG学習アプリ.md`）の第3章のうち、API で作れるものを Terraform にしたもの。
 
 | ディレクトリ | 作るもの | 手順書 |
 | --- | --- | --- |
 | `shared/` | コンテナレジストリ、push 用・pull 用のユーザー（dev・prod で共用） | 3.7 |
-| `dev/` | スイッチ、パケットフィルタ、データベースアプライアンス、DNS の A レコード、サーバー（初回の起動で Docker・`/opt/rpg`・DB `rpg` の作成・`docker compose up -d` まで行う）、シンプル監視 | 3.2・3.3・3.8・3.9・3.12 |
+| `dev/` | パケットフィルタ、DNS の A レコード、サーバー（初回の起動で Docker・`/opt/rpg`・バックアップからの DB の復元・`docker compose up -d`・自動停止のタイマーまで行う）。DB はサーバーの中の db コンテナで、データベースアプライアンス・スイッチ・シンプル監視は作らない | 3.2・3.3・3.8・3.9・3.13 |
 
-画面で作るもの（Terraform では作れない）：プロジェクト、オブジェクトストレージのバケットとアクセスキー（3.4）、さくらのAI Engine のトークン（3.5）、SMTP（3.6）、DNS のゾーン（2.2）、GitHub の Environment（2.3・3.7）。
+画面で作るもの（Terraform では作れない）：プロジェクト、オブジェクトストレージのバケット（DB のバックアップの `rpg-dev-backup` を含む）とアクセスキー（3.4）、さくらのAI Engine のトークン（3.5）、SMTP（3.6）、DNS のゾーン（2.2）、GitHub の Environment（2.3・3.7）。
 
 ## 最初に1回だけ
 
@@ -23,6 +25,7 @@
 | `TF_VAR_ai_api_key` | V-11 さくらのAI Engine のトークン |
 | `TF_VAR_smtp_password` | V-12 SMTP のパスワード |
 | `TF_VAR_alert_email` | V-14 監視のお知らせの宛先（個人のアドレスのため `dev.auto.tfvars` に書かない） |
+| `TF_VAR_cloudflare_api_token` | Cloudflare の API トークン（ゾーンの DNS の編集だけ）。`dns_provider = "cloudflare"` のときだけ |
 | `TF_VAR_tailscale_auth_key` | Tailscale の認証キー（1回しか使えないもの）。サーバーを作るときだけ使う。空なら Tailscale を入れるだけでつながない |
 
 ## 作る順番
@@ -43,3 +46,19 @@ infra/sakura/tf.sh dev output fqdn                              # DNS の A レ�
 - 2回目からのリリースの反映は手順書 3.11 のとおりサーバーで行う。`image` を変えて apply してもサーバーは変わらない
 - スマホから反映できるよう、サーバーには反映のコマンド `rpg-deploy`（`dev/rpg-deploy.sh`）と Tailscale が入る。スマホの Tailscale と SSH アプリから `rpg-dev` に入り、`rpg-deploy` と打つといちばん新しい版を反映する。いまのサーバーへの入れ方は手順書 3.11
 - シンプル監視の通知は、さくらのクラウドの会員のメールアドレスに届く
+- シンプル監視は作らない。dev のサーバーはアクセスがないと止まるため、止まるたびにお知らせが来てしまう
+
+## 費用を抑える仕組み（dev。手順書 3.13）
+
+- さくらのクラウドのサーバーは電源を切っているあいだ料金がかからない（ディスクは別）。データベースアプライアンスは止めても料金がかかるため、dev は DB を compose の `db`（`COMPOSE_PROFILES=localdb`）にした
+- サーバーの `rpg-idle-stop.timer` が5分ごとに見回り、`/api/*`（`/api/health`・`/api/auth/refresh` は数えない）のアクセスが `idle_stop_minutes`（既定60分）なく、採点・取り込みのジョブも、SSH で入っている人もいなければ、`rpg-db backup` でバケット `rpg-dev-backup` にバックアップしてから電源を切る
+- 使うときは GitHub Actions の `power`（`start`）か、PC で `scripts/sakura-power.sh start`。電源が入ると Docker がコンテナを起動する
+- サーバーを作り直すと、初回の起動で `rpg-db restore-if-empty` がいちばん新しいバックアップを戻す
+- `rpg-deploy`・`rpg-db`・`rpg-idle-stop` は、スタートアップスクリプトの 10,000 文字に入らないため、サーバーを作るときに GitHub の `tools_ref`（既定 `main`）から取る。手元のファイルの sha256 と違うと止まるため、**push してから apply する**（ブランチで試すときは `-var tools_ref=<ブランチ名>`）
+- データベースアプライアンスからの引っ越しは手順書 3.13 のとおり。先にバックアップをバケットに置いてから `-replace` でサーバーを作り直す（アプライアンスとスイッチは apply で消える）
+
+## アクセスで起こす（dev。手順書 3.14）
+
+- `rpglearning.net` の DNS を Cloudflare に移し、`dev.auto.tfvars` に `dns_provider = "cloudflare"`・`cloudflare_zone_id` を書くと、Terraform は `site_address` と `redirect_addresses` の A レコード（ドメインそのものは `@`）を Cloudflare にプロキシ付きで作る（さくらのクラウド DNS のレコードは消す）。プロバイダーを足したため、最初だけ `infra/sakura/tf.sh dev init -upgrade`
+- `rpglearning.net/*`・`www.rpglearning.net/*`・`rpg-dev.rpglearning.net/*` は Cloudflare Worker `rpg-dev-wake`（`workers/wake`）を通る。`www` と `rpg-dev` は Worker が `https://rpglearning.net` へ 301 で移す。サーバーにつながらなければ、起動中ページを返してさくらのクラウド API で電源を入れる。デプロイは GitHub Actions の `wake-worker`
+- 起こすのは、起動中ページの JavaScript（`POST /__wake`）と、ログイン中の画面からの `/api/*` だけ。ボットの見回りでは起きない

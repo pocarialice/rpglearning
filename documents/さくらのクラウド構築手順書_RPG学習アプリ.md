@@ -3,7 +3,7 @@
 | 項目   | 内容 |
 | ---- | --- |
 | 文書名  | RPG学習アプリ さくらのクラウド構築手順書 |
-| 版数   | 第0.1版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避） |
+| 版数   | 第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）。第0.4版で、prod の構築を凍結し、dev を本番としてテスターに `rpglearning.net` で公開することにした（1.8）。第0.5版で、通知メールを機能ごと削除した |
 | 作成日  | 2026-10-27 |
 | 入力文書 | 外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章） |
 | 対象   | Phase 1（MVP）のパイロット環境。dev・prod の2環境 |
@@ -15,6 +15,7 @@
 
 ### 1.1 この手順書の使い方
 
+- **2026-11 から prod の構築は凍結している**（1.8）。dev を本番としてテスターに公開する。第4章は凍結を解くときに使う
 - 第2章（アカウントで1回だけ行う作業）を最初に行い、そのあと **dev → prod の順** に第3〜4章を進める
 - 第4章（prod）は第3章と同じ手順のため、値の違いだけを書いている
 - 手順の中の `<DBのパスワード>` などの山かっこは、自分の環境の値に置き換える
@@ -45,14 +46,17 @@
 
 ```mermaid
 flowchart LR
-  U["利用者のブラウザ"] -->|"HTTPS 443"| PF["パケットフィルタ"]
+  U["利用者のブラウザ"] -->|"HTTPS 443"| CF["Cloudflare（dev）<br>Worker rpg-dev-wake"]
+  CF -->|"止まっていたら電源を入れる"| SAPI["さくらのクラウド API"]
+  CF --> PF["パケットフィルタ"]
   PF --> SV
   subgraph SV["サーバー rpg-{env}-app（Ubuntu・Docker）"]
     CA["caddy<br>HTTPS"] --> API["api<br>画面と /api/*"]
     WK["worker<br>採点・取り込み・定期処理"]
   end
-  SV -->|"スイッチ（ローカル）"| DB[("データベース<br>PostgreSQL")]
-  API --> OS["オブジェクトストレージ<br>import・assets・notify"]
+  SV -->|"prod：スイッチ（ローカル）"| DB[("prod：データベース<br>アプライアンス")]
+  SV -.-|"dev：サーバーの中の db コンテナ<br>（バックアップはオブジェクトストレージ）"| SV
+  API --> OS["オブジェクトストレージ<br>import・assets・backup"]
   WK --> OS
   API --> AI["さくらのAI Engine<br>（あとで Bedrock）"]
   WK --> AI
@@ -60,7 +64,8 @@ flowchart LR
   WK --> SM
   GH["GitHub Actions"] -->|"push"| CR["コンテナレジストリ"]
   CR -->|"pull"| SV
-  MON["シンプル監視"] -->|"/api/health"| SV
+  MON["シンプル監視（prod）"] -->|"/api/health"| SV
+  GHP["GitHub Actions power（dev）"] -->|"電源を入れる"| SV
 ```
 
 ### 1.5 構築の順番
@@ -80,6 +85,8 @@ flowchart TD
     E9 --> E10["3.10 最初のシステム管理者"]
     E10 --> E11["3.11 リリースの反映"]
     E11 --> E12["3.12 シンプル監視・バックアップ"]
+    E12 --> E13["3.13 自動停止と起動（dev）"]
+    E13 --> E14["3.14 アクセスで起こす（dev・Cloudflare）"]
   end
   E12 --> OP["第5章 運用<br>OS更新・バックアップ・Bedrock への切り替え"]
 ```
@@ -88,21 +95,25 @@ flowchart TD
 
 | 番号 | 項目 | dev | prod | どこで決まるか |
 | --- | --- | --- | --- | --- |
-| V-01 | サイトのドメイン名（`SITE_ADDRESS`） | `rpg-dev.<ドメイン>` | `rpg.<ドメイン>` | 2.2 |
+| V-01 | サイトのドメイン名（`SITE_ADDRESS`。テスターに公開する名前） | `rpglearning.net`（ドメインそのもの） | `rpg.<ドメイン>`（凍結中） | 2.2 |
+| V-23 | 転送するだけのドメイン名（`REDIRECT_ADDRESSES`） | `www.rpglearning.net`・`rpg-dev.rpglearning.net` | （なし） | 2.2 |
 | V-02 | サーバーのグローバルIPアドレス | | | 3.8 |
-| V-03 | スイッチのネットワーク | `192.168.10.0/24` | `192.168.20.0/24` | 3.2 |
-| V-04 | サーバーのローカルIPアドレス | `192.168.10.11` | `192.168.20.11` | 3.8 |
-| V-05 | DB のIPアドレス | `192.168.10.21` | `192.168.20.21` | 3.3 |
+| V-03 | スイッチのネットワーク | （使わない） | `192.168.20.0/24` | 3.2 |
+| V-04 | サーバーのローカルIPアドレス | （使わない） | `192.168.20.11` | 3.8 |
+| V-05 | DB のIPアドレス | （使わない。compose の `db`） | `192.168.20.21` | 3.3 |
 | V-06 | DB のユーザー名 | `rpgadmin` | `rpgadmin` | 3.3 |
 | V-07 | DB のパスワード | （管理ツールへ） | （管理ツールへ） | 3.3 |
 | V-08 | オブジェクトストレージのエンドポイント・リージョン | `https://s3.isk01.sakurastorage.jp`・`jp-north-1` | 同じ | 3.4 |
-| V-09 | バケット名（取り込み・画像・通知） | `rpg-dev-import`・`rpg-dev-assets`・`rpg-dev-notify` | `rpg-prod-*` | 3.4 |
+| V-09 | バケット名（取り込み・画像） | `rpg-dev-import`・`rpg-dev-assets` | `rpg-prod-*` | 3.4 |
 | V-10 | オブジェクトストレージのアクセスキー・シークレットキー | （管理ツールへ） | （管理ツールへ） | 3.4 |
 | V-11 | さくらのAI Engine のアカウントトークン | （管理ツールへ） | （管理ツールへ。dev と分ける） | 3.5 |
 | V-12 | SMTP のホスト・ポート・ユーザー・パスワード | | | 3.6 |
 | V-13 | 送信元のメールアドレス（`MAIL_FROM`） | `no-reply@mail.<ドメイン>` | 同じ | 3.6 |
 | V-14 | 監視のお知らせの宛先（`ALERT_EMAIL`） | 開発者 | システム管理者・開発者 | 3.6 |
 | V-15 | `AUTH_SECRET`（ログインの署名の鍵） | （管理ツールへ） | （管理ツールへ。dev と別の値） | 3.8 |
+| V-17 | DB のバックアップのバケット（`BACKUP_BUCKET`） | `rpg-dev-backup` | （使わない。アプライアンスのバックアップ） | 3.4 |
+| V-18 | 自動停止までの分数（`IDLE_STOP_MINUTES`） | `60` | （使わない。止めない） | 3.13 |
+| V-19 | Cloudflare のゾーンID（`cloudflare_zone_id`） | `rpglearning.net` のゾーンID | dev と同じゾーン | 3.14 |
 | V-16 | `GOOGLE_CLIENT_ID`（Googleでログインの OAuth クライアントID。使わないなら空） | `<番号>-xxxx.apps.googleusercontent.com` | dev と別のクライアントID | 3.8.1 |
 | V-20 | コンテナレジストリのドメイン | `<レジストリ名>.sakuracr.jp` | dev と同じ | 3.7 |
 | V-21 | レジストリの push 用ユーザー・パスワード | （管理ツールへ） | 同じ | 3.7 |
@@ -115,11 +126,30 @@ flowchart TD
 | リソース | dev | prod |
 | --- | --- | --- |
 | サーバー | 1コア・2GB・ディスク40GB | 2コア・4GB・ディスク40GB（利用者が増えたら4コア・8GB） |
-| スイッチ | 1 | 1 |
-| データベースアプライアンス | 10GB プラン（1コア・2GB） | 30GB プラン（2コア・4GB） |
-| オブジェクトストレージ | バケット3つ | バケット3つ |
+| サーバーの動く時間 | 使うときだけ（アクセスがない時間が60分続くと止まる。3.13） | 24時間 |
+| スイッチ | なし | 1 |
+| データベースアプライアンス | なし（サーバーの中の db コンテナ） | 30GB プラン（2コア・4GB） |
+| オブジェクトストレージ | バケット3つ（DB のバックアップを含む） | バケット2つ |
 | コンテナレジストリ | 1つを dev・prod で共用 | （共用） |
-| シンプル監視 | 2つ（HTTPS・ping） | 2つ（HTTPS・ping） |
+| シンプル監視 | なし（止まるたびにお知らせが来るため） | 2つ（HTTPS・ping） |
+| Cloudflare | Free プラン（DNS・プロキシ・Workers。Workers は1日10万リクエストまで無料） | DNS だけ（プロキシと Worker は通さない） |
+
+- さくらのクラウドのサーバーは、電源を切っているあいだはサーバーの料金がかからない（ディスクの料金はかかる）。データベースアプライアンスは止めても料金がかかるため、dev は DB をサーバーの中に置き、サーバーごと止める（2026-11-07 に変更）
+- 料金の決まりは変わることがあるため、構築のときに料金表で確かめる
+
+### 1.8 運用の方針（2026-11 から）
+
+| 項目 | 方針 |
+| --- | --- |
+| prod | **軌道に乗るまで構築を凍結する**。第4章の手順と `rpg-prod` の名前は残すが、リソースは作らない |
+| 本番 | いまの dev 環境を本番として、テスターに公開する。リソースやプロジェクトの名前（`rpg-dev-*`）、`APP_ENV=dev`、GitHub の Environment `dev` は変えない |
+| ドメイン | テスターに公開するのは `rpglearning.net`（サブドメインなし。V-01）。`www.rpglearning.net` と前の `rpg-dev.rpglearning.net` は `https://rpglearning.net` へ 301 で転送する（V-23） |
+| 自動停止 | 3.13 のとおり60分アクセスがなければ止める。テスターは、開いてから1〜3分待つことがある（3.14） |
+| 通知メール | 送らない（2026-11-07 に機能ごと削除した） |
+| リリース | GitHub Actions の release（main で手動）で作った `dev-*` の版を `rpg-deploy` で反映する（3.11）。テスターに使ってもらっているため、反映の前に dev の画面で確かめる手順を飛ばさない |
+
+- 転送は2か所で行う。Cloudflare の Worker（3.14。サーバーが止まっていても移せる）と、サーバーの Caddy（`Caddyfile` の `REDIRECT_ADDRESSES`。DNS がさくらのクラウドのときに使う）
+- 切り替えの手順は 5.6
 
 ---
 
@@ -134,7 +164,7 @@ flowchart TD
 ### 2.2 ドメインと DNS
 
 1. 使うドメインを決める（さくらのドメインで取る場合は「ドメイン取得」）。DNS は、さくらのクラウドの「DNS」アプライアンス、またはドメインの管理会社の DNS を使う
-2. 名前を決めて V-01 に書く（`rpg-dev.<ドメイン>`・`rpg.<ドメイン>`）。A レコードはサーバーを作ったあと（3.8）に登録する
+2. 名前を決めて V-01・V-23 に書く（dev は `rpglearning.net`、転送は `www.rpglearning.net`・`rpg-dev.rpglearning.net`。prod は凍結中）。A レコードは Terraform がサーバーを作ったあとに作る（ドメインそのものは名前 `@`）
 3. 送信元のドメインの SPF・DKIM は 3.6 で登録する
 
 ### 2.3 GitHub の設定
@@ -159,7 +189,7 @@ flowchart TD
 
 ### 3.2 スイッチとパケットフィルタ
 
-**スイッチ**
+**スイッチ**（prod だけ。dev は DB をサーバーの中に置くため作らない）
 
 1. 「ネットワーク」→「スイッチ」→「追加」
 2. 名前 `rpg-dev-sw`、タグ `rpg`・`dev`。ルータは付けない（サーバーと DB を内側でつなぐだけ）
@@ -185,7 +215,20 @@ flowchart TD
 - SSH は作業場所のIPアドレスだけに開ける。IPアドレスが変わる環境なら、作業のときだけルール3を足す
 - サーバーの中でも ufw で 22・80・443 だけを開ける（3.8）。二重に守る
 
-### 3.3 データベースアプライアンス
+### 3.3 データベース
+
+**dev：サーバーの中の db コンテナ**
+
+dev は、データベースアプライアンスを作らない。DB は `compose.yaml` の `db`（PostgreSQL 16）で、`.env` に `COMPOSE_PROFILES=localdb` があるときだけ動く。データはサーバーのディスク（Docker のボリューム `pg_data`）に置き、オブジェクトストレージのバケット V-17 にバックアップする（3.4・5.3）。
+
+| 項目 | 値 |
+| --- | --- |
+| ユーザー名・パスワード | V-06（`rpgadmin`）・V-07（Terraform が作る。`infra/sakura/tf.sh dev output -raw database_password`） |
+| データベース | `rpg`（db コンテナが最初の起動で作る） |
+| `.env` | `COMPOSE_PROFILES=localdb`・`DB_PASSWORD=<V-07>`・`DATABASE_URL=postgres://rpgadmin:<V-07>@db:5432/rpg` |
+| バックアップ | `rpg-db backup`。毎日 3:00、自動停止の前、`rpg-deploy` の反映の前に動き、30個残す |
+
+**prod：データベースアプライアンス**
 
 1. 「アプライアンス」→「データベース」→「追加」
 2. 次のとおり入れる
@@ -218,11 +261,13 @@ flowchart TD
 | --- | --- | --- |
 | `rpg-dev-import` | 問題の取り込みの原本（PDF・画像・テキスト） | 非公開 |
 | `rpg-dev-assets` | パートナーの画像（api コンテナの `/partners/*` が配信する） | 非公開 |
-| `rpg-dev-notify` | 通知メールの送信リスト（日次処理が作る） | 非公開 |
+| `rpg-dev-backup` | DB のバックアップ（`rpg-db` が `db/` に置く。V-17。dev だけ） | 非公開 |
+
+- 2026-11-07 に通知メールを機能ごと削除した。前に作った `rpg-dev-notify` は使わないため、中身を消してからバケットごと消してよい。DB の通知設定（`notify_settings`）は、次の反映で api がマイグレーション V009 を流して消す
 
 **アクセスキー**
 
-2. 「パーミッション」（アクセスキー）を作り、上の3つのバケットに「読み取り・書き込み」を付ける。名前 `rpg-dev-app`
+2. 「パーミッション」（アクセスキー）を作り、上のバケットすべてに「読み取り・書き込み」を付ける。名前 `rpg-dev-app`（あとから `rpg-dev-backup` を作ったときは、このパーミッションに足す）
 3. 表示されたアクセスキーとシークレットキーを V-10 に控える（シークレットキーはあとで表示できない）
 4. エンドポイントとリージョンを V-08 に控える（画面に出る値を優先する）
 
@@ -257,7 +302,7 @@ done
 
 **古いファイルの削除**（任意）
 
-7. `rpg-dev-import` の `uploads/` は取り込みが終われば使わないため、ライフサイクルで30日後に消す。`rpg-dev-notify` の `notify/` は7日後に消す（S3 互換 API の `put-bucket-lifecycle-configuration`。使えなければ手で年に数回消す）
+7. `rpg-dev-import` の `uploads/` は取り込みが終われば使わないため、ライフサイクルで30日後に消す（S3 互換 API の `put-bucket-lifecycle-configuration`。使えなければ手で年に数回消す）
 
 ### 3.5 さくらのAI Engine
 
@@ -366,11 +411,11 @@ docker compose exec api node -e "import('./functions/shared/mail/smtp.js').then(
 | プラン | 1コア・2GB（prod は2コア・4GB） |
 | ディスク | 40GB（SSD）、アーカイブ「Ubuntu Server 24.04 LTS」 |
 | NIC 1 | インターネット（共有セグメント）、パケットフィルタ `rpg-dev-pf` |
-| NIC 2 | スイッチ `rpg-dev-sw`（追加の NIC。作成後に「NIC」タブで足してもよい） |
+| NIC 2 | prod だけ：スイッチ `rpg-prod-sw`（追加の NIC。dev は付けない） |
 | 公開鍵 | `rpg-admin`（パスワードでのログインは無効にする） |
 | ホスト名・名前・タグ | `rpg-dev-app`・`rpg`・`dev` |
 
-2. 作成後、グローバルIPアドレスを V-02 に控え、DNS に A レコード `<V-01>` → V-02 を登録する
+2. 作成後、グローバルIPアドレスを V-02 に控え、DNS に A レコード `<V-01>`（ドメインそのものなら名前 `@`）と V-23 の名前 → V-02 を登録する（Terraform で作るときは自動）
 3. SSH でログインする：`ssh ubuntu@<V-02>`
 
 **OS の設定**
@@ -383,7 +428,7 @@ sudo timedatectl set-timezone Asia/Tokyo
 sudo ufw allow 22/tcp && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw --force enable
 ```
 
-5. NIC 2（スイッチ側）にローカルIPアドレス V-04 を付ける。`/etc/netplan/60-switch.yaml` を作る（インターフェース名は `ip link` で確かめる。例 `ens4`）
+5. prod だけ：NIC 2（スイッチ側）にローカルIPアドレス V-04 を付ける。`/etc/netplan/60-switch.yaml` を作る（インターフェース名は `ip link` で確かめる。例 `ens4`）
 
 ```yaml
 network:
@@ -431,10 +476,15 @@ curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/Caddy
 ```bash
 IMAGE=<V-20>/rpg-app:<3.7 で控えたリリース番号>
 SITE_ADDRESS=<V-01>
+REDIRECT_ADDRESSES=<V-23 をカンマ区切りで。例 www.rpglearning.net, rpg-dev.rpglearning.net>
 APP_ENV=dev
 APP_URL=https://<V-01>
-DATABASE_URL=postgres://rpgadmin:<V-07>@192.168.10.21:5432/rpg
+COMPOSE_PROFILES=localdb
+DB_PASSWORD=<V-07>
+DATABASE_URL=postgres://rpgadmin:<V-07>@db:5432/rpg
 DATABASE_SSL=
+BACKUP_BUCKET=<V-17>
+IDLE_STOP_MINUTES=<V-18>
 AUTH_SECRET=<V-15>
 GOOGLE_CLIENT_ID=<V-16。使わないなら空>
 S3_ENDPOINT=https://s3.isk01.sakurastorage.jp
@@ -443,7 +493,6 @@ S3_ACCESS_KEY_ID=<V-10 のアクセスキー>
 S3_SECRET_ACCESS_KEY=<V-10 のシークレットキー>
 IMPORT_BUCKET=rpg-dev-import
 ASSETS_BUCKET=rpg-dev-assets
-NOTIFY_BUCKET=rpg-dev-notify
 SMTP_HOST=<V-12>
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -456,7 +505,6 @@ AI_BASE_URL=https://api.ai.sakura.ad.jp/v1
 AI_API_KEY=<V-11>
 MODEL_HIGH=gpt-oss-120b
 MODEL_LIGHT=gpt-oss-120b
-MAIL_SCHEDULE_ENABLED=false
 ```
 
 ```bash
@@ -483,7 +531,7 @@ flowchart LR
 1. Google Cloud コンソール（`https://console.cloud.google.com/`）で、プロジェクト `rpg-login` を作る（dev・prod で共用してよい）
 2. 「API とサービス」→「OAuth 同意画面」。ユーザーの種類は「外部」、アプリ名 `RPG学習アプリ`、サポートメール、デベロッパーの連絡先を入れる。スコープは既定（`openid`・`email`・`profile`）のまま。テスト中は「テストユーザー」に入れた人しかログインできないため、だれでも使えるようにするときは「アプリを公開」にする
 3. 「認証情報」→「認証情報を作成」→「OAuth クライアントID」。種類は「ウェブアプリケーション」、名前は `rpg-dev`
-4. 「承認済みの JavaScript 生成元」に `https://<V-01>`（例 `https://rpg-dev.<ドメイン>`）を入れる。リダイレクト URI は使わない（空のまま）
+4. 「承認済みの JavaScript 生成元」に `https://<V-01>`（例 `https://rpglearning.net`。転送するだけの V-23 は入れなくてよい）を入れる。リダイレクト URI は使わない（空のまま）
 5. 表示されたクライアントID（`…apps.googleusercontent.com`）を V-16 に控える。クライアントシークレットは使わない
 6. 入れる：dev は `rpg-dev` に入って `rpg-deploy env GOOGLE_CLIENT_ID <V-16>` を打つ（`.env` を書き換えて入れ直し、最後に A-38 の結果を出す。前の値は `# 前回 GOOGLE_CLIENT_ID=` で残る）。あわせて `infra/sakura/dev/dev.auto.tfvars` の `google_client_id` にも V-16 を書いておく（サーバーを作り直しても消えないように。公開してよい値なので Git に入れてよい）。手で入れるときは `.env` の `GOOGLE_CLIENT_ID=` に V-16 を入れ、`docker compose up -d` で入れ直す
 7. 確かめる：`curl -s https://<V-01>/api/auth/google/config` が `{"clientId":"<V-16>"}` を返し、ログイン画面に「Googleでログイン」ボタンが出る
@@ -494,7 +542,7 @@ flowchart LR
 
 ### 3.9 初回の起動と確認
 
-1. データベース `rpg` を作る（一度だけ）
+1. prod だけ：データベース `rpg` を作る（一度だけ。dev は db コンテナが作る）
 
 ```bash
 docker run --rm -it postgres:16 psql "postgres://rpgadmin:<V-07>@192.168.10.21:5432/postgres" -c "CREATE DATABASE rpg;"
@@ -616,7 +664,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 
 ### 3.12 シンプル監視とバックアップ
 
-**シンプル監視**
+**シンプル監視**（prod だけ。dev はアクセスがないと止まるため作らない）
 
 1. 「シンプル監視」→「追加」を2つ
 
@@ -629,12 +677,140 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 
 **バックアップ**
 
-3. データベースの「バックアップ」タブで自動バックアップ（毎日 3:00・8世代）が動いていることを翌日に確かめる
+3. prod：データベースの「バックアップ」タブで自動バックアップ（毎日 3:00・8世代）が動いていることを翌日に確かめる。dev：`rpg-db list` にバックアップが並んでいることを確かめる
 4. サーバーは、`/opt/rpg`（`.env`・`compose.yaml`・`Caddyfile`）だけが手で作ったもの。`.env` の中身はパスワード管理ツールに控えてあるため、サーバーのバックアップは取らない（壊れたら 3.8 で作り直す）
+
+### 3.13 自動停止と起動（dev）
+
+dev のサーバーは、アクセスがない時間が V-18（60分）続くと、DB をバックアップしてから電源を切る。電源を切っているあいだはサーバーの料金がかからない。使うときは GitHub Actions の power で電源を入れる。
+
+```mermaid
+flowchart TD
+  T["rpg-idle-stop.timer<br>5分ごと"] --> C{"止めない理由がある？"}
+  C -->|"直近60分に /api/* のアクセス<br>採点・取り込みのジョブ<br>SSH で入っている人<br>起動して60分たっていない<br>rpg-idle-stop pause"| W["何もしない"]
+  C -->|"ない"| B["rpg-db backup<br>（オブジェクトストレージへ）"]
+  B -->|"失敗"| W
+  B -->|"成功"| P["電源を切る<br>（サーバーの料金が止まる）"]
+  G["GitHub Actions power<br>start"] -->|"さくらのクラウド API"| ON["電源を入れる"]
+  ON --> UP["Docker が db・api・worker・caddy を起動<br>日次処理の取りこぼしも動く"]
+```
+
+**数えるアクセス**
+
+- `/api/` で始まるものだけを数える。`/api/health`（死活確認）と `/api/auth/refresh`（開きっぱなしのタブが自動で行うトークンの更新）は数えない
+- 画面のファイル（`/`・`/js/…`）も数えない。インターネットを見回るボットが来ても止まるようにするため。使う人はログインや画面の表示で必ず `/api/` を呼ぶ
+
+**準備（1回だけ）**
+
+1. 3.4 でバケット `rpg-dev-backup`（V-17）を作り、パーミッション `rpg-dev-app` に「読み取り・書き込み」を足す
+2. GitHub の Environment `dev` に、Secrets `SAKURACLOUD_ACCESS_TOKEN`・`SAKURACLOUD_ACCESS_TOKEN_SECRET`（APIキー。アクセスレベルは「作成・削除」か、電源の操作ができるもの）と、Variables `SITE_URL`（`https://<V-01>`）を入れる
+
+**使うとき**
+
+3. GitHub（スマホのアプリでもよい）の Actions →「power」→「Run workflow」で `start` を選ぶ。`✅ 使えます` が出たら画面を開く（電源を入れてから1〜3分）
+4. 使い終わったら何もしなくてよい。60分たつと自動で止まる
+
+| コマンド（サーバー） | すること |
+| --- | --- |
+| `rpg-idle-stop status` | いま止めない理由（アクセスの件数・ジョブ・ログイン中の人など） |
+| `sudo rpg-idle-stop pause` | 自動停止を休む（長い作業のとき）。`sudo rpg-idle-stop resume` で再開 |
+| `rpg-deploy env IDLE_STOP_MINUTES <分>` | 止めるまでの分数を変える。`0` で止めない |
+| `scripts/sakura-power.sh start\|stop\|status`（PC） | GitHub を使わずに電源を操作する（APIキーを環境変数に入れる） |
+
+- 止めた記録はサーバーの `/var/log/rpg-idle-stop.log`
+- 止まっているあいだはサイトにつながらない。夜 0:00 の日次処理は、次に電源を入れたときに動く（ワーカーがその日の枠を見て動かす）
+- `stop` は DB のバックアップを取らずに止める。ふだんは自動停止に任せる
+
+- 3.14 の Worker を置いたあとは、サイトを開くだけで起きる。power は Worker が使えないときの予備にする
+
+**データベースアプライアンスからの引っ越し（1回だけ。2026-11 の dev）**
+
+5. いまのサーバーで、アプライアンスの DB をファイルに書き出してバケットに置く（`<V-07>` はアプライアンスのパスワード、`<V-10>` は 3.4 のキー）
+
+```bash
+cd /opt/rpg
+docker run --rm postgres:16 pg_dump "postgres://rpgadmin:<V-07>@192.168.10.21:5432/rpg" -Fc > /tmp/rpg.dump
+docker run --rm -i -e AWS_ACCESS_KEY_ID=<V-10 のアクセスキー> -e AWS_SECRET_ACCESS_KEY=<V-10 のシークレットキー> -e AWS_REQUEST_CHECKSUM_CALCULATION=when_required amazon/aws-cli:2.22.35 --endpoint-url https://s3.isk01.sakurastorage.jp --region jp-north-1 s3 cp - s3://rpg-dev-backup/db/rpg-$(date +%Y%m%d-%H%M).dump < /tmp/rpg.dump
+```
+
+6. 変更を main に入れてから（スタートアップスクリプトが `rpg-db` などを GitHub から取るため）、Tailscale の認証キーを `TF_VAR_tailscale_auth_key` に入れ、サーバーを作り直す。アプライアンスとスイッチは消える
+
+```bash
+infra/sakura/tf.sh dev apply -replace=sakuracloud_disk.app -replace=sakuracloud_server.app
+```
+
+7. 新しいサーバーの初回の起動で、`rpg-db restore-if-empty` が 5. のファイルを戻してからアプリを起動する。`/var/log/rpg-setup.log` に `✅ 戻しました` が出ていること、画面にログインしてデータが残っていることを確かめる
+8. サーバーのグローバルIPアドレスが変わる。DNS の A レコードは Terraform が直す。パケットフィルタの SSH の許可はそのまま使える
+
+
+### 3.14 アクセスで起こす（dev・Cloudflare）
+
+3.13 で止まった dev のサーバーを、サイトを開くだけで起こす。`rpglearning.net` の DNS を Cloudflare に移し、`<V-01>` と V-23 へのアクセスを Cloudflare Worker `rpg-dev-wake`（`workers/wake`）に通す。サーバーが動いていれば、Worker はリクエストをそのままサーバーへ渡すだけ。
+
+```mermaid
+sequenceDiagram
+  participant B as ブラウザ
+  participant W as Worker rpg-dev-wake
+  participant S as サーバー rpg-dev-app
+  participant A as さくらのクラウド API
+  B->>W: https://rpglearning.net/
+  W->>S: そのまま渡す
+  S--xW: つながらない（止まっている。Cloudflare の 521・522）
+  W-->>B: 起動中ページ（503）
+  B->>W: POST /__wake（ページの JavaScript）
+  W->>A: 電源を入れる
+  loop 5秒ごと
+    B->>W: GET /api/health
+    W->>S: そのまま渡す
+  end
+  S-->>B: 200 → ページを読み込み直す
+```
+
+**起こすとき・起こさないとき**
+
+| アクセス | サーバーが止まっているときの Worker |
+| --- | --- |
+| 画面（`/` など）を開く | 起動中ページを返す。**ページの JavaScript** が `POST /__wake` を呼んで起こす（JavaScript を動かさないボットの見回りでは起きない） |
+| ログイン中の画面からの `/api/*`（`Authorization` ヘッダー付き）・`POST` | 起こして `503`・`SERVER_WAKING` を返す。画面は「ギルドの扉を開けています…」を出し、5秒ごとに4分まで待ってやり直す（`web/js/core/api.js`・`auth.js`） |
+| `GET /api/health`、ヘッダーのない `GET /api/*` | 起こさない（`503`・`SERVER_WAKING`） |
+| User-Agent がボット・`curl` などのもの | 起こさない |
+| `/.well-known/acme-challenge/*` | そのまま渡す（Let's Encrypt の証明書の更新） |
+| V-23（`www`・`rpg-dev`）へのアクセス | サーバーに渡さず、`https://<V-01>` へ 301 で移す（`CANONICAL_HOST`） |
+
+- 一度つながらなかったら20秒はサーバーに取りに行かず、すぐ起動中を返す。電源を入れたら60秒は API を呼ばない（Cloudflare のデータセンターごと）
+- Service Worker が画面をキャッシュしている端末は、キャッシュの画面がそのまま開き、最初の API で起きる
+
+**DNS を Cloudflare に移す（1回だけ）**
+
+1. Cloudflare のアカウントを作り、「Add a domain」で `rpglearning.net` を Free プランで足す。さくらのクラウド DNS のレコードが読み込まれるので、**すべて**あるかを見比べる。特にメール（`mail.rpglearning.net` の MX・SPF の TXT・DKIM・DMARC）は、プロキシを「DNS only」（灰色の雲）にする
+2. 足りないレコードは、さくらのクラウドの「DNS」→ ゾーン `rpglearning.net` のレコードを見て手で足す。`rpglearning.net`（`@`）・`www`・`rpg-dev` の A レコードは Terraform が作るため、読み込まれていたら消す
+3. さくらのドメインの会員メニューで、`rpglearning.net` のネームサーバーを Cloudflare が示す2つに替える。切り替わるまで数時間〜1日。Cloudflare の画面が「Active」になるまで待つ
+4. Cloudflare の「SSL/TLS」を **Full (strict)** にする（サーバーの Caddy は Let's Encrypt の証明書を持っている）。「Always Use HTTPS」はオンでよい
+5. ゾーンの「概要」の右下のゾーンIDを V-19 に控え、`infra/sakura/dev/dev.auto.tfvars` に `dns_provider = "cloudflare"`・`cloudflare_zone_id = "<V-19>"` を書く
+6. Cloudflare の「My Profile」→「API Tokens」で、ゾーン `rpglearning.net` の「DNS の編集」だけのトークンを作り、`TF_VAR_cloudflare_api_token` に入れて apply する（プロバイダーを足したため、最初だけ `init -upgrade`）
+
+```bash
+infra/sakura/tf.sh dev init -upgrade
+infra/sakura/tf.sh dev apply
+```
+
+7. メールを送って届くこと（3.6）、`https://<V-01>/api/health` が返ることを確かめる
+
+**Worker を置く（1回だけ。workers/wake を変えたときも）**
+
+8. Cloudflare で、Workers の編集とゾーンの Workers ルートの編集ができる API トークンを作る。アカウントID（「Workers & Pages」の右側）と一緒に、GitHub の Environment `dev` の Secrets `CLOUDFLARE_API_TOKEN`・`CLOUDFLARE_ACCOUNT_ID` に入れる。`SAKURACLOUD_ACCESS_TOKEN`・`SAKURACLOUD_ACCESS_TOKEN_SECRET` は 3.13 で入れたものを使う（Worker にも入る。アクセスレベルは電源の操作ができる最小のものにする）
+9. GitHub の Actions →「wake-worker」→「Run workflow」。テストのあと、Worker をデプロイしてさくらのクラウドの APIキーを Worker の secret に入れる
+10. 確かめる：サーバーで `sudo rpg-idle-stop` が止めるのを待つ（または `scripts/sakura-power.sh stop`）。ブラウザで `https://<V-01>/` を開き、起動中ページのあと1〜3分で画面が開くこと。Cloudflare の Worker の「Logs」に `{"msg":"wake","result":"started"}` が出ること
+
+- Worker のルートは `rpglearning.net/*`・`www.rpglearning.net/*`・`rpg-dev.rpglearning.net/*`、本体のドメインは `CANONICAL_HOST`（`workers/wake/wrangler.toml`）。ドメインを変えたらここも直す
+- 証明書の更新が失敗するとき（`docker compose logs caddy` に `challenge failed`）は、Cloudflare の「Always Use HTTPS」を一度オフにして Caddy を `docker compose restart caddy` する。それでもだめなら、Cloudflare の Origin CA 証明書を Caddy に置く方法に替える（6章 No.7）
+- サーバーの IP アドレスが変わったとき（作り直したとき）は、Terraform が Cloudflare の A レコードを直す
 
 ---
 
 ## 4. prod 環境の構築
+
+> **2026-11 から凍結中**（1.8）。軌道に乗るまでこの章は行わない。凍結を解くときは、dev を本番にしていたあいだの決まり（ドメイン `rpglearning.net` を prod に移すか、転送の向きなど）を先に決め直す
 
 右上のプロジェクトで `rpg-prod` を選び、第3章を上から同じ順で行う。違うところだけを書く。
 
@@ -642,14 +818,16 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 | --- | --- |
 | 3.2 | スイッチ `rpg-prod-sw`（`192.168.20.0/24`）、パケットフィルタ `rpg-prod-pf` |
 | 3.3 | プラン 30GB（2コア・4GB）、IPアドレス `192.168.20.21`、送信元 `192.168.20.0/24`、パスワードは dev と別 |
-| 3.4 | バケット `rpg-prod-import`・`rpg-prod-assets`・`rpg-prod-notify`、アクセスキー `rpg-prod-app`（dev のバケットには権限を付けない）、CORS の `AllowedOrigins` は `https://rpg.<ドメイン>` |
+| 3.4 | バケット `rpg-prod-import`・`rpg-prod-assets`、アクセスキー `rpg-prod-app`（dev のバケットには権限を付けない）、CORS の `AllowedOrigins` は `https://rpg.<ドメイン>` |
 | 3.5 | アカウントトークン `rpg-prod`（dev と分け、使った量を分けて見られるようにする） |
 | 3.6 | `ALERT_EMAIL` はシステム管理者と開発者 |
 | 3.7 | レジストリは作らない（dev と共用）。GitHub の Environment `prod` に Variables・Secrets を入れる。イメージはタグ `release-YYYYMMDD-NN` を付けて承認すると作られる |
-| 3.8 | サーバー `rpg-prod-app`、ローカルIPアドレス `192.168.20.11`、`.env` は `APP_ENV=prod`・`SITE_ADDRESS=rpg.<ドメイン>`・`MAIL_SCHEDULE_ENABLED=true`・prod のバケット・キー・`AUTH_SECRET`（dev と別） |
+| 3.8 | サーバー `rpg-prod-app`、ローカルIPアドレス `192.168.20.11`、`.env` は `APP_ENV=prod`・`SITE_ADDRESS=rpg.<ドメイン>`・prod のバケット・キー・`AUTH_SECRET`（dev と別） |
 | 3.8.1 | クライアントIDは `rpg-prod` を作り、JavaScript 生成元は `https://rpg.<ドメイン>`。OAuth 同意画面は「公開」にしておく |
 | 3.10 | 本番のシステム管理者を作る。確認用の利用者は `[確認用]` を名前に付ける |
 | 3.12 | 監視の通知先にシステム管理者を入れる |
+| 3.13 | 行わない。prod は24時間動かし、DB はデータベースアプライアンス（`.env` の `COMPOSE_PROFILES` は空、`DATABASE_URL` はアプライアンスのIPアドレス） |
+| 3.14 | 行わない。prod の A レコードは Cloudflare で「DNS only」（プロキシを通さない）にする |
 
 - prod の `.env` を dev からコピーして直すときは、**キー・パスワード・`AUTH_SECRET` をすべて prod の値に替えた**ことを2人で確かめる
 
@@ -677,12 +855,13 @@ cd /opt/rpg && docker compose ps                       # restart: unless-stopped
 | --- | --- | --- |
 | サーバーの CPU・メモリ | コントロールパネルの「リソースモニタ」、`docker stats` | CPU が常に70%を超える、メモリが足りない → プランを上げる |
 | ディスク | `df -h`、`docker system df` | 70%を超えたら `docker image prune -a`（使っていない古いイメージを消す） |
-| DB の容量 | データベースの「リソースモニタ」 | 70%を超えたらプランを上げる（5.3 の復元で作り直す） |
+| DB の容量 | prod：データベースの「リソースモニタ」。dev：`df -h`（DB はサーバーのディスク） | 70%を超えたらプランを上げる（5.3 の復元で作り直す）。dev はディスクを大きくする |
 | AI の使った量 | AI Engine の利用状況 | 予算を超えそうなら相談する |
 | 監視メール | `ALERT_EMAIL` の受信箱 | 届いたものの原因を確かめたか |
 
 ### 5.3 バックアップと復元
 
+- dev：`rpg-db list` で一覧、`rpg-db restore <名前>`（`latest` でいちばん新しいもの）で戻す。**今のデータが巻き戻る**。サーバーを作り直したときは、初回の起動でいちばん新しいバックアップが自動で戻る（3.13）
 - リリースで DB の変更があるときは、prod へ反映する前にデータベースの「バックアップ」→「追加」で手動のバックアップを取る（詳細設計書 11.6）
 - 復元は、データベースの「バックアップ」タブで世代を選んで「復元」。**今のデータが巻き戻る**ため、システム管理者の判断で行う
 - プランを上げるときは、手動のバックアップを取ってから新しいプランで作り直し、そのバックアップから復元する（IPアドレスは同じにする）
@@ -714,6 +893,31 @@ MODEL_LIGHT=<Haiku のモデルID>
 
 - 切り替えでコードは変えない（詳細設計書 7章）。画像の取り込みは Bedrock のときだけ使える
 
+### 5.6 ドメインの切り替え（2026-11。`rpg-dev.rpglearning.net` → `rpglearning.net`、1回だけ）
+
+1. `dev.auto.tfvars` の `site_address`・`redirect_addresses`・`dns_zone`・`mail_schedule_enabled` が 1.8 のとおりであることを確かめ、apply する。A レコード（`@`・`www`・`rpg-dev`）ができる。3.13 の引っ越しでサーバーを作り直すときは、その apply で一緒に行う
+2. Google Cloud の OAuth クライアントID `rpg-dev` の「承認済みの JavaScript 生成元」に `https://rpglearning.net` を足す（3.8.1。前の `https://rpg-dev.rpglearning.net` は、転送を確かめてから消す）
+3. オブジェクトストレージの CORS（3.4 の `cors.json`）の `AllowedOrigins` を `https://rpglearning.net` にして、`rpg-dev-import`・`rpg-dev-assets` に入れ直す
+4. サーバーを作り直さないときは、いまのサーバーで `.env` を替え、`compose.yaml`・`Caddyfile` を置き直す（3.8 の 8.）
+
+```bash
+rpg-deploy env SITE_ADDRESS rpglearning.net
+rpg-deploy env APP_URL https://rpglearning.net
+rpg-deploy env REDIRECT_ADDRESSES "www.rpglearning.net, rpg-dev.rpglearning.net"
+```
+
+5. Cloudflare の Worker を使っているときは、GitHub Actions の wake-worker でデプロイし直す（ルートが3つになる）
+6. 確かめる
+
+| No | 確認 | 期待する結果 |
+| --- | --- | --- |
+| 1 | `https://rpglearning.net/api/health` | `{"status":"ok"}`（証明書のエラーが出ない） |
+| 2 | `https://www.rpglearning.net/s/01`・`https://rpg-dev.rpglearning.net/s/01` | `https://rpglearning.net/s/01` に移る（301） |
+| 3 | Googleでログイン | ログインできる |
+| 4 | 問題の取り込み（PDF）と、パートナーの画像のアップロード | アップロードできる（CORS） |
+
+- `APP_URL` はメールのリンクと、パスワードの再設定などに使う。替え忘れると、メールのリンクが前のドメインになる（転送されるので開けはする）
+
 ---
 
 ## 6. 確認したいこと（未決事項）
@@ -726,3 +930,5 @@ MODEL_LIGHT=<Haiku のモデルID>
 | 4 | サーバーの冗長化 | Phase 1 は1台（止まると数分〜数十分使えない）。全社展開の前に2台とロードバランサにするかを決める | Phase 3 の計画時 |
 | 5 | AWS に残っている dev のリソース | **2026-10-27 に費用がかかるものを止めた**：Aurora Serverless v2 を削除（最終スナップショットなし。DB のシークレットも削除）、EventBridge のスケジュール2つを無効化。CloudFront は Free プラン（月0円）のため API で無効にできず、そのまま残した。S3・Cognito・API Gateway・SQS・SNS・CloudWatch のアラームとロググループ・IAM ロールは、ほぼ0円のため残した（Lambda は一覧を見る権限がなく、さわっていない）。アカウント共通のもの（CloudTrail・予算・GitHub OIDC）も残した。残りをすべて消すかは、Bedrock の切り替え（5.5）のときに決める | Bedrock の切り替え時 |
 | 6 | サーバーの SSH を開ける範囲 | 作業場所のIPアドレスだけ。テレワークで IPアドレスが変わる場合の運用を決める | dev 構築時 |
+| 7 | Cloudflare の後ろでの証明書の更新 | Caddy の Let's Encrypt（HTTP-01）を Cloudflare のプロキシ越しに通す。dev で90日後の更新が通るかを見る。通らなければ Cloudflare の Origin CA 証明書に替える | 2027-02（初回の更新） |
+| 8 | 自動停止と日次処理 | **決定（2026-11-07）**：通知メールを機能ごと削除したため、自動停止とぶつかるものはなくなった。0:00 の日次処理は、止まっていた日も次に起動したときに動く | 決定済み |

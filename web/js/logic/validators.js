@@ -5,7 +5,6 @@ const ng = (code, field, params = {}) => ({ ok: false, code, field, params })
 const WHITESPACE_RE = /[\s　]/gu
 const NICKNAME_RE = /^[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ーA-Za-z0-9_-]+$/u
 const PARTNER_NAME_RE = /^[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ーA-Za-z0-9]+$/u
-const TIME_RE = /^([01][0-9]|2[0-3]):(00|30)$/
 export const EXPLANATION_MIN = 50
 export const EXPLANATION_MAX = 400
 export const IMPORT_MAX_BYTES = 20 * 1024 * 1024
@@ -34,11 +33,6 @@ export function validatePartnerName(s) {
   const len = [...s].length
   if (len < 1 || len > 10) return ng('INVALID', 'partnerName', { min: 1, max: 10, count: len })
   if (!PARTNER_NAME_RE.test(s)) return ng('INVALID', 'partnerName', { reason: 'chars' })
-  return OK
-}
-export function validateNotifyTime(hhmm) {
-  if (typeof hhmm !== 'string' || !TIME_RE.test(hhmm)) return ng('INVALID', 'sendTime', { reason: 'format' })
-  if (hhmm < '06:00' || hhmm > '22:00') return ng('INVALID', 'sendTime', { min: '06:00', max: '22:00' })
   return OK
 }
 export function validateImportRequest(r) {

@@ -3,11 +3,6 @@ variable "env" {
   type    = string
   default = "dev"
 }
-variable "network_prefix" {
-  description = "V-03 スイッチのネットワーク（/24 の先頭3つ）"
-  type        = string
-  default     = "192.168.10"
-}
 variable "ssh_public_keys" {
   description = "作業PCの公開鍵（~/.ssh/id_ed25519.pub の中身）。PC ごとに1行。足しても、いまのサーバーには入らない（README）"
   type        = list(string)
@@ -22,7 +17,7 @@ variable "ssh_allowed_cidrs" {
   default     = []
 }
 variable "site_address" {
-  description = "V-01 サイトのドメイン名。空なら HTTPS の監視を作らない"
+  description = "V-01 サイトのドメイン名（テスターに公開する名前。例 rpglearning.net）。空なら DNS のレコードを作らない"
   type        = string
   default     = ""
 }
@@ -88,5 +83,54 @@ variable "tailscale_auth_key" {
   description = "Tailscale の認証キー（tskey-auth-...）。サーバーを作るときにだけ使う。空なら Tailscale を入れるだけでつながない（README）"
   type        = string
   sensitive   = true
+  default     = ""
+}
+variable "idle_stop_minutes" {
+  description = "この分数アクセスがなければ、DB をバックアップしてサーバーの電源を切る（3.13）。0 なら止めない。いまのサーバーは rpg-deploy env IDLE_STOP_MINUTES <分> で変える"
+  type        = number
+  default     = 60
+  validation {
+    condition     = var.idle_stop_minutes == 0 || var.idle_stop_minutes >= 15
+    error_message = "idle_stop_minutes は 0（止めない）か 15 以上にしてください（起動してすぐ止まらないように）"
+  }
+}
+variable "tools_repo" {
+  description = "サーバーを作るときに rpg-deploy・rpg-db・rpg-idle-stop を取る GitHub のリポジトリ（公開のもの）"
+  type        = string
+  default     = "pocarialice/rpglearning"
+}
+variable "tools_ref" {
+  description = "rpg-deploy などを取るブランチかコミット。手元のファイルの sha256 と同じでないとサーバーの準備が止まるため、push 済みのものにする"
+  type        = string
+  default     = "main"
+}
+variable "dns_provider" {
+  description = "site_address の A レコードを置く DNS。sakura（さくらのクラウド DNS）か cloudflare（Cloudflare。前に起こす係の Worker を置く。3.14）"
+  type        = string
+  default     = "sakura"
+  validation {
+    condition     = contains(["sakura", "cloudflare"], var.dns_provider)
+    error_message = "dns_provider は sakura か cloudflare にしてください"
+  }
+}
+variable "cloudflare_zone_id" {
+  description = "Cloudflare のゾーンID（ゾーンの「概要」の右下。公開してよい値）。dns_provider = cloudflare のときに使う"
+  type        = string
+  default     = ""
+}
+variable "cloudflare_api_token" {
+  description = "Cloudflare の API トークン（ゾーンの DNS の編集だけ）。dns_provider = cloudflare のときに使う"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+variable "redirect_addresses" {
+  description = "V-23 site_address へ転送するだけのドメイン名（www や前の名前）。Caddy が 301 で移し、Worker も同じように移す"
+  type        = list(string)
+  default     = []
+}
+variable "dns_zone" {
+  description = "DNS のゾーン（例 rpglearning.net）。空なら site_address の先頭のラベルを外したもの"
+  type        = string
   default     = ""
 }

@@ -399,8 +399,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.6版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加）</b></li>
-      <li>作成日<b>2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06、第1.6版：2026-11-06）</b></li>
+      <li>版数<b>第1.7版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加。第1.7版で通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009））</b></li>
+      <li>作成日<b>2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06、第1.6版：2026-11-06、第1.7版：2026-11-07）</b></li>
       <li>入力文書<b>要件定義書 第1.2版（ドラフト）、外部設計書 第1.3版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
       <li>関連文書<b>モジュールテスト仕様書_RPG学習アプリ（本書のモジュール単位の試験を定める）</b></li>
@@ -699,7 +699,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 │  ├─ V005__study_time.sql        # 学習時間（冒険ごとと累計）（8.4.3）
 │  ├─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
 │  ├─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
-│  └─ V008__google_login.sql      # Googleでログイン（8.4.6）
+│  ├─ V008__google_login.sql      # Googleでログイン（8.4.6）
+│  └─ V009__drop_notify_settings.sql # 通知設定を削除（8.4.7）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -712,7 +713,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 │  │  │  ├─ tx.js                 # トランザクション
 │  │  │  ├─ migrate.js            # マイグレーションの適用
 │  │  │  └─ repositories/         # users・courses・questions・reviews・exp・quests・badges・rankings
-│  │  │                           # gradings・imports・adventures・audit・notify・partners
+│  │  │                           # gradings・imports・adventures・audit・partners
 │  │  │                           # auth・jobs・schedules（さくら版で追加）
 │  │  ├─ domain/                  # review・exp・quest・badge・ranking・picker・answer-flow
 │  │  ├─ ai/
@@ -983,11 +984,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>2026-10-19</code></td>
 </tr>
 <tr>
-<td><code>jstSlot(now)</code></td>
-<td>30分刻みの送信枠（<code>HHMM</code>）</td>
-<td><code>0030</code></td>
-</tr>
-<tr>
 <td><code>toIsoJst(date)</code></td>
 <td><code>+09:00</code> 付きの文字列</td>
 <td><code>2026-10-21T00:30:00+09:00</code></td>
@@ -1211,11 +1207,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>キャラクター画像の置き場（<code>partners/</code> の下）</td>
 </tr>
 <tr>
-<td><code>NOTIFY_BUCKET</code></td>
-<td>worker</td>
-<td>通知の送信リスト（<code>notify/</code> の下）</td>
-</tr>
-<tr>
 <td><code>SMTP_HOST</code>・<code>SMTP_PORT</code>・<code>SMTP_SECURE</code>・<code>SMTP_USER</code>・<code>SMTP_PASS</code>・<code>MAIL_FROM</code></td>
 <td>すべて</td>
 <td>メールの送信</td>
@@ -1224,11 +1215,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td><code>ALERT_EMAIL</code></td>
 <td>すべて</td>
 <td>監視のお知らせの宛先（なければ送らない）</td>
-</tr>
-<tr>
-<td><code>MAIL_SCHEDULE_ENABLED</code></td>
-<td>worker</td>
-<td><code>true</code> のときだけ B-03（30分ごとのメール送信）を動かす（dev は確認のときだけ）</td>
 </tr>
 <tr>
 <td><code>WORKER_GRADING_CONCURRENCY</code>・<code>WORKER_IMPORT_CONCURRENCY</code></td>
@@ -1286,7 +1272,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>M-U03</td>
 <td><code>util/date-jst.js</code></td>
 <td>JST日付</td>
-<td><code>todayJst</code>、<code>addDays</code>、<code>weekStartJst</code>、<code>jstSlot</code>、<code>toIsoJst</code>、<code>diffDays</code></td>
+<td><code>todayJst</code>、<code>addDays</code>、<code>weekStartJst</code>、<code>toIsoJst</code>、<code>diffDays</code></td>
 </tr>
 <tr>
 <td>M-U04</td>
@@ -1310,7 +1296,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>M-U07</td>
 <td><code>logic/validators.js</code>（共用）</td>
 <td>入力チェック</td>
-<td><code>validateExplanation</code>、<code>validateNickname</code>、<code>validatePartnerName</code>、<code>validateNotifyTime</code>、<code>validateImportRequest</code>、<code>validateQuestionDraft</code></td>
+<td><code>validateExplanation</code>、<code>validateNickname</code>、<code>validatePartnerName</code>、<code>validateImportRequest</code>、<code>validateQuestionDraft</code></td>
 </tr>
 <tr>
 <td>M-U08</td>
@@ -1436,7 +1422,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>M-M01</td>
 <td><code>mail/smtp.js</code>・<code>templates.js</code></td>
 <td>メール</td>
-<td><code>sendMail({to, subject, text})</code>、<code>setTransport</code>、<code>notifyMail(item)</code>、<code>deletionMail(user)</code>、<code>inviteMail(…)</code>、<code>resetMail(…)</code>、<code>signupMail(…)</code>、<code>signupExistsMail(…)</code></td>
+<td><code>sendMail({to, subject, text})</code>、<code>setTransport</code>、<code>deletionMail(user)</code>、<code>inviteMail(…)</code>、<code>resetMail(…)</code>、<code>signupMail(…)</code>、<code>signupExistsMail(…)</code></td>
 </tr>
 <tr>
 <td>M-O01</td>
@@ -1504,7 +1490,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </ul>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-U07 <code>web/js/logic/validators.js</code>（画面とサーバーで共用）</h4>
 <p>戻り値は <code>{ ok: true }</code> または <code>{ ok: false, code: 'M-03', field, params }</code>。サーバー側は <code>ok:false</code> を <code>VALIDATION_ERROR</code> に変換する。</p>
-<p><code>code</code> は画面のメッセージID（<code>M-03</code>・<code>M-04</code>・<code>M-12</code>）。メッセージIDのない入力エラー（ニックネーム・パートナー名・通知時刻・取り込み）は <code>code: 'INVALID'</code> とし、<code>field</code>（<code>nickname</code>・<code>partnerName</code>・<code>sendTime</code>・<code>sourceType</code>・<code>fileName</code>・<code>contentType</code>・<code>size</code>・<code>text</code>）と <code>params</code>（上限・下限・文字数など）で画面が文言を組み立てる。サーバー側は <code>assertValid(result)</code>（<code>util/validators.js</code>）で変換する。</p>
+<p><code>code</code> は画面のメッセージID（<code>M-03</code>・<code>M-04</code>・<code>M-12</code>）。メッセージIDのない入力エラー（ニックネーム・パートナー名・取り込み）は <code>code: 'INVALID'</code> とし、<code>field</code>（<code>nickname</code>・<code>partnerName</code>・<code>sourceType</code>・<code>fileName</code>・<code>contentType</code>・<code>size</code>・<code>text</code>）と <code>params</code>（上限・下限・文字数など）で画面が文言を組み立てる。サーバー側は <code>assertValid(result)</code>（<code>util/validators.js</code>）で変換する。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1528,10 +1514,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td><code>validatePartnerName(s)</code></td>
 <td>空文字は「初期名を使う」として ok。1〜10文字。ひらがな・カタカナ・漢字・英数字のみ（3.6.2）</td>
-</tr>
-<tr>
-<td><code>validateNotifyTime(hhmm)</code></td>
-<td><code>HH:MM</code> 形式、06:00〜22:00、分は00か30（S-10）</td>
 </tr>
 <tr>
 <td><code>validateImportRequest(r)</code></td>
@@ -1676,10 +1658,6 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tr>
 <td><code>audit.js</code></td>
 <td><code>write(actorId, action, target, detail)</code></td>
-</tr>
-<tr>
-<td><code>notify.js</code></td>
-<td><code>get</code>、<code>put</code>、<code>listForSlotBuild(today)</code></td>
 </tr>
 <tr>
 <td><code>partners.js</code></td>
@@ -2099,7 +2077,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>バケットの中</td>
-<td><code>uploads/{importId}/{ファイル名}</code>（取り込み原本）、`partners/{persona}-{yyyyMMddHHmmss}.{png</td>
+<td><code>uploads/{importId}/{ファイル名}</code>（取り込み原本）、<code>partners/{persona}-{yyyyMMddHHmmss}.{png|webp}</code>（キャラクター画像）。AWS 版と同じ</td>
 </tr>
 </tbody>
 </table></div>
@@ -2307,9 +2285,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>A-04</td>
-<td><code>GET・PUT /api/me/notify</code></td>
-<td><code>me.getNotify</code>・<code>me.putNotify</code></td>
-<td>learner</td>
+<td>（欠番。通知設定を削除）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>A-05</td>
@@ -2607,7 +2585,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.5 batch-runner</h3>
-<p>入力：<code>{&quot;job&quot;:&quot;daily&quot;}</code>（毎日0:00以降に1回）または <code>{&quot;job&quot;:&quot;mail&quot;}</code>（6:00〜22:30の30分ごと。<code>MAIL_SCHEDULE_ENABLED=true</code> のときだけ）。worker のスケジューラ（4.7）が呼ぶ。</p>
+<p>入力：<code>{&quot;job&quot;:&quot;daily&quot;}</code>（毎日0:00以降に1回）。worker のスケジューラ（4.7）が呼ぶ。</p>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>4.5.1 daily（B-01・B-02）</h4>
 <p>ステップは順に実行し、各ステップは<strong>何度実行しても結果が同じ</strong>（冪等）になるように作る。失敗したらそこで例外を投げ、スケジューラが次の見回り（30秒後）で最初からやり直す（3回まで。3回とも失敗したら監視のお知らせ）。</p>
 <div class="table-wrap"><table>
@@ -2650,27 +2628,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <td>作成から30日を過ぎた <code>grading_jobs</code> と、終わってから30日を過ぎた <code>jobs</code> を削除</td>
 <td>条件付きDELETEなので何度でも同じ</td>
 </tr>
-<tr>
-<td>6</td>
-<td><code>build-notify.js</code></td>
-<td>メール通知オンの有効な学習者について、送信時刻ごとに送信リストを作り、オブジェクトストレージ <code>notify/{今日}/{HHMM}.json</code> に置く</td>
-<td>同じキーに上書き</td>
-</tr>
 </tbody>
 </table></div>
-<p><strong>送信リストの形（<code>notify/2026-10-20/0730.json</code>）</strong></p>
-<pre><code class="language-json">{&quot;date&quot;:&quot;2026-10-20&quot;,&quot;slot&quot;:&quot;0730&quot;,&quot;items&quot;:[{&quot;to&quot;:&quot;taro@example.co.jp&quot;,&quot;nickname&quot;:&quot;たろう&quot;,&quot;partnerName&quot;:&quot;ミナ&quot;,&quot;persona&quot;:&quot;encourage&quot;,&quot;reviewCount&quot;:5,&quot;quests&quot;:[&quot;今日の復習をすべて終える&quot;,&quot;択一を5問解く&quot;,&quot;キーワード説明を1問合格する&quot;]}]}
-</code></pre>
 <ul>
 <li>各ステップの開始・終了・件数を <code>INFO</code> で出す（メールアドレスは出さない）</li>
 </ul>
-<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>4.5.2 mail（B-03、DBを使わない）</h4>
-<ol>
-<li><code>jstSlot(now)</code> で送信枠（例：<code>0730</code>）を求める。分が0〜29なら <code>00</code>、30〜59なら <code>30</code></li>
-<li>オブジェクトストレージから <code>notify/{今日}/{枠}.json</code> を取得する。ないときは件数0で正常終了（22:30 の枠など）</li>
-<li>1件ずつ <code>notifyMail(item)</code> で本文を作り、SMTP で送る。失敗したら1回だけやり直し、それでも失敗したら <code>WARN</code> で件数を出して次へ</li>
-<li>送信件数・失敗件数を <code>INFO</code> で出す。例外は投げない（メールの再送で二重送信しないため。スケジューラのやり直しは起きない）</li>
-</ol>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>4.5.2（欠番）</h4>
+<p>学習者への通知メール（B-03）は第1.7版で削除した。</p>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.6 HTTP サーバー（<code>server/http.mjs</code>）</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -2721,7 +2685,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>定期処理（<code>createScheduler</code>）</td>
-<td>30秒ごとに、今の時刻で動かすべき枠（<code>dueSlots</code>）を見る。daily は <code>YYYY-MM-DD</code>（その日の0:00以降に1回）、mail は <code>YYYY-MM-DDTHHMM</code>（6:00〜22:30、<code>MAIL_SCHEDULE_ENABLED=true</code> のとき）。<code>schedules.claim</code> で枠を取れたら <code>batch-runner</code> の <code>main</code> を呼び、<code>finish</code> で結果を残す</td>
+<td>30秒ごとに、今の時刻で動かすべき枠（<code>dueSlots</code>）を見る。daily は <code>YYYY-MM-DD</code>（その日の0:00以降に1回）。<code>schedules.claim</code> で枠を取れたら <code>batch-runner</code> の <code>main</code> を呼び、<code>finish</code> で結果を残す</td>
 </tr>
 <tr>
 <td>定期処理の失敗</td>
@@ -2729,7 +2693,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>止まっていた日</td>
-<td>worker が0:00に止まっていても、起動したときにその日の daily を動かす（その日の枠がまだないため）。メールは今の枠だけを動かし、過ぎた枠は送らない</td>
+<td>worker が0:00に止まっていても、起動したときにその日の daily を動かす（その日の枠がまだないため）</td>
 </tr>
 </tbody>
 </table></div>
@@ -3036,7 +3000,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <tbody>
 <tr>
 <td>登録（POST）</td>
-<td><code>users</code>（<code>invited</code>、<code>auth_sub</code> に UUID）・<code>user_roles</code>・<code>notify_settings</code>（初期値）を追加し、仮パスワードのハッシュと期限（7日）を保存</td>
+<td><code>users</code>（<code>invited</code>、<code>auth_sub</code> に UUID）・<code>user_roles</code> を追加し、仮パスワードのハッシュと期限（7日）を保存</td>
 <td>トランザクションの中で招待メール（仮パスワード）を送る。送れなければ登録ごと取り消して <code>500</code>（「招待メールを送れませんでした。メールの設定を確認してください」）。メールアドレスの重複（一意制約 <code>23505</code>）は <code>409</code></td>
 </tr>
 <tr>
@@ -3382,9 +3346,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 <tr>
 <td>S-10</td>
-<td><code>learner/s10-notify.js</code></td>
-<td>A-04</td>
-<td>6:00〜22:00 の30分刻みの選択肢、M-09 の注記</td>
+<td>（欠番。通知設定を削除）</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>S-11</td>
@@ -3751,7 +3715,7 @@ angles には選んだ観点を、それぞれ2〜8文字の名詞で書く。
 <div class="vis">
   <div class="vis-head"><p class="vis-label" style="margin:0 !important">テーブルの全体像</p><span class="tag solid">28 テーブル</span></div>
   <div class="layers">
-    <div class="layer"><div class="layer-h"><i class="fa-solid fa-user"></i>利用者</div><div class="chips"><span class="chip">users</span><span class="chip">user_roles</span><span class="chip">notify_settings</span><span class="chip">login_logs</span><span class="chip">partners</span><span class="chip solid">auth_refresh_tokens</span><span class="chip solid">password_resets</span></div></div>
+    <div class="layer"><div class="layer-h"><i class="fa-solid fa-user"></i>利用者</div><div class="chips"><span class="chip">users</span><span class="chip">user_roles</span><span class="chip">login_logs</span><span class="chip">partners</span><span class="chip solid">auth_refresh_tokens</span><span class="chip solid">password_resets</span></div></div>
     <div class="layer"><div class="layer-h"><i class="fa-solid fa-book"></i>コース・問題</div><div class="chips"><span class="chip">courses</span><span class="chip">enrollments</span><span class="chip">course_admins</span><span class="chip">import_jobs</span><span class="chip">questions</span><span class="chip">choices</span><span class="chip">keywords</span></div></div>
     <div class="layer dark"><div class="layer-h"><i class="fa-solid fa-pen"></i>学習</div><div class="chips"><span class="chip">adventures</span><span class="chip">answer_logs</span><span class="chip">review_items</span><span class="chip">grading_jobs</span></div></div>
     <div class="layer"><div class="layer-h"><i class="fa-solid fa-trophy"></i>ゲーム</div><div class="chips"><span class="chip">exp_logs</span><span class="chip">weekly_rankings</span><span class="chip">quest_defs</span><span class="chip">user_quests</span><span class="chip">badge_defs</span><span class="chip">user_badges</span></div></div>
@@ -3810,7 +3774,6 @@ angles には選んだ観点を、それぞれ2〜8文字の名詞で書く。
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.2 ER図</h3>
 <figure class="diagram"><div class="mermaid">erDiagram
   USERS ||--o{ USER_ROLES : ロール
-  USERS ||--|| NOTIFY_SETTINGS : 通知
   USERS ||--o{ LOGIN_LOGS : ログイン
   USERS }o--o| PARTNERS : 選択
   USERS ||--o{ ENROLLMENTS : 受講
@@ -3877,11 +3840,11 @@ angles には選んだ観点を、それぞれ2〜8文字の名詞で書く。
 </tr>
 <tr>
 <td>T-04</td>
-<td><code>notify_settings</code></td>
-<td>通知設定</td>
-<td><code>user_id</code></td>
-<td>1,000</td>
-<td>NOTIFY_SETTINGS</td>
+<td>（欠番）</td>
+<td>通知設定（V009 で削除）</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
 </tr>
 <tr>
 <td>T-05</td>
@@ -4158,7 +4121,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
   PRIMARY KEY (user_id, role)
 );
 
--- T-04 通知設定
+-- T-04 通知設定（V009 で削除した。8.4.7）
 CREATE TABLE IF NOT EXISTS notify_settings (
   user_id        bigint      PRIMARY KEY REFERENCES users (user_id) ON DELETE CASCADE,
   email_enabled  boolean     NOT NULL DEFAULT true,
@@ -4571,6 +4534,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_email_uq ON users (lower(email))
   WHERE lower(email) NOT IN ('pocarialice7148@gmail.com');
 INSERT INTO schema_migrations (version, description) VALUES ('V008', 'google login') ON CONFLICT DO NOTHING;
 </code></pre>
+<h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>8.4.7 通知設定の削除（<code>db/migrations/V009__drop_notify_settings.sql</code>）</h4>
+<p>通知メール（S-10・A-04・B-03）を機能ごと削除したため、<code>notify_settings</code>（T-04）を消す。送信時刻などの設定は戻せない（dev のテスト用のデータだけだった）。</p>
+<pre><code class="language-sql">DROP TABLE IF EXISTS notify_settings;
+INSERT INTO schema_migrations (version, description) VALUES ('V009', 'drop notify settings') ON CONFLICT DO NOTHING;
+</code></pre>
 <h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.5 初期データ（<code>db/migrations/V002__seed_masters.sql</code>）</h3>
 <pre><code class="language-sql">INSERT INTO partners (persona, label, default_name) VALUES
   ('encourage', '励まし型', 'ミナ'),
@@ -4868,11 +4836,6 @@ ORDER BY last_studied_on DESC NULLS LAST, c.course_id LIMIT 100;
 </tr>
 </thead>
 <tbody>
-<tr>
-<td><code>notifyMail(item)</code></td>
-<td>【RPG学習アプリ】今日の依頼が届いています</td>
-<td>「{nickname}さん」→ パートナーの定型のひとこと（persona ごと）→ 今日の復習数 → クエスト3つ → <code>APP_URL/#/home</code> → 末尾に通知設定 <code>APP_URL/#/notify</code></td>
-</tr>
 <tr>
 <td><code>deletionMail(u)</code></td>
 <td>【RPG学習アプリ】アカウント停止のお知らせ</td>
@@ -5366,11 +5329,6 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 <td>タグ＋承認</td>
 </tr>
 <tr>
-<td><code>MAIL_SCHEDULE_ENABLED</code></td>
-<td><code>false</code>（確かめるときだけ <code>true</code>）</td>
-<td><code>true</code></td>
-</tr>
-<tr>
 <td>サーバー・DB の大きさ</td>
 <td>構築手順書 3.3・3.8</td>
 <td>構築手順書 4</td>
@@ -5485,8 +5443,8 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 </tr>
 <tr>
 <td>9</td>
-<td>通知メールの文言</td>
-<td>パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を <code>mail/templates.js</code> に仮置き。外部設計書 10 No.10 で確定する</td>
+<td>メールの文言</td>
+<td>問い合わせ先（「所属部署の学習推進担当」）を <code>mail/templates.js</code> に仮置き。外部設計書 10 No.10 で確定する</td>
 <td>パイロット開始前</td>
 </tr>
 <tr>
@@ -5530,7 +5488,7 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.6版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.7版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加。第1.7版で通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009））</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

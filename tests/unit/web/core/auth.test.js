@@ -130,6 +130,28 @@ describe('M-F01 core/auth', () => {
     expect(JSON.parse(sessionStorage.getItem(TOKEN_KEY)).expiresAt).toBeGreaterThan(Date.now() + 3500 * 1000)
   })
 })
+describe('M-F01 core/auth サーバー起動中', () => {
+  it('MT-F01-30 SERVER_WAKING なら5秒ごとに待ってやり直す', async () => {
+    vi.useFakeTimers()
+    const waking = () => res(503, { error: { code: 'SERVER_WAKING', message: '起動中' } })
+    fetchFn.mockResolvedValueOnce(waking()).mockResolvedValueOnce(waking()).mockResolvedValue(tokens())
+    const p = make().signIn('a@x.jp', 'Pass1234')
+    await vi.advanceTimersByTimeAsync(10000)
+    await expect(p).resolves.toEqual({ done: true })
+    expect(fetchFn).toHaveBeenCalledTimes(3)
+    vi.useRealTimers()
+  })
+  it('MT-F01-31 待っても起きなければ SERVER_WAKING で失敗する', async () => {
+    vi.useFakeTimers()
+    fetchFn.mockImplementation(async () => res(503, { error: { code: 'SERVER_WAKING' } }))
+    const p = make().signIn('a@x.jp', 'Pass1234')
+    const check = expect(p).rejects.toMatchObject({ code: 'SERVER_WAKING', status: 503 })
+    await vi.advanceTimersByTimeAsync(48 * 5000)
+    await check
+    expect(fetchFn).toHaveBeenCalledTimes(49)
+    vi.useRealTimers()
+  })
+})
 describe('M-F01 core/auth Googleでログイン', () => {
   it('MT-F01-12 A-38 の設定を読む', async () => {
     fetchFn = vi.fn(async () => res(200, { clientId: 'cid' }))

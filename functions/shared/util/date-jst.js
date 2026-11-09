@@ -25,11 +25,6 @@ export function weekStartJst(now = new Date()) {
   const dow = new Date(parseDate(today)).getUTCDay() // 0=日
   return addDays(today, -((dow + 6) % 7))
 }
-export function jstSlot(now = new Date()) {
-  const d = shift(now)
-  const hh = String(d.getUTCHours()).padStart(2, '0')
-  return hh + (d.getUTCMinutes() < 30 ? '00' : '30')
-}
 export function toIsoJst(date, { ms = false } = {}) {
   const iso = shift(date).toISOString()
   return (ms ? iso.slice(0, 23) : iso.slice(0, 19)) + '+09:00'

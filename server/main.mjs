@@ -8,7 +8,7 @@ import { startWorker } from './worker.mjs'
 export const COMMON_ENV = ['APP_ENV', 'DATABASE_URL', 'APP_URL', 'MAIL_FROM', 'SMTP_HOST', 'MODEL_HIGH', 'MODEL_LIGHT', 'S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY']
 export const ROLE_ENV = {
   api: ['AUTH_SECRET', 'IMPORT_BUCKET', 'ASSETS_BUCKET'],
-  worker: ['IMPORT_BUCKET', 'NOTIFY_BUCKET']
+  worker: ['IMPORT_BUCKET']
 }
 // AI_PROVIDER ごとに要る設定（bedrock は AWS の認証情報を AWS_* で渡す）
 export const AI_ENV = { sakura: ['AI_API_KEY'], bedrock: ['AWS_REGION'] }

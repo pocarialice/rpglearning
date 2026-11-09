@@ -14,7 +14,6 @@ const ENV = {
   AI_API_KEY: 'test-ai-key',
   IMPORT_BUCKET: 'rpg-test-import',
   ASSETS_BUCKET: 'rpg-test-assets',
-  NOTIFY_BUCKET: 'rpg-test-notify',
   MAIL_FROM: 'no-reply@app.example.co.jp',
   APP_URL: 'https://app.example.co.jp',
   AUTH_SECRET: 'test-secret-test-secret-test-secret-0123',
@@ -36,7 +35,6 @@ const refusingTransport = { sendMail: refuse('SMTP') }
 beforeEach(() => {
   Object.assign(process.env, ENV)
   delete process.env.ALERT_EMAIL
-  delete process.env.MAIL_SCHEDULE_ENABLED
   delete process.env.AI_REASONING_EFFORT
   setPool(refusingPool)
   setTransport(refusingTransport)

@@ -15,7 +15,6 @@ export const PAGES = [
   ['/profile/courses', () => import('./learner/s16-course-records.js'), LEARNER],
   ['/profile/course', () => import('./learner/s17-course-record.js'), LEARNER],
   ['/partner', () => import('./learner/s09-partner.js'), LEARNER],
-  ['/settings/notify', () => import('./learner/s10-notify.js'), LEARNER],
   ['/admin/dashboard', () => import('./admin/s12-dashboard.js'), COURSE_ADMIN],
   ['/admin/import', () => import('./admin/s11-import.js'), COURSE_ADMIN],
   ['/admin/users', () => import('./admin/s13-users.js'), SYSTEM_ADMIN],

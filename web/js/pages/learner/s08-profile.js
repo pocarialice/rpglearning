@@ -13,8 +13,7 @@ export const M_PROFILE_ERROR = 'プロフィールを読み込めませんでし
 const MENU = [
   ['/profile/courses', 'コースごとの実績'],
   ['/courses', 'コースを選び直す'],
-  ['/partner', 'AIパートナーを選び直す'],
-  ['/settings/notify', '通知設定']
+  ['/partner', 'AIパートナーを選び直す']
 ]
 function statTile(label, value, wide = false) {
   return `<div class="app-stat${wide ? ' app-stat-wide' : ''}"><span class="meta">${label}</span><span class="numeral">${value}</span></div>`

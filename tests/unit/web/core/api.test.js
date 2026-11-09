@@ -41,6 +41,26 @@ describe('M-F02 core/api', () => {
     await check
     expect(fetchFn).toHaveBeenCalledTimes(4)
   })
+  it('MT-F02-03b サーバー起動中（SERVER_WAKING）は5秒ごとに待つ', async () => {
+    vi.useFakeTimers()
+    const waking = () => json(503, { error: { code: 'SERVER_WAKING', message: '起動中' } })
+    fetchFn.mockResolvedValueOnce(waking()).mockResolvedValueOnce(waking()).mockResolvedValue(json(200, { home: 1 }))
+    const p = make().apiGet('/home')
+    await vi.advanceTimersByTimeAsync(4999)
+    expect(fetchFn).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(5001)
+    await expect(p).resolves.toEqual({ home: 1 })
+    expect(onResuming.mock.calls.map((c) => c[0])).toEqual([1, 2])
+  })
+  it('MT-F02-03c サーバー起動中の再試行が尽きる（4分）', async () => {
+    vi.useFakeTimers()
+    fetchFn.mockImplementation(async () => json(503, { error: { code: 'SERVER_WAKING' } }))
+    const p = make().apiGet('/home')
+    const check = expect(p).rejects.toMatchObject({ code: 'SERVER_WAKING', status: 503 })
+    await vi.advanceTimersByTimeAsync(48 * 5000)
+    await check
+    expect(fetchFn).toHaveBeenCalledTimes(49)
+  })
   it('MT-F02-04 401 で1回だけ更新', async () => {
     fetchFn.mockResolvedValueOnce(json(401, {})).mockResolvedValue(json(200, { me: 1 }))
     expect(await make().apiGet('/me')).toEqual({ me: 1 })

@@ -1,6 +1,28 @@
-# さくらのクラウドのサーバー1台で動かすときの構成（構築手順書 3.8）。DB はデータベースアプライアンス、ファイルはオブジェクトストレージ
+# さくらのクラウドのサーバー1台で動かすときの構成（構築手順書 3.8）。ファイルはオブジェクトストレージ
+# DB は .env の COMPOSE_PROFILES=localdb のとき、このサーバーの中の db コンテナ（dev。構築手順書 3.3）。空ならデータベースアプライアンス（DATABASE_URL の先）
 # 使い方：.env を置いて docker compose up -d（イメージは さくらのクラウド コンテナレジストリから取る）
 services:
+  db:
+    image: postgres:16
+    profiles: [localdb]
+    environment:
+      POSTGRES_USER: rpgadmin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-}
+      POSTGRES_DB: rpg
+      TZ: Asia/Tokyo
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    stop_grace_period: 1m
+    shm_size: 128m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rpgadmin -d rpg"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
   api:
     image: ${IMAGE:?IMAGE を .env に書いてください}
     env_file: .env
@@ -8,6 +30,10 @@ services:
       ROLE: api
       MIGRATE_ON_START: "true"
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:8080/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s
@@ -34,10 +60,16 @@ services:
     ports: ["80:80", "443:443"]
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:?SITE_ADDRESS を .env に書いてください}
+      REDIRECT_ADDRESSES: ${REDIRECT_ADDRESSES:-http://redirect.invalid}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
     restart: unless-stopped
     depends_on: [api]
+    # アクセスのログ。rpg-idle-stop がここを見て、アクセスがない時間が続いたらサーバーを止める（構築手順書 3.13）
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
 volumes:
   caddy_data:
+  pg_data:

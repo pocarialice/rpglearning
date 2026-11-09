@@ -5,5 +5,15 @@
 	request_body {
 		max_size 2MB
 	}
+	# アクセスのログ（標準出力に JSON で出す）。rpg-idle-stop が「最後にアクセスがあった時刻」を知るのに使う
+	log {
+		output stdout
+		format json
+	}
 	reverse_proxy api:8080
+}
+# 転送だけのドメイン（www・前の rpg-dev など）。https://SITE_ADDRESS へ 301 で移す。アクセスのログは取らない（自動停止の数に入れない）
+# REDIRECT_ADDRESSES はカンマ区切り（例 www.rpglearning.net, rpg-dev.rpglearning.net）。空のときは compose が届かない名前（http://redirect.invalid）を入れる
+{$REDIRECT_ADDRESSES} {
+	redir https://{$SITE_ADDRESS}{uri} permanent
 }

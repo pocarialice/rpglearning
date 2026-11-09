@@ -4,12 +4,11 @@ import { ok } from '../../shared/util/http.js'
 import { encodeId, PREFIX } from '../../shared/util/ids.js'
 import { parseDbTimestamp, toIsoJst } from '../../shared/util/date-jst.js'
 import { levelInfo } from '../../shared/domain/exp.js'
-import { assertValid, validateNickname, validatePartnerName, validateNotifyTime } from '../../shared/util/validators.js'
+import { assertValid, validateNickname, validatePartnerName } from '../../shared/util/validators.js'
 import { PERSONAS } from '../../shared/ai/persona.js'
 import * as users from '../../shared/db/repositories/users.js'
 import * as enrollments from '../../shared/db/repositories/enrollments.js'
 import * as partners from '../../shared/db/repositories/partners.js'
-import * as notify from '../../shared/db/repositories/notify.js'
 import * as answers from '../../shared/db/repositories/answers.js'
 import * as badges from '../../shared/db/repositories/badges.js'
 import * as courses from '../../shared/db/repositories/courses.js'
@@ -73,19 +72,6 @@ export async function putPartner(ctx) {
   }
   await users.updatePartner(ctx.user.userId, persona, finalName)
   return ok({ persona, name: finalName })
-}
-export async function getNotify(ctx) {
-  const s = await notify.get(ctx.user.userId)
-  return ok({ emailEnabled: s?.emailEnabled ?? true, sendTime: s?.sendTime ?? '07:30' })
-}
-export async function putNotify(ctx) {
-  const { emailEnabled, sendTime } = ctx.body()
-  if (typeof emailEnabled !== 'boolean') {
-    throw new AppError('VALIDATION_ERROR', undefined, { details: [{ field: 'emailEnabled', code: 'INVALID' }] })
-  }
-  assertValid(validateNotifyTime(sendTime))
-  await notify.put(ctx.user.userId, { emailEnabled, sendTime })
-  return ok({ emailEnabled, sendTime, note: 'M-09' })
 }
 // course：受講中のコース（S-08 の2つめのカード。名前・受講開始日・このコースの学習時間・最後の学習日）
 export async function stats(ctx) {

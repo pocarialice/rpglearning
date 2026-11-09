@@ -307,7 +307,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
     <h1>
 <i class="fa-solid fa-file-lines h-ico" aria-hidden="true"></i>RPG学習アプリ 要件定義書</h1>
     <ul class="meta">
-      <li>版数<b>第1.2版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更。2026-11-02：ログイン画面からのアカウント作成（F-14）を追加）</b>
+      <li>版数<b>第1.3版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更。2026-11-02：ログイン画面からのアカウント作成（F-14）を追加。2026-11-07：通知（F-13・S-10）を機能ごと削除）</b>
 </li>
       <li>作成日<b>2026-10-17</b>
 </li>
@@ -431,7 +431,6 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
   CM[コース管理者] --&gt;|問題を取り込む| APP[RPG学習アプリ]
   U[学習者] --&gt;|解答・説明を入力| APP
   AI[AIパートナー] &lt;--&gt;|出題案内・採点・励まし| APP
-  APP --&gt;|復習タイミング通知| U
   CM --&gt;|学習状況を確認| APP
   SA[システム管理者] --&gt;|利用者・コース・権限を管理| APP
 </div></figure>
@@ -587,7 +586,6 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
       <span class="feat l1"><b>F-10</b>デイリークエスト</span>
       <span class="feat l1"><b>F-11</b>バッジ</span>
       <span class="feat l1"><b>F-12</b>AIパートナー選択</span>
-      <span class="feat l1"><b>F-13</b>通知</span>
       <span class="feat l1"><b>F-14</b>アカウント作成</span>
     </div>
     <div class="fcol">
@@ -702,9 +700,9 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 </tr>
 <tr>
 <td>F-13</td>
-<td>通知</td>
-<td>学習者</td>
-<td>復習対象・クエストをメールとプッシュで通知</td>
+<td>（欠番）</td>
+<td>-</td>
+<td>通知を機能ごと削除したため使わない（第1.3版）</td>
 </tr>
 <tr>
 <td>F-14</td>
@@ -992,16 +990,12 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
       </ol>
       <div class="mini-stats">
         <div>
-<p class="tile-num sm">13</p>
+<p class="tile-num sm">12</p>
 <p class="tile-cap">画面</p>
 </div>
         <div>
 <p class="tile-num sm">3</p>
 <p class="tile-cap">キーワード上限/問</p>
-</div>
-        <div>
-<p class="tile-num sm">2</p>
-<p class="tile-cap">通知（メール・プッシュ）</p>
 </div>
       </div>
     </div>
@@ -1065,8 +1059,8 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 </tr>
 <tr>
 <td>S-10</td>
-<td>通知設定</td>
-<td>学習者</td>
+<td>（欠番。通知設定を削除）</td>
+<td>-</td>
 </tr>
 <tr>
 <td>S-11</td>
@@ -1094,11 +1088,9 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 <li>今日の復習数（開始ボタンつき）</li>
 </ol>
 <h3>
-<i class="fa-solid fa-bell h-ico" aria-hidden="true"></i>5.3 通知</h3>
+<i class="fa-solid fa-bell h-ico" aria-hidden="true"></i>5.3 通知（削除）</h3>
 <ul>
-<li>メール通知とブラウザのプッシュ通知の両方に対応する</li>
-<li>学習者が通知設定画面でそれぞれオン・オフできる</li>
-<li>通知内容：その日の復習対象数、デイリークエスト更新</li>
+<li>通知（メール・プッシュ）は第1.3版で機能ごと削除した。学習者には通知を送らない</li>
 </ul>
 <h3>
 <i class="fa-solid fa-shuffle h-ico" aria-hidden="true"></i>5.4 画面遷移</h3>
@@ -1113,7 +1105,6 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
   S02 --&gt; S08[プロフィール]
   S02 --&gt; S03[コース選択]
   S08 --&gt; S09[AIパートナー選択]
-  S08 --&gt; S10[通知設定]
   S01 --&gt; S11[問題取り込み・レビュー]
   S01 --&gt; S12[ダッシュボード]
   S01 --&gt; S13[全体管理]
@@ -1291,7 +1282,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
       <div>
 <p class="sn-h">MVP<span class="tag solid">体験重視型</span></p>
 <p class="sn-sub">パイロット 約10名</p>
-      <p class="note">取り込み・演習・復習・EXP・ランキング・クエスト・AIパートナー複数・バッジ基本・メール通知</p>
+      <p class="note">取り込み・演習・復習・EXP・ランキング・クエスト・AIパートナー複数・バッジ基本</p>
 </div>
     </li>
     <li class="gate"><span class="gate-in">KPI検証<br><b>アクティブ率50%</b></span></li>
@@ -1300,7 +1291,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
       <div>
 <p class="sn-h">拡張</p>
 <p class="sn-sub">パイロット継続</p>
-      <p class="note">バッジ全カテゴリ・プッシュ通知・ダッシュボードの傾向分析</p>
+      <p class="note">バッジ全カテゴリ・ダッシュボードの傾向分析</p>
 </div>
     </li>
     <li>
@@ -1379,12 +1370,6 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 <td></td>
 </tr>
 <tr>
-<td>通知</td>
-<td>メール</td>
-<td>プッシュ通知</td>
-<td></td>
-</tr>
-<tr>
 <td>学習状況ダッシュボード</td>
 <td>基本項目</td>
 <td>傾向分析</td>
@@ -1406,7 +1391,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 </table></div>
 <figure class="diagram"><div class="mermaid">flowchart LR
   P1[Phase 1 MVP&lt;br&gt;パイロット10名&lt;br&gt;体験重視型] --&gt; R1{KPI検証&lt;br&gt;アクティブ率50%}
-  R1 --&gt;|達成| P2[Phase 2 拡張&lt;br&gt;バッジ全種・プッシュ通知&lt;br&gt;ダッシュボード強化]
+  R1 --&gt;|達成| P2[Phase 2 拡張&lt;br&gt;バッジ全種&lt;br&gt;ダッシュボード強化]
   R1 --&gt;|未達| F[ゲーム要素・EXP設計を調整]
   F --&gt; P1
   P2 --&gt; P3[Phase 3 全社展開&lt;br&gt;1,000名・SSO対応]
@@ -1429,9 +1414,9 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 <p class="note">合格ライン、不正解時の戻り先、復習ボーナス、ランキングのリセット</p>
 </div>
     <div class="card cat">
-<p class="cat-n">2<small>件</small></p>
+<p class="cat-n">1<small>件</small></p>
 <p class="cat-h">運用・体験</p>
-<p class="note">デイリークエスト数、MVPの通知範囲</p>
+<p class="note">デイリークエスト数</p>
 </div>
     <div class="card cat">
 <p class="cat-n">1<small>件</small></p>
@@ -1486,8 +1471,8 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 </tr>
 <tr>
 <td>7</td>
-<td>MVPの通知</td>
-<td>メールのみ（プッシュはPhase 2）</td>
+<td>（欠番）</td>
+<td>通知を削除したため（第1.3版）</td>
 </tr>
 <tr>
 <td>8</td>
@@ -1508,7 +1493,7 @@ ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-
 </table></div></section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 要件定義書 第1.2版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更。2026-11-02：ログイン画面からのアカウント作成（F-14）を追加）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 要件定義書 第1.3版（ドラフト。2026-10-21：リリースの環境を dev・prod の2つに変更。2026-11-02：ログイン画面からのアカウント作成（F-14）を追加。2026-11-07：通知（F-13・S-10）を機能ごと削除）</div></footer>
 
 </body>
 </html>

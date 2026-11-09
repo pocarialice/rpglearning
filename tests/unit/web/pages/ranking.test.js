@@ -3,7 +3,6 @@ import { setContext } from '../../../../web/js/core/context.js'
 import { createStore } from '../../../../web/js/core/store.js'
 import { ApiError } from '../../../../web/js/core/api.js'
 import * as ranking from '../../../../web/js/pages/learner/s07-ranking.js'
-import * as notify from '../../../../web/js/pages/learner/s10-notify.js'
 const person = (rank, i, isMe = false) => ({ rank, nickname: isMe ? 'たろう' : `p${i}`, weeklyExp: 1000 - i * 10, isMe })
 const THIS_WEEK = {
   courseName: '基本情報 <午前>', weekStart: '2026-10-19', weekEnd: '2026-10-25', daysToReset: 6,
@@ -71,56 +70,5 @@ describe('M-F15 S-07 週間ランキング', () => {
     click('[data-action="reload"]')
     await flush()
     expect(root.querySelectorAll('.gd-rank')).toHaveLength(11)
-  })
-})
-describe('M-F18 S-10 通知設定', () => {
-  it('MT-F18-01 6:00〜22:00 の30分刻み', () => {
-    expect(notify.SEND_TIMES).toHaveLength(33)
-    expect(notify.SEND_TIMES[0]).toBe('06:00')
-    expect(notify.SEND_TIMES[1]).toBe('06:30')
-    expect(notify.SEND_TIMES.at(-1)).toBe('22:00')
-  })
-  it('MT-F18-02 今の設定を表示し、変えたときだけ保存でき、保存したら M-09', async () => {
-    api.apiGet.mockResolvedValue({ emailEnabled: true, sendTime: '07:30' })
-    await notify.render(root)
-    expect(q('#email-enabled').checked).toBe(true)
-    expect(q('#send-time').value).toBe('07:30')
-    expect(q('[data-state-for="email-enabled"]').textContent).toBe('オン')
-    expect(q('#push-enabled').disabled).toBe(true)
-    expect(root.textContent).toContain('準備中')
-    expect(q('[data-action="save"]').disabled).toBe(true)
-    change('#send-time', '21:30')
-    expect(q('[data-action="save"]').disabled).toBe(false)
-    api.apiPut.mockResolvedValue({ emailEnabled: true, sendTime: '21:30', note: 'M-09' })
-    click('[data-action="save"]')
-    await flush()
-    expect(api.apiPut).toHaveBeenCalledWith('/me/notify', { emailEnabled: true, sendTime: '21:30' })
-    expect(q('.app-notice').textContent).toBe('保存した。変更は明日の通知から反映されます')
-    expect(q('[data-action="save"]').disabled).toBe(true)
-  })
-  it('MT-F18-03 メールをオフにすると時刻は選べない', async () => {
-    api.apiGet.mockResolvedValue({ emailEnabled: true, sendTime: '07:30' })
-    await notify.render(root)
-    change('#email-enabled', false)
-    expect(q('#send-time').disabled).toBe(true)
-    expect(q('[data-state-for="email-enabled"]').textContent).toBe('オフ')
-    expect(q('[data-action="save"]').disabled).toBe(false)
-  })
-  it('MT-F18-04 保存できないときは責めない文言で、もう一度押せる', async () => {
-    api.apiGet.mockResolvedValue({ emailEnabled: false, sendTime: '07:30' })
-    await notify.render(root)
-    expect(q('#send-time').disabled).toBe(true)
-    change('#email-enabled', true)
-    api.apiPut.mockRejectedValue(new ApiError('INTERNAL_ERROR', 500))
-    click('[data-action="save"]')
-    await flush()
-    expect(q('[role="alert"]').textContent).toBe(notify.M_NOTIFY_SAVE_ERROR)
-    expect(q('[data-action="save"]').disabled).toBe(false)
-  })
-  it('MT-F18-05 「プロフィールへ戻る」', async () => {
-    api.apiGet.mockResolvedValue({ emailEnabled: true, sendTime: '07:30' })
-    await notify.render(root)
-    click('[data-action="back"]')
-    expect(go).toHaveBeenCalledWith('/profile')
   })
 })

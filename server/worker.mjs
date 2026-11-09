@@ -1,7 +1,7 @@
 // ワーカー（詳細設計書 4.7）。ジョブキューの採点・取り込みと、定期処理（日次・メール）を動かす
 // Lambda の非同期呼び出し・SQS・EventBridge Scheduler の代わり
 import { createLogger } from '../functions/shared/util/logger.js'
-import { todayJst, jstSlot } from '../functions/shared/util/date-jst.js'
+import { todayJst } from '../functions/shared/util/date-jst.js'
 import { alert } from '../functions/shared/util/alert.js'
 import * as jobs from '../functions/shared/db/repositories/jobs.js'
 import * as schedules from '../functions/shared/db/repositories/schedules.js'
@@ -52,19 +52,15 @@ export async function jobLoop(kind, { log, signal, runners, notify }) {
     if (!worked) await sleep(IDLE_MS)
   }
 }
-// その時刻に動かすべき定期処理の枠。daily は毎日0:00（JST）以降に1回、mail は6:00〜22:30の30分ごと（有効にしたときだけ）
-export function dueSlots(now, { mailEnabled }) {
-  const today = todayJst(now)
-  const slots = [{ name: 'daily', slot: today, event: { job: 'daily' } }]
-  const hh = Number(jstSlot(now).slice(0, 2))
-  if (mailEnabled && hh >= 6 && hh <= 22) slots.push({ name: 'mail', slot: `${today}T${jstSlot(now)}`, event: { job: 'mail' } })
-  return slots
+// その時刻に動かすべき定期処理の枠。daily は毎日0:00（JST）以降に1回（止まっていたら次に起動したとき）
+export function dueSlots(now) {
+  return [{ name: 'daily', slot: todayJst(now), event: { job: 'daily' } }]
 }
 // 枠ごとに1回だけ動かす。失敗したら記録を消して、次の見回りでやり直す（3回まで）
-export function createScheduler({ log, runBatch = batch, notify = alert, mailEnabled = () => process.env.MAIL_SCHEDULE_ENABLED === 'true' }) {
+export function createScheduler({ log, runBatch = batch, notify = alert }) {
   const failures = new Map()
   return async function tick(now = new Date()) {
-    for (const s of dueSlots(now, { mailEnabled: mailEnabled() })) {
+    for (const s of dueSlots(now)) {
       const key = `${s.name}:${s.slot}`
       if ((failures.get(key) ?? 0) >= SCHEDULE_ATTEMPTS) continue
       if (!(await schedules.claim(s.name, s.slot))) continue

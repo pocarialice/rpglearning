@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   countChars, validateExplanation, validateNickname, validatePartnerName,
-  validateNotifyTime, validateImportRequest, validateQuestionDraft
+  validateImportRequest, validateQuestionDraft
 } from '../../../../web/js/logic/validators.js'
 const X = (n) => 'あ'.repeat(n)
 const good = { body: '問題文', choices: ['ア', 'イ', 'ウ', 'エ'], correct: 2, explanation: '解説', keywords: ['DNS', 'TTL'] }
@@ -56,16 +56,7 @@ describe('M-U07 validators ニックネーム・パートナー名', () => {
     expect(validatePartnerName(s)).toMatchObject({ ok: false, field: 'partnerName' })
   })
 })
-describe('M-U07 validators 通知時刻・取り込み・問題', () => {
-  it('MT-U07-21 通知時刻の範囲', () => {
-    expect(validateNotifyTime('05:30').ok).toBe(false)
-    expect(validateNotifyTime('06:00').ok).toBe(true)
-    expect(validateNotifyTime('22:00').ok).toBe(true)
-    expect(validateNotifyTime('22:30').ok).toBe(false)
-  })
-  it.each(['07:15', '7:30', '24:00', null])('MT-U07-22 通知時刻の刻み・形式 %s', (v) => {
-    expect(validateNotifyTime(v).ok).toBe(false)
-  })
+describe('M-U07 validators 取り込み・問題', () => {
   it('MT-U07-23 取り込みのサイズ', () => {
     const base = { sourceType: 'pdf', fileName: 'a.pdf', contentType: 'application/pdf' }
     expect(validateImportRequest({ ...base, size: 20971520 })).toEqual({ ok: true })
