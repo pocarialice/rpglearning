@@ -3,7 +3,7 @@ ssh_public_keys = [
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF9meuqImOfKjBndWSxODryxVz8IRPmKjM2lPhx5tJ70 jun-rpg",
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOyVXtR8nWtjbwmfjYIeO/GY8ptjpBHKyEtoZdUhLn3E jun-IDPW02514",
 ]
-ssh_allowed_cidrs = ["112.70.171.129", "203.140.83.25", "118.18.166.28"]
+ssh_allowed_cidrs = ["112.70.171.129", "203.140.83.25", "118.18.166.28", "113.32.251.162"]
 # テスターに公開する名前（prod は凍結中のため、dev を本番として使う。手順書 1.1）。www と前の rpg-dev は転送するだけ
 site_address       = "rpglearning.net"
 redirect_addresses = ["www.rpglearning.net", "rpg-dev.rpglearning.net"]
