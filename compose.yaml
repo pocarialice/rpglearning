@@ -39,6 +39,10 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # 初回の起動（マイグレーション・復元したばかりの DB）は時間がかかるため、この間の失敗は数えない。
+      # 足りないと worker が「api が正常にならない」で起動しない（2026-11-10 に dev で発生）
+      start_period: 3m
+      start_interval: 5s
     logging:
       driver: json-file
       options: { max-size: "20m", max-file: "10" }
