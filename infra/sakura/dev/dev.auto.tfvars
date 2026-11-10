@@ -8,7 +8,7 @@ ssh_allowed_cidrs = ["112.70.171.129", "203.140.83.25"]
 site_address       = "rpglearning.net"
 redirect_addresses = ["www.rpglearning.net", "rpg-dev.rpglearning.net"]
 dns_zone           = "rpglearning.net"
-image             = "rpglearning.sakuracr.jp/rpg-app:dev-20261107-21"
+image             = "rpglearning.sakuracr.jp/rpg-app:dev-20261109-22"
 mail_from         = "no-reply@mail.rpglearning.net"
 # Googleでログインの OAuth クライアントID（構築手順書 3.8.1。公開してよい値）。いまのサーバーへは rpg-deploy env GOOGLE_CLIENT_ID <値> で入れる
 google_client_id  = "14377743325-3sg08preuiqb1ul04mfut7396q62mhlp.apps.googleusercontent.com"
