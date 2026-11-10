@@ -12,42 +12,6 @@
 
 ---
 
-## 変更履歴
-
-```mermaid
-timeline
-  title 版の移り変わり
-  2026-10-20 : 第0.1版〜第1.0版
-  2026-10-21 : 第1.1版 : 第1.2版 : 第1.3版 : 第1.4版 : 第1.5版 : 第1.6版 : 第1.7版 : 第1.8版 : 第1.9版
-  2026-10-27 : 第2.0版
-  2026-10-31 : 第2.1版 : 第2.2版
-  2026-11-02 : 第2.3版 : 第2.4版
-  2026-11-03 : 第2.5版
-```
-
-日付は版を作った日。PR は、その版を作ったプルリクエスト。
-
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第0.1版〜第1.0版 | 2026-10-20 | 第0.1版は中間報告（共通モジュール）。取り込み前の作業中の版（リポジトリには残っていない） | — |
-| 第1.1版 | 2026-10-21 | 最終報告（全モジュール）として取り込む。7.2 を判断しやすい形（いまの状態・決めてほしいこと・選択肢ごとの影響）に書き直し | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第1.2版 | 2026-10-21 | 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第1.3版 | 2026-10-21 | stg 廃止に合わせた文書の版で再実行 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第1.4版 | 2026-10-21 | 説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせた仕様書 第0.7版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.5版 | 2026-10-21 | A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにした仕様書 第0.8版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.6版 | 2026-10-21 | A-11 にコース名を足した文書の版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.7版 | 2026-10-21 | 管理局の土台（A-01・A-14・ルーター）の変更後の文書の版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.8版 | 2026-10-21 | 管理局の S-13・S-14 に合わせた A-19・A-22 の変更後の文書の版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.9版 | 2026-10-21 | 画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第2.0版 | 2026-10-27 | さくらのクラウド版：DB・ジョブキュー・ログイン・メール・ファイル・AI の差し替え口とコンテナの入口を加えた仕様書 第1.3版の全ケースを実行。第1.9版までの AWS 版は `aws/documents/` に退避 | [#6](https://github.com/pocarialice/rpglearning/pull/6) |
-| 第2.1版 | 2026-10-31 | 画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースを含む、仕様書 第1.4版の全ケースを実行 | [#15](https://github.com/pocarialice/rpglearning/pull/15) |
-| 第2.2版 | 2026-10-31 | ホームの受講中のコース（MT-H03-08・MT-F10-05）を加えた、仕様書 第1.5版の全ケースを実行 | [#17](https://github.com/pocarialice/rpglearning/pull/17) |
-| 第2.3版 | 2026-11-02 | 冒険のまとめと学習時間（仕様書 第1.6版）、学習サマリ（仕様書 第1.7版）のケースを加えた、仕様書 第1.7版の全ケースを実行 | [#24](https://github.com/pocarialice/rpglearning/pull/24) |
-| 第2.4版 | 2026-11-02 | Ctrl+Enter・ピンチの拡大止めのテストを MT-F27・MT-F28 として載せた、仕様書 第1.8版の全ケースを実行 | [#24](https://github.com/pocarialice/rpglearning/pull/24) |
-| 第2.5版 | 2026-11-03 | アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行 | [#27](https://github.com/pocarialice/rpglearning/pull/27) |
-
----
-
 ## 1. 概要
 
 ### 1.1 目的
@@ -1597,3 +1561,39 @@ flowchart TD
 - dev 環境（さくらのクラウド）を構築手順書のとおりに作り、テスト仕様書 6.5 の申し送り5件を結合テストで確かめる
 - コースごとの実績のパートナーのコメント（A-12e）を dev のさくらのAI Engine で何件か作り、コースの学習全体を踏まえた200字くらいの文章になるかを確かめる
 - Bedrock が使えるようになったら、`AI_PROVIDER=bedrock` で dev の採点・取り込みを試し、さくらのAI Engine と比べてから prod を切り替える（詳細設計書 12 No.11）
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-20 : 第0.1版〜第1.0版
+  2026-10-21 : 第1.1版 : 第1.2版 : 第1.3版 : 第1.4版 : 第1.5版 : 第1.6版 : 第1.7版 : 第1.8版 : 第1.9版
+  2026-10-27 : 第2.0版
+  2026-10-31 : 第2.1版 : 第2.2版
+  2026-11-02 : 第2.3版 : 第2.4版
+  2026-11-03 : 第2.5版
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第0.1版〜第1.0版 | 2026-10-20 | 第0.1版は中間報告（共通モジュール）。取り込み前の作業中の版（リポジトリには残っていない） | — |
+| 第1.1版 | 2026-10-21 | 最終報告（全モジュール）として取り込む。7.2 を判断しやすい形（いまの状態・決めてほしいこと・選択肢ごとの影響）に書き直し | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第1.2版 | 2026-10-21 | 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第1.3版 | 2026-10-21 | stg 廃止に合わせた文書の版で再実行 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第1.4版 | 2026-10-21 | 説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせた仕様書 第0.7版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.5版 | 2026-10-21 | A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにした仕様書 第0.8版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.6版 | 2026-10-21 | A-11 にコース名を足した文書の版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.7版 | 2026-10-21 | 管理局の土台（A-01・A-14・ルーター）の変更後の文書の版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.8版 | 2026-10-21 | 管理局の S-13・S-14 に合わせた A-19・A-22 の変更後の文書の版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.9版 | 2026-10-21 | 画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第2.0版 | 2026-10-27 | さくらのクラウド版：DB・ジョブキュー・ログイン・メール・ファイル・AI の差し替え口とコンテナの入口を加えた仕様書 第1.3版の全ケースを実行。第1.9版までの AWS 版は `aws/documents/` に退避 | [#6](https://github.com/pocarialice/rpglearning/pull/6) |
+| 第2.1版 | 2026-10-31 | 画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースを含む、仕様書 第1.4版の全ケースを実行 | [#15](https://github.com/pocarialice/rpglearning/pull/15) |
+| 第2.2版 | 2026-10-31 | ホームの受講中のコース（MT-H03-08・MT-F10-05）を加えた、仕様書 第1.5版の全ケースを実行 | [#17](https://github.com/pocarialice/rpglearning/pull/17) |
+| 第2.3版 | 2026-11-02 | 冒険のまとめと学習時間（仕様書 第1.6版）、学習サマリ（仕様書 第1.7版）のケースを加えた、仕様書 第1.7版の全ケースを実行 | [#24](https://github.com/pocarialice/rpglearning/pull/24) |
+| 第2.4版 | 2026-11-02 | Ctrl+Enter・ピンチの拡大止めのテストを MT-F27・MT-F28 として載せた、仕様書 第1.8版の全ケースを実行 | [#24](https://github.com/pocarialice/rpglearning/pull/24) |
+| 第2.5版 | 2026-11-03 | アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行 | [#27](https://github.com/pocarialice/rpglearning/pull/27) |

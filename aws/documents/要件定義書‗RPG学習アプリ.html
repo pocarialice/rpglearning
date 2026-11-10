@@ -357,7 +357,6 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   <nav class="toc" aria-label="目次">
     <p>目次</p>
     <ol>
-<li><a href="#history">変更履歴</a></li>
 <li><details><summary><a href="#ch1">1. 目的・背景・スコープ</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 背景</a></li><li><a href="#sec-1-2">1.2 目的</a></li><li><a href="#sec-1-3">1.3 スコープ</a></li><li><a href="#sec-1-4">1.4 成功指標（KPI）</a></li><li><a href="#sec-1-5">1.5 全体像</a></li></ol></details></li>
 <li><details><summary><a href="#ch2">2. 利用者とロール</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-2-1">2.1 利用規模</a></li><li><a href="#sec-2-2">2.2 ロール定義</a></li><li><a href="#sec-2-3">2.3 コース管理者が把握する項目</a></li><li><a href="#sec-2-4">2.4 ユースケース</a></li></ol></details></li>
 <li><details><summary><a href="#ch3">3. 機能要件</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-3-1">3.1 機能一覧</a></li><li><a href="#sec-3-2">3.2 問題取り込み（F-01, F-02）</a></li><li><a href="#sec-3-3">3.3 問題形式</a></li><li><a href="#sec-3-4">3.4 キーワード説明の採点（F-04）</a></li><li><a href="#sec-3-5">3.5 忘却曲線復習（F-05）</a></li></ol></details></li>
@@ -366,21 +365,10 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <li><details><summary><a href="#ch6">6. 非機能要件・制約</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-6-1">6.1 インフラ</a></li><li><a href="#sec-6-2">6.2 AIの利用とデータ保護</a></li><li><a href="#sec-6-3">6.3 AIモデルの使い分け</a></li><li><a href="#sec-6-4">6.4 性能</a></li><li><a href="#sec-6-5">6.5 認証・セキュリティ</a></li><li><a href="#sec-6-6">6.6 データ保持</a></li><li><a href="#sec-6-7">6.7 対応環境</a></li></ol></details></li>
 <li><details><summary><a href="#ch7">7. リリース計画</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-7-1">7.1 方針</a></li><li><a href="#sec-7-2">7.2 フェーズ別スコープ</a></li></ol></details></li>
 <li><a href="#ch8">8. 仮置き事項（要確認）</a></li>
+<li><a href="#history">変更履歴</a></li>
     </ol>
   </nav>
   <main>
-<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
-<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第1版</b><small>10/17</small></span></li><li class="now"><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>（退避）</b><small>10/27</small></span></li></ol>
-<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
-<div class="table-wrap"><table class="hist">
-<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
-<tbody>
-<tr><td>第1版</td><td>2026-10-17</td><td>作成</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></span></td></tr>
-<tr><td>第1.1版</td><td>2026-10-21</td><td>リリースの環境を dev・prod の2つに変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>（退避）</td><td>2026-10-27</td><td>さくらのクラウドへの切り替えに合わせて <code>aws/documents/</code> に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a></td></tr>
-</tbody></table></div>
-</section>
 
 <section class="chapter" id="ch1"><h2>
 <i class="fa-solid fa-flag h-ico" aria-hidden="true"></i>1. 目的・背景・スコープ</h2>
@@ -1542,6 +1530,19 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 </tbody>
 </table></div></section>
+  
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第1版</b><small>10/17</small></span></li><li class="now"><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>（退避）</b><small>10/27</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第1版</td><td>2026-10-17</td><td>作成</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></span></td></tr>
+<tr><td>第1.1版</td><td>2026-10-21</td><td>リリースの環境を dev・prod の2つに変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>（退避）</td><td>2026-10-27</td><td>さくらのクラウドへの切り替えに合わせて <code>aws/documents/</code> に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a></td></tr>
+</tbody></table></div>
+</section>
   </main>
 </div>
 <footer class="site-footer"><div class="inner">RPG学習アプリ 要件定義書 第1.1版（ドラフト。変更の内容は「変更履歴」を参照）</div></footer>

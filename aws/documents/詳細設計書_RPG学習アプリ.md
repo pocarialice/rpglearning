@@ -11,35 +11,6 @@
 
 ---
 
-## 変更履歴
-
-```mermaid
-timeline
-  title 版の移り変わり
-  2026-10-20 : 第0.1版 : 第0.2版
-  2026-10-21 : 第0.3版 : 第0.4版 : 第0.5版 : 第0.6版 : 第0.7版 : 第0.8版 : 第0.9版 : 第1.0版 : 第1.1版
-  2026-10-27 : （退避）
-```
-
-日付は版を作った日。PR は、その版を作ったプルリクエスト。
-
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第0.1版 | 2026-10-20 | 作成（第1〜12章、HTML版あり） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
-| 第0.2版 | 2026-10-20 | リリースを GitHub Actions に変更 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
-| 第0.3版 | 2026-10-21 | モジュールテスト結果報告書 第0.1版の指摘を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.4版 | 2026-10-21 | モジュールテスト結果報告書 第1.1版 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.5版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.6版 | 2026-10-21 | ci.yml を作成し、画面のビルドは画面の実装時に足すと明記 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.7版 | 2026-10-21 | 画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映） | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第0.8版 | 2026-10-21 | S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第0.9版 | 2026-10-21 | S-07 の見出しに使うコース名を A-11 の応答に足す | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.0版 | 2026-10-21 | A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.1版 | 2026-10-21 | A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す | [#6](https://github.com/pocarialice/rpglearning/pull/6) |
-
----
-
 ## 1. 文書概要
 
 ### 1.1 目的
@@ -2074,3 +2045,32 @@ jobs:
 | 8  | GitHub のリポジトリ名・承認者               | `<オーナー>/rpg-learning-app`。prod の承認者はシステム管理者と開発リーダーの2名を仮置き     | dev 構築前         |
 | 9  | 通知メールの文言                       | パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を `mail/templates.js` に仮置き。外部設計書 10 No.10 で確定する | パイロット開始前        |
 | 10 | stg 環境を作り直すか                    | **決定（2026-10-21）**：コスト削減のため Phase 1 では作らない（外部設計書 10 No.11）。受け入れ確認は dev を凍結して行い（11.1）、prod は配置のたびにスナップショットを取る。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める | Phase 3 の計画時     |
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-20 : 第0.1版 : 第0.2版
+  2026-10-21 : 第0.3版 : 第0.4版 : 第0.5版 : 第0.6版 : 第0.7版 : 第0.8版 : 第0.9版 : 第1.0版 : 第1.1版
+  2026-10-27 : （退避）
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第0.1版 | 2026-10-20 | 作成（第1〜12章、HTML版あり） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
+| 第0.2版 | 2026-10-20 | リリースを GitHub Actions に変更 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
+| 第0.3版 | 2026-10-21 | モジュールテスト結果報告書 第0.1版の指摘を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.4版 | 2026-10-21 | モジュールテスト結果報告書 第1.1版 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.5版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.6版 | 2026-10-21 | ci.yml を作成し、画面のビルドは画面の実装時に足すと明記 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.7版 | 2026-10-21 | 画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映） | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第0.8版 | 2026-10-21 | S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第0.9版 | 2026-10-21 | S-07 の見出しに使うコース名を A-11 の応答に足す | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.0版 | 2026-10-21 | A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.1版 | 2026-10-21 | A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す | [#6](https://github.com/pocarialice/rpglearning/pull/6) |

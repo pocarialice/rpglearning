@@ -10,38 +10,6 @@
 
 ---
 
-## 変更履歴
-
-```mermaid
-timeline
-  title 版の移り変わり
-  2026-10-20 : 第0.1版 : 第0.2版
-  2026-10-21 : 第0.3版 : 第0.4版 : 第0.5版 : 第0.6版 : 第0.7版 : 第0.8版 : 第0.9版 : 第1.0版 : 第1.1版 : 第1.2版
-  2026-10-27 : （退避）
-  2026-10-31 : （第1.4版→第1.2版）
-```
-
-日付は版を作った日。PR は、その版を作ったプルリクエスト。
-
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第0.1版 | 2026-10-20 | 作成（第1〜6章） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
-| 第0.2版 | 2026-10-20 | GitHub Actions での実行を追加 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
-| 第0.3版 | 2026-10-21 | テスト結果報告書 第0.1版の補足テストに採番し、設定を test.projects に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.4版 | 2026-10-21 | テスト結果報告書 第1.1版 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.5版 | 2026-10-21 | stg 環境をなくし、システムテスト・受け入れ確認を dev に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.6版 | 2026-10-21 | ci.yml の内容と結合テストへの申し送り No.4 を追加 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.7版 | 2026-10-21 | 説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせて MT-U07-03〜07 を書き直し、MT-U07-08〜10・33 を欠番にし、MT-A02-11・MT-A04-07 を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第0.8版 | 2026-10-21 | A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにしたことに合わせて MT-H02-17・18 を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第0.9版 | 2026-10-21 | A-11 にコース名を足したことに合わせて MT-H08-08 を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.0版 | 2026-10-21 | A-01 の担当コース、A-14 の一覧の日時、管理局と初回の流れのテストを追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.1版 | 2026-10-21 | A-19 の一覧の日時、A-22 の性格名と初期名のテストを追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.2版 | 2026-10-21 | 画面（S-02〜S-14）・部品・外枠のテスト M-F07〜M-F22 を追加し、カバレッジの対象に画面を入れる | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す | [#6](https://github.com/pocarialice/rpglearning/pull/6) |
-| （第1.4版→第1.2版） | 2026-10-31 | お祝いの部品を Celebration にまとめ、クエスト達成のお祝いのテスト MT-F07-13・MT-F14-07 を足して第1.4版にしたが、この変更はさくら版に移すものだったため、退避した時点（第1.2版）に戻した | [#12](https://github.com/pocarialice/rpglearning/pull/12)・[#13](https://github.com/pocarialice/rpglearning/pull/13) |
-
----
-
 ## 1. 文書概要
 
 ### 1.1 目的
@@ -1206,3 +1174,35 @@ flowchart TD
 | 2 | Cognito の Username に利用者の `sub` を渡せる（メールを別名にしたユーザープールでは Username＝sub） | 管理画面から利用者のロール変更・論理削除・復活、日次処理の物理削除を1回ずつ行う | 「利用者が見つからない」で、ロール変更・削除・停止・物理削除が失敗する |
 | 3 | 署名付きURLは `content-type` を署名に含む（画面は同じ `Content-Type` を付けて PUT する） | S-11・S-14 から PDF・画像をアップロードする | アップロードが403で拒否され、問題やキャラクター画像を登録できない |
 | 4 | Lambda の束ね（esbuild）で `@aws-sdk/*` を外部扱いにしているため、使っている AWS SDK のパッケージ（`client-*` と `s3-request-presigner`）がすべて Lambda の Node.js 22 ランタイムに同梱されている | dev に配置し、取り込みの登録（署名付きURLの発行）・採点・日次処理を1回ずつ動かして、`Cannot find package` が出ないことを確かめる | その機能を初めて使ったときに Lambda が起動に失敗する（例：取り込みの登録で500）。同梱されていないパッケージは、外部扱いから外して zip に束ねる |
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-20 : 第0.1版 : 第0.2版
+  2026-10-21 : 第0.3版 : 第0.4版 : 第0.5版 : 第0.6版 : 第0.7版 : 第0.8版 : 第0.9版 : 第1.0版 : 第1.1版 : 第1.2版
+  2026-10-27 : （退避）
+  2026-10-31 : （第1.4版→第1.2版）
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第0.1版 | 2026-10-20 | 作成（第1〜6章） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
+| 第0.2版 | 2026-10-20 | GitHub Actions での実行を追加 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
+| 第0.3版 | 2026-10-21 | テスト結果報告書 第0.1版の補足テストに採番し、設定を test.projects に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.4版 | 2026-10-21 | テスト結果報告書 第1.1版 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.5版 | 2026-10-21 | stg 環境をなくし、システムテスト・受け入れ確認を dev に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.6版 | 2026-10-21 | ci.yml の内容と結合テストへの申し送り No.4 を追加 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.7版 | 2026-10-21 | 説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせて MT-U07-03〜07 を書き直し、MT-U07-08〜10・33 を欠番にし、MT-A02-11・MT-A04-07 を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第0.8版 | 2026-10-21 | A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにしたことに合わせて MT-H02-17・18 を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第0.9版 | 2026-10-21 | A-11 にコース名を足したことに合わせて MT-H08-08 を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.0版 | 2026-10-21 | A-01 の担当コース、A-14 の一覧の日時、管理局と初回の流れのテストを追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.1版 | 2026-10-21 | A-19 の一覧の日時、A-22 の性格名と初期名のテストを追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.2版 | 2026-10-21 | 画面（S-02〜S-14）・部品・外枠のテスト M-F07〜M-F22 を追加し、カバレッジの対象に画面を入れる | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す | [#6](https://github.com/pocarialice/rpglearning/pull/6) |
+| （第1.4版→第1.2版） | 2026-10-31 | お祝いの部品を Celebration にまとめ、クエスト達成のお祝いのテスト MT-F07-13・MT-F14-07 を足して第1.4版にしたが、この変更はさくら版に移すものだったため、退避した時点（第1.2版）に戻した | [#12](https://github.com/pocarialice/rpglearning/pull/12)・[#13](https://github.com/pocarialice/rpglearning/pull/13) |

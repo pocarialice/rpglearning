@@ -3,31 +3,9 @@
 | 項目 | 内容 |
 |---|---|
 | 文書名 | RPG学習アプリ 要件定義書 |
-| 版数 | 第1.3版（ドラフト。変更の内容は「変更履歴」を参照） |
+| 版数 | 第1.4版（ドラフト。変更の内容は「変更履歴」を参照） |
 | 作成日 | 2026-10-17（各版の日付は「変更履歴」を参照） |
 | 作成者 | ジュン |
-
----
-
-## 変更履歴
-
-```mermaid
-timeline
-  title 版の移り変わり
-  2026-10-17 : 第1版
-  2026-10-21 : 第1.1版
-  2026-11-02 : 第1.2版
-  2026-11-07 : 第1.3版
-```
-
-日付は版を作った日。PR は、その版を作ったプルリクエスト。
-
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第1版 | 2026-10-17 | 作成 | [#1](https://github.com/pocarialice/rpglearning/pull/1)<br>（版数を上げずに直したPR：[#2](https://github.com/pocarialice/rpglearning/pull/2)） |
-| 第1.1版 | 2026-10-21 | リリースの環境を dev・prod の2つに変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第1.2版 | 2026-11-02 | ログイン画面からのアカウント作成（F-14）を追加 | [#25](https://github.com/pocarialice/rpglearning/pull/25) |
-| 第1.3版 | 2026-11-07 | 通知（F-13・S-10）を機能ごと削除 | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
 
 ---
 
@@ -149,7 +127,7 @@ flowchart LR
 sequenceDiagram
   participant CM as コース管理者
   participant APP as アプリ
-  participant AI as Bedrock
+  participant AI as 生成AI<br>（さくらのAI Engine）
   CM->>APP: PDF・画像・テキストをアップロード
   APP->>AI: 問題・キーワードの抽出を依頼
   AI-->>APP: 抽出結果（下書き）
@@ -360,13 +338,15 @@ flowchart TD
 
 ### 6.1 インフラ
 
-- AWS上にホストする
-- 生成AIはAmazon Bedrockを利用する
-- AWSへのリリース（アプリの配置）は GitHub Actions で行う。テストに通ったものだけを、dev → prod（承認つき）の順に配置する。コストを抑えるため検証用の stg 環境は置かず、受け入れ確認は dev で行う（2026-10-21 変更）
+- さくらのクラウド（国内の事業者・国内のデータセンター）上にホストする（2026-10-27 に AWS から変更。AWS 版は `aws/` に退避）
+- ドメインは `rpglearning.net`。DNS は Cloudflare で管理し、サーバーの前に Cloudflare の Worker を置く（2026-11-09 追加）
+- 生成AIは当面さくらのAI Engine を利用する。Amazon Bedrock が使えるようになったら、設定だけで戻せるようにする
+- リリース（アプリの配置）は GitHub Actions で行う。テストに通ったものだけを、dev → prod（承認つき）の順に配置する。コストを抑えるため検証用の stg 環境は置かず、受け入れ確認は dev で行う（2026-10-21 変更）
+- 費用を抑えるため、prod の構築は軌道に乗るまで凍結し、dev を本番としてテスターに公開する。dev はアクセスがない時間が続いたらサーバーを止め、アクセスがあれば自動で起こす（2026-11-09 追加）
 
 ### 6.2 AIの利用とデータ保護
 
-- 問題文・学習者の説明をBedrockに送信してよい
+- 問題文・学習者の説明をさくらのAI Engine（Bedrock に戻したあとは Bedrock）に送信してよい
 - 送信データがモデルの再学習に使われない設定・契約であることを確認し、オプトアウトを担保する
 
 ### 6.3 AIモデルの使い分け
@@ -383,6 +363,7 @@ flowchart TD
 - 説明採点は精度を優先し、応答時間の上限は30秒とする
 - 採点中はAIパートナーの待機演出を表示する
 - 全社展開時に約1,000名の利用に耐えること
+- dev でサーバーが止まっていたときは、開いてから使えるようになるまで1〜3分待つことを許容する（テスター向けの公開のため）
 
 ### 6.5 認証・セキュリティ
 
@@ -461,3 +442,27 @@ flowchart LR
 | 8 | レベルアップに必要なEXPの計算式 | 基本設計で決定 |
 | 9 | AIパートナーのキャラクター数・設定 | 基本設計で決定 |
 | 10 | 自分でアカウントを作れる人の範囲 | メールアドレスの確認だけで誰でも作れる。社外の人も登録できてしまうため、社内のドメインに絞るか、管理者の承認を待つ形にするかをパイロット前に決める（外部設計書 10 未決事項 No.14 に影響を詳しく記載） |
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-17 : 第1版
+  2026-10-21 : 第1.1版
+  2026-11-02 : 第1.2版
+  2026-11-07 : 第1.3版
+  2026-11-10 : 第1.4版
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第1版 | 2026-10-17 | 作成 | [#1](https://github.com/pocarialice/rpglearning/pull/1)<br>（版数を上げずに直したPR：[#2](https://github.com/pocarialice/rpglearning/pull/2)） |
+| 第1.1版 | 2026-10-21 | リリースの環境を dev・prod の2つに変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第1.2版 | 2026-11-02 | ログイン画面からのアカウント作成（F-14）を追加 | [#25](https://github.com/pocarialice/rpglearning/pull/25) |
+| 第1.3版 | 2026-11-07 | 通知（F-13・S-10）を機能ごと削除 | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
+| 第1.4版 | 2026-11-10 | インフラ（6.1）をいまの構成に合わせる：さくらのクラウド・さくらのAI Engine・Cloudflare（DNS・Worker）、prod の凍結と dev の本番公開、dev の自動停止と起動。6.2 の送信先と 6.4 の起動待ちも直す | [#6](https://github.com/pocarialice/rpglearning/pull/6)・[#38](https://github.com/pocarialice/rpglearning/pull/38)・[#45](https://github.com/pocarialice/rpglearning/pull/45) |

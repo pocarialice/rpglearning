@@ -3,49 +3,11 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.7版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照） |
+| 版数     | 第1.8版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照） |
 | 作成日    | 2026-10-20（各版の日付は「変更履歴」を参照） |
-| 入力文書   | 要件定義書 第1.2版（ドラフト）、外部設計書 第1.3版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は `aws/documents/` に退避                 |
+| 入力文書   | 要件定義書 第1.4版（ドラフト）、外部設計書 第1.7版、さくらのクラウド構築手順書 第0.5版。AWS 版（第1.1版まで）は `aws/documents/` に退避 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
-
----
-
-## 変更履歴
-
-```mermaid
-timeline
-  title 版の移り変わり
-  2026-10-20 : 第0.1版 : 第0.2版
-  2026-10-21 : 第0.3版 : 第0.4版 : 第0.5版 : 第0.6版 : 第0.7版 : 第0.8版 : 第0.9版 : 第1.0版 : 第1.1版
-  2026-10-27 : 第1.2版
-  2026-11-02 : 第1.3版
-  2026-11-03 : 第1.4版
-  2026-11-06 : 第1.5版 : 第1.6版
-  2026-11-07 : 第1.7版
-```
-
-日付は版を作った日。PR は、その版を作ったプルリクエスト。
-
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第0.1版 | 2026-10-20 | 作成（第1〜12章、HTML版あり） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
-| 第0.2版 | 2026-10-20 | リリースを GitHub Actions に変更 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
-| 第0.3版 | 2026-10-21 | モジュールテスト結果報告書 第0.1版の指摘を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.4版 | 2026-10-21 | モジュールテスト結果報告書 第1.1版 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.5版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.6版 | 2026-10-21 | ci.yml を作成し、画面のビルドは画面の実装時に足すと明記 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.7版 | 2026-10-21 | 画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映） | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第0.8版 | 2026-10-21 | S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第0.9版 | 2026-10-21 | S-07 の見出しに使うコース名を A-11 の応答に足す | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.0版 | 2026-10-21 | A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.1版 | 2026-10-21 | A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.2版 | 2026-10-27 | AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる。第1.1版までの AWS 版は `aws/documents/` に退避 | [#6](https://github.com/pocarialice/rpglearning/pull/6)<br>（版数を上げずに直したPR：[#8](https://github.com/pocarialice/rpglearning/pull/8)・[#9](https://github.com/pocarialice/rpglearning/pull/9)・[#10](https://github.com/pocarialice/rpglearning/pull/10)・[#12](https://github.com/pocarialice/rpglearning/pull/12)・[#13](https://github.com/pocarialice/rpglearning/pull/13)・[#14](https://github.com/pocarialice/rpglearning/pull/14)・[#23](https://github.com/pocarialice/rpglearning/pull/23)・[#24](https://github.com/pocarialice/rpglearning/pull/24)） |
-| 第1.3版 | 2026-11-02 | ログイン画面からのアカウント作成（A-36・A-37、T-29）を追加 | [#25](https://github.com/pocarialice/rpglearning/pull/25) |
-| 第1.4版 | 2026-11-03 | コースごとの実績（S-16・S-17、A-12d・A-12e）を追加 | [#27](https://github.com/pocarialice/rpglearning/pull/27)<br>（版数を上げずに直したPR：[#29](https://github.com/pocarialice/rpglearning/pull/29)） |
-| 第1.5版 | 2026-11-06 | ホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007） | [#32](https://github.com/pocarialice/rpglearning/pull/32) |
-| 第1.6版 | 2026-11-06 | Googleでログイン（A-38・A-39、M-K03、V008）を追加 | [#34](https://github.com/pocarialice/rpglearning/pull/34) |
-| 第1.7版 | 2026-11-07 | 通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
 
 ---
 
@@ -138,10 +100,29 @@ flowchart LR
   BAT --> DB
   BAT --> ML
   BAT --> ST
-  DB --> PGDB[("PostgreSQL<br>データベースアプライアンス")]
+  DB --> PGDB[("PostgreSQL<br>dev：db コンテナ<br>prod：データベースアプライアンス")]
   AI --> AIE["さくらのAI Engine<br>（または Bedrock）"]
   ST --> OBJ["オブジェクトストレージ"]
   ML --> SMTP["SMTP"]
+```
+
+アプリの外側に、dev のサーバーを止める・起こすしくみがある（外部設計書 2.10）。入口の Cloudflare Worker（4.8）と、サーバーに置くコマンド（4.9）で、アプリのコードは変えない。
+
+```mermaid
+flowchart LR
+  B["ブラウザ"] --> W["Cloudflare Worker<br>workers/wake（4.8）"]
+  W -->|"動いていればそのまま渡す"| C["caddy → api・worker・db"]
+  W -.->|"止まっていたら電源を入れる"| SA["さくらのクラウド API"]
+  subgraph SV["dev サーバー"]
+    C
+    I["rpg-idle-stop（5分ごと）"]
+    D["rpg-db（毎日 3:00 など）"]
+    R["rpg-deploy（反映）"]
+  end
+  I -->|"60分アクセスがない"| D
+  D -->|"バックアップ"| OS["オブジェクトストレージ<br>rpg-dev-backup"]
+  I -.->|"電源を切る"| SV
+  R -->|"反映の前に"| D
 ```
 
 **依存のルール**
@@ -164,12 +145,14 @@ rpglearning/
 ├─ package-lock.json
 ├─ vitest.config.js               # テスト設定（環境・カバレッジ閾値）
 ├─ Dockerfile                     # コンテナ（画面を組み立てて入れる。ROLE で役割を切り替える）
-├─ compose.yaml                   # サーバーでの構成（caddy・api・worker）
+├─ compose.yaml                   # サーバーでの構成（caddy・api・worker。dev は db も）
 ├─ Caddyfile                      # HTTPS の終端
 ├─ .env.example                   # サーバーの .env の見本（値は構築手順書）
 ├─ .github/workflows/
 │  ├─ ci.yml                      # プルリクエストで test・画面のビルド・コンテナのビルド（11.2）
-│  └─ release.yml                 # コンテナを作ってレジストリへ（main の手動実行 → dev、タグ release-* → prod）
+│  ├─ release.yml                 # コンテナを作ってレジストリへ（main の手動実行 → dev、タグ release-* → prod）
+│  ├─ power.yml                   # dev サーバーの電源を入れる・切る（予備。4.9）
+│  └─ wake-worker.yml             # Cloudflare Worker をデプロイする（4.8）
 ├─ db/migrations/
 │  ├─ V001__create_tables.sql     # 第8章のCREATE TABLE
 │  ├─ V002__seed_masters.sql      # partners・quest_defs・badge_defs
@@ -221,7 +204,13 @@ rpglearning/
 │  ├─ migrate.mjs                 # マイグレーションを流す（手動で使うとき）
 │  ├─ create-admin.mjs            # 最初のシステム管理者を作る（構築手順書）
 │  ├─ check-ai.mjs                # AI の4つの用途を本番と同じ設定で呼んで確かめる（構築手順書 3.9）
+│  ├─ sakura-power.sh             # dev サーバーの電源（power.yml からも使う。4.9）
 │  └─ test-report.mjs             # モジュールテスト結果報告書を作る
+├─ workers/wake/                 # Cloudflare Worker rpg-dev-wake（起こす係。4.8）
+│  ├─ wrangler.toml               # ルート（rpglearning.net・www・rpg-dev）と設定
+│  └─ src/                        # index.js（入口）・wake.js（中身）
+├─ infra/sakura/                 # Terraform（shared：レジストリ、dev：サーバー・パケットフィルタ・DNS）
+│  └─ dev/                        # setup.sh.tftpl（スタートアップスクリプト）・rpg-deploy.sh・rpg-db.sh・rpg-idle-stop.sh（4.9）
 └─ aws/                           # AWS 版（退避。aws/README.md）
 ```
 
@@ -230,8 +219,10 @@ rpglearning/
 | リポジトリ | 成果物 | 配置先（さくらのクラウド） | 配置の方法 |
 | --- | --- | --- | --- |
 | `functions/`・`server/`・`db/`・`web/` | コンテナイメージ `rpg-app:<リリース番号>` | コンテナレジストリ → サーバー `rpg-{env}-app` の `api`・`worker` | GitHub Actions（`release.yml`）がレジストリへ置き、サーバーで `docker compose pull` → `up -d` |
-| `db/migrations/` | （イメージに入る） | データベースアプライアンス `rpg-{env}-db`（データベース `rpg`） | api コンテナの起動時（`MIGRATE_ON_START=true`） |
+| `db/migrations/` | （イメージに入る） | dev：サーバーの中の `db` コンテナ、prod：データベースアプライアンス `rpg-prod-db`（どちらもデータベース `rpg`） | api コンテナの起動時（`MIGRATE_ON_START=true`） |
 | `compose.yaml`・`Caddyfile` | - | サーバーの `/opt/rpg/` | 構築時に置く（変えたときだけ手で置き直す） |
+| `workers/wake/` | Worker `rpg-dev-wake` | Cloudflare（`rpglearning.net` のルート） | GitHub Actions `wake-worker`（手動） |
+| `infra/sakura/dev/rpg-*.sh` | コマンド `rpg-deploy`・`rpg-db`・`rpg-idle-stop` | サーバーの `/usr/local/bin/` | サーバーを作るとき、スタートアップスクリプトが GitHub から取り、sha256 を確かめて置く |
 | - | キャラクター画像 | オブジェクトストレージ `rpg-{env}-assets` の `partners/` | S-14 の画面から登録（リリース対象外） |
 
 ### 2.3 技術スタック
@@ -240,7 +231,7 @@ rpglearning/
 | ----------- | ------------------------------------- | -------------------------------------------- |
 | 実行環境        | Node.js                               | 22.x（コンテナ `node:22-slim`）         |
 | モジュール形式     | ES Modules                            | `package.json` に `"type": "module"`          |
-| DB          | PostgreSQL（データベースアプライアンス）、`pg` | 接続プールは1コンテナ5本まで。セッションのタイムゾーンは UTC |
+| DB          | PostgreSQL 16（dev：サーバーの中の `db` コンテナ、prod：データベースアプライアンス）、`pg` | 接続プールは1コンテナ5本まで。セッションのタイムゾーンは UTC |
 | ファイル        | `@aws-sdk/client-s3`・`@aws-sdk/s3-request-presigner` | S3 互換 API としてさくらのオブジェクトストレージにつなぐ（パス形式） |
 | AI          | さくらのAI Engine（`fetch` で OpenAI 互換の API）、`@aws-sdk/client-bedrock-runtime` | `AI_PROVIDER` で切り替え |
 | メール         | nodemailer                            | SMTP（587 は STARTTLS、465 は TLS） |
@@ -250,6 +241,8 @@ rpglearning/
 | 画面          | Vanilla JS（ES Modules）、アプリ用デザインシステム `bundle.css` | ビルドなし                                         |
 | コンテナ        | Docker、Docker Compose、Caddy 2              | サーバーは Ubuntu |
 | CI/CD       | GitHub Actions                     | ランナー `ubuntu-latest`。レジストリへはユーザー名・パスワード（GitHub の Secrets）でログイン |
+| 入口（dev）    | Cloudflare Workers（`workers/wake`） | wrangler 4.40.0。デプロイは GitHub Actions `wake-worker` |
+| インフラ       | Terraform（さくらのクラウド・Cloudflare のプロバイダ） | `infra/sakura/`。Cloudflare は `dns_provider = "cloudflare"` のときだけ使う |
 
 ### 2.4 共通の実装方針
 
@@ -355,6 +348,16 @@ rpglearning/
 | `ALERT_EMAIL`      | すべて                           | 監視のお知らせの宛先（なければ送らない）                 |
 | `WORKER_GRADING_CONCURRENCY`・`WORKER_IMPORT_CONCURRENCY` | worker | 同時に処理する採点（既定2）・取り込み（既定1）の数 |
 | `PORT`・`WEB_ROOT` | api                           | 待ち受けるポート（既定 8080）、画面のファイルの場所（コンテナでは `/app/web`） |
+
+**サーバーのコマンドと compose だけが読む設定（アプリは読まない）**
+
+| 変数 | 使うもの | 使い方 |
+| --- | --- | --- |
+| `IMAGE` | compose・`rpg-deploy` | 動かすイメージ（`rpg-deploy` が書き換え、前の値を `# 前回 IMAGE=` で残す） |
+| `SITE_ADDRESS`・`REDIRECT_ADDRESSES` | caddy | 公開するドメイン（`rpglearning.net`）と、そこへ 301 で転送するだけのドメイン（`www`・`rpg-dev`） |
+| `COMPOSE_PROFILES`・`DB_PASSWORD` | compose | `localdb` なら `db` コンテナを動かす（dev）。空ならデータベースアプライアンス（prod） |
+| `BACKUP_BUCKET`・`BACKUP_KEEP` | `rpg-db` | DB のバックアップの置き場（`rpg-dev-backup` の `db/`）と残す数（既定30） |
+| `IDLE_STOP_MINUTES` | `rpg-idle-stop` | アクセスがないまま止めるまでの分数（既定60。`0` で止めない） |
 
 ---
 
@@ -872,6 +875,52 @@ flowchart TD
 | 定期処理の失敗 | 枠を `release` して次の見回りでやり直す。同じ枠で3回失敗したらやめて監視のお知らせ（`schedule-{name}`） |
 | 止まっていた日 | worker が0:00に止まっていても、起動したときにその日の daily を動かす（その日の枠がまだないため） |
 
+
+### 4.8 起こす係（Cloudflare Worker `workers/wake`）
+
+dev のサイトの前に置く Worker `rpg-dev-wake`。ルートは `rpglearning.net/*`・`www.rpglearning.net/*`・`rpg-dev.rpglearning.net/*`（`wrangler.toml`）。入口は `src/index.js`、中身は `src/wake.js` の `handle()`。
+
+```mermaid
+flowchart TD
+  Q["リクエスト"] --> A{"/.well-known/acme-challenge/ ？"}
+  A -->|"はい"| P1["そのまま渡す（証明書の更新）"]
+  A -->|"いいえ"| H{"CANONICAL_HOST 以外のホスト？"}
+  H -->|"はい"| R["301 で rpglearning.net へ"]
+  H -->|"いいえ"| K{"POST /__wake ？"}
+  K -->|"はい"| KW["起こす → 204"]
+  K -->|"いいえ"| D{"20秒以内に<br>つながらなかった？"}
+  D -->|"いいえ"| F["サーバーへ渡す（30秒で打ち切り）"]
+  F -->|"届いた"| OK["その応答を返す"]
+  F -->|"520〜527・530・時間切れ"| M["20秒間「止まっている」と覚える"]
+  D -->|"はい"| W
+  M --> W{"起こしてよいリクエスト？"}
+  W -->|"はい"| ON["電源を入れる（60秒間は呼び直さない）"]
+  W --> RET["/api/* → 503 SERVER_WAKING<br>HTML の GET → 起動中ページ（503）<br>そのほか → 503"]
+  ON --> RET
+```
+
+| 項目 | 内容 |
+| --- | --- |
+| 起こしてよいリクエスト（`shouldWake`） | User-Agent が空か、ボット（`bot`・`crawl`・`spider`・`curl`・`python` など）なら起こさない。`/__wake` は POST だけ。`/api/*`（`/api/health` を除く）は、GET 以外か `Authorization` ヘッダー付きのとき。画面のファイルや `/` の GET だけでは起こさない |
+| 電源を入れる（`powerOn`） | さくらのクラウドの API（ゾーン `SAKURACLOUD_ZONE`＝`is1b`）で、名前が `SERVER_NAME`（`rpg-dev-app`）とぴったり同じサーバーを1台探す。電源が入っていなければ `PUT /server/{id}/power` |
+| 覚えておく状態 | Cloudflare の Cache API に、データセンターごとに置く。「つながらなかった」は20秒（`DOWN_SECONDS`）、「電源を入れた」は60秒（`WAKE_SECONDS`） |
+| `SERVER_WAKING` の応答 | `503`、`{"error":{"code":"SERVER_WAKING","message":"サーバーを起動しています。1〜3分お待ちください"}}`、`Cache-Control: no-store`・`Retry-After: 10` |
+| 起動中ページ | `503`・`X-Robots-Tag: noindex`。「ギルドの扉を開けています…」。ページの JavaScript が `POST /__wake` を送り、5秒ごとに `/api/health` を見て、200 なら読み込み直す（6分たったら「開き直してください」） |
+| 画面の側 | `core/api.js`・`core/auth.js` は `SERVER_WAKING` を受けたら、M-01 の待機演出のまま5秒ごとに最大48回（4分）やり直す（10.3） |
+| 設定 | `[vars]`：`SAKURACLOUD_ZONE`・`SERVER_NAME`・`CANONICAL_HOST`。Secrets：`SAKURACLOUD_ACCESS_TOKEN`・`SAKURACLOUD_ACCESS_TOKEN_SECRET`（`wrangler secret put`。ファイルには書かない） |
+| ログ | `wake`（`result`：`started`・`up`）・`wake.error`。Cloudflare の Observability で見る |
+| デプロイ | GitHub Actions `wake-worker`（手動）。`tests/unit/workers` のテストを流してから `wrangler deploy` |
+
+### 4.9 サーバーのコマンド（`infra/sakura/dev/`）
+
+dev のサーバーを作るとき、スタートアップスクリプト（`setup.sh.tftpl`）が GitHub から取って `/usr/local/bin/` に置き、systemd のタイマーを作る。アプリのコンテナの外で動く。
+
+| コマンド | 動くとき | すること |
+| --- | --- | --- |
+| `rpg-idle-stop` | `rpg-idle-stop.timer`（起動の10分後から5分ごと） | caddy のアクセスのログで、直近 `IDLE_STOP_MINUTES` 分の `/api/*`（`/api/health`・`/api/auth/refresh` を除く）を数える。0件で、採点・取り込みのジョブも、SSH で入っている人もなく、起動して60分たっていれば、`rpg-db backup` のあと電源を切る。バックアップに失敗したら止めない。`status`・`pause`・`resume` もある |
+| `rpg-db` | `rpg-db-backup.timer`（毎日 3:00）、自動停止の前、`rpg-deploy` の反映の前 | `backup`：`pg_dump -Fc` をオブジェクトストレージ `BACKUP_BUCKET` の `db/` に置き、`BACKUP_KEEP`（30）個だけ残す。`list`・`restore <名前>`（`latest` も可）・`restore-file`・`psql`。`restore-if-empty`：DB が空ならいちばん新しいバックアップを戻す（作り直したサーバーの初回の起動で動く） |
+| `rpg-deploy` | 人が打つ（スマホからは Tailscale SSH） | 引数なしで、レジストリのいちばん新しい `dev-*` を反映する（11.5）。`<タグ>`・`rollback`・`status`・`list`・`env <名前> <値>`（`.env` を書き換えて入れ直す） |
+| `scripts/sakura-power.sh` | GitHub Actions `power`（手動）か PC | `start`・`status`・`stop`。Worker が使えないときの予備。`stop` はバックアップを取らない |
 
 ---
 
@@ -1422,7 +1471,7 @@ angles には選んだ観点を、それぞれ2〜8文字の名詞で書く。
 
 | 項目       | 方針                                                                                                 |
 | -------- | -------------------------------------------------------------------------------------------------- |
-| DB       | さくらのクラウド データベースアプライアンス（PostgreSQL 16以降）、データベース名 `rpg`、スキーマ `public`。アプリは `pg` でつなぐ（3.3）                           |
+| DB       | PostgreSQL 16以降（dev：サーバーの中の `db` コンテナ、prod：さくらのクラウド データベースアプライアンス）、データベース名 `rpg`、スキーマ `public`。アプリは `pg` でつなぐ（3.3）                           |
 | 主キー      | `bigint GENERATED ALWAYS AS IDENTITY`。マスタ（パートナー・クエスト・バッジ）はコード値の `text`                             |
 | 区分値      | PostgreSQL の enum 型は使わず、`text` ＋ `CHECK` 制約（値の追加がしやすいため）                           |
 | 日時       | `timestamptz`（UTCで保存）。JST日付は `date` 型の列にアプリが計算して入れる                                                |
@@ -2264,7 +2313,7 @@ ORDER BY last_studied_on DESC NULLS LAST, c.course_id LIMIT 100;
 | APIの処理完了（`api`）         | INFO  | route、status、durationMs、userId              | 5xx が5分に5回で監視メール（10.4）                               |
 | 採点の30秒超え         | WARN  | `code: GRADING_TIMEOUT`、gradingId            | -（件数はログで確認） |
 | 採点の失敗            | WARN  | gradingId、failureReason、inputTokens         | 失敗を例外にしないため、件数はこのログで確認 |
-| DBにつながらない          | WARN  | `code: DB_RESUMING`                    | 続くならシンプル監視（DB）も赤になる                    |
+| DBにつながらない          | WARN  | `code: DB_RESUMING`                    | 続くなら prod はシンプル監視も赤になる                    |
 | AIの呼び出し（さくら：`ai.converse`、Bedrock：`bedrock.converse`）     | INFO  | purpose、modelId、inputTokens、outputTokens、durationMs（さくらは provider も） | コストの確認（10.2 で集計）       |
 | ジョブの終わり（`job.end`）・失敗（`job.error`・`job.exhausted`） | INFO・ERROR | jobId、kind、outcome、attempts            | 取り込みが最後まで失敗したら監視メール                  |
 | 定期処理（`schedule.done`・`schedule.failed`）       | INFO・ERROR  | name、slot、attempt                   | 3回失敗したら監視メール    |
@@ -2295,22 +2344,25 @@ docker compose logs --since 24h api worker | grep -E '"msg":"(ai|bedrock).conver
 | 409 `CONFLICT`           | 入力欄の下に表示                                              | M-08  |
 | 409 `ONBOARDING_REQUIRED`・`COURSE_REQUIRED` | 初回の流れ・S-03 へ移動                       | -     |
 | 503 `DB_RESUMING`        | 待機演出で2・4・8秒あけて再試行                                    | M-01  |
+| 503 `SERVER_WAKING`（dev。Worker が返す） | 待機演出のまま5秒ごとに最大48回（4分）再試行（`core/api.js`・`core/auth.js`。4.8） | M-01 |
 | 504 `GRADING_TIMEOUT`    | 「もう一度採点してもらう」ボタンを出す（入力はそのまま）                          | M-07  |
 | そのほか・通信エラー               | 画面上部の帯                                                | M-02  |
 
 ### 10.4 監視
 
-AWS 版の CloudWatch アラーム・SNS の代わりに、アプリが監視のお知らせメールを送り、外からの死活はさくらのクラウドのシンプル監視で見る。
+AWS 版の CloudWatch アラーム・SNS の代わりに、アプリが監視のお知らせメールを送り、外からの死活は prod ではさくらのクラウドのシンプル監視で見る。dev はアクセスがないと止まるため、シンプル監視を置かない（止まるたびにお知らせが来るため）。
 
 | 監視 | しくみ | 知らせ先 |
 | --- | --- | --- |
-| サイトが開けるか | シンプル監視（HTTPS `https://{SITE_ADDRESS}/api/health`、5分ごと、ステータス200） | シンプル監視の通知メール（構築手順書 3.12） |
-| サーバーが生きているか | シンプル監視（ping） | 同上 |
+| サイトが開けるか（prod） | シンプル監視（HTTPS `https://{SITE_ADDRESS}/api/health`、5分ごと、ステータス200） | シンプル監視の通知メール（構築手順書 3.12） |
+| サーバーが生きているか（prod） | シンプル監視（ping） | 同上 |
 | DB が生きているか | `/api/health` が DB に `SELECT 1` を投げる（失敗すると 503） | 同上 |
 | API の 5xx が続く | `server/http.mjs` が5分に5回数えたら `alert('api-5xx')` | `ALERT_EMAIL`（`util/alert.js`） |
 | 取り込みが最後まで失敗 | worker が `alert('import-failed')` | 同上 |
 | 定期処理が3回失敗 | worker が `alert('schedule-daily')`・`alert('schedule-mail')` | 同上 |
 | ディスク・メモリ | サーバーのリソースモニタ（コントロールパネル）を月に1回見る（構築手順書 5.2） | - |
+| dev の停止と起動 | `rpg-idle-stop` の記録（`/var/log/rpg-idle-stop.log`）と、Worker のログ（`wake`・`wake.error`。Cloudflare の Observability） | - |
+| dev の DB のバックアップ | `rpg-db list` に毎日 3:00 の分が並んでいるか（構築手順書 3.12） | - |
 
 - 監視メールは同じ種類なら1時間に1通まで（M-U08）。件名の先頭に `[{APP_ENV}]` を付ける
 - `ALERT_EMAIL` が空なら送らない（ローカル・テスト）
@@ -2357,6 +2409,8 @@ flowchart LR
 | --- | --- | --- |
 | `ci.yml` | `main` へのプルリクエスト・手動 | `npm ci` → `npm test -- --coverage`（基準を下回ったら失敗）→ `npm run build:web` → `docker build`（押し出さない） |
 | `release.yml` | `main` で手動実行（dev）、タグ `release-*`（prod） | テスト → リリース番号を決める → レジストリにログイン → `docker build`（`APP_ENV`・`RELEASE_NO`）→ `docker push`。イメージ名をジョブの概要に書く |
+| `power.yml` | 手動（Environment `dev`） | `scripts/sakura-power.sh` で dev サーバーの電源を入れる・状態を見る・切る（4.9） |
+| `wake-worker.yml` | 手動（Environment `dev`） | `tests/unit/workers` を流してから、`wrangler deploy` で Worker を置き、さくらのクラウドの APIキーを Secrets に入れる（4.8） |
 
 - AWS 版の `deploy.yml`・`rollback.yml` はない（反映と切り戻しはサーバーで行う。11.5・11.6）
 
@@ -2383,7 +2437,9 @@ flowchart LR
 
 ### 11.5 サーバーへの反映
 
-サーバーに SSH で入り、`/opt/rpg` で行う。
+**dev**：サーバーに SSH（スマホからは Tailscale SSH）で入り、`rpg-deploy` を打つ（4.9）。レジストリのいちばん新しい `dev-*` を探し、DB をバックアップしてから、下の 1.〜4. を行い、Caddy 越しに `/api/health` を確かめる。サーバーが止まっていたら、先にサイトを開いて起こす（4.8）。
+
+**prod**（凍結を解いたとき）：サーバーに SSH で入り、`/opt/rpg` で行う。
 
 1. `.env` の `IMAGE=` を新しいリリース番号に書き換える（前の値は `.env` の末尾に `# 前回 IMAGE=...` として残しておく）
 2. `docker compose pull` でイメージを取る
@@ -2392,17 +2448,20 @@ flowchart LR
 5. `docker compose logs --since 10m api | grep -E 'migrate|ERROR'` で、マイグレーションの結果とエラーがないことを確かめる
 6. 11.7 のスモークテスト
 
+**注意**
+
 - マイグレーションが失敗すると api は起動しない（ログに `server.start_failed`）。その場合は 11.6 で前のイメージに戻す（失敗したファイルはトランザクションで取り消されている）
-- Bedrock に切り替えるときも同じ手順で、1. の代わりに `.env` の `AI_PROVIDER`・`MODEL_*`・AWS の認証情報を書き換える（構築手順書 5.5）
+- Bedrock に切り替えるときも同じ手順で、1. の代わりに `.env` の `AI_PROVIDER`・`MODEL_*`・AWS の認証情報を書き換える（構築手順書 5.5）。dev は `rpg-deploy env <名前> <値>` で書き換えられる
 
 ### 11.6 切り戻し
 
 | 対象 | 方法 | 時間 |
 | --- | --- | --- |
 | アプリ（api・worker・画面） | `.env` の `IMAGE=` を前回の値に戻して `docker compose up -d` | 約2分 |
-| DB | 原則として戻さない（新しい列・テーブルは古いイメージでは使われないため）。データを壊す不具合だった場合だけ、データベースアプライアンスのバックアップから復元する（システム管理者の判断。構築手順書 5.3） | 1時間以上 |
+| DB | 原則として戻さない（新しい列・テーブルは古いイメージでは使われないため）。データを壊す不具合だった場合だけ、prod はデータベースアプライアンスのバックアップから、dev は `rpg-db restore <名前>` で復元する（システム管理者の判断。構築手順書 5.3） | 1時間以上 |
 
 - prod に反映する前に、DB の変更があるリリースでは、データベースアプライアンスの「今すぐバックアップ」を取る（構築手順書 5.3）
+- dev は `rpg-deploy` が反映の前に `rpg-db backup` を取る。`rpg-deploy rollback` で前の `IMAGE` に戻せる
 
 ### 11.7 スモークテスト（反映後に人が行う）
 
@@ -2421,7 +2480,13 @@ flowchart LR
 | --- | --- | --- |
 | イメージを作るきっかけ | `main` で手動 | タグ＋承認 |
 | サーバー・DB の大きさ | 構築手順書 3.3・3.8 | 構築手順書 4 |
-| DB のバックアップ | 自動バックアップ（1日1回） | 自動バックアップ（1日1回）＋リリース前の手動 |
+| DB のバックアップ | `rpg-db backup`（毎日 3:00・自動停止の前・反映の前。30個残す） | 自動バックアップ（1日1回）＋リリース前の手動 |
+| いまの状態 | 本番としてテスターに公開（`rpglearning.net`） | 凍結中（作っていない） |
+| DB | サーバーの中の `db` コンテナ | データベースアプライアンス |
+| サーバーの動く時間 | 使うときだけ（60分アクセスがなければ止まる。4.9） | 24時間 |
+| 入口 | Cloudflare（DNS・プロキシ・Worker `rpg-dev-wake`） | Cloudflare の DNS だけ（Worker を通さない） |
+| サーバーへの反映 | `rpg-deploy`（11.5） | 手で `docker compose`（11.5） |
+| 外からの死活監視 | なし | シンプル監視 |
 
 ### 11.9 リリース記録
 
@@ -2457,3 +2522,44 @@ flowchart LR
 | 13 | 古い `waiting` の取り込みの掃除          | A-13b が呼ばれなかった取り込みは `waiting` のまま残る。日次処理で1日より古いものを `failed` にするかを検討 | Phase 2 |
 | 14 | さくらのクラウドの料金                   | サーバー・DB・オブジェクトストレージの月額は構築時に料金表で確認し、外部設計書のコストの表に書く | dev 構築時 |
 | 15 | アカウント作成の範囲とボット対策 | メールアドレスの確認だけで誰でも学習者として作れる（外部設計書 10 No.14）。社内のドメインに絞るときは A-36 にドメインの許可リスト（環境変数）を足す。同じメールアドレスへの連打は60秒で止めるが、別々のメールアドレスを大量に使われたときの IP ごとの制限はない（必要なら Caddy の rate limit を足す） | パイロット開始前 |
+| 16 | prod の構築を再開する時期 | 凍結中。dev を本番としてテスターに公開している（外部設計書 10 No.15）。再開するときは、DB をデータベースアプライアンスにし、Worker を通さずに作る（構築手順書 第4章） | テスターの利用が軌道に乗ったら |
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-20 : 第0.1版 : 第0.2版
+  2026-10-21 : 第0.3版 : 第0.4版 : 第0.5版 : 第0.6版 : 第0.7版 : 第0.8版 : 第0.9版 : 第1.0版 : 第1.1版
+  2026-10-27 : 第1.2版
+  2026-11-02 : 第1.3版
+  2026-11-03 : 第1.4版
+  2026-11-06 : 第1.5版 : 第1.6版
+  2026-11-07 : 第1.7版
+  2026-11-10 : 第1.8版
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第0.1版 | 2026-10-20 | 作成（第1〜12章、HTML版あり） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
+| 第0.2版 | 2026-10-20 | リリースを GitHub Actions に変更 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
+| 第0.3版 | 2026-10-21 | モジュールテスト結果報告書 第0.1版の指摘を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.4版 | 2026-10-21 | モジュールテスト結果報告書 第1.1版 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.5版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.6版 | 2026-10-21 | ci.yml を作成し、画面のビルドは画面の実装時に足すと明記 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.7版 | 2026-10-21 | 画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映） | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第0.8版 | 2026-10-21 | S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第0.9版 | 2026-10-21 | S-07 の見出しに使うコース名を A-11 の応答に足す | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.0版 | 2026-10-21 | A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.1版 | 2026-10-21 | A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.2版 | 2026-10-27 | AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる。第1.1版までの AWS 版は `aws/documents/` に退避 | [#6](https://github.com/pocarialice/rpglearning/pull/6)<br>（版数を上げずに直したPR：[#8](https://github.com/pocarialice/rpglearning/pull/8)・[#9](https://github.com/pocarialice/rpglearning/pull/9)・[#10](https://github.com/pocarialice/rpglearning/pull/10)・[#12](https://github.com/pocarialice/rpglearning/pull/12)・[#13](https://github.com/pocarialice/rpglearning/pull/13)・[#14](https://github.com/pocarialice/rpglearning/pull/14)・[#23](https://github.com/pocarialice/rpglearning/pull/23)・[#24](https://github.com/pocarialice/rpglearning/pull/24)） |
+| 第1.3版 | 2026-11-02 | ログイン画面からのアカウント作成（A-36・A-37、T-29）を追加 | [#25](https://github.com/pocarialice/rpglearning/pull/25) |
+| 第1.4版 | 2026-11-03 | コースごとの実績（S-16・S-17、A-12d・A-12e）を追加 | [#27](https://github.com/pocarialice/rpglearning/pull/27)<br>（版数を上げずに直したPR：[#29](https://github.com/pocarialice/rpglearning/pull/29)） |
+| 第1.5版 | 2026-11-06 | ホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007） | [#32](https://github.com/pocarialice/rpglearning/pull/32) |
+| 第1.6版 | 2026-11-06 | Googleでログイン（A-38・A-39、M-K03、V008）を追加 | [#34](https://github.com/pocarialice/rpglearning/pull/34) |
+| 第1.7版 | 2026-11-07 | 通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
+| 第1.8版 | 2026-11-10 | dev を本番として公開している構成に合わせる。起こす係の Cloudflare Worker（4.8）とサーバーのコマンド rpg-idle-stop・rpg-db・rpg-deploy（4.9）を足し、DB（dev はサーバーの中）・ディレクトリ・技術スタック・環境変数・監視・エラーの扱い（`SERVER_WAKING`）・ワークフロー・反映・環境ごとの違いを直す | [#22](https://github.com/pocarialice/rpglearning/pull/22)・[#38](https://github.com/pocarialice/rpglearning/pull/38)・[#45](https://github.com/pocarialice/rpglearning/pull/45) |
