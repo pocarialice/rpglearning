@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPG学習アプリ リリースノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;family=Noto+Sans+Mono&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  /* DADS color tokens */
+  --blue-1000: #00118F;
+  --blue-900: #0017C1;
+  --blue-700: #264AF4;
+  --blue-200: #C5D7FB;
+  --blue-100: #D9E6FF;
+  --blue-50: #E8F1FE;
+  --gray-900: #1A1A1C;
+  --gray-700: #414141;
+  --gray-600: #626264;
+  --gray-536: #767676;
+  --gray-300: #B4B4B4;
+  --gray-100: #E6E6E6;
+  --gray-50: #F2F2F2;
+  --white: #FFFFFF;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --focus: #FFD43D;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--gray-900);
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+a { color: var(--blue-900); text-underline-offset: 3px; }
+a:hover { color: var(--blue-1000); }
+a:focus-visible { outline: 4px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.site-header {
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--white);
+}
+.site-header .inner {
+  max-width: 1120px; margin: 0 auto; padding: 40px 16px 32px;
+}
+.eyebrow {
+  display: inline-block; font-size: 14px; font-weight: 700; color: var(--blue-900);
+  background: var(--blue-50); border-radius: 999px; padding: 2px 12px; margin-bottom: 12px;
+}
+.site-header h1 {
+  font-size: 32px; line-height: 1.4; margin: 0 0 16px; font-weight: 700;
+}
+.meta {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding: 0; list-style: none;
+  font-size: 14px; color: var(--gray-600);
+}
+.meta b { color: var(--gray-900); font-weight: 700; margin-left: 4px; }
+
+.layout {
+  max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px;
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px;
+}
+nav.toc { position: sticky; top: 24px; align-self: start; }
+nav.toc p { font-size: 14px; font-weight: 700; color: var(--gray-600); margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--gray-100); }
+nav.toc a {
+  display: block; padding: 6px 12px; margin-left: -2px; border-left: 2px solid transparent;
+  color: var(--gray-700); text-decoration: none; font-size: 15px;
+}
+nav.toc a:hover { color: var(--blue-900); border-left-color: var(--blue-900); background: var(--blue-50); }
+
+main { min-width: 0; }
+.chapter { padding-bottom: 48px; margin-bottom: 48px; border-bottom: 1px solid var(--gray-100); scroll-margin-top: 24px; }
+.chapter:last-child { border-bottom: none; }
+h2 {
+  font-size: 28px; line-height: 1.4; margin: 0 0 24px; padding-left: 16px;
+  border-left: 6px solid var(--blue-900);
+}
+h3 {
+  font-size: 20px; line-height: 1.5; margin: 32px 0 12px; color: var(--blue-1000);
+}
+p { margin: 0 0 16px; }
+.h-ico { color: var(--blue-900); display: inline-block; width: 1.2em; text-align: center; margin-right: 0.45em; font-size: 0.9em; vertical-align: 0.02em; }
+h3 .h-ico { font-size: 0.85em; margin-right: 0.4em; }
+ul, ol { margin: 0 0 16px; padding-left: 1.5em; }
+li { margin: 4px 0; }
+li::marker { color: var(--blue-900); }
+
+.table-wrap { overflow-x: auto; margin: 0 0 24px; border: 1px solid var(--gray-300); border-radius: var(--radius-8); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--gray-100); }
+th { background: var(--blue-50); color: var(--gray-900); font-weight: 700; border-bottom: 2px solid var(--blue-900); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+.mermaid .node rect, .mermaid rect.actor, .mermaid .statediagram-state rect { rx: 8px; ry: 8px; }
+.mermaid .edgeLabel, .mermaid .edgeLabel p { font-size: 13px; color: var(--gray-700); }
+
+figure.diagram {
+  margin: 8px 0 32px; padding: 24px 16px; background: var(--white);
+  border: 1px solid var(--gray-300); border-radius: var(--radius-12); overflow-x: auto;
+  text-align: center;
+}
+.mermaid { font-family: "Noto Sans JP", sans-serif; }
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* ===== chapter visuals (DADS components) ===== */
+.vis {
+  background: var(--blue-50); border-radius: var(--radius-12); padding: 24px;
+  margin: 0 0 32px; display: grid; gap: 16px;
+}
+.vis p { margin: 0; }
+.vis-grid { display: grid; gap: 16px; }
+.vis-grid.c1 { grid-template-columns: minmax(220px, 1fr) 2fr; }
+.vis-grid.c2 { grid-template-columns: 1fr 1fr; }
+.vis-grid.c5 { grid-template-columns: 280px 1fr; align-items: center; }
+.vis-grid.cards4 { grid-template-columns: repeat(4, 1fr); }
+.vis-grid.cards4.c6 { grid-template-columns: repeat(2, 1fr); }
+.vis-grid.tiles4 { grid-template-columns: repeat(4, 1fr); }
+.vis-stack { display: grid; gap: 16px; }
+.card, .role, .tile, .kpi-hero {
+  background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px;
+}
+.vis-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin-bottom: 8px !important; }
+.vis-label.inline { margin: 0 8px 0 0 !important; }
+.vis-title { font-size: 17px; font-weight: 700; }
+.count { font-size: 13px; color: var(--white); background: var(--blue-900); border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
+.lead { font-size: 17px; font-weight: 400; line-height: 1.6; }
+.lead strong { color: var(--blue-900); }
+.note { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-top: 6px !important; }
+.tag-row, .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-row { margin-top: 12px; }
+.tag { display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; line-height: 1.4; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.tag.solid { background: var(--blue-900); color: var(--white); }
+.tag.line { background: var(--white); color: var(--blue-900); border: 1px solid var(--blue-900); }
+.tag.mute { background: var(--gray-50); color: var(--gray-600); border: 1px solid var(--gray-300); }
+.pill { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--blue-100); color: var(--blue-1000); }
+.scope { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+/* KPI hero */
+.kpi-hero { background: var(--blue-900); border-color: var(--blue-900); color: var(--white); display: flex; flex-direction: column; justify-content: center; }
+.kpi-hero .vis-label { color: var(--blue-100); }
+.kpi-num { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: 0; }
+.kpi-num span { font-size: 32px; margin-left: 2px; }
+.kpi-num small { font-size: 16px; margin-left: 6px; font-weight: 400; }
+.kpi-name { font-size: 17px; font-weight: 700; margin-top: 12px !important; }
+.kpi-def { font-size: 14px; color: var(--blue-100); margin-top: 4px !important; }
+/* scale */
+.scale { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.scale-pt { display: flex; align-items: center; gap: 10px; }
+.scale-num { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1; }
+.scale-num small { font-size: 15px; margin-left: 2px; }
+.scale-cap { font-size: 13px; color: var(--gray-600); line-height: 1.4; }
+.scale-bar { height: 8px; background: var(--blue-100); border-radius: 999px; position: relative; }
+.scale-bar span { position: absolute; inset: 0; background: linear-gradient(90deg, var(--blue-200), var(--blue-900)); border-radius: 999px; }
+.scale-bar::after { content: ""; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); border-left: 12px solid var(--blue-900); border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+/* role */
+.ico { width: 44px; height: 44px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; margin-bottom: 10px; }
+.ico.sm { width: 32px; height: 32px; margin: 0; }
+.ico.sm svg { width: 18px; height: 18px; }
+.role.ai { border-style: dashed; border-color: var(--blue-700); }
+.role-name { font-size: 17px; font-weight: 700; margin-bottom: 6px !important; }
+ul.mini, ul.checks { list-style: none; padding: 0; margin: 0; font-size: 14px; color: var(--gray-700); }
+ul.mini li { padding-left: 14px; position: relative; margin: 2px 0; }
+ul.mini li::before { content: ""; position: absolute; left: 0; top: 0.7em; width: 6px; height: 6px; border-radius: 50%; background: var(--blue-900); }
+.info-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* feature map */
+.vis-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--gray-700); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.lg.l1, .feat.l1 { background: var(--white); border: 1px solid var(--blue-900); }
+.lg.l2, .feat.l2 { background: var(--blue-900); border: 1px solid var(--blue-900); color: var(--white); }
+.lg.l3, .feat.l3 { background: var(--gray-900); border: 1px solid var(--gray-900); color: var(--white); }
+.fmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fcol { display: flex; flex-direction: column; gap: 8px; }
+.fcol-h { font-size: 14px; font-weight: 700; color: var(--blue-1000); border-bottom: 2px solid var(--blue-900); padding-bottom: 4px; }
+.feat { display: flex; align-items: baseline; gap: 8px; font-size: 14px; padding: 8px 12px; border-radius: 6px; }
+.feat b { font-family: "Noto Sans Mono", monospace; font-size: 12px; opacity: 0.8; }
+.interval { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+ol.steps-mini { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+ol.steps-mini li { position: relative; font-size: 13px; color: var(--gray-700); background: var(--blue-50); border: 1px solid var(--blue-200); border-radius: 6px; padding: 6px 12px 6px 12px; margin: 0; }
+ol.steps-mini li b { font-size: 18px; color: var(--blue-900); margin-right: 2px; }
+ol.steps-mini li:not(:last-child)::after { content: "›"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--blue-900); font-weight: 700; }
+ol.steps-mini li.done { background: var(--blue-900); color: var(--white); border-color: var(--blue-900); font-weight: 700; display: flex; align-items: center; }
+/* tiles */
+.tile { text-align: center; }
+.tile.strong { border: 2px solid var(--blue-900); }
+.tile-num { font-size: 36px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.tile-num small { font-size: 14px; margin-left: 4px; }
+.tile-num.sm { font-size: 26px; }
+.tile-cap { font-size: 13px; color: var(--gray-700); margin-top: 6px !important; }
+ul.checks li { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--gray-100); }
+ul.checks li::before { content: ""; width: 16px; height: 16px; flex: none; border: 2px solid var(--blue-900); border-radius: 4px; }
+.badges { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px 20px; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 20px; }
+.badge { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--gray-700); }
+.medal { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--blue-900); background: var(--blue-50); border: 2px solid var(--blue-900); box-shadow: 0 0 0 3px var(--blue-100); }
+/* phone */
+.phone { background: var(--gray-900); border-radius: 32px; padding: 10px; width: 260px; justify-self: center; }
+.phone-in { background: var(--white); border-radius: 24px; padding: 18px 14px; display: grid; gap: 10px; font-size: 12px; }
+.ph-lv { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 8px; }
+.ph-badge { grid-row: span 2; background: var(--blue-900); color: var(--white); font-weight: 700; border-radius: 8px; padding: 6px 8px; font-size: 14px; }
+.ph-bar { height: 8px; background: var(--blue-100); border-radius: 999px; overflow: hidden; }
+.ph-bar span { display: block; height: 100%; background: var(--blue-900); }
+.ph-exp { font-size: 11px; color: var(--gray-600); }
+.ph-say { display: flex; gap: 8px; align-items: flex-start; }
+.ph-ava { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-100); color: var(--blue-900); display: grid; place-items: center; }
+.ph-ava svg { width: 16px; height: 16px; }
+.ph-say p { background: var(--blue-50); border-radius: 0 10px 10px 10px; padding: 8px 10px; line-height: 1.5; }
+.ph-quest { border: 1px solid var(--gray-100); border-radius: 10px; padding: 8px 10px; }
+.ph-quest p { font-weight: 700; margin-bottom: 4px !important; }
+.ph-quest ul { list-style: none; margin: 0; padding: 0; }
+.ph-quest li { display: flex; gap: 6px; align-items: center; margin: 3px 0; color: var(--gray-700); }
+.ph-quest li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--blue-900); border-radius: 3px; flex: none; }
+.ph-quest li.ok { color: var(--gray-536); text-decoration: line-through; }
+.ph-quest li.ok::before { background: var(--blue-900); }
+.ph-btn { background: var(--blue-900); color: var(--white); text-align: center; font-weight: 700; border-radius: 8px; padding: 10px; font-size: 13px; }
+ol.prio-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+ol.prio-list li { display: flex; gap: 12px; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px 14px; margin: 0; }
+ol.prio-list li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--blue-900); color: var(--white); display: grid; place-items: center; font-size: 14px; }
+ol.prio-list span { font-weight: 700; display: flex; flex-direction: column; }
+ol.prio-list small { font-weight: 400; font-size: 13px; color: var(--gray-600); }
+.mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-stats > div { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 10px; text-align: center; }
+/* non-functional */
+.nf-h { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 10px; }
+ul.model { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 14px; }
+ul.model li { display: flex; align-items: center; gap: 8px; margin: 0; }
+ul.model .tag { min-width: 72px; justify-content: center; }
+.auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.arrow { color: var(--blue-900); font-weight: 700; }
+ol.tl { list-style: none; padding: 0 0 0 14px; margin: 0; border-left: 2px solid var(--blue-200); display: grid; gap: 8px; font-size: 14px; }
+ol.tl li { position: relative; margin: 0; color: var(--gray-700); }
+ol.tl li::before { content: ""; position: absolute; left: -21px; top: 0.45em; width: 12px; height: 12px; border-radius: 50%; background: var(--white); border: 2px solid var(--blue-900); }
+ol.tl li:last-child::before { background: var(--blue-900); }
+ol.tl b { display: block; color: var(--gray-900); font-size: 13px; }
+/* step navigation */
+ol.stepnav { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1.5fr auto 1fr 1fr; gap: 12px; align-items: stretch; }
+ol.stepnav > li { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 16px; display: flex; gap: 12px; margin: 0; }
+ol.stepnav > li.current { border: 2px solid var(--blue-900); }
+.sn-num { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue-900); color: var(--blue-900); display: grid; place-items: center; font-weight: 700; }
+li.current .sn-num { background: var(--blue-900); color: var(--white); }
+.sn-h { font-weight: 700; font-size: 17px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sn-sub { font-size: 13px; color: var(--blue-900); font-weight: 700; }
+ol.stepnav > li.gate { background: transparent; border: none; padding: 0; align-items: center; }
+.gate-in { font-size: 12px; text-align: center; color: var(--gray-700); border: 2px dashed var(--blue-900); border-radius: var(--radius-8); padding: 8px 10px; background: var(--white); line-height: 1.5; }
+.gate-in b { color: var(--blue-900); }
+/* banner */
+.banner { display: flex; gap: 14px; align-items: flex-start; background: var(--white); border: 1px solid var(--blue-900); border-left: 6px solid var(--blue-900); border-radius: var(--radius-8); padding: 16px 20px; }
+.banner-ico { color: var(--blue-900); flex: none; }
+.banner-h { font-size: 17px; font-weight: 700; }
+.banner-h b { color: var(--blue-900); font-size: 22px; }
+.cat-n { font-size: 32px; font-weight: 700; color: var(--blue-900); line-height: 1.1; }
+.cat-n small { font-size: 14px; margin-left: 2px; }
+.cat-h { font-weight: 700; margin-top: 4px !important; }
+
+@media (max-width: 860px) {
+  .vis { padding: 16px; }
+  .card, .role, .tile, .kpi-hero { padding: 14px; }
+  .role-name, .cat-h { font-size: 15px; }
+  .vis-grid.c1, .vis-grid.c2, .vis-grid.c5, .scope, .fmap { grid-template-columns: 1fr; }
+  .vis-grid.tiles4, .mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .mini-stats { grid-template-columns: repeat(3, 1fr); }
+  ol.stepnav { grid-template-columns: 1fr; }
+  .vis-grid.cards4 { grid-template-columns: repeat(2, 1fr); }
+  .vis-grid.cards4.c6 { grid-template-columns: 1fr; }
+  ol.stepnav > li.gate { justify-content: center; }
+  .scale { grid-template-columns: 1fr; text-align: left; }
+  .scale-bar { height: 6px; margin-right: 12px; }
+  .kpi-num { font-size: 52px; }
+}
+@media print { .vis { break-inside: avoid; } }
+
+.site-footer { border-top: 1px solid var(--gray-100); color: var(--gray-600); font-size: 14px; }
+.site-footer .inner { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }
+  nav.toc { position: static; background: var(--gray-50); border-radius: var(--radius-8); padding: 16px; }
+  nav.toc ol { border-left: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  nav.toc a { padding: 6px 4px; border-left: none; font-size: 14px; }
+  .site-header h1 { font-size: 26px; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 18px; }
+  th, td { padding: 10px 12px; font-size: 14px; }
+}
+@media print {
+  nav.toc { display: none; }
+  .layout { display: block; }
+  .chapter { break-inside: auto; }
+  figure.diagram { break-inside: avoid; }
+}
+</style>
+<style>
+.rel-kinds { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 0 0 24px; }
+.rel-kind { background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 12px 14px; }
+.rel-kind b { display: flex; align-items: center; gap: 6px; color: var(--blue-900); }
+.rel-kind span { display: block; font-size: 13px; color: var(--gray-600); margin-top: 4px; line-height: 1.5; }
+.rel-vis { background: var(--blue-50); border-radius: var(--radius-12); padding: 20px 24px; margin: 0 0 32px; }
+.rel-vis .hist-label { margin-bottom: 12px; }
+.rel-line { list-style: none; margin: 0; padding: 0 0 0 4px; border-left: 2px solid var(--blue-200); }
+.rel-line li { position: relative; margin: 0; padding: 6px 0 6px 18px; }
+.rel-line li::before { content: ""; position: absolute; left: -7px; top: 14px; width: 12px; height: 12px; border-radius: 50%; background: var(--white); border: 2px solid var(--blue-900); }
+.rel-line li.big::before { background: var(--blue-900); }
+.rel-line time { font-weight: 700; color: var(--blue-1000); margin-right: 8px; }
+.rel-line .cnt { font-size: 12px; color: var(--gray-600); margin-left: 6px; }
+.rel-items { list-style: none; margin: 0 0 24px; padding: 0; display: grid; gap: 10px; }
+.rel-items li { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; padding: 12px 16px; border: 1px solid var(--gray-100); border-radius: var(--radius-8); }
+.rel-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 2px 10px; white-space: nowrap; background: var(--blue-50); color: var(--blue-900); border: 1px solid var(--blue-200); }
+.rel-badge.k-新機能 { background: var(--blue-900); color: var(--white); border-color: var(--blue-900); }
+.rel-badge.k-削除, .rel-badge.k-修正 { background: var(--gray-50); color: var(--gray-700); border-color: var(--gray-300); }
+.rel-who { font-size: 12px; color: var(--gray-600); margin-right: 8px; }
+.rel-body p { margin: 0; }
+.rel-pr { font-size: 13px; margin-left: 6px; white-space: nowrap; }
+@media (max-width: 860px) {
+  .rel-kinds { grid-template-columns: 1fr 1fr; }
+  .rel-items li { grid-template-columns: 1fr; }
+}
+</style>
+<style id="toc-accordion">
+/* 目次：章ごとのアコーディオン（PC のみ小見出しを出す） */
+nav.toc { max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; }
+nav.toc details > summary { list-style: none; display: flex; align-items: stretch; cursor: pointer; border-radius: 4px; }
+nav.toc details > summary::-webkit-details-marker { display: none; }
+nav.toc details > summary::marker { content: ""; }
+nav.toc details > summary > a { flex: 1 1 auto; min-width: 0; }
+nav.toc .toc-caret { flex: none; width: 32px; display: flex; align-items: center; justify-content: center; color: var(--gray-600); border-radius: 4px; }
+nav.toc .toc-caret::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+nav.toc details[open] > summary .toc-caret::before { transform: rotate(45deg); }
+nav.toc summary:hover .toc-caret { color: var(--blue-900); background: var(--blue-50); }
+nav.toc summary:focus-visible { outline: 4px solid var(--focus); outline-offset: -2px; }
+nav.toc ol.toc-sub { list-style: none; border-left: none; margin: 2px 0 8px 12px; padding: 0; font-size: 13px; display: block; }
+nav.toc ol.toc-sub li { margin: 0; }
+nav.toc ol.toc-sub a { font-size: 13px; line-height: 1.5; padding: 4px 12px; color: var(--gray-600); }
+nav.toc ol.toc-sub a:hover { color: var(--blue-900); }
+@media (prefers-reduced-motion: reduce) { nav.toc .toc-caret::before { transition: none; } }
+@media (max-width: 860px) {
+  nav.toc { max-height: none; overflow: visible; }
+  nav.toc .toc-caret, nav.toc ol.toc-sub { display: none; }
+  nav.toc details > summary { cursor: auto; }
+}
+/* 変更履歴 */
+.hist-vis { background: var(--blue-50); border-radius: var(--radius-12); padding: 20px 24px; margin: 0 0 24px; }
+.hist-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin: 0 0 12px; }
+.hist-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 4px; align-items: center; }
+.hist-flow li { margin: 0; display: flex; align-items: center; gap: 4px; }
+.hist-flow li + li::before { content: ""; width: 12px; height: 2px; background: var(--blue-200); }
+.hist-chip { display: inline-flex; flex-direction: column; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 4px 10px; line-height: 1.3; }
+.hist-chip b { font-size: 13px; color: var(--gray-900); }
+.hist-chip small { font-size: 11px; color: var(--gray-600); }
+.hist-flow li.now .hist-chip { background: var(--blue-900); border-color: var(--blue-900); }
+.hist-flow li.now .hist-chip b, .hist-flow li.now .hist-chip small { color: var(--white); }
+.hist-note { font-size: 14px; color: var(--gray-600); margin: 12px 0 0; }
+.hist-held { font-size: 13px; color: var(--gray-600); }
+table.hist td:nth-child(2) { white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <span class="eyebrow">リリースノート</span>
+    <h1><i class="fa-solid fa-scroll h-ico" aria-hidden="true"></i>RPG学習アプリ リリースノート</h1>
+    <ul class="meta">
+      <li>版数<b>第1.0版</b></li>
+      <li>作成日<b>2026-11-10</b></li>
+      <li>対象<b>学習者・管理者（アプリを使う人から見た変更）</b></li>
+      <li>元にしたもの<b>プルリクエスト #1〜#44 のうち、使う人から見て変わったもの</b></li>
+    </ul>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <p>目次</p>
+    <ol>
+<li><details><summary><a href="#ch1">1. このリリースノートについて</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 読み方</a></li><li><a href="#sec-1-2">1.2 いまの公開先</a></li></ol></details></li>
+<li><details><summary><a href="#ch2">2. 2026年11月の変更</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#rel-2026-11-10">2.1 11月10日：サーバーを起こしたあとの裏側の処理を直す</a></li><li><a href="#rel-2026-11-09">2.2 11月9日：rpglearning.net で公開</a></li><li><a href="#rel-2026-11-07">2.3 11月7日：Googleでログイン</a></li><li><a href="#rel-2026-11-06">2.4 11月6日：ホームのひとことを時間帯ごとに</a></li><li><a href="#rel-2026-11-05">2.5 11月5日：紙の質感</a></li><li><a href="#rel-2026-11-03">2.6 11月3日：アカウント作成とコースごとの実績</a></li><li><a href="#rel-2026-11-02">2.7 11月2日：学習サマリ</a></li><li><a href="#rel-2026-11-01">2.8 11月1日：冒険を5問に</a></li></ol></details></li>
+<li><details><summary><a href="#ch3">3. 2026年10月の変更</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#rel-2026-10-31">3.1 10月31日：演出と操作性の改善</a></li><li><a href="#rel-2026-10-30">3.2 10月30日：問題の管理と AI の安定</a></li><li><a href="#rel-2026-10-27">3.3 10月27日：さくらのクラウドへ引っ越し</a></li><li><a href="#rel-2026-10-22">3.4 10月22日：最初の画面ひととおり</a></li></ol></details></li>
+<li><a href="#history">変更履歴</a></li>
+    </ol>
+  </nav>
+  <main>
+<section class="chapter" id="ch1"><h2><i class="fa-solid fa-book-open h-ico" aria-hidden="true"></i>1. このリリースノートについて</h2>
+<div class="rel-kinds"><div class="rel-kind"><b><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</b><span>できることが増えた</span></div><div class="rel-kind"><b><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>改善</b><span>前より使いやすくなった</span></div><div class="rel-kind"><b><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>変更</b><span>ふるまいや見た目が変わった</span></div><div class="rel-kind"><b><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>修正</b><span>困っていたことを直した</span></div><div class="rel-kind"><b><i class="fa-solid fa-trash-can" aria-hidden="true"></i>削除</b><span>機能をなくした</span></div></div>
+<h3 id="sec-1-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 読み方</h3>
+<p>アプリを使う人から見て「何が変わったか」を、新しい順にまとめる。開発や運用だけの変更（テスト・文書・サーバーの設定など）は載せない。日付は変更を取り込んだ日（日本時間）。dev への反映は、その日か次の日になる。</p>
+<p>区分は上の5つ。「対象」は、その変更が関わる人で、学習者・管理者・全員（両方）のどれか。</p>
+<h3 id="sec-1-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 いまの公開先</h3>
+<ul><li>アドレス：<code>https://rpglearning.net</code>（2026-11-09 から）</li><li>しばらく使われていないときはサーバーが休んでいる。開くと「起動中」の画面が出て、数分で使えるようになる</li></ul>
+</section>
+<section class="chapter" id="ch2"><h2><i class="fa-solid fa-calendar-days h-ico" aria-hidden="true"></i>2. 2026年11月の変更</h2>
+<div class="rel-vis"><p class="hist-label">この月の流れ</p><ol class="rel-line"><li><time datetime="2026-11-10">11月10日</time><a href="#rel-2026-11-10">サーバーを起こしたあとの裏側の処理を直す</a><span class="cnt">1件</span></li><li><time datetime="2026-11-09">11月9日</time><a href="#rel-2026-11-09">rpglearning.net で公開</a><span class="cnt">3件</span></li><li class="big"><time datetime="2026-11-07">11月7日</time><a href="#rel-2026-11-07">Googleでログイン</a><span class="cnt">1件</span></li><li><time datetime="2026-11-06">11月6日</time><a href="#rel-2026-11-06">ホームのひとことを時間帯ごとに</a><span class="cnt">1件</span></li><li><time datetime="2026-11-05">11月5日</time><a href="#rel-2026-11-05">紙の質感</a><span class="cnt">1件</span></li><li class="big"><time datetime="2026-11-03">11月3日</time><a href="#rel-2026-11-03">アカウント作成とコースごとの実績</a><span class="cnt">2件</span></li><li class="big"><time datetime="2026-11-02">11月2日</time><a href="#rel-2026-11-02">学習サマリ</a><span class="cnt">1件</span></li><li class="big"><time datetime="2026-11-01">11月1日</time><a href="#rel-2026-11-01">冒険を5問に</a><span class="cnt">2件</span></li></ol><p class="hist-note">塗りつぶした丸は、新機能が入った日。</p></div>
+<h3 id="rel-2026-11-10"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 11月10日：サーバーを起こしたあとの裏側の処理を直す</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-修正"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>修正</span><div class="rel-body"><p><span class="rel-who">全員</span>サーバーを作り直したり起こしたりしたとき、説明問題の採点などを受け持つ裏側の処理（worker）が起動しないことがあったのを直した<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/44">#44</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-11-09"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 11月9日：rpglearning.net で公開</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-変更"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>変更</span><div class="rel-body"><p><span class="rel-who">全員</span>アプリのアドレスを <code>https://rpglearning.net</code> にした。前のアドレスや <code>www</code> から開いても、自動でこのアドレスに移る<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a>）</span></p></div></li>
+<li><span class="rel-badge k-変更"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>変更</span><div class="rel-body"><p><span class="rel-who">全員</span>しばらく誰も使っていないときはサーバーが休むようにした。休んでいるときに開くと「起動中」の画面が出て、数分で使えるようになる。ログイン中の画面は、起動を待って自動でやり直す<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a>）</span></p></div></li>
+<li><span class="rel-badge k-削除"><i class="fa-solid fa-trash-can" aria-hidden="true"></i>削除</span><div class="rel-body"><p><span class="rel-who">学習者</span>通知メールと通知設定の画面（S-10）をなくした。招待・パスワード再設定・アカウント作成・アカウント停止のメールはこれまでどおり届く<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-11-07"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 11月7日：Googleでログイン</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">全員</span>ログイン画面に「Googleでログイン」を追加した。Google のアカウントで、パスワードを入れずにログインできる<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/34">#34</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-11-06"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.4 11月6日：ホームのひとことを時間帯ごとに</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-改善"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>改善</span><div class="rel-body"><p><span class="rel-who">学習者</span>ホームの AI パートナーのひとことを、朝・昼・夜の時間帯ごとに作り直すようにした。復習の話より、その日・前日に学んだ実績を優先して伝える<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/32">#32</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-11-05"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.5 11月5日：紙の質感</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-改善"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>改善</span><div class="rel-body"><p><span class="rel-who">学習者</span>学習者の画面に、古い羊皮紙ふうの紙の質感を控えめに足した<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/31">#31</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-11-03"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.6 11月3日：アカウント作成とコースごとの実績</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">全員</span>ログイン画面の「アカウントを作る」から、自分でアカウントを作れるようにした。届いたメールの確認リンクを開くと登録され、そのままログインできる<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/25">#25</a>）</span></p></div></li>
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">学習者</span>プロフィールに受講中のコースを出し、下部メニューの「コースごとの実績」から一覧（S-16）と詳細（S-17）を見られるようにした。コースごとの累計の学習時間と、AI パートナーのコメントが見られる<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/27">#27</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-11-02"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.7 11月2日：学習サマリ</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">学習者</span>冒険のまとめ（S-15）とプロフィール（S-08）に、学習サマリを Markdown で出す機能を追加した。ふだんは閉じていて、開くとワンクリックでコピーでき、ほかのノートアプリに貼り付けられる。AI パートナーのコメントも付く<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-11-01"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.8 11月1日：冒険を5問に</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-変更"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>変更</span><div class="rel-body"><p><span class="rel-who">学習者</span>1回の冒険を10問から5問にした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/23">#23</a>）</span></p></div></li>
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">学習者</span>冒険の最後に「冒険のまとめ」（S-15）を出すようにした。学習時間を冒険ごとと累計で記録する<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/23">#23</a>）</span></p></div></li>
+</ul>
+</section>
+<section class="chapter" id="ch3"><h2><i class="fa-solid fa-calendar-days h-ico" aria-hidden="true"></i>3. 2026年10月の変更</h2>
+<div class="rel-vis"><p class="hist-label">この月の流れ</p><ol class="rel-line"><li class="big"><time datetime="2026-10-31">10月31日</time><a href="#rel-2026-10-31">演出と操作性の改善</a><span class="cnt">9件</span></li><li class="big"><time datetime="2026-10-30">10月30日</time><a href="#rel-2026-10-30">問題の管理と AI の安定</a><span class="cnt">5件</span></li><li><time datetime="2026-10-27">10月27日</time><a href="#rel-2026-10-27">さくらのクラウドへ引っ越し</a><span class="cnt">1件</span></li><li class="big"><time datetime="2026-10-22">10月22日</time><a href="#rel-2026-10-22">最初の画面ひととおり</a><span class="cnt">3件</span></li></ol><p class="hist-note">塗りつぶした丸は、新機能が入った日。</p></div>
+<h3 id="rel-2026-10-31"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 10月31日：演出と操作性の改善</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-変更"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>変更</span><div class="rel-body"><p><span class="rel-who">学習者</span>キーワード説明の問題を、パートナーが「どの観点で説明してほしいか」を問いかけ、それに答える形にした。採点もその問いかけへの答えとして行う<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>）</span></p></div></li>
+<li><span class="rel-badge k-改善"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>改善</span><div class="rel-body"><p><span class="rel-who">学習者</span>AI の文章の【】の小見出しを太字にし、改行を入れて読みやすくした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>）</span></p></div></li>
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">学習者</span>レベルアップとクエスト達成のときに、光の柱と紙吹雪のお祝いを出すようにした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a>）</span></p></div></li>
+<li><span class="rel-badge k-修正"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>修正</span><div class="rel-body"><p><span class="rel-who">全員</span>新しい版に入れ替えたあとも、前の版の画面が表示されることがあったのを直した<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/14">#14</a>）</span></p></div></li>
+<li><span class="rel-badge k-改善"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>改善</span><div class="rel-body"><p><span class="rel-who">学習者</span>結果画面（S-06）で、獲得EXPのカードを問題文より上に移し、EXPのバーが伸びる演出を付けた<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/15">#15</a>）</span></p></div></li>
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">学習者</span>ホームのパートナーのひとことの下に、受講中のコースを出すようにした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/17">#17</a>）</span></p></div></li>
+<li><span class="rel-badge k-修正"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>修正</span><div class="rel-body"><p><span class="rel-who">学習者</span>スマホで入力欄を選んだときに、画面が勝手に拡大されないようにした。指で広げる拡大も止めた<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/18">#18</a>）</span></p></div></li>
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">全員</span>PC で Ctrl+Enter（Mac は ⌘+Enter）を押すと、入力を確定できるようにした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/18">#18</a>）</span></p></div></li>
+<li><span class="rel-badge k-修正"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>修正</span><div class="rel-body"><p><span class="rel-who">学習者</span>iPhone でホームの右側が切れてはみ出していたのを直し、横にスクロールしないようにした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/20">#20</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-10-30"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 10月30日：問題の管理と AI の安定</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-改善"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>改善</span><div class="rel-body"><p><span class="rel-who">全員</span>AI の解説コメントやひとことが、AI が考えているうちに文字数の上限に届いて空になることがないようにした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/8">#8</a>）</span></p></div></li>
+<li><span class="rel-badge k-改善"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>改善</span><div class="rel-body"><p><span class="rel-who">管理者</span>AI で問題を取り込むとき、選択肢に「A.」「ア」「①」などの項番が入らないようにした。問題文に書かれた HTML のコードも消えないようにした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/9">#9</a>・<a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>）</span></p></div></li>
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">管理者</span>問題取り込み・レビュー画面（S-11）で、登録済みの問題を状態で絞り込んで見られるようにした。下書きもここに出る<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/9">#9</a>・<a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>）</span></p></div></li>
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">管理者</span>チェックボックスで選んだ問題を、まとめて公開・削除できるようにした<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/9">#9</a>・<a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>）</span></p></div></li>
+<li><span class="rel-badge k-改善"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>改善</span><div class="rel-body"><p><span class="rel-who">管理者</span>問題の修正をダイアログで行うようにした。学習者からの見え方を横に表示し、保存・公開・削除したら次の問題へ進む<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-10-27"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 10月27日：さくらのクラウドへ引っ越し</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-変更"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>変更</span><div class="rel-body"><p><span class="rel-who">全員</span>アプリを動かす場所を AWS からさくらのクラウドに移した。データはすべて国内に置く。ログインはアプリのログイン（メールアドレス＋パスワード）になる<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a>）</span></p></div></li>
+</ul>
+<h3 id="rel-2026-10-22"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 10月22日：最初の画面ひととおり</h3>
+<ul class="rel-items">
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">学習者</span>ホーム・コース選択・演習（四肢択一）・キーワード説明・結果・週間ランキング・プロフィール・AI パートナー選択の画面と、初回の流れ「はじめての冒険」を作った<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a>・<a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a>）</span></p></div></li>
+<li><span class="rel-badge k-新機能"><i class="fa-solid fa-star" aria-hidden="true"></i>新機能</span><div class="rel-body"><p><span class="rel-who">管理者</span>管理局に、問題取り込み・レビュー、学習状況ダッシュボード、利用者・コース・権限管理、AI パートナー設定の画面を作った<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a>）</span></p></div></li>
+<li><span class="rel-badge k-変更"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>変更</span><div class="rel-body"><p><span class="rel-who">学習者</span>説明文の「200文字を超えたら【】の小見出しが必要」というルールをなくした（AI の模範説明のほうで小見出しを使う）<span class="rel-pr">（PR <a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a>）</span></p></div></li>
+</ul>
+</section>
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="table-wrap"><table class="hist"><thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead><tbody><tr><td>第1.0版</td><td>2026-11-10</td><td>作成。PR #1〜#44 から、使う人から見た変更をまとめる</td><td>—</td></tr></tbody></table></div>
+</section>
+  </main>
+</div>
+<footer class="site-footer"><div class="inner">RPG学習アプリ リリースノート 第1.0版</div></footer>
+<script id="toc-accordion-js">
+(() => {
+  const nav = document.querySelector('nav.toc');
+  if (!nav) return;
+  // 章の見出しを選んだら、その章の小見出しを開く
+  nav.addEventListener('click', (e) => {
+    const a = e.target.closest('summary > a');
+    if (a) { const d = a.closest('details'); if (d) d.open = true; }
+  });
+  // 小見出しへのリンクで開いたときは、その章を開いておく
+  const openForHash = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    for (const a of nav.querySelectorAll('ol.toc-sub a')) {
+      if (a.getAttribute('href') === '#' + id) { a.closest('details').open = true; break; }
+    }
+  };
+  openForHash();
+  window.addEventListener('hashchange', openForHash);
+})();
+</script>
+</body>
+</html>

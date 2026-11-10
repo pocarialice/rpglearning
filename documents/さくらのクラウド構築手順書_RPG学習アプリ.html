@@ -522,6 +522,43 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 .toc ol ol li{margin:2px 0}
 .chapter ol li, .chapter ul li{margin:4px 0}
 </style>
+<style id="toc-accordion">
+/* 目次：章ごとのアコーディオン（PC のみ小見出しを出す） */
+nav.toc { max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; }
+nav.toc details > summary { list-style: none; display: flex; align-items: stretch; cursor: pointer; border-radius: 4px; }
+nav.toc details > summary::-webkit-details-marker { display: none; }
+nav.toc details > summary::marker { content: ""; }
+nav.toc details > summary > a { flex: 1 1 auto; min-width: 0; }
+nav.toc .toc-caret { flex: none; width: 32px; display: flex; align-items: center; justify-content: center; color: var(--gray-600); border-radius: 4px; }
+nav.toc .toc-caret::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+nav.toc details[open] > summary .toc-caret::before { transform: rotate(45deg); }
+nav.toc summary:hover .toc-caret { color: var(--blue-900); background: var(--blue-50); }
+nav.toc summary:focus-visible { outline: 4px solid var(--focus); outline-offset: -2px; }
+nav.toc ol.toc-sub { list-style: none; border-left: none; margin: 2px 0 8px 12px; padding: 0; font-size: 13px; display: block; }
+nav.toc ol.toc-sub li { margin: 0; }
+nav.toc ol.toc-sub a { font-size: 13px; line-height: 1.5; padding: 4px 12px; color: var(--gray-600); }
+nav.toc ol.toc-sub a:hover { color: var(--blue-900); }
+@media (prefers-reduced-motion: reduce) { nav.toc .toc-caret::before { transition: none; } }
+@media (max-width: 860px) {
+  nav.toc { max-height: none; overflow: visible; }
+  nav.toc .toc-caret, nav.toc ol.toc-sub { display: none; }
+  nav.toc details > summary { cursor: auto; }
+}
+/* 変更履歴 */
+.hist-vis { background: var(--blue-50); border-radius: var(--radius-12); padding: 20px 24px; margin: 0 0 24px; }
+.hist-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin: 0 0 12px; }
+.hist-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 4px; align-items: center; }
+.hist-flow li { margin: 0; display: flex; align-items: center; gap: 4px; }
+.hist-flow li + li::before { content: ""; width: 12px; height: 2px; background: var(--blue-200); }
+.hist-chip { display: inline-flex; flex-direction: column; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 4px 10px; line-height: 1.3; }
+.hist-chip b { font-size: 13px; color: var(--gray-900); }
+.hist-chip small { font-size: 11px; color: var(--gray-600); }
+.hist-flow li.now .hist-chip { background: var(--blue-900); border-color: var(--blue-900); }
+.hist-flow li.now .hist-chip b, .hist-flow li.now .hist-chip small { color: var(--white); }
+.hist-note { font-size: 14px; color: var(--gray-600); margin: 12px 0 0; }
+.hist-held { font-size: 13px; color: var(--gray-600); }
+table.hist td:nth-child(2) { white-space: nowrap; }
+</style>
 </head>
 <body>
 <header class="site-header">
@@ -529,8 +566,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">さくらのクラウド構築手順書</span>
     <h1><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>RPG学習アプリ さくらのクラウド構築手順書</h1>
     <ul class="meta">
-      <li>版数<b>第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）。第0.4版で、prod の構築を凍結し、dev を本番としてテスターに <code>rpglearning.net</code> で公開することにした（1.8）。第0.5版で、通知メールを機能ごと削除した</b></li>
-      <li>作成日<b>2026-10-27</b></li>
+      <li>版数<b>第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避。変更の内容は「変更履歴」を参照）</b></li>
+      <li>作成日<b>2026-10-27（各版の日付は「変更履歴」を参照）</b></li>
       <li>入力文書<b>外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章）</b></li>
       <li>対象<b>Phase 1（MVP）のパイロット環境。dev・prod の2環境</b></li>
       <li>作業方法<b>さくらのクラウドのリソースはコントロールパネル（Web画面）で作る。アプリはコンテナイメージにして GitHub Actions がコンテナレジストリに置き、サーバーで <code>docker compose</code> を使って動かす（詳細設計書 第11章）</b></li>
@@ -541,17 +578,32 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   <nav class="toc" aria-label="目次">
     <p>目次</p>
     <ol>
-<li><a href="#ch1">1. はじめに</a></li>
-<li><a href="#ch2">2. アカウントで1回だけ行う作業</a></li>
-<li><a href="#ch3">3. dev 環境の構築</a></li>
-<li><a href="#ch4">4. prod 環境の構築</a></li>
-<li><a href="#ch5">5. 運用</a></li>
+<li><a href="#history">変更履歴</a></li>
+<li><details><summary><a href="#ch1">1. はじめに</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 この手順書の使い方</a></li><li><a href="#sec-1-2">1.2 前提</a></li><li><a href="#sec-1-3">1.3 名前の決まり</a></li><li><a href="#sec-1-4">1.4 全体の構成</a></li><li><a href="#sec-1-5">1.5 構築の順番</a></li><li><a href="#sec-1-6">1.6 環境ごとの設定値と控える値</a></li><li><a href="#sec-1-7">1.7 費用の目安</a></li><li><a href="#sec-1-8">1.8 運用の方針（2026-11 から）</a></li></ol></details></li>
+<li><details><summary><a href="#ch2">2. アカウントで1回だけ行う作業</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-2-1">2.1 プロジェクト</a></li><li><a href="#sec-2-2">2.2 ドメインと DNS</a></li><li><a href="#sec-2-3">2.3 GitHub の設定</a></li></ol></details></li>
+<li><details><summary><a href="#ch3">3. dev 環境の構築dev・開発</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-3-1">3.1 準備</a></li><li><a href="#sec-3-2">3.2 スイッチとパケットフィルタ</a></li><li><a href="#sec-3-3">3.3 データベース</a></li><li><a href="#sec-3-4">3.4 オブジェクトストレージ</a></li><li><a href="#sec-3-5">3.5 さくらのAI Engine</a></li><li><a href="#sec-3-6">3.6 メール（SMTP）</a></li><li><a href="#sec-3-7">3.7 コンテナレジストリと GitHub</a></li><li><a href="#sec-3-8">3.8 サーバーと Docker・compose・.env</a></li><li><a href="#sec-3-9">3.9 初回の起動と確認</a></li><li><a href="#sec-3-10">3.10 最初のシステム管理者</a></li><li><a href="#sec-3-11">3.11 リリースの反映</a></li><li><a href="#sec-3-12">3.12 シンプル監視とバックアップ</a></li><li><a href="#sec-3-13">3.13 自動停止と起動（dev）</a></li><li><a href="#sec-3-14">3.14 アクセスで起こす（dev・Cloudflare）</a></li></ol></details></li>
+<li><a href="#ch4">4. prod 環境の構築prod・本番</a></li>
+<li><details><summary><a href="#ch5">5. 運用</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-5-1">5.1 OS の更新（月に1回）</a></li><li><a href="#sec-5-2">5.2 リソースの確認（月に1回）</a></li><li><a href="#sec-5-3">5.3 バックアップと復元</a></li><li><a href="#sec-5-4">5.4 ログを見る</a></li><li><a href="#sec-5-5">5.5 Bedrock への切り替え（AI だけ）</a></li><li><a href="#sec-5-6">5.6 ドメインの切り替え（2026-11。rpg-dev.rpglearning.net → rpglearning.net、1回だけ）</a></li></ol></details></li>
 <li><a href="#ch6">6. 確認したいこと（未決事項）</a></li>
     </ol>
   </nav>
   <main>
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>11/07</small></span></li><li class="now"><span class="hist-chip"><b>第0.5版</b><small>11/07</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第0.1版</td><td>2026-10-27</td><td>AWS 版の構築手順書 第0.5版に代わる手順書として作成。さくらのクラウドで dev・prod を作る手順をまとめる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/7">#7</a>・<a href="https://github.com/pocarialice/rpglearning/pull/8">#8</a>・<a href="https://github.com/pocarialice/rpglearning/pull/11">#11</a>・<a href="https://github.com/pocarialice/rpglearning/pull/22">#22</a>・<a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a>・<a href="https://github.com/pocarialice/rpglearning/pull/34">#34</a>・<a href="https://github.com/pocarialice/rpglearning/pull/36">#36</a></span></td></tr>
+<tr><td>第0.2版</td><td>2026-11-07</td><td>dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
+<tr><td>第0.3版</td><td>2026-11-07</td><td>DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
+<tr><td>第0.4版</td><td>2026-11-07</td><td>prod の構築を凍結し、dev を本番としてテスターに <code>rpglearning.net</code> で公開することにした（1.8）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
+<tr><td>第0.5版</td><td>2026-11-07</td><td>通知メールを機能ごと削除した</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/39">#39</a>・<a href="https://github.com/pocarialice/rpglearning/pull/40">#40</a></span></td></tr>
+</tbody></table></div>
+</section>
 <section class="chapter" id="ch1"><h2><i aria-hidden="true" class="fa-solid fa-book-open h-ico"></i>1. はじめに</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 この手順書の使い方</h3>
+<h3 id="sec-1-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 この手順書の使い方</h3>
 <ul>
 <li><strong>2026-11 から prod の構築は凍結している</strong>（1.8）。dev を本番としてテスターに公開する。第4章は凍結を解くときに使う</li>
 <li>第2章（アカウントで1回だけ行う作業）を最初に行い、そのあと <strong>dev → prod の順</strong> に第3〜4章を進める</li>
@@ -561,7 +613,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>コントロールパネルの項目名は2026年10月時点の想定。画面の文言が少し違う場合は、意味の近い項目を選ぶ</li>
 <li>AI は当面 <strong>さくらのAI Engine</strong> を使い、Amazon Bedrock が使えるようになったら AI だけを Bedrock に切り替える（5.5）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 前提</h3>
+<h3 id="sec-1-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 前提</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -596,7 +648,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 名前の決まり</h3>
+<h3 id="sec-1-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 名前の決まり</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -623,7 +675,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.4 全体の構成</h3>
+<h3 id="sec-1-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.4 全体の構成</h3>
 <figure class="diagram wide"><div class="mermaid">flowchart LR
   U["利用者のブラウザ"] --&gt;|"HTTPS 443"| CF["Cloudflare（dev）&lt;br&gt;Worker rpg-dev-wake"]
   CF --&gt;|"止まっていたら電源を入れる"| SAPI["さくらのクラウド API"]
@@ -646,7 +698,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   MON["シンプル監視（prod）"] --&gt;|"/api/health"| SV
   GHP["GitHub Actions power（dev）"] --&gt;|"電源を入れる"| SV
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.5 構築の順番</h3>
+<h3 id="sec-1-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.5 構築の順番</h3>
 <figure class="diagram"><div class="mermaid">flowchart TD
   C0["第2章 アカウントで1回&lt;br&gt;プロジェクト・ドメイン・GitHub"] --&gt; E1
   subgraph ENV["第3〜4章 環境ごと dev → prod"]
@@ -666,7 +718,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   end
   E12 --&gt; OP["第5章 運用&lt;br&gt;OS更新・バックアップ・Bedrock への切り替え"]
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.6 環境ごとの設定値と控える値</h3>
+<h3 id="sec-1-6"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.6 環境ごとの設定値と控える値</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -844,7 +896,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <ul>
 <li>2026-11-07 に通知メールを機能ごと削除した。前に作った <code>rpg-dev-notify</code> は使わないため、中身を消してからバケットごと消してよい。DB の通知設定（<code>notify_settings</code>）は、次の反映で api がマイグレーション V009 を流して消す</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.7 費用の目安</h3>
+<h3 id="sec-1-7"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.7 費用の目安</h3>
 <p>月額の料金は構築時にさくらのクラウドの料金表で確かめ、外部設計書のコストの表に書く（詳細設計書 12 No.14）。AI は、さくらのAI Engine の従量課金で prod が月に約400円の見込み（1か月の採点・抽出の回数から計算）。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -901,7 +953,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>さくらのクラウドのサーバーは、電源を切っているあいだはサーバーの料金がかからない（ディスクの料金はかかる）。データベースアプライアンスは止めても料金がかかるため、dev は DB をサーバーの中に置き、サーバーごと止める（2026-11-07 に変更）</li>
 <li>料金の決まりは変わることがあるため、構築のときに料金表で確かめる</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.8 運用の方針（2026-11 から）</h3>
+<h3 id="sec-1-8"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.8 運用の方針（2026-11 から）</h3>
 <div class="vis">
   <p class="vis-label">テスターに公開するドメイン</p>
   <ol class="flow">
@@ -949,19 +1001,19 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>切り替えの手順は 5.6</li>
 </ul>
 </section><section class="chapter" id="ch2"><h2><i aria-hidden="true" class="fa-solid fa-user-shield h-ico"></i>2. アカウントで1回だけ行う作業</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 プロジェクト</h3>
+<h3 id="sec-2-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 プロジェクト</h3>
 <ol>
 <li>コントロールパネルにログインし、右上の「プロジェクト」で <code>rpg-dev</code> と <code>rpg-prod</code> の2つを作る</li>
 <li>作業者のユーザーに二要素認証を設定する（「会員メニュー」→「セキュリティ」）</li>
 <li>以降の作業は、環境ごとのプロジェクトを選んでから行う（リソースが混ざらないようにする）</li>
 </ol>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 ドメインと DNS</h3>
+<h3 id="sec-2-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 ドメインと DNS</h3>
 <ol>
 <li>使うドメインを決める（さくらのドメインで取る場合は「ドメイン取得」）。DNS は、さくらのクラウドの「DNS」アプライアンス、またはドメインの管理会社の DNS を使う</li>
 <li>名前を決めて V-01・V-23 に書く（dev は <code>rpglearning.net</code>、転送は <code>www.rpglearning.net</code>・<code>rpg-dev.rpglearning.net</code>。prod は凍結中）。A レコードは Terraform がサーバーを作ったあとに作る（ドメインそのものは名前 <code>@</code>）</li>
 <li>送信元のドメインの SPF・DKIM は 3.6 で登録する</li>
 </ol>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 GitHub の設定</h3>
+<h3 id="sec-2-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 GitHub の設定</h3>
 <ol>
 <li>リポジトリの「Settings」→「Branches」で <code>main</code> のルールを作り、「Require status checks to pass」で <code>ci</code> を必須にする（詳細設計書 11.4）</li>
 <li>「Settings」→「Environments」で <code>dev</code> と <code>prod</code> を作る。<code>prod</code> は「Required reviewers」にシステム管理者と開発リーダーを入れ、「Prevent self-review」を有効にする。<code>prod</code> の「Deployment branches and tags」はタグ <code>release-*</code> だけにする</li>
@@ -969,7 +1021,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </ol>
 </section><section class="chapter" id="ch3"><h2><i aria-hidden="true" class="fa-solid fa-flask h-ico"></i>3. dev 環境の構築<span class="env-badge env-dev">dev・開発</span></h2>
 <p>右上のプロジェクトで <code>rpg-dev</code> を選び、ゾーンを「石狩第2」にしてから始める。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 準備</h3>
+<h3 id="sec-3-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 準備</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -992,7 +1044,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 スイッチとパケットフィルタ</h3>
+<h3 id="sec-3-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 スイッチとパケットフィルタ</h3>
 <p><strong>スイッチ</strong>（prod だけ。dev は DB をサーバーの中に置くため作らない）</p>
 <ol>
 <li>「ネットワーク」→「スイッチ」→「追加」</li>
@@ -1104,7 +1156,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>SSH は作業場所のIPアドレスだけに開ける。IPアドレスが変わる環境なら、作業のときだけルール3を足す</li>
 <li>サーバーの中でも ufw で 22・80・443 だけを開ける（3.8）。二重に守る</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 データベース</h3>
+<h3 id="sec-3-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 データベース</h3>
 <p><strong>dev：サーバーの中の db コンテナ</strong></p>
 <p>dev は、データベースアプライアンスを作らない。DB は <code>compose.yaml</code> の <code>db</code>（PostgreSQL 16）で、<code>.env</code> に <code>COMPOSE_PROFILES=localdb</code> があるときだけ動く。データはサーバーのディスク（Docker のボリューム <code>pg_data</code>）に置き、オブジェクトストレージのバケット V-17 にバックアップする（3.4・5.3）。</p>
 <div class="table-wrap"><table>
@@ -1195,7 +1247,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <ul>
 <li>作成後はプランと接続先スイッチを変えられない。プランを上げるときはバックアップから作り直す（5.3）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 オブジェクトストレージ</h3>
+<h3 id="sec-3-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 オブジェクトストレージ</h3>
 <p><strong>バケット</strong></p>
 <ol>
 <li>「オブジェクトストレージ」を開き、サイト「石狩第1（isk01）」でバケットを3つ作る</li>
@@ -1263,7 +1315,7 @@ done
 <ol start="7">
 <li><code>rpg-dev-import</code> の <code>uploads/</code> は取り込みが終われば使わないため、ライフサイクルで30日後に消す（S3 互換 API の <code>put-bucket-lifecycle-configuration</code>。使えなければ手で年に数回消す）</li>
 </ol>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 さくらのAI Engine</h3>
+<h3 id="sec-3-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 さくらのAI Engine</h3>
 <ol>
 <li>コントロールパネルの「AI Engine」を開き、利用規約を確認して利用を始める</li>
 <li>「アカウントトークン」→「発行」。名前 <code>rpg-dev</code>。表示された値（<code>&lt;UUID&gt;:&lt;シークレット&gt;</code>）を V-11 に控える（あとで表示できない）</li>
@@ -1281,7 +1333,7 @@ done
 <li><code>reasoning_effort</code> で <code>400</code> が返るときは、<code>reasoning_effort</code> を外して試す。外して通るなら、3.8 の <code>.env</code> に <code>AI_REASONING_EFFORT=</code>（空）を足す（詳細設計書 M-A05）</li>
 <li>指示文・速さ・答えの形は、アプリを起動したあとに 3.9 の No.5 で確かめる</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 メール（SMTP）</h3>
+<h3 id="sec-3-6"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 メール（SMTP）</h3>
 <p>ここでは、さくらのメールボックスで送る例を書く。ほかの SMTP サービスでも、ホスト・ポート・ユーザー・パスワードがあれば同じように使える。</p>
 <p><strong>ドメインを足す</strong></p>
 <ol>
@@ -1368,7 +1420,7 @@ docker compose exec api node -e "import('./functions/shared/mail/smtp.js').then(
 <li>サーバーから外への 25番ポートは使わない（587・465 で送る）</li>
 <li>DKIM はまだ入れていない。迷惑メールに入るようなら、メールボックスの案内どおりに <code>mail</code> の TXT を足す</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.7 コンテナレジストリと GitHub</h3>
+<h3 id="sec-3-7"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.7 コンテナレジストリと GitHub</h3>
 <p>レジストリは dev・prod で1つを共用する（dev のときだけ作る。prod では作らない）。</p>
 <ol>
 <li>「アプライアンス」→「コンテナレジストリ」→「追加」。名前（サブドメイン）を決め、公開設定は「非公開」にする。ドメイン <code>&lt;名前&gt;.sakuracr.jp</code> を V-20 に控える</li>
@@ -1440,7 +1492,7 @@ docker compose exec api node -e "import('./functions/shared/mail/smtp.js').then(
 <ol start="4">
 <li>「Actions」→「release」→「Run workflow」（ブランチ <code>main</code>）で、最初の dev 用のイメージを作る。成功したら、ジョブの概要に出たイメージ名（<code>&lt;V-20&gt;/rpg-app:dev-YYYYMMDD-NN</code>）を控える</li>
 </ol>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.8 サーバーと Docker・compose・.env</h3>
+<h3 id="sec-3-8"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.8 サーバーと Docker・compose・.env</h3>
 <p><strong>サーバーを作る</strong></p>
 <ol>
 <li>「サーバ」→「追加」</li>
@@ -1593,7 +1645,7 @@ MODEL_LIGHT=gpt-oss-120b
 <li>api コンテナから <code>https://www.googleapis.com</code>（Google の公開鍵）へ HTTPS で出られる必要がある。パケットフィルタ（3.2）は外向きを止めていないので追加の設定はいらない</li>
 <li>検証用：<code>pocarialice7148@gmail.com</code> は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.9 初回の起動と確認</h3>
+<h3 id="sec-3-9"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.9 初回の起動と確認</h3>
 <ol>
 <li>prod だけ：データベース <code>rpg</code> を作る（一度だけ。dev は db コンテナが作る）</li>
 </ol>
@@ -1651,7 +1703,7 @@ docker compose logs --since 5m api | grep -E 'migrate|ERROR'
 <li>No.5 は、本番と同じ指示文・モデル・設定で、見本の問題（個人情報なし）を AI に送る。DB・メールにはつながない。<code>NG</code> のときは表の下の「見るところ」を見る</li>
 <li>打ち切り時間を決めるため（詳細設計書 12 No.3）、<code>--long --repeat=3</code> を付けて本当にかかる時間を測り、時間の列に <code>⚠</code>（本番の打ち切りを超えた）が出ないかを見る。用途を絞るときは <code>--only=grading,extraction</code></li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.10 最初のシステム管理者</h3>
+<h3 id="sec-3-10"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.10 最初のシステム管理者</h3>
 <p>画面から利用者を登録できる人がまだいないため、1人目だけをコマンドで作る（詳細設計書 8.5）。</p>
 <pre><code class="language-bash">cd /opt/rpg
 docker compose exec api node scripts/create-admin.mjs &lt;メールアドレス&gt; &lt;氏名&gt;
@@ -1662,7 +1714,7 @@ docker compose exec api node scripts/create-admin.mjs &lt;メールアドレス&
 <li>「パスワードを忘れたとき」で再設定のメールが届くことを確かめる</li>
 <li>表示された仮パスワードはどこにも残さない（端末の履歴も <code>history -c</code> で消す）</li>
 </ol>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.11 リリースの反映</h3>
+<h3 id="sec-3-11"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.11 リリースの反映</h3>
 <p>新しい版を反映するときは、詳細設計書 11.5 のとおりにサーバーで行う。dev は、スマホから Tailscale SSH で入って <code>rpg-deploy</code> を打てば済む。</p>
 <p><strong>スマホから反映する（dev）</strong></p>
 <ol>
@@ -1764,7 +1816,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 <li><code>compose.yaml</code>・<code>Caddyfile</code> を変えたリリースのときだけ、8. のファイルも置き直す（<code>rpg-deploy</code> は置き直さない）</li>
 <li>api が <code>connect EHOSTUNREACH &lt;V-05&gt;:5432</code> で起動しなおしを繰り返し、サーバーから DB へ ping は届くのに 5432 だけ届かないときは、DB の中で通信がはじかれている。コントロールパネルで DB を「再起動」すると直る（2026-10-30 に dev で発生）。再起動のあいだのエラーは、api が自動で起動しなおすため気にしなくてよい</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.12 シンプル監視とバックアップ</h3>
+<h3 id="sec-3-12"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.12 シンプル監視とバックアップ</h3>
 <p><strong>シンプル監視</strong>（prod だけ。dev はアクセスがないと止まるため作らない）</p>
 <ol>
 <li>「シンプル監視」→「追加」を2つ</li>
@@ -1804,7 +1856,7 @@ docker compose logs --since 10m api | grep -E 'migrate|ERROR'
 <li>prod：データベースの「バックアップ」タブで自動バックアップ（毎日 3:00・8世代）が動いていることを翌日に確かめる。dev：<code>rpg-db list</code> にバックアップが並んでいることを確かめる</li>
 <li>サーバーは、<code>/opt/rpg</code>（<code>.env</code>・<code>compose.yaml</code>・<code>Caddyfile</code>）だけが手で作ったもの。<code>.env</code> の中身はパスワード管理ツールに控えてあるため、サーバーのバックアップは取らない（壊れたら 3.8 で作り直す）</li>
 </ol>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.13 自動停止と起動（dev）</h3>
+<h3 id="sec-3-13"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.13 自動停止と起動（dev）</h3>
 <p>dev のサーバーは、アクセスがない時間が V-18（60分）続くと、DB をバックアップしてから電源を切る。電源を切っているあいだはサーバーの料金がかからない。使うときは GitHub Actions の power で電源を入れる。</p>
 <div class="vis">
   <p class="vis-label">dev のサーバーが止まってから、また使えるようになるまで</p>
@@ -1903,7 +1955,7 @@ s3 ls s3://rpg-dev-backup/db/
 <li>新しいサーバーの初回の起動で、<code>rpg-db restore-if-empty</code> が 5. のファイルを戻してからアプリを起動する。<code>/var/log/rpg-setup.log</code> に <code>✅ 戻しました</code> が出ていること、画面にログインしてデータが残っていることを確かめる</li>
 <li>サーバーのグローバルIPアドレスが変わる。DNS の A レコードは Terraform が直す。パケットフィルタの SSH の許可はそのまま使える</li>
 </ol>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.14 アクセスで起こす（dev・Cloudflare）</h3>
+<h3 id="sec-3-14"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.14 アクセスで起こす（dev・Cloudflare）</h3>
 <p>3.13 で止まった dev のサーバーを、サイトを開くだけで起こす。<code>rpglearning.net</code> の DNS を Cloudflare に移し、<code>&lt;V-01&gt;</code> と V-23 へのアクセスを Cloudflare Worker <code>rpg-dev-wake</code>（<code>workers/wake</code>）に通す。サーバーが動いていれば、Worker はリクエストをそのままサーバーへ渡すだけ。</p>
 <div class="vis">
   <p class="vis-label">止まっている dev のサイトを開いたとき</p>
@@ -2058,7 +2110,7 @@ infra/sakura/tf.sh dev apply
 <li>prod の <code>.env</code> を dev からコピーして直すときは、<strong>キー・パスワード・<code>AUTH_SECRET</code> をすべて prod の値に替えた</strong>ことを2人で確かめる</li>
 </ul>
 </section><section class="chapter" id="ch5"><h2><i aria-hidden="true" class="fa-solid fa-screwdriver-wrench h-ico"></i>5. 運用</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.1 OS の更新（月に1回）</h3>
+<h3 id="sec-5-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.1 OS の更新（月に1回）</h3>
 <p>平日の 13:00〜13:30（詳細設計書 11.1 の時間帯）に行う。dev で先に行い、問題がなければ prod。</p>
 <pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt -y upgrade
 docker compose -f /opt/rpg/compose.yaml pull caddy   # Caddy の更新（同じ 2.x の範囲）
@@ -2069,7 +2121,7 @@ cd /opt/rpg &amp;&amp; docker compose ps                       # restart: unless
 <ul>
 <li>再起動のあいだ（1〜2分）サイトは止まる。シンプル監視の通知が来ることがある</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 リソースの確認（月に1回）</h3>
+<h3 id="sec-5-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 リソースの確認（月に1回）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2106,16 +2158,16 @@ cd /opt/rpg &amp;&amp; docker compose ps                       # restart: unless
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 バックアップと復元</h3>
+<h3 id="sec-5-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 バックアップと復元</h3>
 <ul>
 <li>dev：<code>rpg-db list</code> で一覧、<code>rpg-db restore &lt;名前&gt;</code>（<code>latest</code> でいちばん新しいもの）で戻す。<strong>今のデータが巻き戻る</strong>。サーバーを作り直したときは、初回の起動でいちばん新しいバックアップが自動で戻る（3.13）</li>
 <li>リリースで DB の変更があるときは、prod へ反映する前にデータベースの「バックアップ」→「追加」で手動のバックアップを取る（詳細設計書 11.6）</li>
 <li>復元は、データベースの「バックアップ」タブで世代を選んで「復元」。<strong>今のデータが巻き戻る</strong>ため、システム管理者の判断で行う</li>
 <li>プランを上げるときは、手動のバックアップを取ってから新しいプランで作り直し、そのバックアップから復元する（IPアドレスは同じにする）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 ログを見る</h3>
+<h3 id="sec-5-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 ログを見る</h3>
 <p>詳細設計書 10.2 のとおり、サーバーで <code>docker compose logs</code> を使う。ログはコンテナごとに 20MB×10ファイルまで残る。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 Bedrock への切り替え（AI だけ）</h3>
+<h3 id="sec-5-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 Bedrock への切り替え（AI だけ）</h3>
 <p>Amazon Bedrock が使えるようになったら、AI だけを Bedrock に替える。DB・ファイル・メール・ログインはさくらのクラウドのまま。</p>
 <ol>
 <li>AWS で、Bedrock の呼び出しだけを許した IAM ユーザーを作り、アクセスキーを発行する（ポリシーは <code>bedrock:InvokeModel</code> を使うモデルだけに限る）</li>
@@ -2137,7 +2189,7 @@ MODEL_LIGHT=&lt;Haiku のモデルID&gt;
 <ul>
 <li>切り替えでコードは変えない（詳細設計書 7章）。画像の取り込みは Bedrock のときだけ使える</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.6 ドメインの切り替え（2026-11。<code>rpg-dev.rpglearning.net</code> → <code>rpglearning.net</code>、1回だけ）</h3>
+<h3 id="sec-5-6"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.6 ドメインの切り替え（2026-11。<code>rpg-dev.rpglearning.net</code> → <code>rpglearning.net</code>、1回だけ）</h3>
 <ol>
 <li><code>dev.auto.tfvars</code> の <code>site_address</code>・<code>redirect_addresses</code>・<code>dns_zone</code>・<code>mail_schedule_enabled</code> が 1.8 のとおりであることを確かめ、apply する。A レコード（<code>@</code>・<code>www</code>・<code>rpg-dev</code>）ができる。3.13 の引っ越しでサーバーを作り直すときは、その apply で一緒に行う</li>
 <li>Google Cloud の OAuth クライアントID <code>rpg-dev</code> の「承認済みの JavaScript 生成元」に <code>https://rpglearning.net</code> を足す（3.8.1。前の <code>https://rpg-dev.rpglearning.net</code> は、転送を確かめてから消す）</li>
@@ -2250,7 +2302,7 @@ rpg-deploy env REDIRECT_ADDRESSES "www.rpglearning.net, rpg-dev.rpglearning.net"
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は aws/documents/ に退避）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ さくらのクラウド構築手順書 第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は <code>aws/documents/</code> に退避。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({
@@ -2274,6 +2326,27 @@ mermaid.initialize({
   flowchart: { htmlLabels: true, curve: "basis", padding: 12 },
   er: { useMaxWidth: true }, sequence: { useMaxWidth: true, mirrorActors: false }
 });
+</script>
+<script id="toc-accordion-js">
+(() => {
+  const nav = document.querySelector('nav.toc');
+  if (!nav) return;
+  // 章の見出しを選んだら、その章の小見出しを開く
+  nav.addEventListener('click', (e) => {
+    const a = e.target.closest('summary > a');
+    if (a) { const d = a.closest('details'); if (d) d.open = true; }
+  });
+  // 小見出しへのリンクで開いたときは、その章を開いておく
+  const openForHash = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    for (const a of nav.querySelectorAll('ol.toc-sub a')) {
+      if (a.getAttribute('href') === '#' + id) { a.closest('details').open = true; break; }
+    }
+  };
+  openForHash();
+  window.addEventListener('hashchange', openForHash);
+})();
 </script>
 </body>
 </html>

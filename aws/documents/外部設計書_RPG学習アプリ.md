@@ -3,10 +3,35 @@
 | 項目     | 内容                               |
 | ------ | -------------------------------- |
 | 文書名    | RPG学習アプリ 外部設計書                   |
-| 版数     | 第1.0版（ドラフト：第1〜10章、HTML版あり。説明文の小見出しのルールをなくし、模範説明のルールに移す）       |
-| 作成日    | 2026-10-19（第1.0版：2026-10-21）       |
+| 版数     | 第1.0版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照） |
+| 作成日    | 2026-10-19（各版の日付は「変更履歴」を参照） |
 | 入力文書   | RPG学習アプリ 要件定義書 第1.1版（ドラフト）         |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記 |
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-19 : 第0.1版〜第0.5版 : 第0.6版
+  2026-10-20 : 第0.7版
+  2026-10-21 : 第0.8版 : 第0.9版 : 第1.0版
+  2026-10-27 : （退避）
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第0.1版〜第0.5版 | 2026-10-19 | 取り込み前の作業中の版（リポジトリには残っていない） | — |
+| 第0.6版 | 2026-10-19 | リポジトリに取り込み（第1〜10章、HTML版あり） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
+| 第0.7版 | 2026-10-20 | AWS へのリリースを GitHub Actions で行う前提に更新 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
+| 第0.8版 | 2026-10-21 | 通知メールの文言を未決事項に追加 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.9版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第1.0版 | 2026-10-21 | 説明文の小見出しのルールをなくし、模範説明のルールに移す | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す。PR #12 でお祝いの記述を足したが、PR #13 で退避した時点に戻した | [#6](https://github.com/pocarialice/rpglearning/pull/6)<br>（版数を上げずに直したPR：[#12](https://github.com/pocarialice/rpglearning/pull/12)・[#13](https://github.com/pocarialice/rpglearning/pull/13)） |
 
 ---
 

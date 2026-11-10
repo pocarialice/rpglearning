@@ -3,11 +3,49 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.7版（ドラフト：第1〜12章、HTML版あり。第1.2版で AWS からさくらのクラウドへ切り替え。第1.3版でログイン画面からのアカウント作成（A-36・A-37、T-29）を追加。第1.4版でコースごとの実績（S-16・S-17、A-12d・A-12e）を追加。第1.5版でホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）。第1.6版で Googleでログイン（A-38・A-39、M-K03、V008）を追加。第1.7版で通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009））      |
-| 作成日    | 2026-10-20（第1.2版：2026-10-27、第1.3版：2026-11-02、第1.4版：2026-11-03、第1.5版：2026-11-06、第1.6版：2026-11-06、第1.7版：2026-11-07）                                                 |
+| 版数     | 第1.7版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照） |
+| 作成日    | 2026-10-20（各版の日付は「変更履歴」を参照） |
 | 入力文書   | 要件定義書 第1.2版（ドラフト）、外部設計書 第1.3版、さくらのクラウド構築手順書 第0.1版。AWS 版（第1.1版まで）は `aws/documents/` に退避                 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-20 : 第0.1版 : 第0.2版
+  2026-10-21 : 第0.3版 : 第0.4版 : 第0.5版 : 第0.6版 : 第0.7版 : 第0.8版 : 第0.9版 : 第1.0版 : 第1.1版
+  2026-10-27 : 第1.2版
+  2026-11-02 : 第1.3版
+  2026-11-03 : 第1.4版
+  2026-11-06 : 第1.5版 : 第1.6版
+  2026-11-07 : 第1.7版
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第0.1版 | 2026-10-20 | 作成（第1〜12章、HTML版あり） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
+| 第0.2版 | 2026-10-20 | リリースを GitHub Actions に変更 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
+| 第0.3版 | 2026-10-21 | モジュールテスト結果報告書 第0.1版の指摘を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.4版 | 2026-10-21 | モジュールテスト結果報告書 第1.1版 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.5版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.6版 | 2026-10-21 | ci.yml を作成し、画面のビルドは画面の実装時に足すと明記 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| 第0.7版 | 2026-10-21 | 画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映） | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第0.8版 | 2026-10-21 | S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第0.9版 | 2026-10-21 | S-07 の見出しに使うコース名を A-11 の応答に足す | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.0版 | 2026-10-21 | A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.1版 | 2026-10-21 | A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
+| 第1.2版 | 2026-10-27 | AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる。第1.1版までの AWS 版は `aws/documents/` に退避 | [#6](https://github.com/pocarialice/rpglearning/pull/6)<br>（版数を上げずに直したPR：[#8](https://github.com/pocarialice/rpglearning/pull/8)・[#9](https://github.com/pocarialice/rpglearning/pull/9)・[#10](https://github.com/pocarialice/rpglearning/pull/10)・[#12](https://github.com/pocarialice/rpglearning/pull/12)・[#13](https://github.com/pocarialice/rpglearning/pull/13)・[#14](https://github.com/pocarialice/rpglearning/pull/14)・[#23](https://github.com/pocarialice/rpglearning/pull/23)・[#24](https://github.com/pocarialice/rpglearning/pull/24)） |
+| 第1.3版 | 2026-11-02 | ログイン画面からのアカウント作成（A-36・A-37、T-29）を追加 | [#25](https://github.com/pocarialice/rpglearning/pull/25) |
+| 第1.4版 | 2026-11-03 | コースごとの実績（S-16・S-17、A-12d・A-12e）を追加 | [#27](https://github.com/pocarialice/rpglearning/pull/27)<br>（版数を上げずに直したPR：[#29](https://github.com/pocarialice/rpglearning/pull/29)） |
+| 第1.5版 | 2026-11-06 | ホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007） | [#32](https://github.com/pocarialice/rpglearning/pull/32) |
+| 第1.6版 | 2026-11-06 | Googleでログイン（A-38・A-39、M-K03、V008）を追加 | [#34](https://github.com/pocarialice/rpglearning/pull/34) |
+| 第1.7版 | 2026-11-07 | 通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
 
 ---
 

@@ -435,30 +435,96 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 @media (max-width: 860px) { .dl-plain { grid-template-columns: 1fr; gap: 2px; } .dl-plain dd { margin-bottom: 8px; } }
 @media (max-width: 860px) { .cov-row { grid-template-columns: 1fr; } .judge { flex-direction: column; align-items: flex-start; } }
 </style>
+<style id="toc-accordion">
+/* 目次：章ごとのアコーディオン（PC のみ小見出しを出す） */
+nav.toc { max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; }
+nav.toc details > summary { list-style: none; display: flex; align-items: stretch; cursor: pointer; border-radius: 4px; }
+nav.toc details > summary::-webkit-details-marker { display: none; }
+nav.toc details > summary::marker { content: ""; }
+nav.toc details > summary > a { flex: 1 1 auto; min-width: 0; }
+nav.toc .toc-caret { flex: none; width: 32px; display: flex; align-items: center; justify-content: center; color: var(--gray-600); border-radius: 4px; }
+nav.toc .toc-caret::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+nav.toc details[open] > summary .toc-caret::before { transform: rotate(45deg); }
+nav.toc summary:hover .toc-caret { color: var(--blue-900); background: var(--blue-50); }
+nav.toc summary:focus-visible { outline: 4px solid var(--focus); outline-offset: -2px; }
+nav.toc ol.toc-sub { list-style: none; border-left: none; margin: 2px 0 8px 12px; padding: 0; font-size: 13px; display: block; }
+nav.toc ol.toc-sub li { margin: 0; }
+nav.toc ol.toc-sub a { font-size: 13px; line-height: 1.5; padding: 4px 12px; color: var(--gray-600); }
+nav.toc ol.toc-sub a:hover { color: var(--blue-900); }
+@media (prefers-reduced-motion: reduce) { nav.toc .toc-caret::before { transition: none; } }
+@media (max-width: 860px) {
+  nav.toc { max-height: none; overflow: visible; }
+  nav.toc .toc-caret, nav.toc ol.toc-sub { display: none; }
+  nav.toc details > summary { cursor: auto; }
+}
+/* 変更履歴 */
+.hist-vis { background: var(--blue-50); border-radius: var(--radius-12); padding: 20px 24px; margin: 0 0 24px; }
+.hist-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin: 0 0 12px; }
+.hist-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 4px; align-items: center; }
+.hist-flow li { margin: 0; display: flex; align-items: center; gap: 4px; }
+.hist-flow li + li::before { content: ""; width: 12px; height: 2px; background: var(--blue-200); }
+.hist-chip { display: inline-flex; flex-direction: column; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 4px 10px; line-height: 1.3; }
+.hist-chip b { font-size: 13px; color: var(--gray-900); }
+.hist-chip small { font-size: 11px; color: var(--gray-600); }
+.hist-flow li.now .hist-chip { background: var(--blue-900); border-color: var(--blue-900); }
+.hist-flow li.now .hist-chip b, .hist-flow li.now .hist-chip small { color: var(--white); }
+.hist-note { font-size: 14px; color: var(--gray-600); margin: 12px 0 0; }
+.hist-held { font-size: 13px; color: var(--gray-600); }
+table.hist td:nth-child(2) { white-space: nowrap; }
+</style>
 </head>
 <body>
 <header class="site-header"><div class="inner"><span class="eyebrow"><i class="fa-solid fa-flask-vial"></i> モジュールテスト結果</span><h1>RPG学習アプリ モジュールテスト結果報告書</h1><ul class="meta">
-<li>版数<b>第2.5版（さくらのクラウド版：アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行）</b></li><li>作成日<b>2026-10-21（第2.0版：2026-10-27、第2.1版：2026-10-31、第2.2版：2026-10-31、第2.3版：2026-11-02、第2.4版：2026-11-02、第2.5版：2026-11-03）</b></li><li>コミット<b>80bba16</b></li><li>判定<b>合格</b></li></ul></div></header>
+<li>版数<b>第2.5版（さくらのクラウド版。変更の内容は「変更履歴」を参照）</b></li><li>作成日<b>2026-10-21（各版の日付は「変更履歴」を参照）</b></li><li>コミット<b>80bba16</b></li><li>判定<b>合格</b></li></ul></div></header>
 <div class="layout">
-<nav class="toc" aria-label="目次"><p>目次</p><ol>
-<li><a href="#s1">1. 概要</a></li>
+<nav class="toc" aria-label="目次">
+    <p>目次</p>
+    <ol>
+<li><a href="#history">変更履歴</a></li>
+<li><details><summary><a href="#s1">1. 概要</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 目的</a></li><li><a href="#sec-1-2">1.2 今回の範囲</a></li><li><a href="#sec-1-3">1.3 文書情報</a></li></ol></details></li>
 <li><a href="#s2">2. 実行環境</a></li>
 <li><a href="#s3">3. 結果の要約</a></li>
 <li><a href="#s4">4. カバレッジ</a></li>
 <li><a href="#s5">5. モジュール別の結果</a></li>
 <li><a href="#s6">6. テストケース別の結果</a></li>
-<li><a href="#s7">7. 所見</a></li>
+<li><details><summary><a href="#s7">7. 所見</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-7-1">7.1 不具合</a></li><li><a href="#sec-7-2">7.2 決めてほしいこと</a></li></ol></details></li>
 <li><a href="#s8">8. 判定と次の作業</a></li>
-</ol></nav>
+    </ol>
+  </nav>
 <main>
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第1.0版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.4版</b><small>11/02</small></span></li><li class="now"><span class="hist-chip"><b>第2.5版</b><small>11/03</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第0.1版〜第1.0版</td><td>2026-10-20</td><td>第0.1版は中間報告（共通モジュール）。取り込み前の作業中の版（リポジトリには残っていない）</td><td>—</td></tr>
+<tr><td>第1.1版</td><td>2026-10-21</td><td>最終報告（全モジュール）として取り込む。7.2 を判断しやすい形（いまの状態・決めてほしいこと・選択肢ごとの影響）に書き直し</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.2版</td><td>2026-10-21</td><td>7.2 の判断を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.3版</td><td>2026-10-21</td><td>stg 廃止に合わせた文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.4版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせた仕様書 第0.7版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.5版</td><td>2026-10-21</td><td>A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにした仕様書 第0.8版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.6版</td><td>2026-10-21</td><td>A-11 にコース名を足した文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.7版</td><td>2026-10-21</td><td>管理局の土台（A-01・A-14・ルーター）の変更後の文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.8版</td><td>2026-10-21</td><td>管理局の S-13・S-14 に合わせた A-19・A-22 の変更後の文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.9版</td><td>2026-10-21</td><td>画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第2.0版</td><td>2026-10-27</td><td>さくらのクラウド版：DB・ジョブキュー・ログイン・メール・ファイル・AI の差し替え口とコンテナの入口を加えた仕様書 第1.3版の全ケースを実行。第1.9版までの AWS 版は <code>aws/documents/</code> に退避</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a></td></tr>
+<tr><td>第2.1版</td><td>2026-10-31</td><td>画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースを含む、仕様書 第1.4版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/15">#15</a></td></tr>
+<tr><td>第2.2版</td><td>2026-10-31</td><td>ホームの受講中のコース（MT-H03-08・MT-F10-05）を加えた、仕様書 第1.5版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/17">#17</a></td></tr>
+<tr><td>第2.3版</td><td>2026-11-02</td><td>冒険のまとめと学習時間（仕様書 第1.6版）、学習サマリ（仕様書 第1.7版）のケースを加えた、仕様書 第1.7版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></td></tr>
+<tr><td>第2.4版</td><td>2026-11-02</td><td>Ctrl+Enter・ピンチの拡大止めのテストを MT-F27・MT-F28 として載せた、仕様書 第1.8版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></td></tr>
+<tr><td>第2.5版</td><td>2026-11-03</td><td>アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/27">#27</a></td></tr>
+</tbody></table></div>
+</section>
 <section class="chapter" id="s1"><h2><i class="fa-solid fa-circle-info h-ico" aria-hidden="true"></i>1. 概要</h2>
 <div class="vis"><p class="vis-label">今回の範囲（全750ケースのうち750ケース）</p><ol class="flow">
 <li class="hl"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail・auth・storage　299ケース</li>
 <li class="hl"><b><i class="fa-solid fa-bolt fi"></i>API・ワーカー</b>api-handler・worker・batch・server　251ケース</li>
 <li class="hl"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js（core・logic・pages・部品）　200ケース</li></ol>
 <p class="vis-cap">塗りつぶし＝今回テストした範囲、点線＝次回</p></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3><p>モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。第2.0版では、AWS から さくらのクラウドへの切り替え（2026-10-27）に合わせて、DB を pg（データベースアプライアンス）に、SQS・Lambda の非同期呼び出し・EventBridge を DB のジョブキューと worker の定期処理に、Cognito をアプリのログインに、SES を SMTP に、S3 をオブジェクトストレージに替え、AI を差し替え口（さくらのAI Engine／Bedrock）にした。仕様書 第1.3版でそれらのテストケースを追加・差し替えて、全件を流し直した。AWS 版の結果（第1.9版）は aws/documents/ に残している。第2.1版では、そのあとに加えたテストケース（クエスト達成・レベルアップのお祝い、結果画面の獲得EXPの演出、説明問題の問いかけ、問題のまとめて削除、Service Worker など）と、テストにはあったが仕様書になかった MT-A05-08・09 を仕様書 第1.4版に載せ、全件を流し直した。第2.2版では、ホームのパートナーのひとことの下に受講中のコースを出す変更に合わせて、MT-H03-08・MT-F10-05 を仕様書 第1.5版に載せ、全件を流し直した。第2.3版では、冒険を5問にして冒険のまとめ（S-15）と学習時間を加えた仕様書 第1.6版のケース（この報告書に載せていなかったもの）と、学習サマリ（A-12b・A-12c、S-15・S-08）を加えた仕様書 第1.7版のケースを含めて、全件を流し直した。第2.4版では、第2.3版で「IDのないテスト」として残っていた12件を、仕様書 第1.8版に MT-F27（<code>core/keys.js</code>）・MT-F28（<code>core/zoom.js</code>）として載せ、全件を流し直した。第2.5版では、ログイン画面からのアカウント作成（A-36・A-37、S-01）を加えた仕様書 第1.9版のケース（この報告書に載せていなかったもの）と、コースごとの実績（A-12d・A-12e、S-08・S-16・S-17）を加えた仕様書 第2.0版のケースを含めて、全件を流し直した。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 今回の範囲</h3>
+<h3 id="sec-1-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3><p>モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。第2.0版では、AWS から さくらのクラウドへの切り替え（2026-10-27）に合わせて、DB を pg（データベースアプライアンス）に、SQS・Lambda の非同期呼び出し・EventBridge を DB のジョブキューと worker の定期処理に、Cognito をアプリのログインに、SES を SMTP に、S3 をオブジェクトストレージに替え、AI を差し替え口（さくらのAI Engine／Bedrock）にした。仕様書 第1.3版でそれらのテストケースを追加・差し替えて、全件を流し直した。AWS 版の結果（第1.9版）は aws/documents/ に残している。第2.1版では、そのあとに加えたテストケース（クエスト達成・レベルアップのお祝い、結果画面の獲得EXPの演出、説明問題の問いかけ、問題のまとめて削除、Service Worker など）と、テストにはあったが仕様書になかった MT-A05-08・09 を仕様書 第1.4版に載せ、全件を流し直した。第2.2版では、ホームのパートナーのひとことの下に受講中のコースを出す変更に合わせて、MT-H03-08・MT-F10-05 を仕様書 第1.5版に載せ、全件を流し直した。第2.3版では、冒険を5問にして冒険のまとめ（S-15）と学習時間を加えた仕様書 第1.6版のケース（この報告書に載せていなかったもの）と、学習サマリ（A-12b・A-12c、S-15・S-08）を加えた仕様書 第1.7版のケースを含めて、全件を流し直した。第2.4版では、第2.3版で「IDのないテスト」として残っていた12件を、仕様書 第1.8版に MT-F27（<code>core/keys.js</code>）・MT-F28（<code>core/zoom.js</code>）として載せ、全件を流し直した。第2.5版では、ログイン画面からのアカウント作成（A-36・A-37、S-01）を加えた仕様書 第1.9版のケース（この報告書に載せていなかったもの）と、コースごとの実績（A-12d・A-12e、S-08・S-16・S-17）を加えた仕様書 第2.0版のケースを含めて、全件を流し直した。</p>
+<h3 id="sec-1-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 今回の範囲</h3>
 <div class="table-wrap"><table><thead><tr><th>区分</th><th>層</th><th>仕様書のケース数</th><th>今回</th></tr></thead><tbody><tr><td>対象</td><td>util（MT-U）</td><td>79</td><td>実行</td></tr>
 <tr><td>対象</td><td>db（MT-D）</td><td>75</td><td>実行</td></tr>
 <tr><td>対象</td><td>domain（MT-G）</td><td>77</td><td>実行</td></tr>
@@ -470,7 +536,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>対象</td><td>ワーカー・バッチ（MT-W）</td><td>56</td><td>実行</td></tr>
 <tr><td>対象</td><td>server（HTTP・ワーカーの入口）（MT-S）</td><td>26</td><td>実行</td></tr>
 <tr><td>対象</td><td>画面（web/js）（MT-F）</td><td>200</td><td>実行</td></tr></tbody></table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 文書情報</h3>
+<h3 id="sec-1-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 文書情報</h3>
 <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>文書名</td><td>RPG学習アプリ モジュールテスト結果報告書</td></tr>
 <tr><td>版数</td><td>第2.5版（さくらのクラウド版：アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行）</td></tr>
 <tr><td>入力文書</td><td>モジュールテスト仕様書 第2.0版、詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版の報告書（第1.9版まで）は aws/documents/ に退避</td></tr>
@@ -1690,11 +1756,11 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 </section>
 <section class="chapter" id="s7"><h2><i class="fa-solid fa-magnifying-glass h-ico" aria-hidden="true"></i>7. 所見</h2>
 <div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合（修正済み）</h5><p class="tile-num sm">3<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-scale-balanced"></i>決めてほしいこと</h5><p class="tile-num sm">2<small>件</small></p></div></div></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 不具合</h3><ul><li>第2.5版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>文書の食い違いを1件見つけて直した：コースごとの実績のテストに仮に付けたID（M-F27・M-F28・MT-F16-06・MT-H02-19）が既存のIDと重なっていたため、仕様書 第2.0版の付け方（M-F29・M-F30・MT-F16-07〜08・MT-H02-20）に振り直した</li><li>コースごとの実績の SQL（<code>course-records.listForUser</code>・<code>findForUser</code>・<code>detailCounts</code>・<code>listWeak</code>）は、モジュールテスト（SQL の組み立て）のほかに、作業用コンテナの PostgreSQL 16 にマイグレーションを当てて実際に流し、学習時間の合計・内訳・今日の復習・苦手な問題が引けることを確かめた。あわせてアプリを起動し、Playwright でプロフィール → 一覧 → 詳細を開いて表示とコンソールエラーがないことを確かめた</li><li>次の2項目は第2.4版のもの（記録として残す）</li><li>第2.4版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>第2.3版で見つけた「IDのないテスト」12件（<code>core/keys.js</code> の10件・<code>core/zoom.js</code> の2件）に ID をふり、仕様書 第1.8版に載せた。IDのないテストは0件になった。どちらの機能も設計書にはまだ書かれていない（仕様書 6.1 には「設計書に記載なし」として載せた）</li><li>次の3項目は第2.3版のもの（記録として残す）</li><li>第2.3版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>文書の食い違いを1件見つけて直した：学習サマリのテストに仮に付けたID（M-H12・M-D04・M-A05・M-F20 など）が既存のモジュールIDと重なっていたため、仕様書 第1.7版の付け方（MT-G08・MT-H16・MT-D03-36〜37・MT-A04-11〜12・MT-F26・MT-F25-04・MT-F16-06）に振り直した</li><li>学習サマリの SQL（<code>summaries.listForAdventure</code>・<code>listForDate</code>）は、モジュールテスト（SQL の組み立て）のほかに、作業用コンテナの PostgreSQL 16 にマイグレーションを当てて実際に流し、足りない観点・正解の選択肢・次の復習日が引けることを確かめた</li><li>次の項目は第2.2版以前のもの（記録として残す）</li><li>第2.2版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>次の2項目は第2.1版のもの（記録として残す）</li><li>第2.1版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>文書の食い違いを2件見つけて直した：(1) MT-A05-08・09 はテストにあるのに仕様書になかったため、仕様書 第1.4版に載せた。(2) MT-F19-01・07〜09 は仕様書の観点が書き換わっていたのに報告書が古いままだったため、仕様書に合わせた</li><li>次の3項目と表は第2.0版で見つけて直したもの（記録として残す）</li><li>切り替えの作業中に製品コードの不具合を3件見つけ、どれも直してから全件を流し直した（下の表）。最終の実行では失敗0件</li><li>文書の食い違いを1件見つけて直した：さくらのAI Engine・差し替え口のモジュールIDが、既存の persona・prompts（M-A03・M-A04）と重なっていたため、M-A05・M-A06 にした</li><li>モジュールテストのほかに、作業PCの PostgreSQL 16 と偽の SMTP・AI・オブジェクトストレージで、ログイン・招待・再設定・取り込み・採点・日次処理を通しで動かして確かめた（結合テストの前の確認）</li></ul>
+<h3 id="sec-7-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 不具合</h3><ul><li>第2.5版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>文書の食い違いを1件見つけて直した：コースごとの実績のテストに仮に付けたID（M-F27・M-F28・MT-F16-06・MT-H02-19）が既存のIDと重なっていたため、仕様書 第2.0版の付け方（M-F29・M-F30・MT-F16-07〜08・MT-H02-20）に振り直した</li><li>コースごとの実績の SQL（<code>course-records.listForUser</code>・<code>findForUser</code>・<code>detailCounts</code>・<code>listWeak</code>）は、モジュールテスト（SQL の組み立て）のほかに、作業用コンテナの PostgreSQL 16 にマイグレーションを当てて実際に流し、学習時間の合計・内訳・今日の復習・苦手な問題が引けることを確かめた。あわせてアプリを起動し、Playwright でプロフィール → 一覧 → 詳細を開いて表示とコンソールエラーがないことを確かめた</li><li>次の2項目は第2.4版のもの（記録として残す）</li><li>第2.4版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>第2.3版で見つけた「IDのないテスト」12件（<code>core/keys.js</code> の10件・<code>core/zoom.js</code> の2件）に ID をふり、仕様書 第1.8版に載せた。IDのないテストは0件になった。どちらの機能も設計書にはまだ書かれていない（仕様書 6.1 には「設計書に記載なし」として載せた）</li><li>次の3項目は第2.3版のもの（記録として残す）</li><li>第2.3版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>文書の食い違いを1件見つけて直した：学習サマリのテストに仮に付けたID（M-H12・M-D04・M-A05・M-F20 など）が既存のモジュールIDと重なっていたため、仕様書 第1.7版の付け方（MT-G08・MT-H16・MT-D03-36〜37・MT-A04-11〜12・MT-F26・MT-F25-04・MT-F16-06）に振り直した</li><li>学習サマリの SQL（<code>summaries.listForAdventure</code>・<code>listForDate</code>）は、モジュールテスト（SQL の組み立て）のほかに、作業用コンテナの PostgreSQL 16 にマイグレーションを当てて実際に流し、足りない観点・正解の選択肢・次の復習日が引けることを確かめた</li><li>次の項目は第2.2版以前のもの（記録として残す）</li><li>第2.2版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>次の2項目は第2.1版のもの（記録として残す）</li><li>第2.1版の実行では、製品コードの不具合は見つからなかった（失敗0件）</li><li>文書の食い違いを2件見つけて直した：(1) MT-A05-08・09 はテストにあるのに仕様書になかったため、仕様書 第1.4版に載せた。(2) MT-F19-01・07〜09 は仕様書の観点が書き換わっていたのに報告書が古いままだったため、仕様書に合わせた</li><li>次の3項目と表は第2.0版で見つけて直したもの（記録として残す）</li><li>切り替えの作業中に製品コードの不具合を3件見つけ、どれも直してから全件を流し直した（下の表）。最終の実行では失敗0件</li><li>文書の食い違いを1件見つけて直した：さくらのAI Engine・差し替え口のモジュールIDが、既存の persona・prompts（M-A03・M-A04）と重なっていたため、M-A05・M-A06 にした</li><li>モジュールテストのほかに、作業PCの PostgreSQL 16 と偽の SMTP・AI・オブジェクトストレージで、ログイン・招待・再設定・取り込み・採点・日次処理を通しで動かして確かめた（結合テストの前の確認）</li></ul>
 <div class="table-wrap"><table><thead><tr><th>No</th><th>見つけたテスト・作業</th><th>重大度</th><th>内容</th><th>対応</th></tr></thead><tbody><tr><td>1</td><td>招待メールの実装（MT-H12-01）</td><td>高（登録できない）</td><td>招待メールを送る関数が、置き換えの誤りで自分自身を呼んでいた</td><td>送信部品（<code>mail/smtp.js</code>）を呼ぶように直した。MT-H12-01・02 で確認</td></tr>
 <tr><td>2</td><td>PostgreSQL での通しの確認（再招待）</td><td>中</td><td><code>audit_logs</code> の CHECK 制約に <code>user.reinvite</code> がなく、再招待（A-21b）の操作記録で失敗した</td><td>V003 で CHECK 制約を作り直した。MT-H12-11 と通しの確認で確認</td></tr>
 <tr><td>3</td><td>MT-D02-06・07</td><td>低（警告）</td><td>トランザクションの中で問い合わせを同時に呼ぶと、pg が「同じ接続で同時に問い合わせている」と警告した</td><td><code>db/tx.js</code> で問い合わせを1つずつ順に流すようにした</td></tr></tbody></table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 決めてほしいこと</h3><p>テストの結果そのものは合格で、下の2件はどれもリリースを止めるものではありません。それぞれ「いまの状態」「決めてほしいこと」「選んだときに起こること」を書き、★をおすすめとしました。</p>
+<h3 id="sec-7-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 決めてほしいこと</h3><p>テストの結果そのものは合格で、下の2件はどれもリリースを止めるものではありません。それぞれ「いまの状態」「決めてほしいこと」「選んだときに起こること」を書き、★をおすすめとしました。</p>
 <div class="table-wrap"><table><thead><tr><th>No</th><th>項目</th><th>決めてほしいこと</th><th>おすすめ</th><th>決定</th></tr></thead><tbody><tr><td><a href="#n1">1</a></td><td>さくらのAI Engine のあいだの画像の取り込み</td><td>Bedrock に戻るまで、S-11 で画像を選べないようにするか</td><td>今のまま（選べるが、失敗の理由を出す）</td><td>未定</td></tr>
 <tr><td><a href="#n2">2</a></td><td>さくらのAI Engine の採点の質の確かめ方</td><td>dev でどこまで確かめてから prod に出すか</td><td>dev で説明10件・抽出3資料を試し、<code>ai_error</code> が1割未満なら出す</td><td>未定</td></tr></tbody></table></div>
 <div class="decision" id="n1"><h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>7.2.1 さくらのAI Engine のあいだの画像の取り込み</h4>
@@ -1713,6 +1779,27 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <ul><li>dev 環境（さくらのクラウド）を構築手順書のとおりに作り、テスト仕様書 6.5 の申し送り5件を結合テストで確かめる</li><li>コースごとの実績のパートナーのコメント（A-12e）を dev のさくらのAI Engine で何件か作り、コースの学習全体を踏まえた200字くらいの文章になるかを確かめる</li><li>Bedrock が使えるようになったら、<code>AI_PROVIDER=bedrock</code> で dev の採点・取り込みを試し、さくらのAI Engine と比べてから prod を切り替える（詳細設計書 12 No.11）</li></ul></section>
 </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト結果報告書 第2.5版（さくらのクラウド版：アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト結果報告書 第2.5版（さくらのクラウド版。変更の内容は「変更履歴」を参照）</div></footer>
+<script id="toc-accordion-js">
+(() => {
+  const nav = document.querySelector('nav.toc');
+  if (!nav) return;
+  // 章の見出しを選んだら、その章の小見出しを開く
+  nav.addEventListener('click', (e) => {
+    const a = e.target.closest('summary > a');
+    if (a) { const d = a.closest('details'); if (d) d.open = true; }
+  });
+  // 小見出しへのリンクで開いたときは、その章を開いておく
+  const openForHash = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    for (const a of nav.querySelectorAll('ol.toc-sub a')) {
+      if (a.getAttribute('href') === '#' + id) { a.closest('details').open = true; break; }
+    }
+  };
+  openForHash();
+  window.addEventListener('hashchange', openForHash);
+})();
+</script>
 </body>
 </html>
