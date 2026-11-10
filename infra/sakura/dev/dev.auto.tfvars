@@ -3,11 +3,14 @@ ssh_public_keys = [
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF9meuqImOfKjBndWSxODryxVz8IRPmKjM2lPhx5tJ70 jun-rpg",
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOyVXtR8nWtjbwmfjYIeO/GY8ptjpBHKyEtoZdUhLn3E jun-IDPW02514",
 ]
-ssh_allowed_cidrs = ["112.70.171.129", "203.140.83.25", "118.18.166.28"]
+ssh_allowed_cidrs = ["112.70.171.129", "203.140.83.25", "118.18.166.28", "113.32.251.162"]
 # テスターに公開する名前（prod は凍結中のため、dev を本番として使う。手順書 1.1）。www と前の rpg-dev は転送するだけ
 site_address       = "rpglearning.net"
 redirect_addresses = ["www.rpglearning.net", "rpg-dev.rpglearning.net"]
 dns_zone           = "rpglearning.net"
+# DNS は Cloudflare（手順書 3.14。2026-11-10 に切り替え）。ゾーンID は公開してよい値。トークンは TF_VAR_cloudflare_api_token か、環境の network secret
+dns_provider       = "cloudflare"
+cloudflare_zone_id = "9a52ad8e278035a7c87d61fdab001869"
 image             = "rpglearning.sakuracr.jp/rpg-app:dev-20261109-22"
 mail_from         = "no-reply@mail.rpglearning.net"
 # Googleでログインの OAuth クライアントID（構築手順書 3.8.1。公開してよい値）。いまのサーバーへは rpg-deploy env GOOGLE_CLIENT_ID <値> で入れる

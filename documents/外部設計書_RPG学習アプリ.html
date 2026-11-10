@@ -518,6 +518,43 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 .arch-note { font-size: 13px; color: var(--gray-600); margin: -12px 0 24px; }
 @media (max-width: 760px) { .arch { grid-template-columns: 1fr; } .arch-arrow { justify-content: center; transform: rotate(90deg); } }
 </style>
+<style id="toc-accordion">
+/* 目次：章ごとのアコーディオン（PC のみ小見出しを出す） */
+nav.toc { max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; }
+nav.toc details > summary { list-style: none; display: flex; align-items: stretch; cursor: pointer; border-radius: 4px; }
+nav.toc details > summary::-webkit-details-marker { display: none; }
+nav.toc details > summary::marker { content: ""; }
+nav.toc details > summary > a { flex: 1 1 auto; min-width: 0; }
+nav.toc .toc-caret { flex: none; width: 32px; display: flex; align-items: center; justify-content: center; color: var(--gray-600); border-radius: 4px; }
+nav.toc .toc-caret::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+nav.toc details[open] > summary .toc-caret::before { transform: rotate(45deg); }
+nav.toc summary:hover .toc-caret { color: var(--blue-900); background: var(--blue-50); }
+nav.toc summary:focus-visible { outline: 4px solid var(--focus); outline-offset: -2px; }
+nav.toc ol.toc-sub { list-style: none; border-left: none; margin: 2px 0 8px 12px; padding: 0; font-size: 13px; display: block; }
+nav.toc ol.toc-sub li { margin: 0; }
+nav.toc ol.toc-sub a { font-size: 13px; line-height: 1.5; padding: 4px 12px; color: var(--gray-600); }
+nav.toc ol.toc-sub a:hover { color: var(--blue-900); }
+@media (prefers-reduced-motion: reduce) { nav.toc .toc-caret::before { transition: none; } }
+@media (max-width: 860px) {
+  nav.toc { max-height: none; overflow: visible; }
+  nav.toc .toc-caret, nav.toc ol.toc-sub { display: none; }
+  nav.toc details > summary { cursor: auto; }
+}
+/* 変更履歴 */
+.hist-vis { background: var(--blue-50); border-radius: var(--radius-12); padding: 20px 24px; margin: 0 0 24px; }
+.hist-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin: 0 0 12px; }
+.hist-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 4px; align-items: center; }
+.hist-flow li { margin: 0; display: flex; align-items: center; gap: 4px; }
+.hist-flow li + li::before { content: ""; width: 12px; height: 2px; background: var(--blue-200); }
+.hist-chip { display: inline-flex; flex-direction: column; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 4px 10px; line-height: 1.3; }
+.hist-chip b { font-size: 13px; color: var(--gray-900); }
+.hist-chip small { font-size: 11px; color: var(--gray-600); }
+.hist-flow li.now .hist-chip { background: var(--blue-900); border-color: var(--blue-900); }
+.hist-flow li.now .hist-chip b, .hist-flow li.now .hist-chip small { color: var(--white); }
+.hist-note { font-size: 14px; color: var(--gray-600); margin: 12px 0 0; }
+.hist-held { font-size: 13px; color: var(--gray-600); }
+table.hist td:nth-child(2) { white-space: nowrap; }
+</style>
 </head>
 <body>
 <header class="site-header">
@@ -525,8 +562,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.6版（ドラフト：第1〜10章、HTML版あり。第1.1版で AWS からさくらのクラウドへ切り替え、第1.2版でログイン画面からのアカウント作成を追加、第1.3版でコースごとの実績を追加、第1.4版でホームのひとことを時間帯ごとに作り直すようにする、第1.5版で Googleでログインを追加、第1.6版で通知メール（S-10・B-03）を機能ごと削除）</b></li>
-      <li>作成日<b>2026-10-19（第1.0版：2026-10-21、第1.1版：2026-10-27、第1.2版：2026-11-02、第1.3版：2026-11-03、第1.4版：2026-11-06、第1.5版：2026-11-06、第1.6版：2026-11-07）</b></li>
+      <li>版数<b>第1.6版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>作成日<b>2026-10-19（各版の日付は「変更履歴」を参照）</b></li>
       <li>入力文書<b>RPG学習アプリ 要件定義書 第1.2版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
@@ -536,23 +573,45 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   <nav class="toc" aria-label="目次">
     <p>目次</p>
     <ol>
-<li><a href="#ch1">1. 文書概要</a></li>
-<li><a href="#ch2">2. システム方式設計</a></li>
-<li><a href="#ch3">3. 画面設計</a></li>
-<li><a href="#ch4">4. 機能設計</a></li>
-<li><a href="#ch5">5. 外部インターフェース設計</a></li>
-<li><a href="#ch6">6. 定期処理設計</a></li>
-<li><a href="#ch7">7. データ設計</a></li>
-<li><a href="#ch8">8. 非機能・セキュリティ設計</a></li>
-<li><a href="#ch9">9. メッセージ設計</a></li>
+<li><a href="#history">変更履歴</a></li>
+<li><details><summary><a href="#ch1">1. 文書概要</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 目的</a></li><li><a href="#sec-1-2">1.2 本書で確定する事項</a></li><li><a href="#sec-1-3">1.3 関連文書</a></li></ol></details></li>
+<li><details><summary><a href="#ch2">2. システム方式設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-2-1">2.1 方式の選定理由</a></li><li><a href="#sec-2-2">2.2 さくらのクラウド構成図</a></li><li><a href="#sec-2-3">2.3 サービス一覧</a></li><li><a href="#sec-2-4">2.4 コンテナの役割の分担</a></li><li><a href="#sec-2-5">2.5 説明採点の非同期方式</a></li><li><a href="#sec-2-6">2.6 フロントエンド方式</a></li><li><a href="#sec-2-7">2.7 環境構成</a></li><li><a href="#sec-2-8">2.8 AIモデルの使い分け</a></li><li><a href="#sec-2-9">2.9 月額コスト試算（パイロット10名）</a></li></ol></details></li>
+<li><details><summary><a href="#ch3">3. 画面設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-3-1">3.1 画面一覧</a></li><li><a href="#sec-3-2">3.2 画面構成図</a></li><li><a href="#sec-3-3">3.3 画面遷移</a></li><li><a href="#sec-3-4">3.4 画面レイアウトの基本</a></li><li><a href="#sec-3-5">3.5 共通の表示ルール</a></li><li><a href="#sec-3-6">3.6 AIパートナー設計</a></li><li><a href="#sec-3-7">3.7 学習者画面</a></li><li><a href="#sec-3-8">3.8 管理画面（ギルド管理局）</a></li></ol></details></li>
+<li><details><summary><a href="#ch4">4. 機能設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-4-1">4.1 機能と画面・APIの対応</a></li><li><a href="#sec-4-2">4.2 解答から結果表示までの処理</a></li><li><a href="#sec-4-3">4.3 出題ルール（F-03、F-05）</a></li><li><a href="#sec-4-4">4.4 忘却曲線復習（F-05）</a></li><li><a href="#sec-4-5">4.5 経験値・レベル（F-08）</a></li><li><a href="#sec-4-6">4.6 週間ランキング（F-09）</a></li><li><a href="#sec-4-7">4.7 デイリークエスト（F-10）</a></li><li><a href="#sec-4-8">4.8 バッジ（F-11）</a></li><li><a href="#sec-4-9">4.9 キーワード説明の採点（F-04）</a></li><li><a href="#sec-4-10">4.10 問題取り込み（F-01、F-02）</a></li><li><a href="#sec-4-11">4.11 アカウント管理（F-07）</a></li></ol></details></li>
+<li><details><summary><a href="#ch5">5. 外部インターフェース設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-5-1">5.1 API共通仕様</a></li><li><a href="#sec-5-2">5.2 API一覧</a></li><li><a href="#sec-5-3">5.3 主なAPIの入出力</a></li><li><a href="#sec-5-4">5.4 CSV出力（S-12）</a></li><li><a href="#sec-5-5">5.5 AI連携（さくらのAI Engine／Amazon Bedrock）</a></li><li><a href="#sec-5-6">5.6 メール（SMTP）</a></li></ol></details></li>
+<li><details><summary><a href="#ch6">6. 定期処理設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-6-1">6.1 一覧</a></li><li><a href="#sec-6-2">6.2 定期処理の動かし方</a></li><li><a href="#sec-6-3">6.3 処理ごとのルール</a></li></ol></details></li>
+<li><details><summary><a href="#ch7">7. データ設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-7-1">7.1 ER図</a></li><li><a href="#sec-7-2">7.2 主なデータ項目</a></li><li><a href="#sec-7-3">7.3 保持期間</a></li></ol></details></li>
+<li><details><summary><a href="#ch8">8. 非機能・セキュリティ設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-8-1">8.1 認証・権限</a></li><li><a href="#sec-8-2">8.2 データ保護</a></li><li><a href="#sec-8-3">8.3 性能・可用性</a></li><li><a href="#sec-8-4">8.4 監視</a></li></ol></details></li>
+<li><details><summary><a href="#ch9">9. メッセージ設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-9-1">9.1 方針</a></li><li><a href="#sec-9-2">9.2 主なメッセージ</a></li></ol></details></li>
 <li><a href="#ch10">10. 未決事項</a></li>
     </ol>
   </nav>
   <main>
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li class="now"><span class="hist-chip"><b>第1.6版</b><small>11/07</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第0.1版〜第0.5版</td><td>2026-10-19</td><td>取り込み前の作業中の版（リポジトリには残っていない）</td><td>—</td></tr>
+<tr><td>第0.6版</td><td>2026-10-19</td><td>リポジトリに取り込み（第1〜10章、HTML版あり）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
+<tr><td>第0.7版</td><td>2026-10-20</td><td>AWS へのリリースを GitHub Actions で行う前提に更新</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
+<tr><td>第0.8版</td><td>2026-10-21</td><td>通知メールの文言を未決事項に追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.9版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.0版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくし、模範説明のルールに移す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.1版</td><td>2026-10-27</td><td>AWS からさくらのクラウドへ切り替え、ログイン・AI・メール・定期処理の方式を見直す。第1.0版までの AWS 版は <code>aws/documents/</code> に退避</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/9">#9</a>・<a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>・<a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>・<a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a>・<a href="https://github.com/pocarialice/rpglearning/pull/15">#15</a>・<a href="https://github.com/pocarialice/rpglearning/pull/17">#17</a>・<a href="https://github.com/pocarialice/rpglearning/pull/23">#23</a>・<a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></span></td></tr>
+<tr><td>第1.2版</td><td>2026-11-02</td><td>ログイン画面からのアカウント作成を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/25">#25</a></td></tr>
+<tr><td>第1.3版</td><td>2026-11-03</td><td>コースごとの実績を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/27">#27</a></td></tr>
+<tr><td>第1.4版</td><td>2026-11-06</td><td>ホームのひとことを時間帯ごとに作り直すようにする</td><td><a href="https://github.com/pocarialice/rpglearning/pull/32">#32</a></td></tr>
+<tr><td>第1.5版</td><td>2026-11-06</td><td>Googleでログインを追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/34">#34</a></td></tr>
+<tr><td>第1.6版</td><td>2026-11-07</td><td>通知メール（S-10・B-03）を機能ごと削除</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
+</tbody></table></div>
+</section>
 <section class="chapter" id="ch1"><h2><i class="fa-solid fa-file-lines h-ico" aria-hidden="true"></i>1. 文書概要</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3>
+<h3 id="sec-1-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3>
 <p>要件定義書で決めた「何を作るか」を、利用者から見える形（画面・操作・外部とのやり取り・システム構成）に落とし込む。内部設計（プログラム構造・テーブル定義の詳細）の入力とする。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 本書で確定する事項</h3>
+<h3 id="sec-1-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 本書で確定する事項</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -644,7 +703,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 関連文書</h3>
+<h3 id="sec-1-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 関連文書</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -697,7 +756,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <div class="arch-box ext"><b>メール送信（SMTP）</b><span>招待・お知らせ・再設定</span></div></div>
 </div>
 <p class="arch-note">AWS 版の CloudFront・API Gateway・Lambda・Cognito・SQS・EventBridge の役割は、サーバーの中の api・worker コンテナがまとめて受け持つ。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 方式の選定理由</h3>
+<h3 id="sec-2-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 方式の選定理由</h3>
 <p>2026-10-27 に、AWS からさくらのクラウドへ切り替えた。AWS アカウントで Amazon Bedrock（全モデル）と AWS Lambda が使えなくなり、復旧の見込みが立たなかったため。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -729,7 +788,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 さくらのクラウド構成図</h3>
+<h3 id="sec-2-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 さくらのクラウド構成図</h3>
 <figure class="diagram wide"><div class="mermaid">flowchart LR
   subgraph Client["利用者端末"]
     U["学習者&lt;br&gt;スマホ・PC"]
@@ -768,7 +827,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   MON --&gt;|"/api/health を見張る"| CADDY
 </div></figure>
 <p>※ Amazon Bedrock に戻すときは、AI の呼び出し先だけが AWS（東京リージョン）に変わる（2.8）。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 サービス一覧</h3>
+<h3 id="sec-2-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 サービス一覧</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -835,7 +894,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.4 コンテナの役割の分担</h3>
+<h3 id="sec-2-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.4 コンテナの役割の分担</h3>
 <p>AWS 版の Lambda 4関数は、2つのコンテナにまとめた。中の処理（ルーティング・採点・抽出・日次処理）は AWS 版と同じものを使う。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -865,7 +924,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>1台で足りる間は、<code>api</code> と <code>worker</code> を同じサーバーで動かす。どちらも同じコンテナ（イメージ）で、環境変数 <code>ROLE</code> で役割を変える</li>
 <li>採点は同時に2件、取り込みは同時に1件まで処理する（AI の使いすぎを防ぐ）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.5 説明採点の非同期方式</h3>
+<h3 id="sec-2-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.5 説明採点の非同期方式</h3>
 <p>採点は30秒近くかかることがあるため、受付と処理を分ける。画面は2秒ごとに結果を確認し、その間AIパートナーの待機演出を表示する（AWS 版と同じ）。</p>
 <figure class="diagram"><div class="mermaid">sequenceDiagram
   participant U as 学習者（ブラウザ）
@@ -889,7 +948,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   end
   Note over U: 30秒を超えたら再試行を案内
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.6 フロントエンド方式</h3>
+<h3 id="sec-2-6"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.6 フロントエンド方式</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -928,7 +987,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.7 環境構成</h3>
+<h3 id="sec-2-7"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.7 環境構成</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -987,7 +1046,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>さくらのクラウドのリソースは構築手順書に沿ってコントロールパネルで dev → prod の順に作る。アプリ（コンテナ）は GitHub Actions が作ってレジストリに置き、サーバーで入れ替える。DB のテーブルはコンテナの起動時に自動で作る（マイグレーション）</li>
 <li>配置のきっかけ：dev は GitHub Actions を <code>main</code> で手動実行したとき、prod は dev での受け入れ確認のあとタグ <code>release-YYYYMMDD-NN</code> を付け、承認者が GitHub で承認したとき（詳細設計書 第11章）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.8 AIモデルの使い分け</h3>
+<h3 id="sec-2-8"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.8 AIモデルの使い分け</h3>
 <p>AI の呼び出しは「差し替え口」（詳細設計書 3.6）を通し、環境変数 <code>AI_PROVIDER</code> で呼び出し先を切り替える。当面はさくらのAI Engine を使い、Amazon Bedrock が使えるようになりしだい Bedrock に戻す。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1031,7 +1090,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>採点の質は Claude より下がる可能性がある。パイロットの前に、過去問を使って採点の結果を Claude（AWS 版の試験の結果）と見比べ、合格の基準（60点）や指示文を見直すかを決める（10 未決事項 No.12）</li>
 <li>Bedrock に戻すときのモデルIDは、そのときに東京リージョンで使えるものを確かめる（AWS 版の外部設計書 2.8 の方針。推論プロファイルを使うかは未決事項 No.2）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.9 月額コスト試算（パイロット10名）</h3>
+<h3 id="sec-2-9"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.9 月額コスト試算（パイロット10名）</h3>
 <p>さくらのクラウドの料金は、構築するときに公式の料金ページで確かめて本表を埋める。AI の料金は公表単価で試算した。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1114,7 +1173,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>利用回数は仮置き。説明問題を多く解くほど AI の費用は増える（それでも月数百円の規模）</li>
 </ul>
 </section><section class="chapter" id="ch3"><h2><i class="fa-solid fa-display h-ico" aria-hidden="true"></i>3. 画面設計</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 画面一覧</h3>
+<h3 id="sec-3-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 画面一覧</h3>
 <p>要件定義書の画面一覧（S-01〜S-13）に、キャラクター画像の差し替え用として <strong>S-14 AIパートナー設定</strong> を、冒険の振り返り用として <strong>S-15 冒険のまとめ</strong> を、コースごとの振り返り用として <strong>S-16 コースごとの実績</strong>・<strong>S-17 コースの実績</strong> を追加する。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1248,7 +1307,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 画面構成図</h3>
+<h3 id="sec-3-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 画面構成図</h3>
 <figure class="diagram"><div class="mermaid">flowchart TB
   ROOT["RPG学習アプリ&lt;br&gt;app.example.co.jp"]
   ROOT --&gt; AUTH["S-01 ログイン&lt;br&gt;パスワードの設定・再設定"]
@@ -1279,7 +1338,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   LEARN -.- COMMON
   ADMIN -.- COMMON
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 画面遷移</h3>
+<h3 id="sec-3-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 画面遷移</h3>
 <h4>3.3.1 学習者</h4>
 <p>初回ログイン時は「はじめての冒険」として、ニックネーム登録 → コース選択 → AIパートナー選択の3段階を済ませてからホームに進む。</p>
 <figure class="diagram"><div class="mermaid">flowchart TD
@@ -1322,7 +1381,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   S13 -.-&gt;|"ヘッダーの切替"| S02
   S02 -.-&gt;|"管理局へ 管理者のみ表示"| S12
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 画面レイアウトの基本</h3>
+<h3 id="sec-3-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 画面レイアウトの基本</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1388,7 +1447,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     AH --- AB
   end
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 共通の表示ルール</h3>
+<h3 id="sec-3-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 共通の表示ルール</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1480,7 +1539,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   B --&gt;|"ダイアログ・本文"| N
   B --&gt;|"まだ"| U
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 AIパートナー設計</h3>
+<h3 id="sec-3-6"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.6 AIパートナー設計</h3>
 <h4>3.6.1 キャラクター定義</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -1602,7 +1661,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.7 学習者画面</h3>
+<h3 id="sec-3-7"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.7 学習者画面</h3>
 <h4>S-01 ログイン</h4>
 <p>AWS 版では Cognito のログイン画面を使っていた。さくら版ではアプリが同じ羊皮紙の見た目でログイン画面を出す。</p>
 <div class="table-wrap"><table>
@@ -2357,7 +2416,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </table></div>
 <h4>S-10（欠番）</h4>
 <p>通知設定は第1.6版で通知メールと一緒に削除した。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.8 管理画面（ギルド管理局）</h3>
+<h3 id="sec-3-8"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.8 管理画面（ギルド管理局）</h3>
 <h4>S-11 問題取り込み・レビュー</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -2486,7 +2545,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <div class="ad-act"><button class="gd-btn gd-btn-quiet" type="button">画像を外す</button><button class="gd-btn gd-btn-primary" type="button">差し替える</button></div>
 </div></div></div><p class="mk-cap">見本表示だけゲーム部品（PartnerBubble）を使う</p></div></div><p class=mock-note>画像が未設定のときは名前の頭文字を表示する。</p></div>
 </section><section class="chapter" id="ch4"><h2><i class="fa-solid fa-gears h-ico" aria-hidden="true"></i>4. 機能設計</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.1 機能と画面・APIの対応</h3>
+<h3 id="sec-4-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.1 機能と画面・APIの対応</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2605,7 +2664,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.2 解答から結果表示までの処理</h3>
+<h3 id="sec-4-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.2 解答から結果表示までの処理</h3>
 <figure class="diagram"><div class="mermaid">flowchart TD
   A["解答を送信"] --&gt; B{形式}
   B --&gt;|"四肢択一"| C["正解データと照合"]
@@ -2626,7 +2685,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   M --&gt; N["バッジ判定"]
   N --&gt; O["結果を返す"]
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.3 出題ルール（F-03、F-05）</h3>
+<h3 id="sec-4-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.3 出題ルール（F-03、F-05）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2660,7 +2719,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>四肢択一とキーワード説明は、出題対象の中で交互に出す。キーワードがない問題は択一のみ</li>
 <li>キーワード説明は1問につき1キーワードを出す（復習予定日の早いもの）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.4 忘却曲線復習（F-05）</h3>
+<h3 id="sec-4-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.4 忘却曲線復習（F-05）</h3>
 <figure class="diagram"><div class="mermaid">stateDiagram-v2
   [*] --&gt; 未学習
   未学習 --&gt; 段階1: 初回解答
@@ -2709,7 +2768,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.5 経験値・レベル（F-08）</h3>
+<h3 id="sec-4-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.5 経験値・レベル（F-08）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2806,7 +2865,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <blockquote>
 <p>目安：1日に択一10問正解・説明1問合格・クエスト達成（約210 EXP）を続けると、1週間でLv5、1か月でLv9、3か月でLv16。</p>
 </blockquote>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.6 週間ランキング（F-09）</h3>
+<h3 id="sec-4-6"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.6 週間ランキング（F-09）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2849,7 +2908,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.7 デイリークエスト（F-10）</h3>
+<h3 id="sec-4-7"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.7 デイリークエスト（F-10）</h3>
 <p>毎日0:00に、次の候補から3つを学習者ごとに割り当てる（同じ種類は重ならない）。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -2898,7 +2957,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>達成したらその場でEXPを付与し、S-06 に「達成」スタンプを出す</li>
 <li>未達成でもペナルティはない。翌日0:00に入れ替える</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.8 バッジ（F-11）</h3>
+<h3 id="sec-4-8"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.8 バッジ（F-11）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2951,7 +3010,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>判定は解答のたび（習得）と毎日0:00（継続）に行う</li>
 <li>一度獲得したバッジは取り消さない</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.9 キーワード説明の採点（F-04）</h3>
+<h3 id="sec-4-9"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.9 キーワード説明の採点（F-04）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2986,7 +3045,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.10 問題取り込み（F-01、F-02）</h3>
+<h3 id="sec-4-10"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.10 問題取り込み（F-01、F-02）</h3>
 <figure class="diagram"><div class="mermaid">sequenceDiagram
   participant CM as コース管理者
   participant API as api コンテナ
@@ -3045,7 +3104,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.11 アカウント管理（F-07）</h3>
+<h3 id="sec-4-11"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.11 アカウント管理（F-07）</h3>
 <figure class="diagram"><div class="mermaid">stateDiagram-v2
   [*] --&gt; 招待中: 管理者が登録
   [*] --&gt; 招待中: 自分で作成（メールで確認）
@@ -3097,7 +3156,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch5"><h2><i class="fa-solid fa-plug h-ico" aria-hidden="true"></i>5. 外部インターフェース設計</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.1 API共通仕様</h3>
+<h3 id="sec-5-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.1 API共通仕様</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3191,7 +3250,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 API一覧</h3>
+<h3 id="sec-5-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 API一覧</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3492,7 +3551,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 主なAPIの入出力</h3>
+<h3 id="sec-5-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 主なAPIの入出力</h3>
 <p><strong>A-07 次の問題（冒険の終わり）</strong></p>
 <pre><code class="language-json">// 5問を出し終えたあと（出せる問題がなくなったときは &quot;reason&quot;: &quot;NO_QUESTION&quot; がつく）。1問も解いていなければ summary は null
 {&quot;adventureId&quot;: &quot;adv_90&quot;, &quot;done&quot;: true,
@@ -3553,7 +3612,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <ul>
 <li><code>prompt</code> は問いかけつきで採点したときだけ入る。<code>status</code> は <code>full</code>（答えられた）・<code>partial</code>（一部）・<code>none</code>（まだ）・<code>unknown</code>（AI が判定を返さなかった。印を出さない）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 CSV出力（S-12）</h3>
+<h3 id="sec-5-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 CSV出力（S-12）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3588,7 +3647,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 AI連携（さくらのAI Engine／Amazon Bedrock）</h3>
+<h3 id="sec-5-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 AI連携（さくらのAI Engine／Amazon Bedrock）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3673,7 +3732,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>ひとことは、時間帯（朝 5〜11時・昼 11〜17時・夜 17〜5時）ごとに1回だけ生成して保存し、同じ時間帯は使い回す（コストを抑えつつ、一日の中でも話題が変わるようにするため）。復習の話はせず、今日の解答数があればそれを、なければ昨日の解答数、どちらもなければ今週のEXPかレベルを1つ入れる</li>
 <li>指示文と出力の形は、さくらのAI Engine と Bedrock で同じものを使う。切り替えたときは dev で採点の結果と応答時間を確かめる</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.6 メール（SMTP）</h3>
+<h3 id="sec-5-6"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.6 メール（SMTP）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3728,7 +3787,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li>dev では件名の先頭に <code>[dev]</code> を付ける</li>
 </ul>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-clock h-ico" aria-hidden="true"></i>6. 定期処理設計</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.1 一覧</h3>
+<h3 id="sec-6-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.1 一覧</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3772,12 +3831,12 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   section 毎週月曜 DBを使う
   ランキング締め・リセット 日次処理の中で実行 :b1, 00:00, 15m
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 定期処理の動かし方</h3>
+<h3 id="sec-6-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 定期処理の動かし方</h3>
 <ul>
 <li>定期処理は worker コンテナが時刻（Asia/Tokyo）を見て動かす。同じ枠を二重に動かさないよう、動かした枠を DB に記録する。worker が止まっていた日は、起動したときにその日の日次処理を動かす</li>
 <li>学習者への通知メール（第1.5版までの B-03 と、その送信方式）は第1.6版で削除した</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.3 処理ごとのルール</h3>
+<h3 id="sec-6-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.3 処理ごとのルール</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3809,7 +3868,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch7"><h2><i class="fa-solid fa-database h-ico" aria-hidden="true"></i>7. データ設計</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 ER図</h3>
+<h3 id="sec-7-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 ER図</h3>
 <figure class="diagram"><div class="mermaid">erDiagram
   USERS ||--o{ ENROLLMENTS : 受講
   ENROLLMENTS }o--|| COURSES : 含む
@@ -3834,7 +3893,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   COURSES ||--o{ WEEKLY_RANKINGS : 週ごと
   WEEKLY_RANKINGS }o--|| USERS : 順位
 </div></figure>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 主なデータ項目</h3>
+<h3 id="sec-7-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 主なデータ項目</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3901,7 +3960,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.3 保持期間</h3>
+<h3 id="sec-7-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.3 保持期間</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3937,7 +3996,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch8"><h2><i class="fa-solid fa-shield-halved h-ico" aria-hidden="true"></i>8. 非機能・セキュリティ設計</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.1 認証・権限</h3>
+<h3 id="sec-8-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.1 認証・権限</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3976,7 +4035,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.2 データ保護</h3>
+<h3 id="sec-8-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.2 データ保護</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -4011,7 +4070,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.3 性能・可用性</h3>
+<h3 id="sec-8-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.3 性能・可用性</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -4050,7 +4109,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.4 監視</h3>
+<h3 id="sec-8-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>8.4 監視</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -4093,13 +4152,13 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch9"><h2><i class="fa-solid fa-comment-dots h-ico" aria-hidden="true"></i>9. メッセージ設計</h2>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>9.1 方針</h3>
+<h3 id="sec-9-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>9.1 方針</h3>
 <ul>
 <li>責めない。不正解・不合格・未達成に赤い警告色や強い言葉を使わない</li>
 <li>「〜できませんでした。〜してください」の形で、次にやることを示す</li>
 <li>ボタンは動詞で終える（「答える」「採点してもらう」）。「OK」「はい」だけにしない</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>9.2 主なメッセージ</h3>
+<h3 id="sec-9-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>9.2 主なメッセージ</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -4281,7 +4340,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.0版（ドラフト：第1〜10章、HTML版あり。説明文の小見出しのルールをなくし、模範説明のルールに移す）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.6版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({
@@ -4305,6 +4364,27 @@ mermaid.initialize({
   flowchart: { htmlLabels: true, curve: "basis", padding: 12 },
   er: { useMaxWidth: true }, sequence: { useMaxWidth: true, mirrorActors: false }
 });
+</script>
+<script id="toc-accordion-js">
+(() => {
+  const nav = document.querySelector('nav.toc');
+  if (!nav) return;
+  // 章の見出しを選んだら、その章の小見出しを開く
+  nav.addEventListener('click', (e) => {
+    const a = e.target.closest('summary > a');
+    if (a) { const d = a.closest('details'); if (d) d.open = true; }
+  });
+  // 小見出しへのリンクで開いたときは、その章を開いておく
+  const openForHash = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    for (const a of nav.querySelectorAll('ol.toc-sub a')) {
+      if (a.getAttribute('href') === '#' + id) { a.closest('details').open = true; break; }
+    }
+  };
+  openForHash();
+  window.addEventListener('hashchange', openForHash);
+})();
 </script>
 </body>
 </html>

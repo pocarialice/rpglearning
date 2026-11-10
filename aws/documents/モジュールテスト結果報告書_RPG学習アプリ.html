@@ -428,30 +428,92 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 @media (max-width: 860px) { .dl-plain { grid-template-columns: 1fr; gap: 2px; } .dl-plain dd { margin-bottom: 8px; } }
 @media (max-width: 860px) { .cov-row { grid-template-columns: 1fr; } .judge { flex-direction: column; align-items: flex-start; } }
 </style>
+<style id="toc-accordion">
+/* 目次：章ごとのアコーディオン（PC のみ小見出しを出す） */
+nav.toc { max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; }
+nav.toc details > summary { list-style: none; display: flex; align-items: stretch; cursor: pointer; border-radius: 4px; }
+nav.toc details > summary::-webkit-details-marker { display: none; }
+nav.toc details > summary::marker { content: ""; }
+nav.toc details > summary > a { flex: 1 1 auto; min-width: 0; }
+nav.toc .toc-caret { flex: none; width: 32px; display: flex; align-items: center; justify-content: center; color: var(--gray-600); border-radius: 4px; }
+nav.toc .toc-caret::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+nav.toc details[open] > summary .toc-caret::before { transform: rotate(45deg); }
+nav.toc summary:hover .toc-caret { color: var(--blue-900); background: var(--blue-50); }
+nav.toc summary:focus-visible { outline: 4px solid var(--focus); outline-offset: -2px; }
+nav.toc ol.toc-sub { list-style: none; border-left: none; margin: 2px 0 8px 12px; padding: 0; font-size: 13px; display: block; }
+nav.toc ol.toc-sub li { margin: 0; }
+nav.toc ol.toc-sub a { font-size: 13px; line-height: 1.5; padding: 4px 12px; color: var(--gray-600); }
+nav.toc ol.toc-sub a:hover { color: var(--blue-900); }
+@media (prefers-reduced-motion: reduce) { nav.toc .toc-caret::before { transition: none; } }
+@media (max-width: 860px) {
+  nav.toc { max-height: none; overflow: visible; }
+  nav.toc .toc-caret, nav.toc ol.toc-sub { display: none; }
+  nav.toc details > summary { cursor: auto; }
+}
+/* 変更履歴 */
+.hist-vis { background: var(--blue-50); border-radius: var(--radius-12); padding: 20px 24px; margin: 0 0 24px; }
+.hist-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin: 0 0 12px; }
+.hist-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 4px; align-items: center; }
+.hist-flow li { margin: 0; display: flex; align-items: center; gap: 4px; }
+.hist-flow li + li::before { content: ""; width: 12px; height: 2px; background: var(--blue-200); }
+.hist-chip { display: inline-flex; flex-direction: column; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 4px 10px; line-height: 1.3; }
+.hist-chip b { font-size: 13px; color: var(--gray-900); }
+.hist-chip small { font-size: 11px; color: var(--gray-600); }
+.hist-flow li.now .hist-chip { background: var(--blue-900); border-color: var(--blue-900); }
+.hist-flow li.now .hist-chip b, .hist-flow li.now .hist-chip small { color: var(--white); }
+.hist-note { font-size: 14px; color: var(--gray-600); margin: 12px 0 0; }
+.hist-held { font-size: 13px; color: var(--gray-600); }
+table.hist td:nth-child(2) { white-space: nowrap; }
+</style>
 </head>
 <body>
 <header class="site-header"><div class="inner"><span class="eyebrow"><i class="fa-solid fa-flask-vial"></i> モジュールテスト結果</span><h1>RPG学習アプリ モジュールテスト結果報告書</h1><ul class="meta">
-<li>版数<b>第1.9版（最終報告：全モジュール。画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行）</b></li><li>作成日<b>2026-10-21</b></li><li>コミット<b>3347b63</b></li><li>判定<b>合格</b></li></ul></div></header>
+<li>版数<b>第1.9版（最終報告：全モジュール。変更の内容は「変更履歴」を参照）</b></li><li>作成日<b>2026-10-21（各版の日付は「変更履歴」を参照）</b></li><li>コミット<b>3347b63</b></li><li>判定<b>合格</b></li></ul></div></header>
 <div class="layout">
-<nav class="toc" aria-label="目次"><p>目次</p><ol>
-<li><a href="#s1">1. 概要</a></li>
+<nav class="toc" aria-label="目次">
+    <p>目次</p>
+    <ol>
+<li><a href="#history">変更履歴</a></li>
+<li><details><summary><a href="#s1">1. 概要</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 目的</a></li><li><a href="#sec-1-2">1.2 今回の範囲</a></li><li><a href="#sec-1-3">1.3 文書情報</a></li></ol></details></li>
 <li><a href="#s2">2. 実行環境</a></li>
 <li><a href="#s3">3. 結果の要約</a></li>
 <li><a href="#s4">4. カバレッジ</a></li>
 <li><a href="#s5">5. モジュール別の結果</a></li>
 <li><a href="#s6">6. テストケース別の結果</a></li>
-<li><a href="#s7">7. 所見</a></li>
+<li><details><summary><a href="#s7">7. 所見</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-7-1">7.1 不具合</a></li><li><a href="#sec-7-2">7.2 決めてほしいこと</a></li></ol></details></li>
 <li><a href="#s8">8. 判定と次の作業</a></li>
-</ol></nav>
+    </ol>
+  </nav>
 <main>
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第1.0版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>10/21</small></span></li><li class="now"><span class="hist-chip"><b>第1.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>（退避）</b><small>10/27</small></span></li><li><span class="hist-chip"><b>（第2.1版→第1.9版）</b><small>10/31</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第0.1版〜第1.0版</td><td>2026-10-20</td><td>第0.1版は中間報告（共通モジュール）。取り込み前の作業中の版（リポジトリには残っていない）</td><td>—</td></tr>
+<tr><td>第1.1版</td><td>2026-10-21</td><td>最終報告（全モジュール）として取り込む。7.2 を判断しやすい形（いまの状態・決めてほしいこと・選択肢ごとの影響）に書き直し</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.2版</td><td>2026-10-21</td><td>7.2 の判断を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.3版</td><td>2026-10-21</td><td>stg 廃止に合わせた文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.4版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせた仕様書 第0.7版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.5版</td><td>2026-10-21</td><td>A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにした仕様書 第0.8版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.6版</td><td>2026-10-21</td><td>A-11 にコース名を足した文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.7版</td><td>2026-10-21</td><td>管理局の土台（A-01・A-14・ルーター）の変更後の文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.8版</td><td>2026-10-21</td><td>管理局の S-13・S-14 に合わせた A-19・A-22 の変更後の文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.9版</td><td>2026-10-21</td><td>画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>（退避）</td><td>2026-10-27</td><td>さくらのクラウドへの切り替えに合わせて <code>aws/documents/</code> に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a></td></tr>
+<tr><td>（第2.1版→第1.9版）</td><td>2026-10-31</td><td>お祝いのテスト2件を足して再実行し第2.1版にしたが、この変更はさくら版に移すものだったため、退避した時点（第1.9版）に戻した</td><td><a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>・<a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a></td></tr>
+</tbody></table></div>
+</section>
 <section class="chapter" id="s1"><h2><i class="fa-solid fa-circle-info h-ico" aria-hidden="true"></i>1. 概要</h2>
 <div class="vis"><p class="vis-label">今回の範囲（全526ケースのうち526ケース）</p><ol class="flow">
 <li class="hl"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail　228ケース</li>
 <li class="hl"><b><i class="fa-solid fa-bolt fi"></i>Lambda関数</b>api-handler・worker・batch　172ケース</li>
 <li class="hl"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js（core・logic・pages・部品）　126ケース</li></ol>
 <p class="vis-cap">塗りつぶし＝今回テストした範囲、点線＝次回</p></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3><p>モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。本版は段階リリースの第2弾（最終報告）で、第0.1版（中間報告：共通モジュール）に Lambda関数（MT-H・MT-W）と画面（MT-F）を加え、仕様書の全ケースで合否を判定する。第1.4版では、説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせて、仕様書 第0.7版で MT-U07-03〜07 を書き直し、MT-U07-08〜10・33 を欠番にし、MT-A02-11・MT-A04-07 を足して全件を流し直した。第1.5版では、S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにしたこと（詳細設計書 第0.8版）に合わせて、仕様書 第0.8版で MT-H02-17・18 を足して全件を流し直した。第1.6版では、S-07 の見出しに使うコース名を A-11 の応答に足したこと（詳細設計書 第0.9版）に合わせて、仕様書 第0.9版で MT-H08-08 を足して全件を流し直した。第1.7版では、管理局の画面に合わせて A-01 に担当コースを足し、A-14 の一覧の日時を +09:00 付きにし、管理局を初回の流れの対象外にしたこと（詳細設計書 第1.0版）に合わせて、仕様書 第1.0版で MT-H02-19・MT-F03-06 を足し、MT-H09-07 の期待結果を直して全件を流し直した。第1.8版では、A-19 の一覧の日時を +09:00 付きにし、A-22 の取得に性格名と初期名を足したこと（詳細設計書 第1.1版）に合わせて、仕様書 第1.1版で MT-H12-10・MT-H14-06 を足して全件を流し直した。第1.9版では、画面（S-02〜S-14）・部品・外枠のテスト92件を仕様書 第1.2版の M-F07〜M-F22 に載せてIDをふり、画面のコードもカバレッジの対象（命令90%・分岐80%）に入れて全件を流し直した。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 今回の範囲</h3>
+<h3 id="sec-1-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3><p>モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。本版は段階リリースの第2弾（最終報告）で、第0.1版（中間報告：共通モジュール）に Lambda関数（MT-H・MT-W）と画面（MT-F）を加え、仕様書の全ケースで合否を判定する。第1.4版では、説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせて、仕様書 第0.7版で MT-U07-03〜07 を書き直し、MT-U07-08〜10・33 を欠番にし、MT-A02-11・MT-A04-07 を足して全件を流し直した。第1.5版では、S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにしたこと（詳細設計書 第0.8版）に合わせて、仕様書 第0.8版で MT-H02-17・18 を足して全件を流し直した。第1.6版では、S-07 の見出しに使うコース名を A-11 の応答に足したこと（詳細設計書 第0.9版）に合わせて、仕様書 第0.9版で MT-H08-08 を足して全件を流し直した。第1.7版では、管理局の画面に合わせて A-01 に担当コースを足し、A-14 の一覧の日時を +09:00 付きにし、管理局を初回の流れの対象外にしたこと（詳細設計書 第1.0版）に合わせて、仕様書 第1.0版で MT-H02-19・MT-F03-06 を足し、MT-H09-07 の期待結果を直して全件を流し直した。第1.8版では、A-19 の一覧の日時を +09:00 付きにし、A-22 の取得に性格名と初期名を足したこと（詳細設計書 第1.1版）に合わせて、仕様書 第1.1版で MT-H12-10・MT-H14-06 を足して全件を流し直した。第1.9版では、画面（S-02〜S-14）・部品・外枠のテスト92件を仕様書 第1.2版の M-F07〜M-F22 に載せてIDをふり、画面のコードもカバレッジの対象（命令90%・分岐80%）に入れて全件を流し直した。</p>
+<h3 id="sec-1-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 今回の範囲</h3>
 <div class="table-wrap"><table><thead><tr><th>区分</th><th>層</th><th>仕様書のケース数</th><th>今回</th></tr></thead><tbody><tr><td>対象</td><td>util（MT-U）</td><td>77</td><td>実行</td></tr>
 <tr><td>対象</td><td>db（MT-D）</td><td>50</td><td>実行</td></tr>
 <tr><td>対象</td><td>domain（MT-G）</td><td>69</td><td>実行</td></tr>
@@ -460,7 +522,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>対象</td><td>api-handler（MT-H）</td><td>122</td><td>実行</td></tr>
 <tr><td>対象</td><td>ワーカー・バッチ（MT-W）</td><td>50</td><td>実行</td></tr>
 <tr><td>対象</td><td>画面（web/js）（MT-F）</td><td>126</td><td>実行</td></tr></tbody></table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 文書情報</h3>
+<h3 id="sec-1-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 文書情報</h3>
 <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>文書名</td><td>RPG学習アプリ モジュールテスト結果報告書</td></tr>
 <tr><td>版数</td><td>第1.9版（最終報告：全モジュール。画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行）</td></tr>
 <tr><td>入力文書</td><td>モジュールテスト仕様書 第1.2版、詳細設計書 第1.1版、外部設計書 第1.0版</td></tr>
@@ -1351,10 +1413,10 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 </section>
 <section class="chapter" id="s7"><h2><i class="fa-solid fa-magnifying-glass h-ico" aria-hidden="true"></i>7. 所見</h2>
 <div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合（修正済み）</h5><p class="tile-num sm">2<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-scale-balanced"></i>決めてほしいこと</h5><p class="tile-num sm">8<small>件</small></p></div></div></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 不具合</h3><ul><li>製品コードの不具合を2件見つけ、どちらも直してから全件を流し直した（下の表）。最終の実行では失敗0件</li><li>テスト仕様書の記述の矛盾を1件見つけた（7.2 No.3）。期待結果の値に合わせて実装し、仕様書の注記の修正を提案する</li><li>テストコード側の誤り2件（期待値の書き違い・変数の宣言位置）は実行前・実行直後に直した。製品コードへの影響はない</li></ul>
+<h3 id="sec-7-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.1 不具合</h3><ul><li>製品コードの不具合を2件見つけ、どちらも直してから全件を流し直した（下の表）。最終の実行では失敗0件</li><li>テスト仕様書の記述の矛盾を1件見つけた（7.2 No.3）。期待結果の値に合わせて実装し、仕様書の注記の修正を提案する</li><li>テストコード側の誤り2件（期待値の書き違い・変数の宣言位置）は実行前・実行直後に直した。製品コードへの影響はない</li></ul>
 <div class="table-wrap"><table><thead><tr><th>No</th><th>見つけたテスト・作業</th><th>重大度</th><th>内容</th><th>対応</th></tr></thead><tbody><tr><td>1</td><td>第2弾の設計確認（詳細設計書 5.3 A-15）／MT-H10-01・02</td><td>高（データが消える）</td><td>第1弾の <code>questions.update</code> が選択肢・キーワードを全件削除して作り直していた。公開済みの問題を直すと <code>keyword_id</code> が変わり、学習者の説明の復習段階（<code>review_items</code>）が CASCADE で消える</td><td>番号（<code>choice_no</code>・<code>sort_order</code>）ごとの UPDATE に直し、減った番号だけ DELETE、増えた番号だけ INSERT にした。MT-H10-01・02、MT-D03-18 で確認</td></tr>
 <tr><td>2</td><td>MT-H09-01</td><td>中</td><td>取り込み用の署名付きURLの署名に <code>content-type</code> が入っておらず、申告と違う種類のファイルを置けた（設計の「Content-Type 固定」を満たしていない）</td><td><code>getSignedUrl</code> に <code>signableHeaders: content-type</code> を指定した。MT-H09-01・MT-H14-01 で確認</td></tr></tbody></table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 決めてほしいこと</h3><p>テストの結果そのものは合格で、下の8件はどれもリリースを止めるものではありません。それぞれ「いまの状態」「決めてほしいこと」「選んだときに起こること」を書き、★をおすすめとしました。2026-10-21 にジュンさんが8件すべて「おすすめどおり」と決め、設計書・テスト仕様書・プログラムに反映しました。</p>
+<h3 id="sec-7-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>7.2 決めてほしいこと</h3><p>テストの結果そのものは合格で、下の8件はどれもリリースを止めるものではありません。それぞれ「いまの状態」「決めてほしいこと」「選んだときに起こること」を書き、★をおすすめとしました。2026-10-21 にジュンさんが8件すべて「おすすめどおり」と決め、設計書・テスト仕様書・プログラムに反映しました。</p>
 <div class="table-wrap"><table><thead><tr><th>No</th><th>項目</th><th>決めてほしいこと</th><th>おすすめ</th><th>決定</th></tr></thead><tbody><tr><td><a href="#n1">1</a></td><td>新しく作った2つの部品を設計書に書くか</td><td>この2つの部品を設計書に正式に書き加えるかどうか</td><td>設計書に書き加える</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>決定済み</span></td></tr>
 <tr><td><a href="#n2">2</a></td><td>追加したDB操作の関数を設計書に書くか</td><td>追加・変更した関数を設計書の一覧に反映するかどうか</td><td>設計書の一覧に反映する</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>決定済み</span></td></tr>
 <tr><td><a href="#n3">3</a></td><td>キーワードの重複を、英字の大文字・小文字の違いで別物と見るか</td><td>英字の大文字・小文字だけが違うキーワードを、同じものとして1つにまとめるか</td><td>まとめる（今のプログラムのまま。仕様書の注記を直す）</td><td><span class="res ok"><i class="fa-solid fa-circle-check"></i>決定済み</span></td></tr>
@@ -1397,6 +1459,27 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <ul><li>dev 環境の結合テストで 6.5 の申し送り（テスト仕様書）を確かめる。あわせて、AIの模範説明が50〜400文字で、200文字を超えるときに【】の小見出しが付くこと、S3 へのアップロード（S-11・S-14）と Cognito の招待メール（S-13）を本物の環境で確かめる</li></ul></section>
 </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト結果報告書 第1.9版（最終報告：全モジュール。画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト結果報告書 第1.9版（最終報告：全モジュール。変更の内容は「変更履歴」を参照）</div></footer>
+<script id="toc-accordion-js">
+(() => {
+  const nav = document.querySelector('nav.toc');
+  if (!nav) return;
+  // 章の見出しを選んだら、その章の小見出しを開く
+  nav.addEventListener('click', (e) => {
+    const a = e.target.closest('summary > a');
+    if (a) { const d = a.closest('details'); if (d) d.open = true; }
+  });
+  // 小見出しへのリンクで開いたときは、その章を開いておく
+  const openForHash = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    for (const a of nav.querySelectorAll('ol.toc-sub a')) {
+      if (a.getAttribute('href') === '#' + id) { a.closest('details').open = true; break; }
+    }
+  };
+  openForHash();
+  window.addEventListener('hashchange', openForHash);
+})();
+</script>
 </body>
 </html>

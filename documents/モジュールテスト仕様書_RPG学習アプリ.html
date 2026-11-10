@@ -392,6 +392,43 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 .mermaid .flowchart-link, .mermaid .relation { stroke-width: 1.5px; }
 .mermaid .node polygon { fill: var(--white) !important; stroke: var(--blue-900) !important; stroke-width: 2px; }
 </style>
+<style id="toc-accordion">
+/* 目次：章ごとのアコーディオン（PC のみ小見出しを出す） */
+nav.toc { max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; }
+nav.toc details > summary { list-style: none; display: flex; align-items: stretch; cursor: pointer; border-radius: 4px; }
+nav.toc details > summary::-webkit-details-marker { display: none; }
+nav.toc details > summary::marker { content: ""; }
+nav.toc details > summary > a { flex: 1 1 auto; min-width: 0; }
+nav.toc .toc-caret { flex: none; width: 32px; display: flex; align-items: center; justify-content: center; color: var(--gray-600); border-radius: 4px; }
+nav.toc .toc-caret::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+nav.toc details[open] > summary .toc-caret::before { transform: rotate(45deg); }
+nav.toc summary:hover .toc-caret { color: var(--blue-900); background: var(--blue-50); }
+nav.toc summary:focus-visible { outline: 4px solid var(--focus); outline-offset: -2px; }
+nav.toc ol.toc-sub { list-style: none; border-left: none; margin: 2px 0 8px 12px; padding: 0; font-size: 13px; display: block; }
+nav.toc ol.toc-sub li { margin: 0; }
+nav.toc ol.toc-sub a { font-size: 13px; line-height: 1.5; padding: 4px 12px; color: var(--gray-600); }
+nav.toc ol.toc-sub a:hover { color: var(--blue-900); }
+@media (prefers-reduced-motion: reduce) { nav.toc .toc-caret::before { transition: none; } }
+@media (max-width: 860px) {
+  nav.toc { max-height: none; overflow: visible; }
+  nav.toc .toc-caret, nav.toc ol.toc-sub { display: none; }
+  nav.toc details > summary { cursor: auto; }
+}
+/* 変更履歴 */
+.hist-vis { background: var(--blue-50); border-radius: var(--radius-12); padding: 20px 24px; margin: 0 0 24px; }
+.hist-label { font-size: 13px; font-weight: 700; color: var(--blue-900); letter-spacing: 0.04em; margin: 0 0 12px; }
+.hist-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 4px; align-items: center; }
+.hist-flow li { margin: 0; display: flex; align-items: center; gap: 4px; }
+.hist-flow li + li::before { content: ""; width: 12px; height: 2px; background: var(--blue-200); }
+.hist-chip { display: inline-flex; flex-direction: column; align-items: center; background: var(--white); border: 1px solid var(--blue-200); border-radius: var(--radius-8); padding: 4px 10px; line-height: 1.3; }
+.hist-chip b { font-size: 13px; color: var(--gray-900); }
+.hist-chip small { font-size: 11px; color: var(--gray-600); }
+.hist-flow li.now .hist-chip { background: var(--blue-900); border-color: var(--blue-900); }
+.hist-flow li.now .hist-chip b, .hist-flow li.now .hist-chip small { color: var(--white); }
+.hist-note { font-size: 14px; color: var(--gray-600); margin: 12px 0 0; }
+.hist-held { font-size: 13px; color: var(--gray-600); }
+table.hist td:nth-child(2) { white-space: nowrap; }
+</style>
 </head>
 <body>
 <header class="site-header">
@@ -399,8 +436,8 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第2.4版（ドラフト：第1〜6章、HTML版あり。第1.9版でアカウント作成（A-36・A-37、S-01）のテスト14件を載せた。第2.0版でコースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せる。第2.1版で HEAD のテスト2件（MT-H01-13・MT-S01-11）を載せた。第2.2版でひとことの時間帯のテスト2件（MT-A04-14・MT-H03-09）を載せ、MT-A04-05・MT-H03-01〜03・07 を直す。第2.3版で Googleでログイン（A-38・A-39、S-01）のテスト23件を MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18 として載せる。第2.4版で通知メール（S-10・A-04・B-03）を機能ごと削除し、そのテスト22件（MT-U03-10・MT-U07-21〜22・MT-D03-33・MT-M01-01・MT-H02-10・16・MT-W03-12・MT-W04-01〜07・MT-S02-10・MT-F18-01〜05）を欠番にした）</b></li>
-      <li>作成日<b>2026-10-20（第1.3版：2026-10-27、第1.4版：2026-10-31、第1.5版：2026-10-31、第1.6版：2026-11-01、第1.7版：2026-11-02、第1.8版：2026-11-02、第1.9版：2026-11-02、第2.0版：2026-11-03、第2.1版：2026-11-04、第2.2版：2026-11-06、第2.3版：2026-11-06、第2.4版：2026-11-07）</b></li>
+      <li>版数<b>第2.4版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>作成日<b>2026-10-20（各版の日付は「変更履歴」を参照）</b></li>
       <li>入力文書<b>詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
     </ul>
@@ -410,15 +447,49 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   <nav class="toc" aria-label="目次">
     <p>目次</p>
     <ol>
-<li><a href="#ch1">1. 文書概要</a></li>
-<li><a href="#ch2">2. テスト方針</a></li>
-<li><a href="#ch3">3. テスト環境とツール</a></li>
-<li><a href="#ch4">4. テストケース（共通モジュール）</a></li>
-<li><a href="#ch5">5. テストケース（API・ワーカー・コンテナの入口・画面）</a></li>
-<li><a href="#ch6">6. トレーサビリティと合否基準</a></li>
+<li><a href="#history">変更履歴</a></li>
+<li><details><summary><a href="#ch1">1. 文書概要</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 目的</a></li><li><a href="#sec-1-2">1.2 テストの位置づけ</a></li><li><a href="#sec-1-3">1.3 モジュールIDの付け方</a></li></ol></details></li>
+<li><details><summary><a href="#ch2">2. テスト方針</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-2-1">2.1 対象範囲</a></li><li><a href="#sec-2-2">2.2 テスト技法</a></li><li><a href="#sec-2-3">2.3 モックの方針</a></li><li><a href="#sec-2-4">2.4 テストデータ</a></li></ol></details></li>
+<li><details><summary><a href="#ch3">3. テスト環境とツール</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-3-1">3.1 ツール</a></li><li><a href="#sec-3-2">3.2 設定（vitest.config.js）</a></li><li><a href="#sec-3-3">3.3 テストファイルの置き方</a></li><li><a href="#sec-3-4">3.4 実行のしかた</a></li><li><a href="#sec-3-5">3.5 テストの書き方の例</a></li></ol></details></li>
+<li><details><summary><a href="#ch4">4. テストケース（共通モジュール）</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-4-1">4.1 util</a></li><li><a href="#sec-4-2">4.2 db</a></li><li><a href="#sec-4-3">4.3 domain</a></li><li><a href="#sec-4-4">4.4 ai</a></li><li><a href="#sec-4-5">4.5 mail</a></li></ol></details></li>
+<li><details><summary><a href="#ch5">5. テストケース（API・ワーカー・コンテナの入口・画面）</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-5-1">5.1 api-handler</a></li><li><a href="#sec-5-2">5.2 grading-worker</a></li><li><a href="#sec-5-3">5.3 import-worker</a></li><li><a href="#sec-5-4">5.4 batch-runner（worker の定期処理から呼ぶ）</a></li><li><a href="#sec-5-5">5.5 画面（web/js）</a></li></ol></details></li>
+<li><details><summary><a href="#ch6">6. トレーサビリティと合否基準</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-6-1">6.1 設計とテストケースの対応</a></li><li><a href="#sec-6-2">6.2 合否基準</a></li><li><a href="#sec-6-3">6.3 不具合の管理</a></li><li><a href="#sec-6-4">6.4 結果の報告</a></li><li><a href="#sec-6-5">6.5 結合テストへの申し送り</a></li></ol></details></li>
     </ol>
   </nav>
   <main>
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/01</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>11/04</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/06</small></span></li><li class="now"><span class="hist-chip"><b>第2.4版</b><small>11/07</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第0.1版</td><td>2026-10-20</td><td>作成（第1〜6章）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
+<tr><td>第0.2版</td><td>2026-10-20</td><td>GitHub Actions での実行を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
+<tr><td>第0.3版</td><td>2026-10-21</td><td>テスト結果報告書 第0.1版の補足テストに採番し、設定を test.projects に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.4版</td><td>2026-10-21</td><td>テスト結果報告書 第1.1版 7.2 の判断を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.5版</td><td>2026-10-21</td><td>stg 環境をなくし、システムテスト・受け入れ確認を dev に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.6版</td><td>2026-10-21</td><td>ci.yml の内容と結合テストへの申し送り No.4 を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.7版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせて MT-U07-03〜07 を書き直し、MT-U07-08〜10・33 を欠番にし、MT-A02-11・MT-A04-07 を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第0.8版</td><td>2026-10-21</td><td>A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにしたことに合わせて MT-H02-17・18 を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第0.9版</td><td>2026-10-21</td><td>A-11 にコース名を足したことに合わせて MT-H08-08 を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.0版</td><td>2026-10-21</td><td>A-01 の担当コース、A-14 の一覧の日時、管理局と初回の流れのテストを追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.1版</td><td>2026-10-21</td><td>A-19 の一覧の日時、A-22 の性格名と初期名のテストを追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.2版</td><td>2026-10-21</td><td>画面（S-02〜S-14）・部品・外枠のテスト M-F07〜M-F22 を追加し、カバレッジの対象に画面を入れる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.3版</td><td>2026-10-27</td><td>さくらのクラウドへの切り替えに合わせ、DB（pg）・ジョブキュー・ログイン・メール（SMTP）・オブジェクトストレージ・AI の差し替え口・コンテナの入口のテストを追加し、AWS 固有のケースを差し替える。第1.2版までの AWS 版は <code>aws/documents/</code> に退避</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/9">#9</a>・<a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>・<a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>・<a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a>・<a href="https://github.com/pocarialice/rpglearning/pull/14">#14</a></span></td></tr>
+<tr><td>第1.4版</td><td>2026-10-31</td><td>第1.3版のあとに加えた画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースと、さくらのAI Engine の考える深さ（MT-A05-08・09）を載せる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/15">#15</a></td></tr>
+<tr><td>第1.5版</td><td>2026-10-31</td><td>ホームの受講中のコース（MT-H03-08・MT-F10-05）のケースを載せる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/17">#17</a></td></tr>
+<tr><td>第1.6版</td><td>2026-11-01</td><td>冒険を5問にし、冒険のまとめ（S-15）と学習時間のケース（MT-D03-35・MT-H05-12・MT-F05-05・MT-F14-12〜13・MT-F25）を載せる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/23">#23</a></td></tr>
+<tr><td>第1.7版</td><td>2026-11-02</td><td>学習サマリ（A-12b・A-12c、S-15・S-08）のケース（MT-G08・MT-H16・MT-D03-36〜37・MT-A04-11〜12・MT-F26・MT-F25-04・MT-F16-06）を載せる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></td></tr>
+<tr><td>第1.8版</td><td>2026-11-02</td><td>IDのなかった Ctrl+Enter・ピンチでの拡大を止めるテストを、MT-F27（<code>core/keys.js</code>）・MT-F28（<code>core/zoom.js</code>）として載せる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></td></tr>
+<tr><td>第1.9版</td><td>2026-11-02</td><td>アカウント作成（A-36・A-37、S-01）のテスト14件を MT-H15-13〜18・MT-D04-10・MT-F01-11・MT-F23-09〜13・MT-M01-09 として載せる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/25">#25</a></td></tr>
+<tr><td>第2.0版</td><td>2026-11-03</td><td>コースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せ、重なっていたテストIDを振り直す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/27">#27</a></td></tr>
+<tr><td>第2.1版</td><td>2026-11-04</td><td>HEAD のテスト2件（MT-H01-13・MT-S01-11）を載せる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/29">#29</a></td></tr>
+<tr><td>第2.2版</td><td>2026-11-06</td><td>ひとことの時間帯のテスト2件（MT-A04-14・MT-H03-09）を載せ、MT-A04-05・MT-H03-01〜03・07 を直す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/32">#32</a></td></tr>
+<tr><td>第2.3版</td><td>2026-11-06</td><td>Googleでログイン（A-38・A-39、S-01）のテスト23件を MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18 として載せる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/34">#34</a></td></tr>
+<tr><td>第2.4版</td><td>2026-11-07</td><td>通知メール（S-10・A-04・B-03）を機能ごと削除し、そのテストケースを欠番にする</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
+</tbody></table></div>
+</section>
 <section class="chapter" id="ch1"><h2><i class="fa-solid fa-circle-info h-ico" aria-hidden="true"></i>1. 文書概要</h2>
 <div class="vis">
   <p class="vis-label">テストの段階と本書の範囲</p>
@@ -435,9 +506,9 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
     <div class="tile"><p class="tile-num sm">MT-G01-04</p><p class="tile-cap">ID＝モジュール＋連番</p></div>
   </div>
 </div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3>
+<h3 id="sec-1-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3>
 <p>詳細設計書で定めたモジュール（1つのJSファイル）ごとに、公開関数が設計どおりに動くことを確かめるテストの範囲・方法・テストケース・合否基準を定める。テストは Vitest で自動化し、GitHub Actions でプルリクエストごととリリースのビルドごとに全件を実行する（詳細設計書 11.2）。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 テストの位置づけ</h3>
+<h3 id="sec-1-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.2 テストの位置づけ</h3>
 <figure class="diagram wide"><div class="mermaid">flowchart LR
   MT["モジュールテスト&lt;br&gt;（本書）&lt;br&gt;1ファイル単位・外部サービスはモック"] --&gt; IT["結合テスト&lt;br&gt;dev 環境&lt;br&gt;コンテナ＋DB＋AI Engine"]
   IT --&gt; ST["システムテスト&lt;br&gt;dev 環境&lt;br&gt;画面からの業務シナリオ"]
@@ -473,7 +544,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 モジュールIDの付け方</h3>
+<h3 id="sec-1-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.3 モジュールIDの付け方</h3>
 <p>詳細設計書 3.1 の ID（M-U・M-D・M-G・M-A・M-M・M-O・M-K）に加え、本書で次の ID を使う。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -512,7 +583,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   <p class="vis-label" style="margin-top:8px !important">使うテスト技法</p>
   <div class="tag-row"><span class="tag solid">同値分割</span><span class="tag solid">境界値分析</span><span class="tag line">デシジョンテーブル</span><span class="tag line">状態遷移</span><span class="tag line">エラー推測</span></div>
 </div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 対象範囲</h3>
+<h3 id="sec-2-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 対象範囲</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -544,7 +615,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 テスト技法</h3>
+<h3 id="sec-2-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 テスト技法</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -581,7 +652,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 モックの方針</h3>
+<h3 id="sec-2-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 モックの方針</h3>
 <figure class="diagram wide"><div class="mermaid">flowchart LR
   subgraph T["テストコード（Vitest）"]
     TC["it('MT-xxx-nn …')"]
@@ -652,7 +723,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 <li><strong>ドメインロジック（M-G）と入力チェック（M-U07）はモックを使わない</strong>（純粋関数のため、入力と出力だけで確かめる）</li>
 <li>外部サービスへ実際に接続するテストは書かない（ネットワークに出たらテストを失敗させる：<code>vitest.setup.js</code> で <code>fetch</code> の既定をエラーにする）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.4 テストデータ</h3>
+<h3 id="sec-2-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.4 テストデータ</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -706,7 +777,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
   </div>
   <div class="kv"><span class="tag mute">GitHub Actions</span><code>ci.yml</code><code>release.yml（image）</code><span class="tag mute">全件</span><code>npm test</code><span class="tag mute">カバレッジ</span><code>npm test -- --coverage</code><span class="tag mute">IDで絞る</span><code>npx vitest run -t "MT-G01"</code></div>
 </div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 ツール</h3>
+<h3 id="sec-3-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 ツール</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -743,7 +814,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 設定（<code>vitest.config.js</code>）</h3>
+<h3 id="sec-3-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 設定（<code>vitest.config.js</code>）</h3>
 <pre><code class="language-js">import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
@@ -771,7 +842,7 @@ export default defineConfig({
 <ul>
 <li><code>functions/</code>・<code>server/</code> のテストは Node、<code>web/</code> のテストは jsdom で動かすため、<code>test.projects</code> で2つに分ける（Vitest 3.2 で非推奨になった <code>environmentMatchGlobs</code> は使わない）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 テストファイルの置き方</h3>
+<h3 id="sec-3-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.3 テストファイルの置き方</h3>
 <pre><code class="language-text">tests/
 ├─ unit/
 │  ├─ functions/
@@ -795,7 +866,7 @@ export default defineConfig({
 <li>テストの説明文（<code>it('…')</code>）の先頭にテストケースIDを書く。例：<code>it('MT-G01-04 予定日当日に正解すると段階2・3日後になる', …)</code></li>
 <li>1つの <code>it</code> で確かめるのは1つのテストケースだけにする</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 実行のしかた</h3>
+<h3 id="sec-3-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.4 実行のしかた</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -856,7 +927,7 @@ export default defineConfig({
 <li>Node.js は <code>actions/setup-node</code> で 22 を使い、作業PCと版をそろえる</li>
 <li>時刻に依存するテストは偽の時計を使う。ランナーのタイムゾーンは UTC のため、<code>TZ</code> に頼るテストを書かない</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 テストの書き方の例</h3>
+<h3 id="sec-3-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.5 テストの書き方の例</h3>
 <pre><code class="language-js">import { describe, it, expect, beforeEach } from 'vitest'
 import { query, NOT_READY } from '../../../../../functions/shared/db/client.js'
 import { dbMock, pgError } from '../../../../helpers/mocks.js'
@@ -885,7 +956,7 @@ describe('M-D01 client', () =&gt; {
   <div class="banner"><i class="fa-solid fa-bullseye banner-ico"></i><div><p class="banner-h">境界値をとくに厚く</p><p class="note">説明文 49／50／200／201／400／401文字、JSTの0:00、月曜0:00、復習予定日の前日と当日、レベルアップの境界（99／100 EXP）。</p></div></div>
 </div>
 <p>表の「技法」は、同＝同値分割、境＝境界値、DT＝デシジョンテーブル、状＝状態遷移、異＝エラー推測。</p>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.1 util</h3>
+<h3 id="sec-4-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.1 util</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-U01 <code>util/errors.js</code></h4>
 <div class="table-wrap"><table>
 <thead>
@@ -1608,7 +1679,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.2 db</h3>
+<h3 id="sec-4-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.2 db</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-D01 <code>db/client.js</code></h4>
 <div class="table-wrap"><table>
 <thead>
@@ -2211,7 +2282,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.3 domain</h3>
+<h3 id="sec-4-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.3 domain</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-G01 <code>domain/review.js</code> 忘却曲線</h4>
 <p>今日＝<code>2026-10-20</code>（特に書かない限り）。</p>
 <div class="table-wrap"><table>
@@ -2864,7 +2935,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.4 ai</h3>
+<h3 id="sec-4-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.4 ai</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-A01 <code>ai/bedrock.js</code></h4>
 <div class="table-wrap"><table>
 <thead>
@@ -3257,7 +3328,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.5 mail</h3>
+<h3 id="sec-4-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>4.5 mail</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-M01 <code>mail/smtp.js</code>・<code>mail/templates.js</code></h4>
 <div class="table-wrap"><table>
 <thead>
@@ -3555,7 +3626,7 @@ describe('M-D01 client', () =&gt; {
     <li class="gate"><b><i class="fa-solid fa-circle-xmark fi"></i>failed</b>30秒超え・AIの失敗</li>
   </ol>
 </div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.1 api-handler</h3>
+<h3 id="sec-5-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.1 api-handler</h3>
 <p>ハンドラのテストは、リポジトリを <code>vi.mock</code> で差し替え、<code>server/http.mjs</code> が作るのと同じ形のイベント（<code>tests/fixtures/events/http.js</code> の <code>httpEvent({ method, path, body, groups, sub })</code>）を <code>main</code> に渡して、応答（statusCode・本文）と呼ばれた関数を確かめる。</p>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H01 <code>router.js</code>・入口</h4>
 <div class="table-wrap"><table>
@@ -5036,7 +5107,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 grading-worker</h3>
+<h3 id="sec-5-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.2 grading-worker</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-W01 <code>grading-worker/index.mjs</code>・<code>grader.js</code></h4>
 <div class="table-wrap"><table>
 <thead>
@@ -5149,7 +5220,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 import-worker</h3>
+<h3 id="sec-5-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 import-worker</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-W02 <code>import-worker/index.mjs</code>・<code>extractor.js</code>・<code>pdf-splitter.js</code>・<code>pdf-text.js</code></h4>
 <p><code>AI_PROVIDER=bedrock</code>（PDF・画像を読める AI）で MT-W02-01〜16 を、<code>AI_PROVIDER=sakura</code> で MT-W02-17〜20 を確かめる。</p>
 <div class="table-wrap"><table>
@@ -5305,7 +5376,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 batch-runner（worker の定期処理から呼ぶ）</h3>
+<h3 id="sec-5-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.4 batch-runner（worker の定期処理から呼ぶ）</h3>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-W03 <code>jobs/daily.js</code> と <code>steps/</code></h4>
 <div class="table-wrap"><table>
 <thead>
@@ -5720,7 +5791,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 画面（web/js）</h3>
+<h3 id="sec-5-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.5 画面（web/js）</h3>
 <p>画面のテストは jsdom で実行する。<code>fetch</code> は <code>vi.fn()</code>、移動は auth.js に渡す <code>navigate</code> を差し替える。</p>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F01 <code>core/auth.js</code></h4>
 <div class="table-wrap"><table>
@@ -7568,7 +7639,7 @@ describe('M-D01 client', () =&gt; {
     <div class="tile"><p class="tile-num sm">高 0<small>件</small></p><p class="tile-cap">未解決の重大な不具合</p></div>
   </div>
 </div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.1 設計とテストケースの対応</h3>
+<h3 id="sec-6-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.1 設計とテストケースの対応</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -7725,7 +7796,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 合否基準</h3>
+<h3 id="sec-6-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.2 合否基準</h3>
 <figure class="diagram"><div class="mermaid">flowchart TD
   A["npm test -- --coverage"] --&gt; B{"全件成功?"}
   B --&gt;|"いいえ"| F["Issue に登録して修正&lt;br&gt;再現テストを追加"]
@@ -7771,7 +7842,7 @@ describe('M-D01 client', () =&gt; {
 <ul>
 <li>カバレッジの基準は <code>vitest.config.js</code> の <code>thresholds</code> で強制し、下回ったら <code>npm test -- --coverage</code> が失敗する</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.3 不具合の管理</h3>
+<h3 id="sec-6-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.3 不具合の管理</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -7802,7 +7873,7 @@ describe('M-D01 client', () =&gt; {
 <li>不具合は GitHub の Issue に、テストケースID・入力・期待結果・実際の結果を書いて登録する</li>
 <li>直したら、その不具合を再現するテストケースを本書と <code>tests/</code> に追加する（ID は該当モジュールの最後の番号の次）</li>
 </ul>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.4 結果の報告</h3>
+<h3 id="sec-6-4"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.4 結果の報告</h3>
 <p>リリースごとに、詳細設計書 11.9 のリリース記録（GitHub Release の本文）に次を書く。値は <code>ci.yml</code> の概要（Summary）から写す。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -7830,7 +7901,7 @@ describe('M-D01 client', () =&gt; {
 </tr>
 </tbody>
 </table></div>
-<h3><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.5 結合テストへの申し送り</h3>
+<h3 id="sec-6-5"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>6.5 結合テストへの申し送り</h3>
 <p>モジュールテストでは DB・AI・オブジェクトストレージ・SMTP をモックで差し替えるため、次の前提は dev 環境（さくらのクラウド）でしか確かめられない。dev 環境の結合テスト（別紙）の確認項目に入れる。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -7877,7 +7948,7 @@ describe('M-D01 client', () =&gt; {
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第2.1版（ドラフト：第1〜6章、HTML版あり。第1.9版でアカウント作成（A-36・A-37、S-01）のテスト14件を載せた。第2.0版でコースごとの実績（A-12d・A-12e、S-08・S-16・S-17）のテスト22件を MT-D03-38〜41・MT-A04-13・MT-H02-20・MT-H17-01〜07・MT-F08-07・MT-F16-07〜08・MT-F29-01〜02・MT-F30-01〜04 として載せる）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第2.4版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({
@@ -7901,6 +7972,27 @@ mermaid.initialize({
   flowchart: { htmlLabels: true, curve: "basis", padding: 12 },
   er: { useMaxWidth: true }, sequence: { useMaxWidth: true, mirrorActors: false }
 });
+</script>
+<script id="toc-accordion-js">
+(() => {
+  const nav = document.querySelector('nav.toc');
+  if (!nav) return;
+  // 章の見出しを選んだら、その章の小見出しを開く
+  nav.addEventListener('click', (e) => {
+    const a = e.target.closest('summary > a');
+    if (a) { const d = a.closest('details'); if (d) d.open = true; }
+  });
+  // 小見出しへのリンクで開いたときは、その章を開いておく
+  const openForHash = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    for (const a of nav.querySelectorAll('ol.toc-sub a')) {
+      if (a.getAttribute('href') === '#' + id) { a.closest('details').open = true; break; }
+    }
+  };
+  openForHash();
+  window.addEventListener('hashchange', openForHash);
+})();
 </script>
 </body>
 </html>

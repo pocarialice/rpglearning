@@ -3,11 +3,32 @@
 | 項目   | 内容 |
 | ---- | --- |
 | 文書名  | RPG学習アプリ さくらのクラウド構築手順書 |
-| 版数   | 第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避）。第0.2版で、dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）。第0.3版で、DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）。第0.4版で、prod の構築を凍結し、dev を本番としてテスターに `rpglearning.net` で公開することにした（1.8）。第0.5版で、通知メールを機能ごと削除した |
-| 作成日  | 2026-10-27 |
+| 版数   | 第0.5版（ドラフト。AWS 版の構築手順書 第0.5版に代わる。AWS 版は `aws/documents/` に退避。変更の内容は「変更履歴」を参照） |
+| 作成日  | 2026-10-27（各版の日付は「変更履歴」を参照） |
 | 入力文書 | 外部設計書 第1.1版（第2章 システム方式設計）、詳細設計書 第1.2版（2.4.6 環境変数、第10〜11章） |
 | 対象   | Phase 1（MVP）のパイロット環境。dev・prod の2環境 |
 | 作業方法 | さくらのクラウドのリソースはコントロールパネル（Web画面）で作る。アプリはコンテナイメージにして GitHub Actions がコンテナレジストリに置き、サーバーで `docker compose` を使って動かす（詳細設計書 第11章） |
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-27 : 第0.1版
+  2026-11-07 : 第0.2版 : 第0.3版 : 第0.4版 : 第0.5版
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第0.1版 | 2026-10-27 | AWS 版の構築手順書 第0.5版に代わる手順書として作成。さくらのクラウドで dev・prod を作る手順をまとめる | [#6](https://github.com/pocarialice/rpglearning/pull/6)<br>（版数を上げずに直したPR：[#7](https://github.com/pocarialice/rpglearning/pull/7)・[#8](https://github.com/pocarialice/rpglearning/pull/8)・[#11](https://github.com/pocarialice/rpglearning/pull/11)・[#22](https://github.com/pocarialice/rpglearning/pull/22)・[#24](https://github.com/pocarialice/rpglearning/pull/24)・[#34](https://github.com/pocarialice/rpglearning/pull/34)・[#36](https://github.com/pocarialice/rpglearning/pull/36)） |
+| 第0.2版 | 2026-11-07 | dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
+| 第0.3版 | 2026-11-07 | DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
+| 第0.4版 | 2026-11-07 | prod の構築を凍結し、dev を本番としてテスターに `rpglearning.net` で公開することにした（1.8） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
+| 第0.5版 | 2026-11-07 | 通知メールを機能ごと削除した | [#38](https://github.com/pocarialice/rpglearning/pull/38)<br>（版数を上げずに直したPR：[#39](https://github.com/pocarialice/rpglearning/pull/39)・[#40](https://github.com/pocarialice/rpglearning/pull/40)） |
 
 ---
 
