@@ -22,8 +22,9 @@ provider "sakuracloud" {
   zone = "is1b"
 }
 # DNS を Cloudflare に移したとき（dns_provider = "cloudflare"。構築手順書 3.14）だけ使う。トークンは TF_VAR_cloudflare_api_token
+# プロバイダーは使わないときもトークンを求めるため、空なら形だけの値を渡す（Cloudflare のリソースがなければ API は呼ばない）
 provider "cloudflare" {
-  api_token = var.cloudflare_api_token != "" ? var.cloudflare_api_token : null
+  api_token = var.cloudflare_api_token != "" ? var.cloudflare_api_token : "unused-unused-unused-unused-unused-unused"
 }
 # レジストリの pull 用ユーザーは shared で作ったものを使う
 data "terraform_remote_state" "shared" {
