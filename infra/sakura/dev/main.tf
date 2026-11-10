@@ -197,10 +197,11 @@ resource "sakuracloud_dns_record" "app" {
   value    = sakuracloud_server.app.ip_address
   ttl      = 300
 }
+# Cloudflare はドメインそのものをゾーン名（rpglearning.net）、ほかを短い名前（www）で持つ。合わせないと作り直しになる
 resource "cloudflare_record" "app" {
   for_each = local.use_cloudflare_dns ? local.dns_label : {}
   zone_id  = var.cloudflare_zone_id
-  name     = each.value
+  name     = each.value == "@" ? each.key : each.value
   type     = "A"
   content  = sakuracloud_server.app.ip_address
   proxied  = true
