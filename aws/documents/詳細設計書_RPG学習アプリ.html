@@ -441,7 +441,6 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   <nav class="toc" aria-label="目次">
     <p>目次</p>
     <ol>
-<li><a href="#history">変更履歴</a></li>
 <li><details><summary><a href="#ch1">1. 文書概要</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 目的</a></li><li><a href="#sec-1-2">1.2 本書で確定する事項</a></li><li><a href="#sec-1-3">1.3 用語</a></li></ol></details></li>
 <li><details><summary><a href="#ch2">2. ソフトウェア構成</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-2-1">2.1 全体構成</a></li><li><a href="#sec-2-2">2.2 ディレクトリ構成（AWSリリースを想定した案）</a></li><li><a href="#sec-2-3">2.3 技術スタック</a></li><li><a href="#sec-2-4">2.4 共通の実装方針</a></li></ol></details></li>
 <li><details><summary><a href="#ch3">3. 共通モジュール設計（functions/shared）</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-3-1">3.1 一覧</a></li><li><a href="#sec-3-2">3.2 util</a></li><li><a href="#sec-3-3">3.3 db</a></li><li><a href="#sec-3-4">3.4 リポジトリ（db/repositories）</a></li><li><a href="#sec-3-5">3.5 domain（純粋関数）</a></li><li><a href="#sec-3-6">3.6 ai</a></li></ol></details></li>
@@ -454,30 +453,10 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <li><details><summary><a href="#ch10">10. ログ・監視・エラー処理</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-10-1">10.1 アプリが出す主なログ</a></li><li><a href="#sec-10-2">10.2 よく使う Logs Insights の検索</a></li><li><a href="#sec-10-3">10.3 画面でのエラーの扱い</a></li></ol></details></li>
 <li><details><summary><a href="#ch11">11. ビルド・リリース手順</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-11-1">11.1 リリースの全体像</a></li><li><a href="#sec-11-2">11.2 ワークフロー一覧</a></li><li><a href="#sec-11-3">11.3 リリース物</a></li><li><a href="#sec-11-4">11.4 ビルド（ジョブ build）</a></li><li><a href="#sec-11-5">11.5 GitHub と AWS の設定</a></li><li><a href="#sec-11-6">11.6 配置（deploy.yml）</a></li><li><a href="#sec-11-7">11.7 スモークテスト（配置後に人が行う）</a></li><li><a href="#sec-11-8">11.8 環境ごとの違い</a></li><li><a href="#sec-11-9">11.9 ロールバック手順</a></li><li><a href="#sec-11-10">11.10 リリース記録</a></li></ol></details></li>
 <li><a href="#ch12">12. 未決事項</a></li>
+<li><a href="#history">変更履歴</a></li>
     </ol>
   </nav>
   <main>
-<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
-<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li class="now"><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>（退避）</b><small>10/27</small></span></li></ol>
-<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
-<div class="table-wrap"><table class="hist">
-<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
-<tbody>
-<tr><td>第0.1版</td><td>2026-10-20</td><td>作成（第1〜12章、HTML版あり）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
-<tr><td>第0.2版</td><td>2026-10-20</td><td>リリースを GitHub Actions に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
-<tr><td>第0.3版</td><td>2026-10-21</td><td>モジュールテスト結果報告書 第0.1版の指摘を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.4版</td><td>2026-10-21</td><td>モジュールテスト結果報告書 第1.1版 7.2 の判断を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.5版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.6版</td><td>2026-10-21</td><td>ci.yml を作成し、画面のビルドは画面の実装時に足すと明記</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.7版</td><td>2026-10-21</td><td>画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第0.8版</td><td>2026-10-21</td><td>S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第0.9版</td><td>2026-10-21</td><td>S-07 の見出しに使うコース名を A-11 の応答に足す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.0版</td><td>2026-10-21</td><td>A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.1版</td><td>2026-10-21</td><td>A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>（退避）</td><td>2026-10-27</td><td>さくらのクラウドへの切り替えに合わせて <code>aws/documents/</code> に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a></td></tr>
-</tbody></table></div>
-</section>
 <section class="chapter" id="ch1"><h2><i class="fa-solid fa-circle-info h-ico" aria-hidden="true"></i>1. 文書概要</h2>
 
 <div class="vis">
@@ -2320,6 +2299,28 @@ jobs:
 <tr><td>8</td><td>GitHub のリポジトリ名・承認者</td><td><code>&lt;オーナー&gt;/rpg-learning-app</code>。prod の承認者はシステム管理者と開発リーダーの2名を仮置き</td><td>dev 構築前</td></tr>
 <tr><td>9</td><td>通知メールの文言</td><td>パートナーの定型のひとこと（persona ごとに1文）と問い合わせ先（「所属部署の学習推進担当」）を <code>mail/templates.js</code> に仮置き。外部設計書 10 No.10 で確定する</td><td>パイロット開始前</td></tr>
 <tr><td>10</td><td>stg 環境を作り直すか</td><td><strong>決定（2026-10-21）</strong>：コスト削減のため Phase 1 では作らない（外部設計書 10 No.11）。受け入れ確認は dev を凍結して行い（11.1）、prod は配置のたびにスナップショットを取る。全社展開の前に、利用者数とリリースの頻度を見て作り直すかを決める</td><td>Phase 3 の計画時</td></tr>
+</tbody></table></div>
+</section>
+  
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li class="now"><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>（退避）</b><small>10/27</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第0.1版</td><td>2026-10-20</td><td>作成（第1〜12章、HTML版あり）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
+<tr><td>第0.2版</td><td>2026-10-20</td><td>リリースを GitHub Actions に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
+<tr><td>第0.3版</td><td>2026-10-21</td><td>モジュールテスト結果報告書 第0.1版の指摘を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.4版</td><td>2026-10-21</td><td>モジュールテスト結果報告書 第1.1版 7.2 の判断を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.5版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.6版</td><td>2026-10-21</td><td>ci.yml を作成し、画面のビルドは画面の実装時に足すと明記</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.7版</td><td>2026-10-21</td><td>画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第0.8版</td><td>2026-10-21</td><td>S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第0.9版</td><td>2026-10-21</td><td>S-07 の見出しに使うコース名を A-11 の応答に足す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.0版</td><td>2026-10-21</td><td>A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.1版</td><td>2026-10-21</td><td>A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>（退避）</td><td>2026-10-27</td><td>さくらのクラウドへの切り替えに合わせて <code>aws/documents/</code> に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a></td></tr>
 </tbody></table></div>
 </section>
   </main>

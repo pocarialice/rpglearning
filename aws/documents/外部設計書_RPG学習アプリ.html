@@ -559,7 +559,6 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   <nav class="toc" aria-label="目次">
     <p>目次</p>
     <ol>
-<li><a href="#history">変更履歴</a></li>
 <li><details><summary><a href="#ch1">1. 文書概要</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 目的</a></li><li><a href="#sec-1-2">1.2 本書で確定する事項</a></li><li><a href="#sec-1-3">1.3 関連文書</a></li></ol></details></li>
 <li><details><summary><a href="#ch2">2. システム方式設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-2-1">2.1 方式の選定理由</a></li><li><a href="#sec-2-2">2.2 AWS構成図</a></li><li><a href="#sec-2-3">2.3 AWSサービス一覧</a></li><li><a href="#sec-2-4">2.4 Lambda関数の分担</a></li><li><a href="#sec-2-5">2.5 説明採点の非同期方式</a></li><li><a href="#sec-2-6">2.6 フロントエンド方式</a></li><li><a href="#sec-2-7">2.7 環境構成</a></li><li><a href="#sec-2-8">2.8 AIモデルの使い分け</a></li><li><a href="#sec-2-9">2.9 月額コスト試算（パイロット10名）</a></li></ol></details></li>
 <li><details><summary><a href="#ch3">3. 画面設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-3-1">3.1 画面一覧</a></li><li><a href="#sec-3-2">3.2 画面構成図</a></li><li><a href="#sec-3-3">3.3 画面遷移</a></li><li><a href="#sec-3-4">3.4 画面レイアウトの基本</a></li><li><a href="#sec-3-5">3.5 共通の表示ルール</a></li><li><a href="#sec-3-6">3.6 AIパートナー設計</a></li><li><a href="#sec-3-7">3.7 学習者画面</a></li><li><a href="#sec-3-8">3.8 管理画面（ギルド管理局）</a></li></ol></details></li>
@@ -570,25 +569,10 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <li><details><summary><a href="#ch8">8. 非機能・セキュリティ設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-8-1">8.1 認証・権限</a></li><li><a href="#sec-8-2">8.2 データ保護</a></li><li><a href="#sec-8-3">8.3 性能・可用性</a></li><li><a href="#sec-8-4">8.4 監視</a></li></ol></details></li>
 <li><details><summary><a href="#ch9">9. メッセージ設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-9-1">9.1 方針</a></li><li><a href="#sec-9-2">9.2 主なメッセージ</a></li></ol></details></li>
 <li><a href="#ch10">10. 未決事項</a></li>
+<li><a href="#history">変更履歴</a></li>
     </ol>
   </nav>
   <main>
-<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
-<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li class="now"><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>（退避）</b><small>10/27</small></span></li></ol>
-<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
-<div class="table-wrap"><table class="hist">
-<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
-<tbody>
-<tr><td>第0.1版〜第0.5版</td><td>2026-10-19</td><td>取り込み前の作業中の版（リポジトリには残っていない）</td><td>—</td></tr>
-<tr><td>第0.6版</td><td>2026-10-19</td><td>リポジトリに取り込み（第1〜10章、HTML版あり）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
-<tr><td>第0.7版</td><td>2026-10-20</td><td>AWS へのリリースを GitHub Actions で行う前提に更新</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
-<tr><td>第0.8版</td><td>2026-10-21</td><td>通知メールの文言を未決事項に追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.9版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第1.0版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくし、模範説明のルールに移す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>（退避）</td><td>2026-10-27</td><td>さくらのクラウドへの切り替えに合わせて <code>aws/documents/</code> に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す。PR #12 でお祝いの記述を足したが、PR #13 で退避した時点に戻した</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>・<a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a></span></td></tr>
-</tbody></table></div>
-</section>
 <section class="chapter" id="ch1"><h2><i class="fa-solid fa-file-lines h-ico" aria-hidden="true"></i>1. 文書概要</h2>
 <h3 id="sec-1-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3>
 <p>要件定義書で決めた「何を作るか」を、利用者から見える形（画面・操作・外部とのやり取り・システム構成）に落とし込む。内部設計（プログラム構造・テーブル定義の詳細）の入力とする。</p>
@@ -3618,6 +3602,23 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 </tbody>
 </table></div></section>
+  
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li class="now"><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>（退避）</b><small>10/27</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第0.1版〜第0.5版</td><td>2026-10-19</td><td>取り込み前の作業中の版（リポジトリには残っていない）</td><td>—</td></tr>
+<tr><td>第0.6版</td><td>2026-10-19</td><td>リポジトリに取り込み（第1〜10章、HTML版あり）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
+<tr><td>第0.7版</td><td>2026-10-20</td><td>AWS へのリリースを GitHub Actions で行う前提に更新</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
+<tr><td>第0.8版</td><td>2026-10-21</td><td>通知メールの文言を未決事項に追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.9版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.0版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくし、模範説明のルールに移す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>（退避）</td><td>2026-10-27</td><td>さくらのクラウドへの切り替えに合わせて <code>aws/documents/</code> に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す。PR #12 でお祝いの記述を足したが、PR #13 で退避した時点に戻した</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>・<a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a></span></td></tr>
+</tbody></table></div>
+</section>
   </main>
 </div>
 <footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.0版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>

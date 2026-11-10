@@ -9,26 +9,6 @@
 
 ---
 
-## 変更履歴
-
-```mermaid
-timeline
-  title 版の移り変わり
-  2026-10-17 : 第1版
-  2026-10-21 : 第1.1版
-  2026-10-27 : （退避）
-```
-
-日付は版を作った日。PR は、その版を作ったプルリクエスト。
-
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第1版 | 2026-10-17 | 作成 | [#1](https://github.com/pocarialice/rpglearning/pull/1)<br>（版数を上げずに直したPR：[#2](https://github.com/pocarialice/rpglearning/pull/2)） |
-| 第1.1版 | 2026-10-21 | リリースの環境を dev・prod の2つに変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す | [#6](https://github.com/pocarialice/rpglearning/pull/6) |
-
----
-
 ## 1. 目的・背景・スコープ
 
 ### 1.1 背景
@@ -460,3 +440,23 @@ flowchart LR
 | 7 | MVPの通知 | メールのみ（プッシュはPhase 2） |
 | 8 | レベルアップに必要なEXPの計算式 | 基本設計で決定 |
 | 9 | AIパートナーのキャラクター数・設定 | 基本設計で決定 |
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-17 : 第1版
+  2026-10-21 : 第1.1版
+  2026-10-27 : （退避）
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第1版 | 2026-10-17 | 作成 | [#1](https://github.com/pocarialice/rpglearning/pull/1)<br>（版数を上げずに直したPR：[#2](https://github.com/pocarialice/rpglearning/pull/2)） |
+| 第1.1版 | 2026-10-21 | リリースの環境を dev・prod の2つに変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す | [#6](https://github.com/pocarialice/rpglearning/pull/6) |

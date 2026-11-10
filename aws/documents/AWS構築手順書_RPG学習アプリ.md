@@ -11,29 +11,6 @@
 
 ---
 
-## 変更履歴
-
-```mermaid
-timeline
-  title 版の移り変わり
-  2026-10-19 : 第0.1版〜第0.2版 : 第0.3版
-  2026-10-20 : 第0.4版
-  2026-10-21 : 第0.5版
-  2026-10-27 : （退避）
-```
-
-日付は版を作った日。PR は、その版を作ったプルリクエスト。
-
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第0.1版〜第0.2版 | 2026-10-19 | 取り込み前の作業中の版（リポジトリには残っていない） | — |
-| 第0.3版 | 2026-10-19 | リポジトリに取り込み | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
-| 第0.4版 | 2026-10-20 | アプリの配置を GitHub Actions に変更 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
-| 第0.5版 | 2026-10-21 | stg 環境を作らず dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す | [#6](https://github.com/pocarialice/rpglearning/pull/6) |
-
----
-
 ## 1. はじめに
 
 ### 1.1 この手順書の使い方
@@ -1709,3 +1686,26 @@ Free プランの CloudFront には AWS WAF が最初から付いている（第
 | 7  | GitHub のリポジトリと承認者            | リポジトリ `<オーナー>/rpg-learning-app`。prod の承認者はシステム管理者と開発リーダーの2名（3.13・4.13）                                      | dev 構築前      |
 
 <p></p>
+
+---
+
+## 変更履歴
+
+```mermaid
+timeline
+  title 版の移り変わり
+  2026-10-19 : 第0.1版〜第0.2版 : 第0.3版
+  2026-10-20 : 第0.4版
+  2026-10-21 : 第0.5版
+  2026-10-27 : （退避）
+```
+
+日付は版を作った日。PR は、その版を作ったプルリクエスト。
+
+| 版数 | 日付 | 変更内容 | 関連PR |
+| --- | --- | --- | --- |
+| 第0.1版〜第0.2版 | 2026-10-19 | 取り込み前の作業中の版（リポジトリには残っていない） | — |
+| 第0.3版 | 2026-10-19 | リポジトリに取り込み | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
+| 第0.4版 | 2026-10-20 | アプリの配置を GitHub Actions に変更 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
+| 第0.5版 | 2026-10-21 | stg 環境を作らず dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
+| （退避） | 2026-10-27 | さくらのクラウドへの切り替えに合わせて `aws/documents/` に退避。以後は AWS に戻すときの参照用として、内容を変えずに残す | [#6](https://github.com/pocarialice/rpglearning/pull/6) |
