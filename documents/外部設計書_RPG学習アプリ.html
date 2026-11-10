@@ -505,7 +505,7 @@ figure.diagram.wide .mermaid svg { min-width: 760px; }
 
 
 /* 2章の構成の図解（さくらのクラウド） */
-.arch { display: grid; grid-template-columns: 1fr auto 2.2fr auto 1.6fr; gap: 12px; align-items: stretch; margin: 16px 0 24px; }
+.arch { display: grid; grid-template-columns: 1fr auto 1.4fr auto 1.8fr auto 1.5fr; gap: 12px; align-items: stretch; margin: 16px 0 24px; }
 .arch-col { border: 1px solid var(--blue-200); border-radius: var(--radius-12); padding: 12px; background: var(--white); }
 .arch-col h4 { margin: 0 0 8px; font-size: 14px; color: var(--blue-1000); }
 .arch-col h4 i { margin-right: 6px; }
@@ -562,9 +562,9 @@ table.hist td:nth-child(2) { white-space: nowrap; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.6版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>版数<b>第1.7版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
       <li>作成日<b>2026-10-19（各版の日付は「変更履歴」を参照）</b></li>
-      <li>入力文書<b>RPG学習アプリ 要件定義書 第1.2版（ドラフト）</b></li>
+      <li>入力文書<b>RPG学習アプリ 要件定義書 第1.4版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
   </div>
@@ -573,9 +573,8 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   <nav class="toc" aria-label="目次">
     <p>目次</p>
     <ol>
-<li><a href="#history">変更履歴</a></li>
 <li><details><summary><a href="#ch1">1. 文書概要</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-1-1">1.1 目的</a></li><li><a href="#sec-1-2">1.2 本書で確定する事項</a></li><li><a href="#sec-1-3">1.3 関連文書</a></li></ol></details></li>
-<li><details><summary><a href="#ch2">2. システム方式設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-2-1">2.1 方式の選定理由</a></li><li><a href="#sec-2-2">2.2 さくらのクラウド構成図</a></li><li><a href="#sec-2-3">2.3 サービス一覧</a></li><li><a href="#sec-2-4">2.4 コンテナの役割の分担</a></li><li><a href="#sec-2-5">2.5 説明採点の非同期方式</a></li><li><a href="#sec-2-6">2.6 フロントエンド方式</a></li><li><a href="#sec-2-7">2.7 環境構成</a></li><li><a href="#sec-2-8">2.8 AIモデルの使い分け</a></li><li><a href="#sec-2-9">2.9 月額コスト試算（パイロット10名）</a></li></ol></details></li>
+<li><details><summary><a href="#ch2">2. システム方式設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-2-1">2.1 方式の選定理由</a></li><li><a href="#sec-2-2">2.2 さくらのクラウド・Cloudflare 構成図</a></li><li><a href="#sec-2-3">2.3 サービス一覧</a></li><li><a href="#sec-2-4">2.4 コンテナの役割の分担</a></li><li><a href="#sec-2-5">2.5 説明採点の非同期方式</a></li><li><a href="#sec-2-6">2.6 フロントエンド方式</a></li><li><a href="#sec-2-7">2.7 環境構成</a></li><li><a href="#sec-2-8">2.8 AIモデルの使い分け</a></li><li><a href="#sec-2-9">2.9 月額コスト試算（パイロット10名）</a></li><li><a href="#sec-2-10">2.10 サーバーの自動停止と起動（dev）</a></li></ol></details></li>
 <li><details><summary><a href="#ch3">3. 画面設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-3-1">3.1 画面一覧</a></li><li><a href="#sec-3-2">3.2 画面構成図</a></li><li><a href="#sec-3-3">3.3 画面遷移</a></li><li><a href="#sec-3-4">3.4 画面レイアウトの基本</a></li><li><a href="#sec-3-5">3.5 共通の表示ルール</a></li><li><a href="#sec-3-6">3.6 AIパートナー設計</a></li><li><a href="#sec-3-7">3.7 学習者画面</a></li><li><a href="#sec-3-8">3.8 管理画面（ギルド管理局）</a></li></ol></details></li>
 <li><details><summary><a href="#ch4">4. 機能設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-4-1">4.1 機能と画面・APIの対応</a></li><li><a href="#sec-4-2">4.2 解答から結果表示までの処理</a></li><li><a href="#sec-4-3">4.3 出題ルール（F-03、F-05）</a></li><li><a href="#sec-4-4">4.4 忘却曲線復習（F-05）</a></li><li><a href="#sec-4-5">4.5 経験値・レベル（F-08）</a></li><li><a href="#sec-4-6">4.6 週間ランキング（F-09）</a></li><li><a href="#sec-4-7">4.7 デイリークエスト（F-10）</a></li><li><a href="#sec-4-8">4.8 バッジ（F-11）</a></li><li><a href="#sec-4-9">4.9 キーワード説明の採点（F-04）</a></li><li><a href="#sec-4-10">4.10 問題取り込み（F-01、F-02）</a></li><li><a href="#sec-4-11">4.11 アカウント管理（F-07）</a></li></ol></details></li>
 <li><details><summary><a href="#ch5">5. 外部インターフェース設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-5-1">5.1 API共通仕様</a></li><li><a href="#sec-5-2">5.2 API一覧</a></li><li><a href="#sec-5-3">5.3 主なAPIの入出力</a></li><li><a href="#sec-5-4">5.4 CSV出力（S-12）</a></li><li><a href="#sec-5-5">5.5 AI連携（さくらのAI Engine／Amazon Bedrock）</a></li><li><a href="#sec-5-6">5.6 メール（SMTP）</a></li></ol></details></li>
@@ -584,30 +583,10 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <li><details><summary><a href="#ch8">8. 非機能・セキュリティ設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-8-1">8.1 認証・権限</a></li><li><a href="#sec-8-2">8.2 データ保護</a></li><li><a href="#sec-8-3">8.3 性能・可用性</a></li><li><a href="#sec-8-4">8.4 監視</a></li></ol></details></li>
 <li><details><summary><a href="#ch9">9. メッセージ設計</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub"><li><a href="#sec-9-1">9.1 方針</a></li><li><a href="#sec-9-2">9.2 主なメッセージ</a></li></ol></details></li>
 <li><a href="#ch10">10. 未決事項</a></li>
+<li><a href="#history">変更履歴</a></li>
     </ol>
   </nav>
   <main>
-<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
-<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li class="now"><span class="hist-chip"><b>第1.6版</b><small>11/07</small></span></li></ol>
-<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
-<div class="table-wrap"><table class="hist">
-<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
-<tbody>
-<tr><td>第0.1版〜第0.5版</td><td>2026-10-19</td><td>取り込み前の作業中の版（リポジトリには残っていない）</td><td>—</td></tr>
-<tr><td>第0.6版</td><td>2026-10-19</td><td>リポジトリに取り込み（第1〜10章、HTML版あり）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
-<tr><td>第0.7版</td><td>2026-10-20</td><td>AWS へのリリースを GitHub Actions で行う前提に更新</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
-<tr><td>第0.8版</td><td>2026-10-21</td><td>通知メールの文言を未決事項に追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.9版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第1.0版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくし、模範説明のルールに移す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.1版</td><td>2026-10-27</td><td>AWS からさくらのクラウドへ切り替え、ログイン・AI・メール・定期処理の方式を見直す。第1.0版までの AWS 版は <code>aws/documents/</code> に退避</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/9">#9</a>・<a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>・<a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>・<a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a>・<a href="https://github.com/pocarialice/rpglearning/pull/15">#15</a>・<a href="https://github.com/pocarialice/rpglearning/pull/17">#17</a>・<a href="https://github.com/pocarialice/rpglearning/pull/23">#23</a>・<a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></span></td></tr>
-<tr><td>第1.2版</td><td>2026-11-02</td><td>ログイン画面からのアカウント作成を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/25">#25</a></td></tr>
-<tr><td>第1.3版</td><td>2026-11-03</td><td>コースごとの実績を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/27">#27</a></td></tr>
-<tr><td>第1.4版</td><td>2026-11-06</td><td>ホームのひとことを時間帯ごとに作り直すようにする</td><td><a href="https://github.com/pocarialice/rpglearning/pull/32">#32</a></td></tr>
-<tr><td>第1.5版</td><td>2026-11-06</td><td>Googleでログインを追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/34">#34</a></td></tr>
-<tr><td>第1.6版</td><td>2026-11-07</td><td>通知メール（S-10・B-03）を機能ごと削除</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
-</tbody></table></div>
-</section>
 <section class="chapter" id="ch1"><h2><i class="fa-solid fa-file-lines h-ico" aria-hidden="true"></i>1. 文書概要</h2>
 <h3 id="sec-1-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>1.1 目的</h3>
 <p>要件定義書で決めた「何を作るか」を、利用者から見える形（画面・操作・外部とのやり取り・システム構成）に落とし込む。内部設計（プログラム構造・テーブル定義の詳細）の入力とする。</p>
@@ -623,7 +602,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tbody>
 <tr>
 <td>方式</td>
-<td>さくらのクラウド（国内）：サーバー1台のコンテナ（API・ワーカー・HTTPS終端）＋データベースアプライアンス（PostgreSQL）＋オブジェクトストレージ。2026-10-27 に AWS から切り替え（AWS 版は <code>aws/</code> に退避）</td>
+<td>さくらのクラウド（国内）：サーバー1台のコンテナ（API・ワーカー・HTTPS終端）＋DB（PostgreSQL。prod はデータベースアプライアンス、dev はサーバーの中の db コンテナ）＋オブジェクトストレージ。DNS と、止まっているサーバーを起こす Worker は Cloudflare（2.2）。2026-10-27 に AWS から切り替え（AWS 版は <code>aws/</code> に退避）</td>
 <td>6.1</td>
 </tr>
 <tr>
@@ -633,7 +612,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>環境</td>
-<td>dev／prod の2環境を1つのさくらのクラウドのアカウント内で、リソース名の接頭辞（rpg-dev- など）とタグで分ける。データはすべて国内に置く</td>
+<td>dev／prod の2環境を1つのさくらのクラウドのアカウント内で、リソース名の接頭辞（rpg-dev- など）とタグで分ける。データはすべて国内に置く。2026-11 から prod の構築は凍結し、dev を本番としてテスターに公開する（2.7）</td>
 <td>6.1</td>
 </tr>
 <tr>
@@ -668,12 +647,12 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>コスト方針</td>
-<td>パイロット期間はコスト最小構成：各環境サーバー1台・DB1台。AIは従量課金（2.9）</td>
+<td>パイロット期間はコスト最小構成：各環境サーバー1台・DB1台。dev はアクセスがない時間が60分続くとサーバーを止め、アクセスがあれば起こす（2.10）。AIは従量課金（2.9）</td>
 <td>6.1</td>
 </tr>
 <tr>
 <td>ドメイン</td>
-<td>未定。本書では <code>app.example.co.jp</code> を仮置き</td>
+<td><code>rpglearning.net</code>（テスターに公開している dev。2026-11-09 から）。<code>www.rpglearning.net</code> と前の <code>rpg-dev.rpglearning.net</code> は 301 で転送する。DNS は Cloudflare で持つ</td>
 <td>-</td>
 </tr>
 <tr>
@@ -739,25 +718,30 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tbody>
 </table></div>
 </section><section class="chapter" id="ch2"><h2><i class="fa-solid fa-cloud h-ico" aria-hidden="true"></i>2. システム方式設計</h2>
-<div class="arch" role="img" aria-label="さくらのクラウドの構成：利用者の端末から、サーバー1台のコンテナ（Caddy・api・worker）を通って、データベース・オブジェクトストレージ・AIにつながる">
+<div class="arch" role="img" aria-label="いまの構成：利用者の端末から Cloudflare の DNS と Worker を通って、さくらのクラウドのサーバー1台のコンテナ（Caddy・api・worker・db）に届き、オブジェクトストレージ・AIにつながる。サーバーが止まっていれば Worker が起こす">
 <div class="arch-col"><h4><i class="fa-solid fa-users" aria-hidden="true"></i>利用者</h4>
 <div class="arch-box"><b>学習者</b><span>スマホ・PC</span></div>
 <div class="arch-box"><b>コース管理者・システム管理者</b><span>PC</span></div></div>
 <div class="arch-arrow"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div>
+<div class="arch-col"><h4><i class="fa-solid fa-cloud" aria-hidden="true"></i>Cloudflare（入口）</h4>
+<div class="arch-box"><b>DNS</b><span>rpglearning.net。プロキシを通す</span></div>
+<div class="arch-box"><b>Worker rpg-dev-wake</b><span>そのまま渡す。止まっていたら起動中ページを出して電源を入れる</span></div></div>
+<div class="arch-arrow"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div>
 <div class="arch-col"><h4><i class="fa-solid fa-server" aria-hidden="true"></i>サーバー1台（Docker Compose）</h4>
 <div class="arch-box"><b>Caddy</b><span>HTTPS の入口。証明書を自動で更新</span></div>
 <div class="arch-box"><b>api コンテナ</b><span>画面の配信・API・ログイン</span></div>
-<div class="arch-box"><b>worker コンテナ</b><span>説明の採点・問題の取り込み・日次処理・メール送信</span></div></div>
+<div class="arch-box"><b>worker コンテナ</b><span>説明の採点・問題の取り込み・日次処理・メール送信</span></div>
+<div class="arch-box"><b>db コンテナ（dev）</b><span>PostgreSQL。60分アクセスがなければ、バックアップしてサーバーを止める</span></div></div>
 <div class="arch-arrow"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div>
 <div class="arch-col"><h4><i class="fa-solid fa-cubes" aria-hidden="true"></i>データとAI（国内）</h4>
-<div class="arch-box"><b>データベースアプライアンス</b><span>PostgreSQL。業務データ・ジョブキュー</span></div>
-<div class="arch-box"><b>オブジェクトストレージ</b><span>取り込み原本・キャラクター画像・送信リスト</span></div>
+<div class="arch-box"><b>オブジェクトストレージ</b><span>取り込み原本・キャラクター画像・DB のバックアップ</span></div>
 <div class="arch-box"><b>さくらのAI Engine</b><span>gpt-oss-120b（あとで Bedrock に戻せる）</span></div>
 <div class="arch-box ext"><b>メール送信（SMTP）</b><span>招待・お知らせ・再設定</span></div></div>
 </div>
-<p class="arch-note">AWS 版の CloudFront・API Gateway・Lambda・Cognito・SQS・EventBridge の役割は、サーバーの中の api・worker コンテナがまとめて受け持つ。</p>
+<p class="arch-note">AWS 版の CloudFront・API Gateway・Lambda・Cognito・SQS・EventBridge の役割は、サーバーの中の api・worker コンテナがまとめて受け持つ。prod（凍結中）は、DB をデータベースアプライアンスにし、Worker を通さず24時間動かす。</p>
 <h3 id="sec-2-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.1 方式の選定理由</h3>
 <p>2026-10-27 に、AWS からさくらのクラウドへ切り替えた。AWS アカウントで Amazon Bedrock（全モデル）と AWS Lambda が使えなくなり、復旧の見込みが立たなかったため。</p>
+<p>2026-11 には、費用を抑えるために dev を「使うときだけ動く」形にした。あわせて DNS を Cloudflare に移し、Cloudflare の Worker を前に置いて、止まっているサーバーをアクセスで起こすようにした（2.10）。prod の構築は軌道に乗るまで凍結し、dev を本番としてテスターに公開している（2.7）。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -786,32 +770,48 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <td>移し替えやすさ</td>
 <td>DB・ファイル・メール・AI・ログインを「差し替え口」にしてあるため、AWS や別のクラウドにも移しやすい（詳細設計書 3.6〜3.10）</td>
 </tr>
+<tr>
+<td>止める・起こす（dev）</td>
+<td>さくらのクラウドのサーバーは、電源を切っているあいだサーバーの料金がかからない（ディスクの料金はかかる）。データベースアプライアンスは止めても料金がかかるため、dev は DB をサーバーの中に置く。サーバーが止まっているあいだも、Cloudflare の Worker（無料のプラン）が入口で受けて、人が使うときだけ起こす</td>
+</tr>
+<tr>
+<td>DNS（Cloudflare）</td>
+<td>Worker をサイトの前に置くため、<code>rpglearning.net</code> の DNS を Cloudflare で持つ。Cloudflare を通す（プロキシ）ため、サーバーのIPアドレスは外から見えない。証明書はサーバーの Caddy（Let's Encrypt）のものを使い、Cloudflare とサーバーのあいだも HTTPS でつなぐ（Full (strict)）</td>
+</tr>
 </tbody>
 </table></div>
-<h3 id="sec-2-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 さくらのクラウド構成図</h3>
+<h3 id="sec-2-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.2 さくらのクラウド・Cloudflare 構成図</h3>
+<p>図は、いま動いている dev（本番としてテスターに公開）の構成。prod は凍結中で、作るときは DB をデータベースアプライアンスにし、Cloudflare は DNS だけに使う（Worker を通さない。2.7）。</p>
 <figure class="diagram wide"><div class="mermaid">flowchart LR
   subgraph Client["利用者端末"]
     U["学習者&lt;br&gt;スマホ・PC"]
     M["コース管理者&lt;br&gt;システム管理者"]
   end
+  subgraph CF["Cloudflare"]
+    DNS["DNS&lt;br&gt;rpglearning.net"]
+    WAKE["Worker rpg-dev-wake&lt;br&gt;そのまま渡す・止まっていたら起こす・www の転送"]
+  end
   subgraph Sakura["さくらのクラウド（国内）"]
-    DNS["DNS"]
-    subgraph VM["サーバー（1台・Docker Compose）"]
+    SAPI["さくらのクラウド API&lt;br&gt;電源の操作"]
+    subgraph VM["サーバー（1台・Docker Compose。使うときだけ動く）"]
       CADDY["Caddy&lt;br&gt;HTTPS終端・証明書の自動更新"]
       API["api コンテナ&lt;br&gt;画面の配信・API・ログイン"]
       WK["worker コンテナ&lt;br&gt;採点・取り込み・定期処理"]
+      DB["db コンテナ&lt;br&gt;PostgreSQL"]
+      IDLE["自動停止&lt;br&gt;60分アクセスがなければ止める"]
     end
-    DB["データベースアプライアンス&lt;br&gt;PostgreSQL"]
-    OBJ["オブジェクトストレージ&lt;br&gt;取り込み原本・キャラクター画像・送信リスト"]
+    OBJ["オブジェクトストレージ&lt;br&gt;取り込み原本・キャラクター画像・DB のバックアップ"]
     AIE["さくらのAI Engine&lt;br&gt;gpt-oss-120b"]
     CR["コンテナレジストリ"]
-    MON["シンプル監視"]
   end
   SMTP["メール送信（SMTP）"]
   GH["GitHub Actions"]
   U --&gt; DNS
   M --&gt; DNS
-  DNS --&gt; CADDY
+  DNS --&gt; WAKE
+  WAKE --&gt;|"HTTPS"| CADDY
+  WAKE -.-&gt;|"止まっていたら電源を入れる"| SAPI
+  SAPI -.-&gt; VM
   CADDY --&gt; API
   U -.-&gt;|"ファイルを直接アップロード（署名付きURL）"| OBJ
   API --&gt; DB
@@ -822,9 +822,10 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   WK --&gt; AIE
   API --&gt; SMTP
   WK --&gt; SMTP
+  IDLE -.-&gt;|"止める前にバックアップ"| OBJ
   GH --&gt;|"コンテナを置く"| CR
+  GH -.-&gt;|"power（予備の電源の操作）"| SAPI
   CR -.-&gt;|"docker compose pull"| VM
-  MON --&gt;|"/api/health を見張る"| CADDY
 </div></figure>
 <p>※ Amazon Bedrock に戻すときは、AI の呼び出し先だけが AWS（東京リージョン）に変わる（2.8）。</p>
 <h3 id="sec-2-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.3 サービス一覧</h3>
@@ -840,7 +841,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr>
 <td>サーバー（さくらのクラウド）</td>
 <td>アプリを動かす</td>
-<td>Ubuntu。Docker Compose で <code>caddy</code>・<code>api</code>・<code>worker</code> の3つのコンテナを動かす。パケットフィルタで 80・443 だけ開け、SSH は管理者のIPアドレスからだけ受ける</td>
+<td>Ubuntu。Docker Compose で <code>caddy</code>・<code>api</code>・<code>worker</code>（dev は <code>db</code> も）のコンテナを動かす。パケットフィルタで 80・443 だけ開け、SSH は管理者のIPアドレスからだけ受ける。dev はアクセスがないと止まる（2.10）</td>
 </tr>
 <tr>
 <td>Caddy（コンテナ）</td>
@@ -858,14 +859,14 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <td>採点・問題取り込みをジョブキュー（DB）から1件ずつ取り出して処理する。日次処理とメール送信を時刻どおりに動かす</td>
 </tr>
 <tr>
-<td>データベースアプライアンス</td>
-<td>業務データ</td>
-<td>PostgreSQL。自動バックアップを有効にする。サーバーとはローカル接続（スイッチ）でつなぎ、インターネットには出さない</td>
+<td>DB（PostgreSQL）</td>
+<td>業務データ・ジョブキュー</td>
+<td>prod：データベースアプライアンス。自動バックアップを有効にする。サーバーとはローカル接続（スイッチ）でつなぎ、インターネットには出さない。dev：サーバーの中の <code>db</code> コンテナ（PostgreSQL 16）。毎日 3:00・自動停止の前・新しい版の反映の前に、オブジェクトストレージへバックアップする（30個残す）</td>
 </tr>
 <tr>
 <td>オブジェクトストレージ</td>
 <td>ファイル</td>
-<td>S3 互換。バケットは取り込み原本（90日で削除）・キャラクター画像の2つ。すべて非公開。アップロードは署名付きURL</td>
+<td>S3 互換。バケットは取り込み原本（90日で削除）・キャラクター画像の2つ（dev は DB のバックアップを足して3つ）。すべて非公開。アップロードは署名付きURL</td>
 </tr>
 <tr>
 <td>さくらのAI Engine</td>
@@ -884,13 +885,23 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>シンプル監視</td>
-<td>死活監視</td>
-<td><code>/api/health</code> を5分ごとに見て、応答がなければ管理者にメール</td>
+<td>死活監視（prod だけ）</td>
+<td><code>/api/health</code> を5分ごとに見て、応答がなければ管理者にメール。dev はアクセスがないと止まるため置かない</td>
 </tr>
 <tr>
-<td>DNS</td>
+<td>DNS（Cloudflare）</td>
 <td>独自ドメイン</td>
-<td>ドメインが決まるまでは、さくらのクラウドのサーバーに付く名前で動かす</td>
+<td><code>rpglearning.net</code> を Cloudflare で持ち、A レコードはプロキシを通す（Terraform で作る）。メール用の <code>mail.rpglearning.net</code>（MX・SPF）も Cloudflare に置く</td>
+</tr>
+<tr>
+<td>Worker（Cloudflare）</td>
+<td>サイトの入口（dev）</td>
+<td><code>rpg-dev-wake</code>。サーバーが動いていればリクエストをそのまま渡す。止まっていれば起動中ページか <code>SERVER_WAKING</code> を返し、さくらのクラウドの API で電源を入れる。<code>www</code>・<code>rpg-dev</code> を本体へ 301 で転送する。無料のプラン（1日10万リクエストまで）</td>
+</tr>
+<tr>
+<td>GitHub Actions（power）</td>
+<td>電源の操作（予備）</td>
+<td>Worker が使えないときに、手で電源を入れる・切る</td>
 </tr>
 </tbody>
 </table></div>
@@ -917,6 +928,12 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <td>ジョブキュー（DB）と時刻</td>
 <td>キーワード説明の採点、PDF・画像・テキストからの問題の抽出、日次処理、30分ごとのメール送信</td>
 <td><code>grading-worker</code>・<code>import-worker</code>・<code>batch-runner</code>・SQS・EventBridge Scheduler</td>
+</tr>
+<tr>
+<td><code>db</code>（dev だけ）</td>
+<td>サーバーの起動</td>
+<td>PostgreSQL 16。<code>.env</code> の <code>COMPOSE_PROFILES=localdb</code> のときだけ動く。prod はデータベースアプライアンスを使うため動かさない</td>
+<td>Aurora Serverless v2</td>
 </tr>
 </tbody>
 </table></div>
@@ -1000,20 +1017,22 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tbody>
 <tr>
 <td>dev</td>
-<td>開発・動作確認、システムテスト・受け入れ確認</td>
-<td>開発者・コース管理者（受け入れ確認）</td>
-<td>サーバー1台・データベースアプライアンス1台（最小のプラン）</td>
+<td>本番としてテスターに公開（2026-11 から）・開発・動作確認・システムテスト・受け入れ確認</td>
+<td>テスター（学習者・コース管理者）・開発者</td>
+<td>サーバー1台（1コア・2GB。使うときだけ動く）。DB はサーバーの中の db コンテナ</td>
 </tr>
 <tr>
 <td>prod</td>
-<td>本番（パイロット→全社）</td>
-<td>全利用者</td>
-<td>サーバー1台・データベースアプライアンス1台（Phase 3で見直し）</td>
+<td>本番（全社）。<strong>軌道に乗るまで構築を凍結</strong>している</td>
+<td>（凍結中）</td>
+<td>サーバー1台・データベースアプライアンス1台（作るとき。Phase 3で見直し）</td>
 </tr>
 </tbody>
 </table></div>
 <p>1つのさくらのクラウドのアカウントの中で、リソース名の接頭辞とタグで環境を分ける。</p>
 <ul>
+<li>2026-11 から、prod の構築を凍結し、いまの dev を本番としてテスターに <code>https://rpglearning.net</code> で公開する。リソースの名前（<code>rpg-dev-*</code>）と <code>APP_ENV=dev</code> は変えない（構築手順書 1.8）</li>
+<li>テスターに使ってもらっているため、新しい版は dev の画面で確かめてから反映する</li>
 <li>コストを抑えるため、検証用の stg 環境は作らない（2026-10-21 決定）。システムテストとコース管理者の受け入れ確認は dev で行う</li>
 <li>受け入れ確認の間は dev に新しい版を入れず「凍結」する。確かめた版にタグを付けて prod に配置する（詳細設計書 11.1）</li>
 <li>prod への配置の直前に、必ず DB のバックアップ（控え）を取り、問題があれば戻せるようにする</li>
@@ -1022,10 +1041,10 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <figure class="diagram"><div class="mermaid">flowchart TB
   subgraph ACC["さくらのクラウドのアカウント（1つ）"]
     subgraph DEV["dev 環境"]
-      D1["rpg-dev-* のサーバー・DB・バケット"]
+      D1["rpg-dev-* のサーバー・バケット&lt;br&gt;（本番として公開中）"]
     end
     subgraph PRD["prod 環境"]
-      P1["rpg-prod-* のサーバー・DB・バケット"]
+      P1["rpg-prod-* のサーバー・DB・バケット&lt;br&gt;（凍結中）"]
     end
     CR["コンテナレジストリ（共通）"]
   end
@@ -1106,13 +1125,13 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <td>サーバー（2仮想コア・4GB程度）</td>
 <td>構築時に確認</td>
 <td>構築時に確認</td>
-<td>Docker Compose で3コンテナ。dev は1コア・2GB（2026-11 に2コア・4GBから変更）</td>
+<td>Docker Compose で3コンテナ。dev は1コア・2GB（2026-11 に2コア・4GBから変更）。dev は使うときだけ動き、止まっているあいだはサーバーの料金がかからない（ディスクの料金はかかる）</td>
 </tr>
 <tr>
 <td>データベースアプライアンス（PostgreSQL・最小のプラン）</td>
 <td>構築時に確認</td>
-<td>構築時に確認</td>
-<td>自動バックアップあり</td>
+<td>0円（使わない）</td>
+<td>prod は自動バックアップあり。dev はサーバーの中の db コンテナにした（止めても料金がかかるため）</td>
 </tr>
 <tr>
 <td>オブジェクトストレージ</td>
@@ -1127,10 +1146,16 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <td>下の内訳。dev は確認のときだけ</td>
 </tr>
 <tr>
-<td>コンテナレジストリ・シンプル監視・DNS</td>
+<td>コンテナレジストリ・シンプル監視</td>
 <td>構築時に確認</td>
-<td>（prod と共用）</td>
+<td>（レジストリは prod と共用。シンプル監視は置かない）</td>
 <td></td>
+</tr>
+<tr>
+<td>Cloudflare（DNS・プロキシ・Worker）</td>
+<td>0円</td>
+<td>0円</td>
+<td>Free プラン。Workers は1日10万リクエストまで無料</td>
 </tr>
 <tr>
 <td>メール送信（SMTP）</td>
@@ -1172,6 +1197,71 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <li>AWS 版（2026-10-21 試算）は合計 約6,900円／月（Bedrock の Claude と Aurora の自動停止が中心）。さくら版は AI がほぼ無料に近くなる代わりに、サーバーと DB が固定費になる</li>
 <li>利用回数は仮置き。説明問題を多く解くほど AI の費用は増える（それでも月数百円の規模）</li>
 </ul>
+<h3 id="sec-2-10"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>2.10 サーバーの自動停止と起動（dev）</h3>
+<p>dev のサーバーは、アクセスがない時間が60分続くと、DB をバックアップしてから電源を切る。次に人がサイトを開いたら、Cloudflare の Worker が電源を入れる。利用者からは、しばらく使われていなかったときだけ、開いてから1〜3分待つように見える（構築手順書 3.13・3.14）。</p>
+<figure class="diagram wide"><div class="mermaid">sequenceDiagram
+  participant B as ブラウザ
+  participant W as Worker（Cloudflare）
+  participant S as サーバー
+  participant A as さくらのクラウド API
+  B-&gt;&gt;W: https://rpglearning.net/
+  W-&gt;&gt;S: そのまま渡す
+  S--xW: つながらない（止まっている）
+  W--&gt;&gt;B: 起動中ページ（503）
+  B-&gt;&gt;W: POST /__wake（起動中ページの JavaScript）
+  W-&gt;&gt;A: 電源を入れる
+  loop 5秒ごと
+    B-&gt;&gt;W: GET /api/health
+    W-&gt;&gt;S: そのまま渡す
+  end
+  S--&gt;&gt;B: 200 → 画面を読み込み直す
+</div></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>止める条件</td>
+<td>5分ごとに確かめ、直近60分に <code>/api/*</code> のアクセスがなく、採点・取り込みのジョブもなく、SSH で入っている人もいないとき。起動して60分たつまでは止めない</td>
+</tr>
+<tr>
+<td>数えるアクセス</td>
+<td><code>/api/</code> で始まるものだけ。<code>/api/health</code>（死活確認）と <code>/api/auth/refresh</code>（開きっぱなしの画面のトークンの更新）は数えない</td>
+</tr>
+<tr>
+<td>止める前</td>
+<td>DB をオブジェクトストレージへバックアップする。失敗したら止めない</td>
+</tr>
+<tr>
+<td>起こすきっかけ</td>
+<td>起動中ページの JavaScript（<code>POST /__wake</code>）と、ログイン中の画面からの <code>/api/*</code>（トークン付きか POST）。画面のファイルを読むだけのアクセスや、ボットのアクセスでは起こさない</td>
+</tr>
+<tr>
+<td>起動中の画面</td>
+<td>画面を開いたとき：Worker の起動中ページ（「ギルドの扉を開けています…」。5秒ごとに確かめ、動いたら読み込み直す）。操作の途中：API が <code>503</code>・<code>SERVER_WAKING</code> を返し、画面は待機の表示（M-01）のまま5秒ごとに最大4分やり直す（3.5・5.1）</td>
+</tr>
+<tr>
+<td>起きるまでの時間</td>
+<td>1〜3分</td>
+</tr>
+<tr>
+<td>止まっているあいだの定期処理</td>
+<td>夜 0:00 の日次処理は、次に起動したときに動く</td>
+</tr>
+<tr>
+<td>予備</td>
+<td>Worker が使えないときは、GitHub Actions の power で電源を入れる</td>
+</tr>
+<tr>
+<td>prod</td>
+<td>止めない（24時間動かす）。Worker も通さない</td>
+</tr>
+</tbody>
+</table></div>
 </section><section class="chapter" id="ch3"><h2><i class="fa-solid fa-display h-ico" aria-hidden="true"></i>3. 画面設計</h2>
 <h3 id="sec-3-1"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.1 画面一覧</h3>
 <p>要件定義書の画面一覧（S-01〜S-13）に、キャラクター画像の差し替え用として <strong>S-14 AIパートナー設定</strong> を、冒険の振り返り用として <strong>S-15 冒険のまとめ</strong> を、コースごとの振り返り用として <strong>S-16 コースごとの実績</strong>・<strong>S-17 コースの実績</strong> を追加する。</p>
@@ -1309,7 +1399,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </table></div>
 <h3 id="sec-3-2"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.2 画面構成図</h3>
 <figure class="diagram"><div class="mermaid">flowchart TB
-  ROOT["RPG学習アプリ&lt;br&gt;app.example.co.jp"]
+  ROOT["RPG学習アプリ&lt;br&gt;rpglearning.net"]
   ROOT --&gt; AUTH["S-01 ログイン&lt;br&gt;パスワードの設定・再設定"]
   ROOT --&gt; L["学習者エリア #/&lt;br&gt;下部ナビ：ホーム・ランキング・プロフィール"]
   ROOT --&gt; A["ギルド管理局エリア #/admin&lt;br&gt;左サイドメニュー"]
@@ -1459,6 +1549,10 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr>
 <td>DBに接続できない（DBの再起動・メンテナンス中）</td>
 <td>「ギルドの扉を開けています…」と <code>gd-dots</code> の待機演出。APIは最大3回まで再試行（2秒・4秒・8秒の間隔）。それでも失敗したらエラー表示</td>
+</tr>
+<tr>
+<td>サーバーを起こしている（dev。2.10）</td>
+<td>開いたときは Worker の起動中ページ（「ギルドの扉を開けています…」）を出し、動いたら自動で読み込み直す。操作の途中なら、上と同じ待機演出のまま5秒ごとに最大4分（48回）やり直す。それでも動かなければエラー表示</td>
 </tr>
 <tr>
 <td>読み込み中（通常）</td>
@@ -3167,7 +3261,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tbody>
 <tr>
 <td>ベースURL</td>
-<td><code>https://app.example.co.jp/api</code>（画面と同じドメイン）</td>
+<td><code>https://rpglearning.net/api</code>（画面と同じドメイン）</td>
 </tr>
 <tr>
 <td>形式</td>
@@ -3188,6 +3282,10 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr>
 <td>DB接続不可</td>
 <td><code>503</code> とコード <code>DB_RESUMING</code> を返す（DBの再起動中など）。画面は 3.5 のとおり再試行する</td>
+</tr>
+<tr>
+<td>サーバー起動中（dev）</td>
+<td>サーバーが止まっているあいだは、Cloudflare の Worker が <code>503</code> とコード <code>SERVER_WAKING</code>（<code>Retry-After: 10</code>）を返す。画面は 3.5 のとおり待ってやり直す（2.10）</td>
 </tr>
 </tbody>
 </table></div>
@@ -3242,6 +3340,11 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <td>503</td>
 <td><code>DB_RESUMING</code></td>
 <td>DBに接続できない</td>
+</tr>
+<tr>
+<td>503</td>
+<td><code>SERVER_WAKING</code></td>
+<td>サーバーを起動している（dev。Worker が返す）</td>
 </tr>
 <tr>
 <td>504</td>
@@ -3782,7 +3885,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tbody>
 </table></div>
 <ul>
-<li>送信元：<code>no-reply@app.example.co.jp</code>（ドメイン決定後に確定）</li>
+<li>送信元：<code>no-reply@mail.rpglearning.net</code>（dev。prod は構築時に決める）</li>
 <li>送信は SMTP サーバー（社内のもの、またはさくらのメールボックスなど）を使う。送信ドメインの SPF・DKIM を設定し、迷惑メールに入らないようにする（手順書に記載）</li>
 <li>dev では件名の先頭に <code>[dev]</code> を付ける</li>
 </ul>
@@ -4081,7 +4184,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tbody>
 <tr>
 <td>画面表示</td>
-<td>通常2秒以内（DBの自動停止がないため、その日最初の操作も待たない）</td>
+<td>通常2秒以内。dev でサーバーが止まっていたときは、起きるまで1〜3分待つ（2.10）</td>
 </tr>
 <tr>
 <td>択一の判定</td>
@@ -4093,11 +4196,11 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>稼働時間</td>
-<td>業務時間内に使えること（パイロット期間は24時間保証なし）</td>
+<td>業務時間内に使えること（パイロット期間は24時間保証なし）。dev はアクセスがない時間が60分続くと止まり、アクセスで起きる</td>
 </tr>
 <tr>
 <td>バックアップ</td>
-<td>データベースアプライアンスの自動バックアップ（世代数は構築時に決める。prod は7日分以上）</td>
+<td>prod：データベースアプライアンスの自動バックアップ（世代数は構築時に決める。7日分以上）。dev：db コンテナの中身を、毎日 3:00・自動停止の前・新しい版の反映の前にオブジェクトストレージへ（30個残す）。作り直したサーバーは、初回の起動でいちばん新しいバックアップを戻す</td>
 </tr>
 <tr>
 <td>全社展開</td>
@@ -4121,7 +4224,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tbody>
 <tr>
 <td>死活</td>
-<td><code>/api/health</code> が応答しない（シンプル監視、5分ごと）</td>
+<td>prod：<code>/api/health</code> が応答しない（シンプル監視、5分ごと）。dev：止まるたびにお知らせが来るため置かない</td>
 <td>システム管理者のメール</td>
 </tr>
 <tr>
@@ -4170,7 +4273,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tbody>
 <tr>
 <td>M-01</td>
-<td>DBに接続できない（再起動中など）</td>
+<td>DBに接続できない（再起動中など）・サーバーを起動している（dev）</td>
 <td>ギルドの扉を開けています…</td>
 </tr>
 <tr>
@@ -4254,14 +4357,14 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr>
 <td>1</td>
 <td>独自ドメイン</td>
-<td><code>app.example.co.jp</code>。決まるまではさくらのクラウドのサーバーに付く名前</td>
-<td>本番構築前</td>
+<td><strong>決定（2026-11-09）</strong>：テスターに公開する dev は <code>rpglearning.net</code>。DNS は Cloudflare で持つ（2.3）。prod は凍結を解くときに決める</td>
+<td>決定済み</td>
 </tr>
 <tr>
 <td>2</td>
 <td>メールの送信元アドレス</td>
-<td><code>no-reply@app.example.co.jp</code></td>
-<td>ドメイン決定時</td>
+<td>dev は <code>no-reply@mail.rpglearning.net</code>（構築手順書 3.6）</td>
+<td>prod の構築時</td>
 </tr>
 <tr>
 <td>3</td>
@@ -4284,8 +4387,8 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr>
 <td>6</td>
 <td>dev の DB の持ち方</td>
-<td>データベースアプライアンスを1台（prod と同じ）。費用を抑えるなら、dev はサーバーの中の PostgreSQL のコンテナにする案もある</td>
-<td>構築時</td>
+<td><strong>決定（2026-11-09）</strong>：サーバーの中の db コンテナ（PostgreSQL 16）にし、オブジェクトストレージへバックアップする（2.3）。データベースアプライアンスは止めても料金がかかるため</td>
+<td>決定済み</td>
 </tr>
 <tr>
 <td>7</td>
@@ -4332,15 +4435,44 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr>
 <td>14</td>
 <td>自分でアカウントを作れる人の範囲</td>
-<td><b>仮置き</b>：メールアドレスの確認だけで誰でも作れる（学習者のみ）。<br>・このままだと：社外の人や個人のメールアドレスでも登録でき、コースを選べば問題を見られる。<br>・社内のドメイン（例：<code>@example.co.jp</code>）に絞ると：社外の人は作れなくなるが、ドメインが複数ある会社では一覧の管理が必要になる。<br>・作成後に管理者の承認を待つ形にすると：いちばん安全だが、管理者の手間が増え、すぐに学習を始められない</td>
+<td><strong>仮置き</strong>：メールアドレスの確認だけで誰でも作れる（学習者のみ）。このままだと社外の人や個人のメールアドレスでも登録でき、コースを選べば問題を見られる。社内のドメイン（例：<code>@example.co.jp</code>）に絞ると社外の人は作れなくなるが、ドメインが複数ある会社では一覧の管理が必要になる。作成後に管理者の承認を待つ形にすると、いちばん安全だが管理者の手間が増え、すぐに学習を始められない</td>
 <td>パイロット開始前</td>
+</tr>
+<tr>
+<td>15</td>
+<td>prod の構築を再開する時期</td>
+<td>凍結中。dev を本番としてテスターに公開している（2.7）</td>
+<td>テスターの利用が軌道に乗ったら</td>
 </tr>
 </tbody>
 </table></div>
 </section>
+  
+<section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
+<div class="hist-vis"><p class="hist-label">版の移り変わり</p>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/07</small></span></li><li class="now"><span class="hist-chip"><b>第1.7版</b><small>11/10</small></span></li></ol>
+<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
+<div class="table-wrap"><table class="hist">
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<tbody>
+<tr><td>第0.1版〜第0.5版</td><td>2026-10-19</td><td>取り込み前の作業中の版（リポジトリには残っていない）</td><td>—</td></tr>
+<tr><td>第0.6版</td><td>2026-10-19</td><td>リポジトリに取り込み（第1〜10章、HTML版あり）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
+<tr><td>第0.7版</td><td>2026-10-20</td><td>AWS へのリリースを GitHub Actions で行う前提に更新</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
+<tr><td>第0.8版</td><td>2026-10-21</td><td>通知メールの文言を未決事項に追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第0.9版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
+<tr><td>第1.0版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくし、模範説明のルールに移す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
+<tr><td>第1.1版</td><td>2026-10-27</td><td>AWS からさくらのクラウドへ切り替え、ログイン・AI・メール・定期処理の方式を見直す。第1.0版までの AWS 版は <code>aws/documents/</code> に退避</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/9">#9</a>・<a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>・<a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>・<a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a>・<a href="https://github.com/pocarialice/rpglearning/pull/15">#15</a>・<a href="https://github.com/pocarialice/rpglearning/pull/17">#17</a>・<a href="https://github.com/pocarialice/rpglearning/pull/23">#23</a>・<a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></span></td></tr>
+<tr><td>第1.2版</td><td>2026-11-02</td><td>ログイン画面からのアカウント作成を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/25">#25</a></td></tr>
+<tr><td>第1.3版</td><td>2026-11-03</td><td>コースごとの実績を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/27">#27</a></td></tr>
+<tr><td>第1.4版</td><td>2026-11-06</td><td>ホームのひとことを時間帯ごとに作り直すようにする</td><td><a href="https://github.com/pocarialice/rpglearning/pull/32">#32</a></td></tr>
+<tr><td>第1.5版</td><td>2026-11-06</td><td>Googleでログインを追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/34">#34</a></td></tr>
+<tr><td>第1.6版</td><td>2026-11-07</td><td>通知メール（S-10・B-03）を機能ごと削除</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
+<tr><td>第1.7版</td><td>2026-11-10</td><td>dev を本番として <code>rpglearning.net</code> で公開している構成に合わせる。Cloudflare（DNS・Worker）、サーバーの自動停止とアクセスでの起動（2.10）、サーバーの中の DB、prod の凍結を、方式・API・可用性・監視・メッセージ・未決事項に反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a>・<a href="https://github.com/pocarialice/rpglearning/pull/45">#45</a></td></tr>
+</tbody></table></div>
+</section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.6版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.7版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({
