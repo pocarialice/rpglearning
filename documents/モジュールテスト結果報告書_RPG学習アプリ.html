@@ -475,7 +475,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </head>
 <body>
 <header class="site-header"><div class="inner"><span class="eyebrow"><i class="fa-solid fa-flask-vial"></i> モジュールテスト結果</span><h1>RPG学習アプリ モジュールテスト結果報告書</h1><ul class="meta">
-<li>版数<b>第2.5版（さくらのクラウド版。変更の内容は「変更履歴」を参照）</b></li><li>作成日<b>2026-10-21（各版の日付は「変更履歴」を参照）</b></li><li>コミット<b>80bba16</b></li><li>判定<b>合格</b></li></ul></div></header>
+<li>版数<b>第2.5版（さくらのクラウド版。変更の内容は「変更履歴」を参照）</b></li><li>作成日<b>2026-10-21（各版の日付は「変更履歴」を参照）</b></li><li>判定<b>合格</b></li></ul></div></header>
 <div class="layout">
 <nav class="toc" aria-label="目次">
     <p>目次</p>
@@ -516,7 +516,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr><td>版数</td><td>第2.5版（さくらのクラウド版：アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行）</td></tr>
 <tr><td>入力文書</td><td>モジュールテスト仕様書 第2.0版、詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版の報告書（第1.9版まで）は aws/documents/ に退避</td></tr>
 <tr><td>対象範囲</td><td>全モジュール（functions/ の共通モジュール・API・ワーカー・バッチ、server/ のコンテナの入口、web/js の画面）</td></tr>
-<tr><td>実行日時・コミット</td><td>2026-11-03（JST）、<code>80bba16</code>（ブランチ <code>claude/stoic-brown-uqbib2</code>）</td></tr></tbody></table></div>
+<tr><td>実行日時</td><td>2026-11-03（JST）</td></tr></tbody></table></div>
 </section>
 <section class="chapter" id="s2"><h2><i class="fa-solid fa-server h-ico" aria-hidden="true"></i>2. 実行環境</h2>
 <div class="vis"><p class="vis-label">テストの道具と差し替え</p><div class="vis-grid c2">
@@ -1757,24 +1757,24 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第1.0版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.4版</b><small>11/02</small></span></li><li class="now"><span class="hist-chip"><b>第2.5版</b><small>11/03</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
-<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
 <tbody>
-<tr><td>第0.1版〜第1.0版</td><td>2026-10-20</td><td>第0.1版は中間報告（共通モジュール）。取り込み前の作業中の版（リポジトリには残っていない）</td><td>—</td></tr>
-<tr><td>第1.1版</td><td>2026-10-21</td><td>最終報告（全モジュール）として取り込む。7.2 を判断しやすい形（いまの状態・決めてほしいこと・選択肢ごとの影響）に書き直し</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第1.2版</td><td>2026-10-21</td><td>7.2 の判断を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第1.3版</td><td>2026-10-21</td><td>stg 廃止に合わせた文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第1.4版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせた仕様書 第0.7版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.5版</td><td>2026-10-21</td><td>A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにした仕様書 第0.8版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.6版</td><td>2026-10-21</td><td>A-11 にコース名を足した文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.7版</td><td>2026-10-21</td><td>管理局の土台（A-01・A-14・ルーター）の変更後の文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.8版</td><td>2026-10-21</td><td>管理局の S-13・S-14 に合わせた A-19・A-22 の変更後の文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.9版</td><td>2026-10-21</td><td>画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第2.0版</td><td>2026-10-27</td><td>さくらのクラウド版：DB・ジョブキュー・ログイン・メール・ファイル・AI の差し替え口とコンテナの入口を加えた仕様書 第1.3版の全ケースを実行。第1.9版までの AWS 版は <code>aws/documents/</code> に退避</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a></td></tr>
-<tr><td>第2.1版</td><td>2026-10-31</td><td>画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースを含む、仕様書 第1.4版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/15">#15</a></td></tr>
-<tr><td>第2.2版</td><td>2026-10-31</td><td>ホームの受講中のコース（MT-H03-08・MT-F10-05）を加えた、仕様書 第1.5版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/17">#17</a></td></tr>
-<tr><td>第2.3版</td><td>2026-11-02</td><td>冒険のまとめと学習時間（仕様書 第1.6版）、学習サマリ（仕様書 第1.7版）のケースを加えた、仕様書 第1.7版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></td></tr>
-<tr><td>第2.4版</td><td>2026-11-02</td><td>Ctrl+Enter・ピンチの拡大止めのテストを MT-F27・MT-F28 として載せた、仕様書 第1.8版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></td></tr>
-<tr><td>第2.5版</td><td>2026-11-03</td><td>アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行</td><td><a href="https://github.com/pocarialice/rpglearning/pull/27">#27</a></td></tr>
+<tr><td>第0.1版〜第1.0版</td><td>2026-10-20</td><td>第0.1版は中間報告（共通モジュール）。取り込み前の作業中の版（リポジトリには残っていない）</td></tr>
+<tr><td>第1.1版</td><td>2026-10-21</td><td>最終報告（全モジュール）として取り込む。7.2 を判断しやすい形（いまの状態・決めてほしいこと・選択肢ごとの影響）に書き直し</td></tr>
+<tr><td>第1.2版</td><td>2026-10-21</td><td>7.2 の判断を反映</td></tr>
+<tr><td>第1.3版</td><td>2026-10-21</td><td>stg 廃止に合わせた文書の版で再実行</td></tr>
+<tr><td>第1.4版</td><td>2026-10-21</td><td>説明文の小見出しのルールをなくしたこと（外部設計書 第1.0版）に合わせた仕様書 第0.7版で再実行</td></tr>
+<tr><td>第1.5版</td><td>2026-10-21</td><td>A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにした仕様書 第0.8版で再実行</td></tr>
+<tr><td>第1.6版</td><td>2026-10-21</td><td>A-11 にコース名を足した文書の版で再実行</td></tr>
+<tr><td>第1.7版</td><td>2026-10-21</td><td>管理局の土台（A-01・A-14・ルーター）の変更後の文書の版で再実行</td></tr>
+<tr><td>第1.8版</td><td>2026-10-21</td><td>管理局の S-13・S-14 に合わせた A-19・A-22 の変更後の文書の版で再実行</td></tr>
+<tr><td>第1.9版</td><td>2026-10-21</td><td>画面のテスト92件にIDをふり、画面をカバレッジの対象に入れた文書の版で再実行</td></tr>
+<tr><td>第2.0版</td><td>2026-10-27</td><td>さくらのクラウド版：DB・ジョブキュー・ログイン・メール・ファイル・AI の差し替え口とコンテナの入口を加えた仕様書 第1.3版の全ケースを実行。第1.9版までの AWS 版は <code>aws/documents/</code> に退避</td></tr>
+<tr><td>第2.1版</td><td>2026-10-31</td><td>画面の演出（お祝い・獲得EXP）・問いかけ・取り込みなどのケースを含む、仕様書 第1.4版の全ケースを実行</td></tr>
+<tr><td>第2.2版</td><td>2026-10-31</td><td>ホームの受講中のコース（MT-H03-08・MT-F10-05）を加えた、仕様書 第1.5版の全ケースを実行</td></tr>
+<tr><td>第2.3版</td><td>2026-11-02</td><td>冒険のまとめと学習時間（仕様書 第1.6版）、学習サマリ（仕様書 第1.7版）のケースを加えた、仕様書 第1.7版の全ケースを実行</td></tr>
+<tr><td>第2.4版</td><td>2026-11-02</td><td>Ctrl+Enter・ピンチの拡大止めのテストを MT-F27・MT-F28 として載せた、仕様書 第1.8版の全ケースを実行</td></tr>
+<tr><td>第2.5版</td><td>2026-11-03</td><td>アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行</td></tr>
 </tbody></table></div>
 </section>
   </main>
@@ -1800,6 +1800,12 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   openForHash();
   window.addEventListener('hashchange', openForHash);
 })();
+</script>
+<script id="pc-open-details-js">
+// PC（幅1024px以上）で開いたときは、アコーディオンを最初から開いておく
+if (window.matchMedia("(min-width: 1024px)").matches) {
+  document.querySelectorAll("details").forEach((d) => { d.open = true; });
+}
 </script>
 </body>
 </html>

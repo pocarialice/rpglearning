@@ -31,7 +31,7 @@
 | ゾーン | 石狩第2ゾーン（`is1b`）。サーバー・スイッチ・データベースアプライアンスは同じゾーンに作る。オブジェクトストレージも石狩のサイト（`isk01`）を使う |
 | ドメイン | HTTPS の証明書（Let's Encrypt）を Caddy が自動で取るため、環境ごとに名前（例：`rpg-dev.<ドメイン>`・`rpg.<ドメイン>`）が要る。DNS の A レコードを作れるドメインを用意する（2.2） |
 | メール | SMTP で送れるメールサービス（例：さくらのメールボックス）。送信元のドメインに SPF・DKIM を設定できること（3.6） |
-| GitHub | リポジトリ `pocarialice/rpglearning` の管理者権限（Settings を変更できる）。Environments を使う |
+| GitHub | リポジトリ `<owner>/rpglearning` の管理者権限（Settings を変更できる）。Environments を使う |
 | 作業PC | SSH の鍵（ed25519）、`aws` CLI（オブジェクトストレージの CORS の設定に使う。S3 互換のため AWS の契約は不要） |
 
 ### 1.3 名前の決まり
@@ -465,8 +465,8 @@ docker login <V-20> -u rpg-pull   # パスワードは V-22
 
 ```bash
 sudo mkdir -p /opt/rpg && sudo chown ubuntu: /opt/rpg && cd /opt/rpg
-curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/compose.yaml
-curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/Caddyfile
+curl -fsSLO https://raw.githubusercontent.com/<owner>/rpglearning/main/compose.yaml
+curl -fsSLO https://raw.githubusercontent.com/<owner>/rpglearning/main/Caddyfile
 ```
 
 （リポジトリが非公開なら、作業PCから `scp compose.yaml Caddyfile ubuntu@<V-02>:/opt/rpg/` で置く）
@@ -538,7 +538,7 @@ flowchart LR
 
 - `rpg-deploy env` は `rpg-deploy`（3.11）を直したあとのものにある。いまのサーバーに入っている `rpg-deploy` が古いときは、3.11 の「スマホから入れるようにする」の 3. の `scp` と `install` をやり直してから打つ
 - api コンテナから `https://www.googleapis.com`（Google の公開鍵）へ HTTPS で出られる必要がある。パケットフィルタ（3.2）は外向きを止めていないので追加の設定はいらない
-- 検証用：`pocarialice7148@gmail.com` は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す
+- 検証用：`<検証用アドレス>` は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す
 
 ### 3.9 初回の起動と確認
 
@@ -955,12 +955,12 @@ timeline
   2026-11-07 : 第0.2版 : 第0.3版 : 第0.4版 : 第0.5版
 ```
 
-日付は版を作った日。PR は、その版を作ったプルリクエスト。
+日付は版を作った日。
 
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第0.1版 | 2026-10-27 | AWS 版の構築手順書 第0.5版に代わる手順書として作成。さくらのクラウドで dev・prod を作る手順をまとめる | [#6](https://github.com/pocarialice/rpglearning/pull/6)<br>（版数を上げずに直したPR：[#7](https://github.com/pocarialice/rpglearning/pull/7)・[#8](https://github.com/pocarialice/rpglearning/pull/8)・[#11](https://github.com/pocarialice/rpglearning/pull/11)・[#22](https://github.com/pocarialice/rpglearning/pull/22)・[#24](https://github.com/pocarialice/rpglearning/pull/24)・[#34](https://github.com/pocarialice/rpglearning/pull/34)・[#36](https://github.com/pocarialice/rpglearning/pull/36)） |
-| 第0.2版 | 2026-11-07 | dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
-| 第0.3版 | 2026-11-07 | DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
-| 第0.4版 | 2026-11-07 | prod の構築を凍結し、dev を本番としてテスターに `rpglearning.net` で公開することにした（1.8） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
-| 第0.5版 | 2026-11-07 | 通知メールを機能ごと削除した | [#38](https://github.com/pocarialice/rpglearning/pull/38)<br>（版数を上げずに直したPR：[#39](https://github.com/pocarialice/rpglearning/pull/39)・[#40](https://github.com/pocarialice/rpglearning/pull/40)） |
+| 版数 | 日付 | 変更内容 |
+| --- | --- | --- |
+| 第0.1版 | 2026-10-27 | AWS 版の構築手順書 第0.5版に代わる手順書として作成。さくらのクラウドで dev・prod を作る手順をまとめる |
+| 第0.2版 | 2026-11-07 | dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13） |
+| 第0.3版 | 2026-11-07 | DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14） |
+| 第0.4版 | 2026-11-07 | prod の構築を凍結し、dev を本番としてテスターに `rpglearning.net` で公開することにした（1.8） |
+| 第0.5版 | 2026-11-07 | 通知メールを機能ごと削除した |
