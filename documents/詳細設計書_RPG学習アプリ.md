@@ -665,7 +665,7 @@ AWS 版の Cognito の代わり。外部設計書 3.7 S-01・8.1。
 | Googleでログイン | `GOOGLE_CLIENT_ID`（Google Cloud の OAuth クライアントID「ウェブアプリケーション」）があるときだけ使える。画面は Google Identity Services のボタンで ID トークン（`credential`）を受け取り、A-39 に送る。アプリのトークン（アクセス・リフレッシュ）はパスワードのときと同じものを出す |
 | Google の ID トークンの確認 | `verifyGoogleIdToken`（M-K03）：Google の公開鍵（`https://www.googleapis.com/oauth2/v3/certs`、`Cache-Control: max-age` の間キャッシュ。知らない `kid` は5分に1回まで取り直す）で RS256 の署名を確かめ、`iss`（`accounts.google.com`）・`aud`（`GOOGLE_CLIENT_ID`）・`exp`／`iat`（ずれ60秒まで）・`email_verified`（true）を見る。合わなければ null。ライブラリは使わず `node:crypto` だけで確かめる |
 | Google の利用者の決め方 | ① `users.google_sub` が一致する利用者 → ② 同じメールアドレスの利用者がいれば結びつける（仮パスワードのままなら仮パスワードを消し、以後は Google でログイン）→ ③ いなければ学習者（`learner`）として新しく登録（氏名は Google の名前、なければメールの @ より前、50文字まで。パスワードなし。操作記録 `user.signup`、`method: 'google'`）。だれでも登録でき、ドメインの制限はない。メールの確認リンク（A-36・A-37）はいらない（Google がメールアドレスを確認済み）。削除予定の利用者は `401 LOGIN_FAILED` |
-| 検証用の重複アドレス | `DUPLICATE_EMAILS`（`pocarialice7148@gmail.com`）だけは②で結びつけず、同じメールアドレスでも別の利用者を作る（パスワードの利用者と Google の利用者を並べて確かめるため）。DB の `users_email_uq` もこのアドレスを除く部分インデックスにする（8.4.6）。2つの値は必ず同じにする。A-30・A-34・A-36 で同じアドレスが複数あるときは、パスワードのある利用者を使う |
+| 検証用の重複アドレス | `DUPLICATE_EMAILS`（`<検証用アドレス>`）だけは②で結びつけず、同じメールアドレスでも別の利用者を作る（パスワードの利用者と Google の利用者を並べて確かめるため）。DB の `users_email_uq` もこのアドレスを除く部分インデックスにする（8.4.6）。2つの値は必ず同じにする。A-30・A-34・A-36 で同じアドレスが複数あるときは、パスワードのある利用者を使う |
 
 ## 4. 処理の入口設計（コンテナ）
 
@@ -2057,7 +2057,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
 CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_uq ON users (google_sub) WHERE google_sub IS NOT NULL;
 DROP INDEX IF EXISTS users_email_uq;
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_uq ON users (lower(email))
-  WHERE lower(email) NOT IN ('pocarialice7148@gmail.com');
+  WHERE lower(email) NOT IN ('<検証用アドレス>');
 INSERT INTO schema_migrations (version, description) VALUES ('V008', 'google login') ON CONFLICT DO NOTHING;
 ```
 
@@ -2543,23 +2543,23 @@ timeline
 
 日付は版を作った日。PR は、その版を作ったプルリクエスト。
 
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第0.1版 | 2026-10-20 | 作成（第1〜12章、HTML版あり） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
-| 第0.2版 | 2026-10-20 | リリースを GitHub Actions に変更 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
-| 第0.3版 | 2026-10-21 | モジュールテスト結果報告書 第0.1版の指摘を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.4版 | 2026-10-21 | モジュールテスト結果報告書 第1.1版 7.2 の判断を反映 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.5版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.6版 | 2026-10-21 | ci.yml を作成し、画面のビルドは画面の実装時に足すと明記 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.7版 | 2026-10-21 | 画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映） | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第0.8版 | 2026-10-21 | S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第0.9版 | 2026-10-21 | S-07 の見出しに使うコース名を A-11 の応答に足す | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.0版 | 2026-10-21 | A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.1版 | 2026-10-21 | A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加 | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.2版 | 2026-10-27 | AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる。第1.1版までの AWS 版は `aws/documents/` に退避 | [#6](https://github.com/pocarialice/rpglearning/pull/6)<br>（版数を上げずに直したPR：[#8](https://github.com/pocarialice/rpglearning/pull/8)・[#9](https://github.com/pocarialice/rpglearning/pull/9)・[#10](https://github.com/pocarialice/rpglearning/pull/10)・[#12](https://github.com/pocarialice/rpglearning/pull/12)・[#13](https://github.com/pocarialice/rpglearning/pull/13)・[#14](https://github.com/pocarialice/rpglearning/pull/14)・[#23](https://github.com/pocarialice/rpglearning/pull/23)・[#24](https://github.com/pocarialice/rpglearning/pull/24)） |
-| 第1.3版 | 2026-11-02 | ログイン画面からのアカウント作成（A-36・A-37、T-29）を追加 | [#25](https://github.com/pocarialice/rpglearning/pull/25) |
-| 第1.4版 | 2026-11-03 | コースごとの実績（S-16・S-17、A-12d・A-12e）を追加 | [#27](https://github.com/pocarialice/rpglearning/pull/27)<br>（版数を上げずに直したPR：[#29](https://github.com/pocarialice/rpglearning/pull/29)） |
-| 第1.5版 | 2026-11-06 | ホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007） | [#32](https://github.com/pocarialice/rpglearning/pull/32) |
-| 第1.6版 | 2026-11-06 | Googleでログイン（A-38・A-39、M-K03、V008）を追加 | [#34](https://github.com/pocarialice/rpglearning/pull/34) |
-| 第1.7版 | 2026-11-07 | 通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009） | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
-| 第1.8版 | 2026-11-10 | dev を本番として公開している構成に合わせる。起こす係の Cloudflare Worker（4.8）とサーバーのコマンド rpg-idle-stop・rpg-db・rpg-deploy（4.9）を足し、DB（dev はサーバーの中）・ディレクトリ・技術スタック・環境変数・監視・エラーの扱い（`SERVER_WAKING`）・ワークフロー・反映・環境ごとの違いを直す | [#22](https://github.com/pocarialice/rpglearning/pull/22)・[#38](https://github.com/pocarialice/rpglearning/pull/38)・[#45](https://github.com/pocarialice/rpglearning/pull/45) |
+| 版数 | 日付 | 変更内容 |
+| --- | --- | --- |
+| 第0.1版 | 2026-10-20 | 作成（第1〜12章、HTML版あり） |
+| 第0.2版 | 2026-10-20 | リリースを GitHub Actions に変更 |
+| 第0.3版 | 2026-10-21 | モジュールテスト結果報告書 第0.1版の指摘を反映 |
+| 第0.4版 | 2026-10-21 | モジュールテスト結果報告書 第1.1版 7.2 の判断を反映 |
+| 第0.5版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 |
+| 第0.6版 | 2026-10-21 | ci.yml を作成し、画面のビルドは画面の実装時に足すと明記 |
+| 第0.7版 | 2026-10-21 | 画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映） |
+| 第0.8版 | 2026-10-21 | S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする |
+| 第0.9版 | 2026-10-21 | S-07 の見出しに使うコース名を A-11 の応答に足す |
+| 第1.0版 | 2026-10-21 | A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に |
+| 第1.1版 | 2026-10-21 | A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加 |
+| 第1.2版 | 2026-10-27 | AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる。第1.1版までの AWS 版は `aws/documents/` に退避 |
+| 第1.3版 | 2026-11-02 | ログイン画面からのアカウント作成（A-36・A-37、T-29）を追加 |
+| 第1.4版 | 2026-11-03 | コースごとの実績（S-16・S-17、A-12d・A-12e）を追加 |
+| 第1.5版 | 2026-11-06 | ホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007） |
+| 第1.6版 | 2026-11-06 | Googleでログイン（A-38・A-39、M-K03、V008）を追加 |
+| 第1.7版 | 2026-11-07 | 通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009） |
+| 第1.8版 | 2026-11-10 | dev を本番として公開している構成に合わせる。起こす係の Cloudflare Worker（4.8）とサーバーのコマンド rpg-idle-stop・rpg-db・rpg-deploy（4.9）を足し、DB（dev はサーバーの中）・ディレクトリ・技術スタック・環境変数・監視・エラーの扱い（`SERVER_WAKING`）・ワークフロー・反映・環境ごとの違いを直す |

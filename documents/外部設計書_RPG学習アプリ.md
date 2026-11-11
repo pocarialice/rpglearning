@@ -220,7 +220,7 @@ flowchart TB
     CR["コンテナレジストリ（共通）"]
   end
   subgraph GH["GitHub"]
-    REPO["リポジトリ<br>pocarialice/rpglearning"]
+    REPO["リポジトリ<br>#lt;owner#gt;/rpglearning"]
     GA["GitHub Actions"]
   end
   REPO --> GA
@@ -556,7 +556,7 @@ AWS 版では Cognito のログイン画面を使っていた。さくら版で�
 | アカウントを作る | ログインの表示の下の「アカウントを作る」から開く。名前（50文字まで）・メールアドレス・パスワード（2回）を入れる。決まりを満たして2回が一致するまでボタンを押せない。送ると「確認のメールを送りました」（M-13）を出してログインの表示に戻る。メールアドレスが登録済みかどうかは画面に出さない（登録済みのときは、その人に「すでに登録されています」の案内メールが届く） |
 | 確認リンクを開いたとき | 確認メールのリンク（24時間・1回だけ）を開くと、学習者として登録してそのままログインし、「はじめての冒険」（ニックネーム登録から）に進む。期限切れ・使用済みのときは M-14 と「ログインに戻る」を出す |
 | Googleでログイン | 「パスワードを忘れたとき」の下に「または」と Google の「Googleでログイン」ボタンを出す（環境に Google のクライアントIDを設定したときだけ）。Google アカウントを選ぶとそのままログインする。だれでも使え、メールアドレスのドメインの制限はなく、確認のメールもいらない。初めての人は学習者として登録され、「はじめての冒険」（ニックネーム登録など）から始まる。管理者が招待した人・自分で登録した人は、同じメールアドレスなら同じ利用者として入れる（仮パスワードはそこで使えなくなる）。失敗したら「Googleでログインできませんでした。もう一度お試しください」 |
-| 検証用のアドレス | `pocarialice7148@gmail.com` だけは、同じメールアドレスの利用者がいても Google では別の利用者になる（パスワードの利用者と Google の利用者を並べて確かめるため） |
+| 検証用のアドレス | `<検証用アドレス>` だけは、同じメールアドレスの利用者がいても Google では別の利用者になる（パスワードの利用者と Google の利用者を並べて確かめるため） |
 | ログイン後 | 画面を読み込み直してホーム（管理者は管理局）を開く。ログアウトは S-08 から |
 
 #### S-02 ホーム
@@ -1474,18 +1474,18 @@ timeline
 
 日付は版を作った日。PR は、その版を作ったプルリクエスト。
 
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第0.1版〜第0.5版 | 2026-10-19 | 取り込み前の作業中の版（リポジトリには残っていない） | — |
-| 第0.6版 | 2026-10-19 | リポジトリに取り込み（第1〜10章、HTML版あり） | [#1](https://github.com/pocarialice/rpglearning/pull/1) |
-| 第0.7版 | 2026-10-20 | AWS へのリリースを GitHub Actions で行う前提に更新 | [#2](https://github.com/pocarialice/rpglearning/pull/2) |
-| 第0.8版 | 2026-10-21 | 通知メールの文言を未決事項に追加 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第0.9版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第1.0版 | 2026-10-21 | 説明文の小見出しのルールをなくし、模範説明のルールに移す | [#4](https://github.com/pocarialice/rpglearning/pull/4) |
-| 第1.1版 | 2026-10-27 | AWS からさくらのクラウドへ切り替え、ログイン・AI・メール・定期処理の方式を見直す。第1.0版までの AWS 版は `aws/documents/` に退避 | [#6](https://github.com/pocarialice/rpglearning/pull/6)<br>（版数を上げずに直したPR：[#9](https://github.com/pocarialice/rpglearning/pull/9)・[#10](https://github.com/pocarialice/rpglearning/pull/10)・[#12](https://github.com/pocarialice/rpglearning/pull/12)・[#13](https://github.com/pocarialice/rpglearning/pull/13)・[#15](https://github.com/pocarialice/rpglearning/pull/15)・[#17](https://github.com/pocarialice/rpglearning/pull/17)・[#23](https://github.com/pocarialice/rpglearning/pull/23)・[#24](https://github.com/pocarialice/rpglearning/pull/24)） |
-| 第1.2版 | 2026-11-02 | ログイン画面からのアカウント作成を追加 | [#25](https://github.com/pocarialice/rpglearning/pull/25) |
-| 第1.3版 | 2026-11-03 | コースごとの実績を追加 | [#27](https://github.com/pocarialice/rpglearning/pull/27) |
-| 第1.4版 | 2026-11-06 | ホームのひとことを時間帯ごとに作り直すようにする | [#32](https://github.com/pocarialice/rpglearning/pull/32) |
-| 第1.5版 | 2026-11-06 | Googleでログインを追加 | [#34](https://github.com/pocarialice/rpglearning/pull/34) |
-| 第1.6版 | 2026-11-07 | 通知メール（S-10・B-03）を機能ごと削除 | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
-| 第1.7版 | 2026-11-10 | dev を本番として `rpglearning.net` で公開している構成に合わせる。Cloudflare（DNS・Worker）、サーバーの自動停止とアクセスでの起動（2.10）、サーバーの中の DB、prod の凍結を、方式・API・可用性・監視・メッセージ・未決事項に反映 | [#38](https://github.com/pocarialice/rpglearning/pull/38)・[#45](https://github.com/pocarialice/rpglearning/pull/45) |
+| 版数 | 日付 | 変更内容 |
+| --- | --- | --- |
+| 第0.1版〜第0.5版 | 2026-10-19 | 取り込み前の作業中の版（リポジトリには残っていない） |
+| 第0.6版 | 2026-10-19 | リポジトリに取り込み（第1〜10章、HTML版あり） |
+| 第0.7版 | 2026-10-20 | AWS へのリリースを GitHub Actions で行う前提に更新 |
+| 第0.8版 | 2026-10-21 | 通知メールの文言を未決事項に追加 |
+| 第0.9版 | 2026-10-21 | stg 環境をなくし dev・prod の2環境に変更 |
+| 第1.0版 | 2026-10-21 | 説明文の小見出しのルールをなくし、模範説明のルールに移す |
+| 第1.1版 | 2026-10-27 | AWS からさくらのクラウドへ切り替え、ログイン・AI・メール・定期処理の方式を見直す。第1.0版までの AWS 版は `aws/documents/` に退避 |
+| 第1.2版 | 2026-11-02 | ログイン画面からのアカウント作成を追加 |
+| 第1.3版 | 2026-11-03 | コースごとの実績を追加 |
+| 第1.4版 | 2026-11-06 | ホームのひとことを時間帯ごとに作り直すようにする |
+| 第1.5版 | 2026-11-06 | Googleでログインを追加 |
+| 第1.6版 | 2026-11-07 | 通知メール（S-10・B-03）を機能ごと削除 |
+| 第1.7版 | 2026-11-10 | dev を本番として `rpglearning.net` で公開している構成に合わせる。Cloudflare（DNS・Worker）、サーバーの自動停止とアクセスでの起動（2.10）、サーバーの中の DB、prod の凍結を、方式・API・可用性・監視・メッセージ・未決事項に反映 |

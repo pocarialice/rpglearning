@@ -459,10 +459,10 @@ timeline
 
 日付は版を作った日。PR は、その版を作ったプルリクエスト。
 
-| 版数 | 日付 | 変更内容 | 関連PR |
-| --- | --- | --- | --- |
-| 第1版 | 2026-10-17 | 作成 | [#1](https://github.com/pocarialice/rpglearning/pull/1)<br>（版数を上げずに直したPR：[#2](https://github.com/pocarialice/rpglearning/pull/2)） |
-| 第1.1版 | 2026-10-21 | リリースの環境を dev・prod の2つに変更 | [#3](https://github.com/pocarialice/rpglearning/pull/3) |
-| 第1.2版 | 2026-11-02 | ログイン画面からのアカウント作成（F-14）を追加 | [#25](https://github.com/pocarialice/rpglearning/pull/25) |
-| 第1.3版 | 2026-11-07 | 通知（F-13・S-10）を機能ごと削除 | [#38](https://github.com/pocarialice/rpglearning/pull/38) |
-| 第1.4版 | 2026-11-10 | インフラ（6.1）をいまの構成に合わせる：さくらのクラウド・さくらのAI Engine・Cloudflare（DNS・Worker）、prod の凍結と dev の本番公開、dev の自動停止と起動。6.2 の送信先と 6.4 の起動待ちも直す | [#6](https://github.com/pocarialice/rpglearning/pull/6)・[#38](https://github.com/pocarialice/rpglearning/pull/38)・[#45](https://github.com/pocarialice/rpglearning/pull/45) |
+| 版数 | 日付 | 変更内容 |
+| --- | --- | --- |
+| 第1版 | 2026-10-17 | 作成 |
+| 第1.1版 | 2026-10-21 | リリースの環境を dev・prod の2つに変更 |
+| 第1.2版 | 2026-11-02 | ログイン画面からのアカウント作成（F-14）を追加 |
+| 第1.3版 | 2026-11-07 | 通知（F-13・S-10）を機能ごと削除 |
+| 第1.4版 | 2026-11-10 | インフラ（6.1）をいまの構成に合わせる：さくらのクラウド・さくらのAI Engine・Cloudflare（DNS・Worker）、prod の凍結と dev の本番公開、dev の自動停止と起動。6.2 の送信先と 6.4 の起動待ちも直す |

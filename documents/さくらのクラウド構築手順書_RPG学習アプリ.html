@@ -626,7 +626,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>GitHub</td>
-<td>リポジトリ <code>pocarialice/rpglearning</code> の管理者権限（Settings を変更できる）。Environments を使う</td>
+<td>リポジトリ <code>&lt;owner&gt;/rpglearning</code> の管理者権限（Settings を変更できる）。Environments を使う</td>
 </tr>
 <tr>
 <td>作業PC</td>
@@ -1559,8 +1559,8 @@ docker compose version
 <li>置き場所を作り、リポジトリの <code>compose.yaml</code> と <code>Caddyfile</code> を置く</li>
 </ol>
 <pre><code class="language-bash">sudo mkdir -p /opt/rpg &amp;&amp; sudo chown ubuntu: /opt/rpg &amp;&amp; cd /opt/rpg
-curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/compose.yaml
-curl -fsSLO https://raw.githubusercontent.com/pocarialice/rpglearning/main/Caddyfile
+curl -fsSLO https://raw.githubusercontent.com/&lt;owner&gt;/rpglearning/main/compose.yaml
+curl -fsSLO https://raw.githubusercontent.com/&lt;owner&gt;/rpglearning/main/Caddyfile
 </code></pre>
 <p>（リポジトリが非公開なら、作業PCから <code>scp compose.yaml Caddyfile ubuntu@&lt;V-02&gt;:/opt/rpg/</code> で置く）</p>
 <ol start="9">
@@ -1629,7 +1629,7 @@ MODEL_LIGHT=gpt-oss-120b
 <ul>
 <li><code>rpg-deploy env</code> は <code>rpg-deploy</code>（3.11）を直したあとのものにある。いまのサーバーに入っている <code>rpg-deploy</code> が古いときは、3.11 の「スマホから入れるようにする」の 3. の <code>scp</code> と <code>install</code> をやり直してから打つ</li>
 <li>api コンテナから <code>https://www.googleapis.com</code>（Google の公開鍵）へ HTTPS で出られる必要がある。パケットフィルタ（3.2）は外向きを止めていないので追加の設定はいらない</li>
-<li>検証用：<code>pocarialice7148@gmail.com</code> は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す</li>
+<li>検証用：<code>&lt;検証用アドレス&gt;</code> は、同じメールアドレスの利用者がいても Google では別の利用者になる（詳細設計書 3.10）。確かめ終わってもこの決まりは残るため、外すときはマイグレーションとアプリの両方を直す</li>
 </ul>
 <h3 id="sec-3-9"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>3.9 初回の起動と確認</h3>
 <ol>
@@ -2292,13 +2292,13 @@ rpg-deploy env REDIRECT_ADDRESSES "www.rpglearning.net, rpg-dev.rpglearning.net"
 <ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>11/07</small></span></li><li class="now"><span class="hist-chip"><b>第0.5版</b><small>11/07</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
-<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
 <tbody>
-<tr><td>第0.1版</td><td>2026-10-27</td><td>AWS 版の構築手順書 第0.5版に代わる手順書として作成。さくらのクラウドで dev・prod を作る手順をまとめる</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/7">#7</a>・<a href="https://github.com/pocarialice/rpglearning/pull/8">#8</a>・<a href="https://github.com/pocarialice/rpglearning/pull/11">#11</a>・<a href="https://github.com/pocarialice/rpglearning/pull/22">#22</a>・<a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a>・<a href="https://github.com/pocarialice/rpglearning/pull/34">#34</a>・<a href="https://github.com/pocarialice/rpglearning/pull/36">#36</a></span></td></tr>
-<tr><td>第0.2版</td><td>2026-11-07</td><td>dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
-<tr><td>第0.3版</td><td>2026-11-07</td><td>DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
-<tr><td>第0.4版</td><td>2026-11-07</td><td>prod の構築を凍結し、dev を本番としてテスターに <code>rpglearning.net</code> で公開することにした（1.8）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
-<tr><td>第0.5版</td><td>2026-11-07</td><td>通知メールを機能ごと削除した</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/39">#39</a>・<a href="https://github.com/pocarialice/rpglearning/pull/40">#40</a></span></td></tr>
+<tr><td>第0.1版</td><td>2026-10-27</td><td>AWS 版の構築手順書 第0.5版に代わる手順書として作成。さくらのクラウドで dev・prod を作る手順をまとめる</td></tr>
+<tr><td>第0.2版</td><td>2026-11-07</td><td>dev の DB をサーバーの中に移し、アクセスがないときにサーバーを自動で止めるようにした（3.3・3.13）</td></tr>
+<tr><td>第0.3版</td><td>2026-11-07</td><td>DNS を Cloudflare に移し、アクセスがあれば止まっているサーバーを自動で起こすようにした（3.14）</td></tr>
+<tr><td>第0.4版</td><td>2026-11-07</td><td>prod の構築を凍結し、dev を本番としてテスターに <code>rpglearning.net</code> で公開することにした（1.8）</td></tr>
+<tr><td>第0.5版</td><td>2026-11-07</td><td>通知メールを機能ごと削除した</td></tr>
 </tbody></table></div>
 </section>
   </main>
@@ -2348,6 +2348,12 @@ mermaid.initialize({
   openForHash();
   window.addEventListener('hashchange', openForHash);
 })();
+</script>
+<script id="pc-open-details-js">
+// PC（幅1024px以上）で開いたときは、アコーディオンを最初から開いておく
+if (window.matchMedia("(min-width: 1024px)").matches) {
+  document.querySelectorAll("details").forEach((d) => { d.open = true; });
+}
 </script>
 </body>
 </html>

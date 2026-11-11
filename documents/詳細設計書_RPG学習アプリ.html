@@ -2266,7 +2266,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>検証用の重複アドレス</td>
-<td><code>DUPLICATE_EMAILS</code>（<code>pocarialice7148@gmail.com</code>）だけは②で結びつけず、同じメールアドレスでも別の利用者を作る（パスワードの利用者と Google の利用者を並べて確かめるため）。DB の <code>users_email_uq</code> もこのアドレスを除く部分インデックスにする（8.4.6）。2つの値は必ず同じにする。A-30・A-34・A-36 で同じアドレスが複数あるときは、パスワードのある利用者を使う</td>
+<td><code>DUPLICATE_EMAILS</code>（<code>&lt;検証用アドレス&gt;</code>）だけは②で結びつけず、同じメールアドレスでも別の利用者を作る（パスワードの利用者と Google の利用者を並べて確かめるため）。DB の <code>users_email_uq</code> もこのアドレスを除く部分インデックスにする（8.4.6）。2つの値は必ず同じにする。A-30・A-34・A-36 で同じアドレスが複数あるときは、パスワードのある利用者を使う</td>
 </tr>
 </tbody>
 </table></div>
@@ -3355,7 +3355,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   <div class="cgrid">
     <div class="card"><h5><i class="fa-solid fa-door-open"></i>だれでも登録</h5><p class="sub">初めての人は学習者（learner）。ドメインの制限なし・確認メールなし</p></div>
     <div class="card"><h5><i class="fa-solid fa-link"></i>同じメールは同じ人</h5><p class="sub">招待・登録済みの人に結びつけ、仮パスワードは消す</p></div>
-    <div class="card"><h5><i class="fa-solid fa-flask"></i>検証用アドレス</h5><p class="sub">pocarialice7148@gmail.com だけは別の利用者を作る</p></div>
+    <div class="card"><h5><i class="fa-solid fa-flask"></i>検証用アドレス</h5><p class="sub">&lt;検証用アドレス&gt; だけは別の利用者を作る</p></div>
   </div>
 </div>
 </section><section class="chapter" id="ch6"><h2><i class="fa-solid fa-mobile-screen h-ico" aria-hidden="true"></i>6. 画面モジュール設計（web）</h2>
@@ -4750,7 +4750,7 @@ INSERT INTO schema_migrations (version, description) VALUES ('V007', 'daily mess
 CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_uq ON users (google_sub) WHERE google_sub IS NOT NULL;
 DROP INDEX IF EXISTS users_email_uq;
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_uq ON users (lower(email))
-  WHERE lower(email) NOT IN ('pocarialice7148@gmail.com');
+  WHERE lower(email) NOT IN ('&lt;検証用アドレス&gt;');
 INSERT INTO schema_migrations (version, description) VALUES ('V008', 'google login') ON CONFLICT DO NOTHING;
 </code></pre>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>8.4.7 通知設定の削除（<code>db/migrations/V009__drop_notify_settings.sql</code>）</h4>
@@ -5769,26 +5769,26 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 <ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/07</small></span></li><li class="now"><span class="hist-chip"><b>第1.8版</b><small>11/10</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
-<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
 <tbody>
-<tr><td>第0.1版</td><td>2026-10-20</td><td>作成（第1〜12章、HTML版あり）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a></td></tr>
-<tr><td>第0.2版</td><td>2026-10-20</td><td>リリースを GitHub Actions に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></td></tr>
-<tr><td>第0.3版</td><td>2026-10-21</td><td>モジュールテスト結果報告書 第0.1版の指摘を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.4版</td><td>2026-10-21</td><td>モジュールテスト結果報告書 第1.1版 7.2 の判断を反映</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.5版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.6版</td><td>2026-10-21</td><td>ci.yml を作成し、画面のビルドは画面の実装時に足すと明記</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第0.7版</td><td>2026-10-21</td><td>画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第0.8版</td><td>2026-10-21</td><td>S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第0.9版</td><td>2026-10-21</td><td>S-07 の見出しに使うコース名を A-11 の応答に足す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.0版</td><td>2026-10-21</td><td>A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.1版</td><td>2026-10-21</td><td>A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/4">#4</a></td></tr>
-<tr><td>第1.2版</td><td>2026-10-27</td><td>AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる。第1.1版までの AWS 版は <code>aws/documents/</code> に退避</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/8">#8</a>・<a href="https://github.com/pocarialice/rpglearning/pull/9">#9</a>・<a href="https://github.com/pocarialice/rpglearning/pull/10">#10</a>・<a href="https://github.com/pocarialice/rpglearning/pull/12">#12</a>・<a href="https://github.com/pocarialice/rpglearning/pull/13">#13</a>・<a href="https://github.com/pocarialice/rpglearning/pull/14">#14</a>・<a href="https://github.com/pocarialice/rpglearning/pull/23">#23</a>・<a href="https://github.com/pocarialice/rpglearning/pull/24">#24</a></span></td></tr>
-<tr><td>第1.3版</td><td>2026-11-02</td><td>ログイン画面からのアカウント作成（A-36・A-37、T-29）を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/25">#25</a></td></tr>
-<tr><td>第1.4版</td><td>2026-11-03</td><td>コースごとの実績（S-16・S-17、A-12d・A-12e）を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/27">#27</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/29">#29</a></span></td></tr>
-<tr><td>第1.5版</td><td>2026-11-06</td><td>ホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/32">#32</a></td></tr>
-<tr><td>第1.6版</td><td>2026-11-06</td><td>Googleでログイン（A-38・A-39、M-K03、V008）を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/34">#34</a></td></tr>
-<tr><td>第1.7版</td><td>2026-11-07</td><td>通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009）</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
-<tr><td>第1.8版</td><td>2026-11-10</td><td>dev を本番として公開している構成に合わせる。起こす係の Cloudflare Worker（4.8）とサーバーのコマンド rpg-idle-stop・rpg-db・rpg-deploy（4.9）を足し、DB（dev はサーバーの中）・ディレクトリ・技術スタック・環境変数・監視・エラーの扱い（<code>SERVER_WAKING</code>）・ワークフロー・反映・環境ごとの違いを直す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/22">#22</a>・<a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a>・<a href="https://github.com/pocarialice/rpglearning/pull/45">#45</a></td></tr>
+<tr><td>第0.1版</td><td>2026-10-20</td><td>作成（第1〜12章、HTML版あり）</td></tr>
+<tr><td>第0.2版</td><td>2026-10-20</td><td>リリースを GitHub Actions に変更</td></tr>
+<tr><td>第0.3版</td><td>2026-10-21</td><td>モジュールテスト結果報告書 第0.1版の指摘を反映</td></tr>
+<tr><td>第0.4版</td><td>2026-10-21</td><td>モジュールテスト結果報告書 第1.1版 7.2 の判断を反映</td></tr>
+<tr><td>第0.5版</td><td>2026-10-21</td><td>stg 環境をなくし dev・prod の2環境に変更</td></tr>
+<tr><td>第0.6版</td><td>2026-10-21</td><td>ci.yml を作成し、画面のビルドは画面の実装時に足すと明記</td></tr>
+<tr><td>第0.7版</td><td>2026-10-21</td><td>画面の実装中に上げた版（個別の記録なし。内容は第1.0版までにまとめて反映）</td></tr>
+<tr><td>第0.8版</td><td>2026-10-21</td><td>S-08 で使う A-12 にレベル・累計EXPを足し、バッジの獲得日時を +09:00 付きにする</td></tr>
+<tr><td>第0.9版</td><td>2026-10-21</td><td>S-07 の見出しに使うコース名を A-11 の応答に足す</td></tr>
+<tr><td>第1.0版</td><td>2026-10-21</td><td>A-01 に担当コース、A-14 の一覧の日時を +09:00 付きに。管理局は初回の流れの対象外に</td></tr>
+<tr><td>第1.1版</td><td>2026-10-21</td><td>A-19 の一覧の日時を +09:00 付きに、A-22 の取得に性格名と初期名を追加</td></tr>
+<tr><td>第1.2版</td><td>2026-10-27</td><td>AWS からさくらのクラウドへ切り替え。DB・キュー・ファイル・メール・AI・ログインを差し替え口にし、Lambda をコンテナ（api・worker）にまとめる。第1.1版までの AWS 版は <code>aws/documents/</code> に退避</td></tr>
+<tr><td>第1.3版</td><td>2026-11-02</td><td>ログイン画面からのアカウント作成（A-36・A-37、T-29）を追加</td></tr>
+<tr><td>第1.4版</td><td>2026-11-03</td><td>コースごとの実績（S-16・S-17、A-12d・A-12e）を追加</td></tr>
+<tr><td>第1.5版</td><td>2026-11-06</td><td>ホームのひとことを時間帯（朝・昼・夜）ごとに作り直すようにし、指示文から復習数を外す（V007）</td></tr>
+<tr><td>第1.6版</td><td>2026-11-06</td><td>Googleでログイン（A-38・A-39、M-K03、V008）を追加</td></tr>
+<tr><td>第1.7版</td><td>2026-11-07</td><td>通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009）</td></tr>
+<tr><td>第1.8版</td><td>2026-11-10</td><td>dev を本番として公開している構成に合わせる。起こす係の Cloudflare Worker（4.8）とサーバーのコマンド rpg-idle-stop・rpg-db・rpg-deploy（4.9）を足し、DB（dev はサーバーの中）・ディレクトリ・技術スタック・環境変数・監視・エラーの扱い（<code>SERVER_WAKING</code>）・ワークフロー・反映・環境ごとの違いを直す</td></tr>
 </tbody></table></div>
 </section>
   </main>
@@ -5838,6 +5838,12 @@ mermaid.initialize({
   openForHash();
   window.addEventListener('hashchange', openForHash);
 })();
+</script>
+<script id="pc-open-details-js">
+// PC（幅1024px以上）で開いたときは、アコーディオンを最初から開いておく
+if (window.matchMedia("(min-width: 1024px)").matches) {
+  document.querySelectorAll("details").forEach((d) => { d.open = true; });
+}
 </script>
 </body>
 </html>

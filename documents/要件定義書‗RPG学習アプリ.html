@@ -1539,13 +1539,13 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <ol class="hist-flow"><li><span class="hist-chip"><b>第1版</b><small>10/17</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/07</small></span></li><li class="now"><span class="hist-chip"><b>第1.4版</b><small>11/10</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
-<thead><tr><th>版数</th><th>日付</th><th>変更内容</th><th>関連PR</th></tr></thead>
+<thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
 <tbody>
-<tr><td>第1版</td><td>2026-10-17</td><td>作成</td><td><a href="https://github.com/pocarialice/rpglearning/pull/1">#1</a><br><span class="hist-held">版数を上げずに直したPR：<a href="https://github.com/pocarialice/rpglearning/pull/2">#2</a></span></td></tr>
-<tr><td>第1.1版</td><td>2026-10-21</td><td>リリースの環境を dev・prod の2つに変更</td><td><a href="https://github.com/pocarialice/rpglearning/pull/3">#3</a></td></tr>
-<tr><td>第1.2版</td><td>2026-11-02</td><td>ログイン画面からのアカウント作成（F-14）を追加</td><td><a href="https://github.com/pocarialice/rpglearning/pull/25">#25</a></td></tr>
-<tr><td>第1.3版</td><td>2026-11-07</td><td>通知（F-13・S-10）を機能ごと削除</td><td><a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a></td></tr>
-<tr><td>第1.4版</td><td>2026-11-10</td><td>インフラ（6.1）をいまの構成に合わせる：さくらのクラウド・さくらのAI Engine・Cloudflare（DNS・Worker）、prod の凍結と dev の本番公開、dev の自動停止と起動。6.2 の送信先と 6.4 の起動待ちも直す</td><td><a href="https://github.com/pocarialice/rpglearning/pull/6">#6</a>・<a href="https://github.com/pocarialice/rpglearning/pull/38">#38</a>・<a href="https://github.com/pocarialice/rpglearning/pull/45">#45</a></td></tr>
+<tr><td>第1版</td><td>2026-10-17</td><td>作成</td></tr>
+<tr><td>第1.1版</td><td>2026-10-21</td><td>リリースの環境を dev・prod の2つに変更</td></tr>
+<tr><td>第1.2版</td><td>2026-11-02</td><td>ログイン画面からのアカウント作成（F-14）を追加</td></tr>
+<tr><td>第1.3版</td><td>2026-11-07</td><td>通知（F-13・S-10）を機能ごと削除</td></tr>
+<tr><td>第1.4版</td><td>2026-11-10</td><td>インフラ（6.1）をいまの構成に合わせる：さくらのクラウド・さくらのAI Engine・Cloudflare（DNS・Worker）、prod の凍結と dev の本番公開、dev の自動停止と起動。6.2 の送信先と 6.4 の起動待ちも直す</td></tr>
 </tbody></table></div>
 </section>
   </main>
@@ -1572,6 +1572,36 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   openForHash();
   window.addEventListener('hashchange', openForHash);
 })();
+</script>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+  startOnLoad: true, securityLevel: "loose", theme: "base",
+  fontFamily: '"Noto Sans JP", sans-serif',
+  themeVariables: {
+    fontFamily: '"Noto Sans JP", sans-serif', fontSize: "14px",
+    primaryColor: "#E8F1FE", primaryBorderColor: "#0017C1", primaryTextColor: "#1A1A1C",
+    secondaryColor: "#F2F2F2", tertiaryColor: "#FFFFFF",
+    lineColor: "#414141", textColor: "#1A1A1C",
+    clusterBkg: "#FFFFFF", clusterBorder: "#B4B4B4",
+    edgeLabelBackground: "#FFFFFF",
+    actorBkg: "#E8F1FE", actorBorder: "#0017C1", actorTextColor: "#1A1A1C",
+    signalColor: "#414141", signalTextColor: "#1A1A1C",
+    noteBkgColor: "#FFF5C2", noteBorderColor: "#B4B4B4", noteTextColor: "#1A1A1C",
+    labelBoxBkgColor: "#E8F1FE", labelBoxBorderColor: "#0017C1", loopTextColor: "#00118F",
+    pie1: "#0017C1", pie2: "#264AF4", pie3: "#7096F8", pie4: "#00118F", pie5: "#9DB7F9", pie6: "#626264", pie7: "#C5D7FB",
+    pieStrokeColor: "#FFFFFF", pieOuterStrokeColor: "#B4B4B4", pieTitleTextSize: "16px", pieSectionTextColor: "#FFFFFF",
+    sectionBkgColor: "#E8F1FE", altSectionBkgColor: "#FFFFFF", taskBkgColor: "#0017C1", taskBorderColor: "#00118F", taskTextColor: "#FFFFFF", taskTextOutsideColor: "#1A1A1C", gridColor: "#E6E6E6", todayLineColor: "#00118F"
+  },
+  flowchart: { htmlLabels: true, curve: "basis", padding: 12 },
+  er: { useMaxWidth: true }, sequence: { useMaxWidth: true, mirrorActors: false }
+});
+</script>
+<script id="pc-open-details-js">
+// PC（幅1024px以上）で開いたときは、アコーディオンを最初から開いておく
+if (window.matchMedia("(min-width: 1024px)").matches) {
+  document.querySelectorAll("details").forEach((d) => { d.open = true; });
+}
 </script>
 </body>
 </html>
