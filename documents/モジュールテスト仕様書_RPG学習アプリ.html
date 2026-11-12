@@ -436,7 +436,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第2.4版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>版数<b>第2.5版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
       <li>作成日<b>2026-10-20（各版の日付は「変更履歴」を参照）</b></li>
       <li>入力文書<b>詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
@@ -7299,6 +7299,20 @@ describe('M-D01 client', () =&gt; {
 <td>キャッシュの応答を返し <code>fetch</code> を呼ばない／どちらも <code>respondWith</code> を呼ばない（ブラウザに任せる）</td>
 <td>同</td>
 </tr>
+<tr>
+<td>MT-F24-03</td>
+<td>画面を開くとき</td>
+<td>キャッシュにある状態で <code>/</code> をナビゲーション（<code>mode: 'navigate'</code>）で GET</td>
+<td>キャッシュを見ずに <code>fetch</code> を <code>{ cache: 'no-cache' }</code> で呼び、その応答を返す（キャッシュに入れない）</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-F24-04</td>
+<td>サーバーにつながらないとき</td>
+<td>ナビゲーションで <code>fetch</code> が失敗／応答が 503（Worker の起動中ページ）・404</td>
+<td>「お休み中」の案内（503、<code>text/html</code>、<code>no-store</code>、「もう一度開く」で再読み込み）を返しキャッシュを見ない／503・404 の応答はそのまま返す</td>
+<td>境</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-F25 <code>pages/learner/s15-summary.js</code>（S-15 冒険のまとめ）</h4>
@@ -7717,7 +7731,7 @@ describe('M-D01 client', () =&gt; {
 <td>3.3 画面遷移、3.4 画面レイアウトの基本</td>
 <td>6.1、6.2</td>
 <td>shell、router、sw</td>
-<td>MT-F08-01〜06、MT-F03-06、MT-F24-01〜02</td>
+<td>MT-F08-01〜06、MT-F03-06、MT-F24-01〜04</td>
 </tr>
 <tr>
 <td>3.5 共通の表示ルール、9章 メッセージ</td>
@@ -7916,7 +7930,7 @@ describe('M-D01 client', () =&gt; {
   
 <section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
 <div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/01</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>11/04</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/06</small></span></li><li class="now"><span class="hist-chip"><b>第2.4版</b><small>11/07</small></span></li></ol>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/01</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>11/04</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.4版</b><small>11/07</small></span></li><li class="now"><span class="hist-chip"><b>第2.5版</b><small>11/12</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
 <thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
@@ -7945,11 +7959,12 @@ describe('M-D01 client', () =&gt; {
 <tr><td>第2.2版</td><td>2026-11-06</td><td>ひとことの時間帯のテスト2件（MT-A04-14・MT-H03-09）を載せ、MT-A04-05・MT-H03-01〜03・07 を直す</td></tr>
 <tr><td>第2.3版</td><td>2026-11-06</td><td>Googleでログイン（A-38・A-39、S-01）のテスト23件を MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18 として載せる</td></tr>
 <tr><td>第2.4版</td><td>2026-11-07</td><td>通知メール（S-10・A-04・B-03）を機能ごと削除し、そのテストケースを欠番にする</td></tr>
+<tr><td>第2.5版</td><td>2026-11-12</td><td>サーバーが止まっているときの Service Worker のテスト2件（MT-F24-03〜04）を載せる</td></tr>
 </tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第2.4版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第2.5版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({
