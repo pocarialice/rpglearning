@@ -1,6 +1,9 @@
 // モジュールテストの結果（Vitest の JSON・カバレッジ要約）とテスト仕様書から、テスト結果報告書（md・html）を作る
-// 使い方：node scripts/test-report.mjs --results reports/vitest-results.json --coverage coverage/coverage-summary.json
-//          --runs reports/stability.json --meta reports/meta.json --out documents
+// 使い方：npm run test:report（scripts/test-report-all.mjs がテストを流してから呼ぶ）
+// 直接：node scripts/test-report.mjs --results reports/vitest-results.json --coverage coverage/coverage-summary.json
+//          --runs reports/stability.json --meta scripts/test-report.meta.json --out documents
+// 文書のルール（claude.md）：版数は最新だけを書き、変更の内容は末尾の「変更履歴」（md は timeline、html は版の流れ）に書く。
+// コミット番号・ブランチ名は書かない。目次は小見出しのアコーディオン（幅1024px以上では開く）
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, all) => (v.startsWith('--') ? [...a, [v.slice(2), all[i + 1]]] : a), []))
@@ -12,6 +15,8 @@ const coverage = JSON.parse(readFileSync(args.coverage, 'utf8'))
 const runs = JSON.parse(readFileSync(args.runs, 'utf8'))
 const meta = JSON.parse(readFileSync(args.meta, 'utf8'))
 const scope = meta.scopePrefixes // 例: ['U','D','G','A','M']
+// 実行日時（JST）は、Vitest の結果の開始時刻から作る
+const executedAt = new Date(results.startTime + 9 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ')
 // ---- テスト仕様書からケースを読む ----
 const spec = []
 let mod = null
@@ -30,7 +35,7 @@ const inScope = spec.filter((c) => scope.includes(c.group))
 const its = results.testResults.flatMap((f) => f.assertionResults.map((a) => ({ ...a, file: relative(ROOT, f.name) })))
 const byId = new Map()
 for (const it of its) {
-  for (const id of new Set(it.fullName.match(/MT-[A-Z]\d+-\d+/g) ?? [])) {
+  for (const id of new Set(it.fullName.match(/MT-[A-Z]\d+-\d+[a-z]?/g) ?? [])) {
     if (!byId.has(id)) byId.set(id, [])
     byId.get(id).push(it)
   }
@@ -41,6 +46,9 @@ const rows = inScope.map((c) => {
   return { ...c, its: list.length, status, file: list[0]?.file ?? '-' }
 })
 const supplementary = its.filter((t) => !/MT-[A-Z]\d+-\d+/.test(t.title))
+// テストにあるのに仕様書にないID（欠番も含めて仕様書のどこにもないもの）
+const specAll = new Set([...readFileSync(SPEC_MD, 'utf8').matchAll(/MT-[A-Z]\d+-\d+/g)].map((m) => m[0]))
+const orphans = [...byId.keys()].filter((id) => !specAll.has(id)).sort()
 const added = new Set(meta.addedIds ?? [])
 const addedCount = rows.filter((r) => added.has(r.id)).length
 const count = (s) => rows.filter((r) => r.status === s).length
@@ -67,7 +75,8 @@ const covGroups = [
   { name: 'web/js/logic/validators.js', f: (p) => p === 'web/js/logic/validators.js', th: [100, 100] },
   { name: 'functions/**', f: (p) => p.startsWith('functions/'), th: [90, 80] },
   { name: 'server/**', f: (p) => p.startsWith('server/'), th: [90, 80] },
-  { name: 'web/js/**', f: (p) => p.startsWith('web/js/'), th: [90, 80] }
+  { name: 'web/js/**', f: (p) => p.startsWith('web/js/'), th: [90, 80] },
+  { name: 'workers/**', f: (p) => p.startsWith('workers/'), th: [90, 80] }
 ].map((g) => ({ ...g, ...sum(g.f) })).filter((g) => g.files > 0)
 const covOk = covGroups.every((g) => !g.th || (g.statements >= g.th[0] && g.branches >= g.th[1]))
 // ---- モジュール別 ----
@@ -78,11 +87,11 @@ for (const r of rows) {
   m.cases++; m.its += r.its
   if (r.status === '合格') m.pass++; else if (r.status === '不合格') m.fail++; else m.missing++
 }
-const LAYERS = { U: 'util', D: 'db', G: 'domain', A: 'ai', M: 'mail', K: 'auth（ログイン）', O: 'storage', H: 'api-handler', W: 'ワーカー・バッチ', S: 'server（HTTP・ワーカーの入口）', F: '画面（web/js）' }
+const LAYERS = { U: 'util', D: 'db', G: 'domain', A: 'ai', M: 'mail', K: 'auth（ログイン）', O: 'storage', H: 'api-handler', W: 'ワーカー・バッチ', S: 'server（HTTP・ワーカーの入口）', C: 'Cloudflare Worker（起こす係）', F: '画面（web/js）' }
 const layerCounts = scope.map((g) => ({ g, name: LAYERS[g], n: rows.filter((r) => r.group === g).length }))
 const stable = runs.length >= 3 && runs.every((r) => r.passed === runs[0].passed && r.failed === runs[0].failed && r.total === runs[0].total)
 const maxMs = Math.max(...runs.map((r) => r.durationMs))
-const judge = total.fail === 0 && total.missing === 0 && itTotals.failed === 0 && itTotals.skipped === 0 && itTotals.todo === 0 && covOk && stable && maxMs <= 60000
+const judge = orphans.length === 0 && total.fail === 0 && total.missing === 0 && itTotals.failed === 0 && itTotals.skipped === 0 && itTotals.todo === 0 && covOk && stable && maxMs <= 60000
 const failedList = rows.filter((r) => r.status !== '合格')
 // ---- Markdown ----
 const md = []
@@ -92,11 +101,14 @@ p()
 p('| 項目 | 内容 |')
 p('| --- | --- |')
 p(`| 文書名 | ${meta.title} |`)
-p(`| 版数 | ${meta.version} |`)
-p(`| 作成日 | ${meta.date} |`)
+const latest = meta.history[meta.history.length - 1]
+const versionLabel = `${latest.version}（${meta.versionNote}変更の内容は「変更履歴」を参照）`
+const createdLabel = `${meta.created ?? meta.history[0].date}（各版の日付は「変更履歴」を参照）`
+p(`| 版数 | ${versionLabel} |`)
+p(`| 作成日 | ${createdLabel} |`)
 p(`| 入力文書 | ${meta.inputs} |`)
 p(`| 対象範囲 | ${meta.scopeLabel} |`)
-p(`| 実行日時・コミット | ${meta.executedAt}、\`${meta.commit}\`（ブランチ \`${meta.branch}\`） |`)
+p(`| 実行日時 | ${executedAt}（JST） |`)
 p(`| 判定 | **${judge ? '合格' : '不合格'}**（対象範囲について、仕様書 6.2 の合否基準による） |`)
 p()
 p('---')
@@ -112,7 +124,7 @@ p()
 p('```mermaid')
 p('flowchart LR')
 const groupCount = (gs) => spec.filter((c) => gs.includes(c.group)).length
-p(`  A["共通モジュール<br>util・db・domain・ai・mail・auth・storage<br>${groupCount('UDGAMKO')}ケース"]:::${scope.includes('U') ? 'done' : 'todo'} --> B["API・ワーカー<br>api-handler・worker・batch・server<br>${groupCount('HWS')}ケース"]:::${scope.includes('H') ? 'done' : 'todo'}`)
+p(`  A["共通モジュール<br>util・db・domain・ai・mail・auth・storage<br>${groupCount('UDGAMKO')}ケース"]:::${scope.includes('U') ? 'done' : 'todo'} --> B["API・ワーカー・入口<br>api-handler・worker・batch・server・Cloudflare Worker<br>${groupCount('HWSC')}ケース"]:::${scope.includes('H') ? 'done' : 'todo'}`)
 p(`  B --> C["画面<br>web/js（core・logic・pages・部品）<br>${groupCount('F')}ケース"]:::${scope.includes('F') ? 'done' : 'todo'}`)
 p('  classDef done fill:#0017C1,color:#fff,stroke:#0017C1')
 p('  classDef todo fill:#fff,color:#414141,stroke:#B4B4B4,stroke-dasharray:4 3')
@@ -131,8 +143,7 @@ p('| 項目 | 内容 |')
 p('| --- | --- |')
 for (const [k, v] of meta.env) p(`| ${k} | ${v} |`)
 p()
-p('- 外部サービス（DB・さくらのAI Engine・Bedrock・オブジェクトストレージ・SMTP）には接続せず、`dbMock`・`mailMock`・`aws-sdk-client-mock`・`fetch` の差し替えで応答を決めた（仕様書 2.3）')
-p('- `tests/helpers/vitest.setup.js` で `fetch` の既定をエラーにし、ネットワークへ出たテストは失敗する')
+for (const s of meta.envNotes) p(`- ${s}`)
 p()
 p('## 3. 結果の要約')
 p()
@@ -149,6 +160,7 @@ p(`| テストケース（仕様書のID） | ${total.cases}件中 合格 ${tota
 p(`| 実行したテスト（\`it\` の数） | ${itTotals.total}件（成功 ${itTotals.passed}・失敗 ${itTotals.failed}・スキップ ${itTotals.skipped}・todo ${itTotals.todo}）、テストファイル ${results.testResults.length} |`)
 p(`| うち仕様書 ${meta.specVersion} で追加したケース | ${addedCount}件（${meta.addedNote}） |`)
 p(`| IDのないテスト | ${supplementary.length}件 |`)
+p(`| 仕様書にないID | ${orphans.length === 0 ? '0件' : `${orphans.length}件（${orphans.join('、')}）`} |`)
 p(`| 実行時間 | 最大 ${(maxMs / 1000).toFixed(2)} 秒（基準：60秒以内） |`)
 p(`| 安定性 | 同じコミットで${runs.length}回実行し、${stable ? 'すべて同じ結果' : '結果が変わった'}（${runs.map((r) => `${r.passed}/${r.total}`).join('、')}） |`)
 p(`| 失敗したテスト | ${failedList.length === 0 ? 'なし' : failedList.map((r) => r.id).join('、')} |`)
@@ -228,18 +240,43 @@ p('```')
 p()
 p('| 基準（仕様書 6.2） | 結果 | 判定 |')
 p('| --- | --- | --- |')
-p(`| テストケースがすべて実装され成功する（skip・todo 0件） | ${total.pass}/${total.cases}、skip ${itTotals.skipped}・todo ${itTotals.todo} | ${total.fail + total.missing + itTotals.skipped + itTotals.todo === 0 ? '合格' : '不合格'} |`)
+p(`| テストケースがすべて実装され成功する（skip・todo 0件） | ${total.pass}/${total.cases}、skip ${itTotals.skipped}・todo ${itTotals.todo}、仕様書にないID ${orphans.length} | ${total.fail + total.missing + itTotals.skipped + itTotals.todo + orphans.length === 0 ? '合格' : '不合格'} |`)
 p(`| カバレッジ（domain・validators 100%、そのほか 90%／80%以上） | 4章のとおり | ${covOk ? '合格' : '不合格'} |`)
 p(`| 実行時間 60秒以内 | ${(maxMs / 1000).toFixed(2)} 秒 | ${maxMs <= 60000 ? '合格' : '不合格'} |`)
 p(`| 安定性（3回続けて同じ結果） | ${stable ? '同じ' : '変わった'} | ${stable ? '合格' : '不合格'} |`)
 p()
 for (const s of meta.next) p(`- ${s}`)
 p()
+p('---')
+p()
+p('## 変更履歴')
+p()
+p('```mermaid')
+p('timeline')
+p('  title 版の移り変わり')
+const byDate = []
+for (const v of meta.history) {
+  const last = byDate[byDate.length - 1]
+  if (last && last.date === v.date) last.versions.push(v.version); else byDate.push({ date: v.date, versions: [v.version] })
+}
+for (const d of byDate) p(`  ${d.date} : ${d.versions.join(' : ')}`)
+p('```')
+p()
+p('日付は版を作った日。')
+p()
+p('| 版数 | 日付 | 変更内容 |')
+p('| --- | --- | --- |')
+for (const v of meta.history) p(`| ${v.version} | ${v.date} | ${v.change} |`)
+p()
 writeFileSync(join(args.out, `${meta.fileBase}.md`), md.join('\n'))
 // ---- HTML ----
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-const style = /<style>[\s\S]*?<\/style>/.exec(readFileSync(SPEC_HTML, 'utf8'))[0]
+const specHtml = readFileSync(SPEC_HTML, 'utf8')
+const style = /<style>[\s\S]*?<\/style>/.exec(specHtml)[0]
+// 目次のアコーディオンと変更履歴の見た目・動きは、仕様書と同じものを使う
+const tocStyle = /<style id="toc-accordion">[\s\S]*?<\/style>/.exec(specHtml)[0]
+const tocScripts = /<script id="toc-accordion-js">[\s\S]*?<\/script>\s*<script id="pc-open-details-js">[\s\S]*?<\/script>/.exec(specHtml)[0]
 const extraStyle = `<style>
 .res { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
 .res.ok { background: var(--blue-50); color: var(--blue-900); border: 1px solid var(--blue-200); }
@@ -295,33 +332,41 @@ H('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awes
 H('<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&amp;family=Noto+Sans+Mono&amp;display=swap" rel="stylesheet">')
 H(style)
 H(extraStyle)
+H(tocStyle)
 H('</head>\n<body>')
 H(`<header class="site-header"><div class="inner"><span class="eyebrow"><i class="fa-solid fa-flask-vial"></i> モジュールテスト結果</span><h1>${esc(meta.title)}</h1><ul class="meta">`)
-H(`<li>版数<b>${esc(meta.version)}</b></li><li>作成日<b>${esc(meta.date)}</b></li><li>コミット<b>${esc(meta.commit)}</b></li><li>判定<b>${judge ? '合格' : '不合格'}</b></li></ul></div></header>`)
-H('<div class="layout">\n<nav class="toc" aria-label="目次"><p>目次</p><ol>')
-for (const [id, t] of toc) H(`<li><a href="#${id}">${toc.findIndex((x) => x[0] === id) + 1}. ${t}</a></li>`)
-H('</ol></nav>\n<main>')
+H(`<li>版数<b>${esc(versionLabel)}</b></li><li>作成日<b>${esc(createdLabel)}</b></li><li>実行日時<b>${esc(executedAt)}（JST）</b></li><li>判定<b>${judge ? '合格' : '不合格'}</b></li></ul></div></header>`)
+H('<div class="layout">\n<nav class="toc" aria-label="目次">\n<p>目次</p>\n<ol>')
+const tocSub = { s1: [['sec-1-1', '1.1 目的'], ['sec-1-2', '1.2 今回の範囲'], ['sec-1-3', '1.3 文書情報']], s7: [['sec-7-1', '7.1 不具合'], ['sec-7-2', '7.2 決めてほしいこと']] }
+toc.forEach(([id, t], i) => {
+  const label = `${i + 1}. ${t}`
+  const sub = tocSub[id]
+  H(sub ? `<li><details><summary><a href="#${id}">${label}</a><span class="toc-caret" aria-hidden="true"></span></summary><ol class="toc-sub">${sub.map(([sid, st]) => `<li><a href="#${sid}">${st}</a></li>`).join('')}</ol></details></li>` : `<li><a href="#${id}">${label}</a></li>`)
+})
+H('<li><a href="#history">変更履歴</a></li>')
+H('</ol>\n</nav>\n<main>')
 // 1
 H(`<section class="chapter" id="s1"><h2>${icon('fa-circle-info')}1. 概要</h2>`)
 H(`<div class="vis"><p class="vis-label">今回の範囲（全${spec.length}ケースのうち${rows.length}ケース）</p><ol class="flow">`)
 H(`<li class="${scope.includes('U') ? 'hl' : ''}"><b><i class="fa-solid fa-cubes fi"></i>共通モジュール</b>util・db・domain・ai・mail・auth・storage　${spec.filter((c) => 'UDGAMKO'.includes(c.group)).length}ケース</li>`)
-H(`<li class="${scope.includes('H') ? 'hl' : 'gate'}"><b><i class="fa-solid fa-bolt fi"></i>API・ワーカー</b>api-handler・worker・batch・server　${spec.filter((c) => 'HWS'.includes(c.group)).length}ケース</li>`)
+H(`<li class="${scope.includes('H') ? 'hl' : 'gate'}"><b><i class="fa-solid fa-bolt fi"></i>API・ワーカー・入口</b>api-handler・worker・batch・server・Cloudflare Worker　${spec.filter((c) => 'HWSC'.includes(c.group)).length}ケース</li>`)
 H(`<li class="${scope.includes('F') ? 'hl' : 'gate'}"><b><i class="fa-solid fa-display fi"></i>画面</b>web/js（core・logic・pages・部品）　${spec.filter((c) => c.group === 'F').length}ケース</li></ol>`)
 H(`<p class="vis-cap">塗りつぶし＝今回テストした範囲、点線＝次回</p></div>`)
-H(`<h3>${icon('fa-caret-right')}1.1 目的</h3><p>${inline(`モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。${meta.purposeNote}`)}</p>`)
-H(`<h3>${icon('fa-caret-right')}1.2 今回の範囲</h3>`)
+H(`<h3 id="sec-1-1">${icon('fa-caret-right')}1.1 目的</h3><p>${inline(`モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。${meta.purposeNote}`)}</p>`)
+H(`<h3 id="sec-1-2">${icon('fa-caret-right')}1.2 今回の範囲</h3>`)
 H(table(['区分', '層', '仕様書のケース数', '今回'], Object.entries(LAYERS).map(([g, name]) => [scope.includes(g) ? '対象' : '対象外（次回）', `${esc(name)}（MT-${g}）`, spec.filter((c) => c.group === g).length, scope.includes(g) ? '実行' : '-'])))
-H(`<h3>${icon('fa-caret-right')}1.3 文書情報</h3>`)
-H(table(['項目', '内容'], [['文書名', esc(meta.title)], ['版数', esc(meta.version)], ['入力文書', esc(meta.inputs)], ['対象範囲', esc(meta.scopeLabel)], ['実行日時・コミット', `${esc(meta.executedAt)}、<code>${esc(meta.commit)}</code>（ブランチ <code>${esc(meta.branch)}</code>）`]]))
+H(`<h3 id="sec-1-3">${icon('fa-caret-right')}1.3 文書情報</h3>`)
+H(table(['項目', '内容'], [['文書名', esc(meta.title)], ['版数', esc(versionLabel)], ['作成日', esc(createdLabel)], ['入力文書', inline(meta.inputs)], ['対象範囲', inline(meta.scopeLabel)], ['実行日時', `${esc(executedAt)}（JST）`]]))
 H('</section>')
 // 2
 H(`<section class="chapter" id="s2"><h2>${icon('fa-server')}2. 実行環境</h2>`)
 H('<div class="vis"><p class="vis-label">テストの道具と差し替え</p><div class="vis-grid c2">')
-H('<div class="card em"><h5><i class="fa-solid fa-check"></i>本物のまま動かす</h5><div class="chips"><span class="chip">domain/*</span><span class="chip">validators</span><span class="chip">ids</span><span class="chip">date-jst</span><span class="chip">json-guard</span><span class="chip">prompts</span><span class="chip">templates</span></div><p class="note">純粋関数は入力と出力だけで確かめた</p></div>')
-H('<div class="card dash"><h5><i class="fa-solid fa-masks-theater"></i>モックに差し替える</h5><div class="chips"><span class="chip">RDS Data API</span><span class="chip">Bedrock Runtime</span><span class="chip">SES</span><span class="chip">S3</span><span class="chip">Lambda</span><span class="chip">Cognito</span><span class="chip">リポジトリ（vi.mock）</span><span class="chip">時計（偽の時計）</span><span class="chip">乱数</span><span class="chip">fetch</span></div><p class="note">aws-sdk-client-mock・vi.useFakeTimers</p></div>')
+const chips = (list) => `<div class="chips">${list.map((c) => `<span class="chip">${esc(c)}</span>`).join('')}</div>`
+H(`<div class="card em"><h5><i class="fa-solid fa-check"></i>本物のまま動かす</h5>${chips(meta.envChips.real)}<p class="note">${inline(meta.envChips.realNote)}</p></div>`)
+H(`<div class="card dash"><h5><i class="fa-solid fa-masks-theater"></i>モックに差し替える</h5>${chips(meta.envChips.mock)}<p class="note">${inline(meta.envChips.mockNote)}</p></div>`)
 H('</div></div>')
 H(table(['項目', '内容'], meta.env.map(([k, v]) => [esc(k), inline(v)])))
-H('<ul><li>外部サービス（DB・さくらのAI Engine・Bedrock・オブジェクトストレージ・SMTP）には接続せず、<code>dbMock</code>・<code>mailMock</code>・<code>aws-sdk-client-mock</code>・<code>fetch</code> の差し替えで応答を決めた（仕様書 2.3）</li><li><code>tests/helpers/vitest.setup.js</code> で <code>fetch</code> の既定をエラーにし、ネットワークへ出たテストは失敗する</li></ul></section>')
+H(`<ul>${meta.envNotes.map((s) => `<li>${inline(s)}</li>`).join('')}</ul></section>`)
 // 3
 const passDeg = (360 * total.pass) / total.cases
 H(`<section class="chapter" id="s3"><h2>${icon('fa-square-poll-vertical')}3. 結果の要約</h2>`)
@@ -339,6 +384,7 @@ H(table(['項目', '結果'], [
   ['実行したテスト（<code>it</code> の数）', `${itTotals.total}件（成功 ${itTotals.passed}・失敗 ${itTotals.failed}・スキップ ${itTotals.skipped}・todo ${itTotals.todo}）、テストファイル ${results.testResults.length}`],
   [`うち仕様書 ${meta.specVersion} で追加したケース`, `${addedCount}件（${meta.addedNote}）`],
   ['IDのないテスト', `${supplementary.length}件`],
+  ['仕様書にないID', orphans.length === 0 ? '0件' : `${orphans.length}件（${orphans.join('、')}）`],
   ['実行時間', `最大 ${(maxMs / 1000).toFixed(2)} 秒（基準：60秒以内）`],
   ['安定性', `同じコミットで${runs.length}回実行し、${stable ? 'すべて同じ結果' : '結果が変わった'}（${runs.map((r) => `${r.passed}/${r.total}`).join('、')}）`],
   ['失敗したテスト', failedList.length === 0 ? 'なし' : failedList.map((r) => r.id).join('、')]
@@ -383,9 +429,9 @@ H('</section>')
 // 7
 H(`<section class="chapter" id="s7"><h2>${icon('fa-magnifying-glass')}7. 所見</h2>`)
 H(`<div class="vis"><p class="vis-label">見つかったこと</p><div class="vis-grid c2"><div class="card"><h5><i class="fa-solid fa-bug"></i>製品コードの不具合（修正済み）</h5><p class="tile-num sm">${meta.defectCount}<small>件</small></p></div><div class="card"><h5><i class="fa-solid fa-scale-balanced"></i>決めてほしいこと</h5><p class="tile-num sm">${meta.notes.length}<small>件</small></p></div></div></div>`)
-H(`<h3>${icon('fa-caret-right')}7.1 不具合</h3><ul>${meta.defects.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>`)
+H(`<h3 id="sec-7-1">${icon('fa-caret-right')}7.1 不具合</h3><ul>${meta.defects.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>`)
 if (meta.defectTable) H(table(['No', '見つけたテスト・作業', '重大度', '内容', '対応'], meta.defectTable.map((d, i) => [i + 1, inline(d[0]), inline(d[1]), inline(d[2]), inline(d[3])])))
-H(`<h3>${icon('fa-caret-right')}7.2 決めてほしいこと</h3><p>${inline(meta.notesIntro)}</p>`)
+H(`<h3 id="sec-7-2">${icon('fa-caret-right')}7.2 決めてほしいこと</h3><p>${inline(meta.notesIntro)}</p>`)
 H(table(['No', '項目', '決めてほしいこと', 'おすすめ', '決定'], meta.notes.map((n, i) => [`<a href="#n${i + 1}">${i + 1}</a>`, inline(n.title), inline(n.decide), inline(n.options.find((o) => o.recommended)?.label ?? '-'), n.decided ? resTag('合格').replace('合格', '決定済み') : '未定'])))
 meta.notes.forEach((n, i) => {
   H(`<div class="decision" id="n${i + 1}"><h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>7.2.${i + 1} ${inline(n.title)}</h4>`)
@@ -397,12 +443,19 @@ H('</section>')
 H(`<section class="chapter" id="s8"><h2>${icon('fa-gavel')}8. 判定と次の作業</h2>`)
 H(`<div class="vis"><div class="judge"><div class="judge-mark ${judge ? '' : 'ng'}">${judge ? '合格' : '不合格'}</div><div class="judge-body"><p class="big">${esc(meta.scopeLabel)}</p><p>${judge ? '仕様書 6.2 の合否基準をすべて満たした' : '合否基準を満たしていない項目がある'}</p></div></div></div>`)
 H(table(['基準（仕様書 6.2）', '結果', '判定'], [
-  ['テストケースがすべて実装され成功する（skip・todo 0件）', `${total.pass}/${total.cases}、skip ${itTotals.skipped}・todo ${itTotals.todo}`, resTag(total.fail + total.missing + itTotals.skipped + itTotals.todo === 0 ? '合格' : '不合格')],
+  ['テストケースがすべて実装され成功する（skip・todo 0件）', `${total.pass}/${total.cases}、skip ${itTotals.skipped}・todo ${itTotals.todo}、仕様書にないID ${orphans.length}`, resTag(total.fail + total.missing + itTotals.skipped + itTotals.todo + orphans.length === 0 ? '合格' : '不合格')],
   ['カバレッジ（domain・validators 100%、そのほか 90%／80%以上）', '4章のとおり', resTag(covOk ? '合格' : '不合格')],
   ['実行時間 60秒以内', `${(maxMs / 1000).toFixed(2)} 秒`, resTag(maxMs <= 60000 ? '合格' : '不合格')],
   ['安定性（3回続けて同じ結果）', stable ? '同じ' : '変わった', resTag(stable ? '合格' : '不合格')]
 ]))
 H(`<ul>${meta.next.map((s) => `<li>${inline(s)}</li>`).join('')}</ul></section>`)
-H(`</main>\n</div>\n<footer class="site-footer"><div class="inner">${esc(meta.title)} ${esc(meta.version)}</div></footer>\n</body>\n</html>\n`)
+// 変更履歴
+H(`<section class="chapter" id="history"><h2>${icon('fa-clock-rotate-left')}変更履歴</h2>`)
+H('<div class="hist-vis"><p class="hist-label">版の移り変わり</p>')
+H(`<ol class="hist-flow">${meta.history.map((v, i) => `<li${i === meta.history.length - 1 ? ' class="now"' : ''}><span class="hist-chip"><b>${esc(v.version)}</b><small>${v.date.slice(5).replace('-', '/')}</small></span></li>`).join('')}</ol>`)
+H('<p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>')
+H(`<div class="table-wrap"><table class="hist">\n<thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>\n<tbody>\n${meta.history.map((v) => `<tr><td>${esc(v.version)}</td><td>${v.date}</td><td>${inline(v.change)}</td></tr>`).join('\n')}\n</tbody></table></div>`)
+H('</section>')
+H(`</main>\n</div>\n<footer class="site-footer"><div class="inner">${esc(meta.title)} ${esc(versionLabel)}</div></footer>\n${tocScripts}\n</body>\n</html>\n`)
 writeFileSync(join(args.out, `${meta.fileBase}.html`), h.join('\n'))
-console.log(JSON.stringify({ judge, total, itTotals, supplementary: supplementary.length, covOk, stable, maxMs }))
+console.log(JSON.stringify({ judge, total, itTotals, supplementary: supplementary.length, orphans, covOk, stable, maxMs }))

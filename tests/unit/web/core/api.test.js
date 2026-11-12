@@ -41,7 +41,7 @@ describe('M-F02 core/api', () => {
     await check
     expect(fetchFn).toHaveBeenCalledTimes(4)
   })
-  it('MT-F02-03b サーバー起動中（SERVER_WAKING）は5秒ごとに待つ', async () => {
+  it('MT-F02-09 サーバー起動中（SERVER_WAKING）は5秒ごとに待つ', async () => {
     vi.useFakeTimers()
     const waking = () => json(503, { error: { code: 'SERVER_WAKING', message: '起動中' } })
     fetchFn.mockResolvedValueOnce(waking()).mockResolvedValueOnce(waking()).mockResolvedValue(json(200, { home: 1 }))
@@ -52,7 +52,7 @@ describe('M-F02 core/api', () => {
     await expect(p).resolves.toEqual({ home: 1 })
     expect(onResuming.mock.calls.map((c) => c[0])).toEqual([1, 2])
   })
-  it('MT-F02-03c サーバー起動中の再試行が尽きる（4分）', async () => {
+  it('MT-F02-10 サーバー起動中の再試行が尽きる（4分）', async () => {
     vi.useFakeTimers()
     fetchFn.mockImplementation(async () => json(503, { error: { code: 'SERVER_WAKING' } }))
     const p = make().apiGet('/home')

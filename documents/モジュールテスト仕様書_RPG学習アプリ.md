@@ -3,7 +3,7 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第2.5版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照） |
+| 版数     | 第2.6版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照） |
 | 作成日    | 2026-10-20（各版の日付は「変更履歴」を参照） |
 | 入力文書   | 詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
@@ -40,6 +40,7 @@ flowchart LR
 | M-H   | api-handler（router と routes/）          |
 | M-W   | grading-worker・import-worker・batch-runner |
 | M-S   | コンテナの入口（`server/http.mjs`・`server/worker.mjs`・`server/main.mjs`） |
+| M-C   | 起こす係の Cloudflare Worker（`workers/wake/src/wake.js`） |
 | M-F   | 画面（`web/js/core`・`logic`・`pages`・`parts`・`components`・`shell.js`） |
 
 テストケースIDは `MT-{モジュールIDの記号と番号}-{2桁の連番}`（例：`MT-G01-04`）とする。
@@ -52,7 +53,7 @@ flowchart LR
 
 | 区分     | 対象                                                                       | 対象外（理由）                                         |
 | ------ | ------------------------------------------------------------------------ | ----------------------------------------------- |
-| サーバー | `functions/shared/` の全モジュール、`functions/*/` の `index.mjs`（`main`・ジョブの入口）・ハンドラ・ステップ、`server/` の3ファイル           | `Dockerfile`・`compose.yaml`・`Caddyfile`（イメージを作って動かす確認。結合テスト）                                              |
+| サーバー | `functions/shared/` の全モジュール、`functions/*/` の `index.mjs`（`main`・ジョブの入口）・ハンドラ・ステップ、`server/` の3ファイル、`workers/wake/src/wake.js`           | `workers/wake/src/index.js`（入口で `wake.js` を呼ぶだけ）、`Dockerfile`・`compose.yaml`・`Caddyfile`（イメージを作って動かす確認。結合テスト）                                              |
 | 画面     | `web/js/core/`、`web/js/logic/`、`web/js/pages/`、`web/js/parts/`、`web/js/components/`、`web/js/shell.js` | `web/js/main.js`（起動とログイン。結合テストで確認）、見た目そのもの（色・配置。システムテストで確認） |
 | DB     | リポジトリが組み立てるSQLとパラメータ（pg の接続プールはモック）                                      | SQL の実行結果そのもの（結合テスト。作業PCの PostgreSQL 16 でも確かめる）                            |
 | 設定     | -                                                                        | `config.{env}.js` の値（リリース時のスモークテスト）            |
@@ -140,26 +141,27 @@ export default defineConfig({
     setupFiles: ['tests/helpers/vitest.setup.js'],
     restoreMocks: true,
     projects: [
-      { extends: true, test: { name: 'functions', include: ['tests/unit/functions/**/*.test.js', 'tests/unit/server/**/*.test.js'], environment: 'node' } },
+      { extends: true, test: { name: 'functions', include: ['tests/unit/functions/**/*.test.js', 'tests/unit/server/**/*.test.js', 'tests/unit/scripts/**/*.test.js', 'tests/unit/workers/**/*.test.js'], environment: 'node' } },
       { extends: true, test: { name: 'web', include: ['tests/unit/web/**/*.test.js'], environment: 'jsdom' } }
     ],
     coverage: {
       provider: 'v8',
-      include: ['functions/**/*.{js,mjs}', 'server/**/*.mjs', 'web/js/core/**', 'web/js/logic/**', 'web/js/pages/**', 'web/js/parts/**', 'web/js/components/**', 'web/js/shell.js'],
+      include: ['functions/**/*.{js,mjs}', 'server/**/*.mjs', 'web/js/core/**', 'web/js/logic/**', 'web/js/pages/**', 'web/js/parts/**', 'web/js/components/**', 'web/js/shell.js', 'workers/**/wake.js'],
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
         'functions/shared/domain/**': { statements: 100, branches: 100 },
         'web/js/logic/validators.js': { statements: 100, branches: 100 },
         'functions/**': { statements: 90, branches: 80 },
         'server/**': { statements: 90, branches: 80 },
-        'web/js/**': { statements: 90, branches: 80 }
+        'web/js/**': { statements: 90, branches: 80 },
+        'workers/**': { statements: 90, branches: 80 }
       }
     }
   }
 })
 ```
 
-- `functions/`・`server/` のテストは Node、`web/` のテストは jsdom で動かすため、`test.projects` で2つに分ける（Vitest 3.2 で非推奨になった `environmentMatchGlobs` は使わない）
+- `functions/`・`server/`・`scripts/`・`workers/` のテストは Node、`web/` のテストは jsdom で動かすため、`test.projects` で2つに分ける（Vitest 3.2 で非推奨になった `environmentMatchGlobs` は使わない）
 
 ### 3.3 テストファイルの置き方
 
@@ -1126,6 +1128,36 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-S03-04 | worker だけ | `ROLE=worker`、並列数の指定 | マイグレーションも HTTP もなし、指定の並列数 | 同 |
 | MT-S03-05 | 設定が足りない | `node server/main.mjs` を設定なしで実行 | 終了コード1、ログ `server.start_failed`（「環境変数がありません」） | 異 |
 
+### 5.4c 起こす係（workers/）
+
+#### M-C01 `workers/wake/src/wake.js`（起こす係の Cloudflare Worker）
+
+Cloudflare の Worker は Node のテストの中で動かす（`Request`・`Response` は Node のものを使う）。オリジン（サーバー）とさくらのクラウド API は差し替えた `fetch`、Cloudflare のキャッシュ（Cache API）はメモリの入れ物にする。
+
+| ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
+| --------- | -- | ----- | ---- | -- |
+| MT-C01-01 | 起こすリクエスト | `/api/me`（`Authorization` 付き）／`POST /api/auth/login`／`POST /__wake` | `shouldWake` がどれも true | 同 |
+| MT-C01-02 | 起こさないリクエスト | `/`・`/js/main.js`・ヘッダーのない `GET /api/me`・`/api/health`・`GET /__wake`・ボットの UA・UA なし | `shouldWake` がどれも false | 同 |
+| MT-C01-03 | つながらないとみなす応答 | 522・530／503・502 | 522・530 は true、アプリの 503 と Caddy の 502 は false | 境 |
+| MT-C01-04 | 電源を入れる | 電源が切れている（`down`） | `powerOn` が `'started'`。名前で探す GET → 電源の GET → PUT の順、ゾーンのURL、認証は Basic | 同 |
+| MT-C01-05 | もう動いている | 電源が入っている（`up`）で2回呼ぶ | 2回とも `'up'`、PUT しない。サーバーの ID は覚えて2回目は探さない | 状 |
+| MT-C01-06 | サーバーが見つからない | 名前が部分一致のサーバーだけ | 「0 台」の例外 | 異 |
+| MT-C01-07 | API のエラー | さくらのクラウド API が 401 | 「HTTP 401」の例外 | 異 |
+| MT-C01-08 | 動いているとき | サーバーが 200 | その応答をそのまま返し、API を呼ばない | 同 |
+| MT-C01-09 | アプリの 503 | サーバーが 503 `DB_RESUMING` | そのまま返す（起動中にしない） | 異 |
+| MT-C01-10 | 止まっていて API | サーバーが 522、`Authorization` 付きの `/api/me` | 503 `SERVER_WAKING`・`Retry-After: 10`、電源を入れる。「つながらない」「起こした」を覚える | 状 |
+| MT-C01-11 | 覚えているあいだ | 「つながらない」「起こした」を覚えている | サーバーにも API にも行かず、503 を返す | 状 |
+| MT-C01-12 | つながらない（例外） | サーバーへの `fetch` が例外（時間切れ） | 503 `SERVER_WAKING` | 異 |
+| MT-C01-13 | 止まっていて画面を開く | サーバーが 521、`Accept: text/html` で `/` | 起動中ページ（503、`text/html`、`X-Robots-Tag: noindex`。`POST /__wake` と `/api/health` を呼ぶ JavaScript）。GET だけでは電源を入れない | 同 |
+| MT-C01-14 | 止まっていて画面のファイル | サーバーが 522、`Accept: image/png` | 503、本文 `starting` | 同 |
+| MT-C01-15 | `POST /__wake` | 人の UA で `POST /__wake` | 204、電源を入れる | 同 |
+| MT-C01-16 | ボットの `POST /__wake` | UA が `GPTBot` | 204、電源を入れない | 異 |
+| MT-C01-17 | 電源を入れられない | さくらのクラウド API が 500、サーバーが 522 | 503 を返す（失敗はログに残す） | 異 |
+| MT-C01-18 | そのまま渡すパス・見せないパス | `/.well-known/acme-challenge/abc`／`/__wake-state/woke` | サーバーの応答をそのまま返す／404 | 同 |
+| MT-C01-19 | 本体のドメインへ移す | `https://www.example.jp/s/06?x=1` | 301、`Location` は本体のドメインにパスとクエリをつけたもの。サーバーにも API にも行かない | 同 |
+| MT-C01-20 | 移さないとき | 本体のドメイン／`CANONICAL_HOST` なし | `canonicalRedirect` が null | 境 |
+| MT-C01-21 | www の証明書の確認 | `https://www.example.jp/.well-known/acme-challenge/abc` | 移さずにサーバーへ渡し、その応答を返す | 同 |
+
 ### 5.5 画面（web/js）
 
 画面のテストは jsdom で実行する。`fetch` は `vi.fn()`、移動は auth.js に渡す `navigate` を差し替える。
@@ -1147,6 +1179,8 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-F01-11 | アカウント作成（A-36・A-37） | `signUp`、`verifySignup`（成功／400） | `POST /api/auth/signup`（トークンは保存しない）、`/api/auth/signup/verify` のトークンを保存、400 は `AuthError` を投げる | 同 |
 | MT-F01-12 | Googleの設定（A-38） | `{clientId:'cid'}`／`{}` | GET `/api/auth/google/config`、`{clientId:'cid'}`／`{clientId:null}` | 同 |
 | MT-F01-13 | Googleでログイン（A-39） | 成功／401 | `{credential}` を送ってトークンを保存／`AuthError`（`LOGIN_FAILED`・401） | 同 |
+| MT-F01-14 | サーバー起動中（ログイン） | `signIn` で 503 `SERVER_WAKING` が2回のあと成功 | 偽の時計で5秒ずつ待ってやり直し、3回目で `{ done: true }` | 状 |
+| MT-F01-15 | サーバー起動中の再試行が尽きる（ログイン） | `signIn` で 503 `SERVER_WAKING` が続く | 5秒ごとに48回（4分）やり直したあと、`code: 'SERVER_WAKING'`・`status: 503` で失敗（呼び出しは49回） | 境 |
 
 #### M-F02 `core/api.js`
 
@@ -1160,6 +1194,8 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-F02-06 | 入力エラー           | 400 `VALIDATION_ERROR`、details あり             | `ApiError` の `code`・`status:400`・`details`                | 同  |
 | MT-F02-07 | 通信エラー           | `fetch` が `TypeError: Failed to fetch`        | `ApiError('NETWORK')`（画面は M-02）                          | 異  |
 | MT-F02-08 | JSONでない応答・204・CSV・PUT・DELETE・既定の引数 | 502（本文がJSONでない）、204、CSV（raw）、PUT、DELETE、`fetch` 既定のまま | `HTTP_502`、null、文字列、メソッドどおり、既定の login・fetch を使う | 異 |
+| MT-F02-09 | サーバー起動中から復帰 | 503 `SERVER_WAKING` が2回のあと200 | 5秒たつまでは再送しない。5秒ずつ進めると結果を返す。`onResuming` に1回目・2回目を渡す（M-01 を表示） | 状 |
+| MT-F02-10 | サーバー起動中の再試行が尽きる | 503 `SERVER_WAKING` が続く | 5秒ごとに48回（4分）やり直したあと `ApiError('SERVER_WAKING')`・`status: 503`（呼び出しは49回） | 境 |
 
 #### M-F03〜M-F06 `core/router.js`・`core/store.js`・`logic/format.js`・`logic/grading-poller.js`
 
@@ -1500,11 +1536,11 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | 4.9 説明の採点、2.5 非同期方式    | 3.7、4.3、4.7、5.2 A-07b・A-09・A-10、7.3・7.6 | grading-worker、gradings、prompts、jobs、server/worker | MT-W01-01〜14、MT-H07-01〜11、MT-A02、MT-A04、MT-D04-01〜03、MT-S02-01〜06   |
 | 4.10 問題取り込み            | 4.4、5.3 A-13〜A-16、7.4 | import-worker、admin-imports、admin-questions | MT-W02-01〜20、MT-H09-01〜09、MT-H10              |
 | 4.11 アカウント管理、6.3 物理削除  | 5.3 A-19・A-20・A-21b、4.5.1 | admin-users、purge-users、s13-users         | MT-H12-01〜11、MT-W03-09・15、MT-F21-11                 |
-| 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01・M-D02、4.6、6.1 | errors、db/client、tx、server/http、api.js          | MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜11、MT-F02-02〜03          |
+| 5.1 API共通仕様、3.5 DB起動待ち | 2.4.4、3.3 M-D01・M-D02、4.6、6.1 | errors、db/client、tx、server/http、api.js          | MT-U01、MT-D01-01〜12、MT-D02-01〜07、MT-S01-01〜11、MT-F02-02〜03・09〜10          |
 | 5.4 CSV出力              | 5.3 A-17・A-18       | admin-dashboard                 | MT-H11-01〜08                              |
 | 5.5 AI連携          | 3.6、7章              | ai/client、sakura、bedrock、json-guard、persona、prompts | MT-A01〜MT-A06                            |
 | 5.6 メール、6.2 定期処理       | 3.8、4.5、4.7、9.2             | mail/smtp、templates、server/worker      | MT-M01-02〜09、MT-S02-07〜09・11      |
-| 8.1 認証・権限、3.7 S-01 ログイン              | 3.2 M-U04、3.10、5.4 A-30〜A-39、6.1       | authz、router、auth/password・token・google、routes/auth、repositories/auth、core/auth.js、pages/login.js            | MT-U04-01〜10、MT-H01-06〜07、MT-K01〜MT-K03、MT-H15-01〜26、MT-D04-05〜11、MT-F01-01〜13、MT-F23-01〜18   |
+| 8.1 認証・権限、3.7 S-01 ログイン              | 3.2 M-U04、3.10、5.4 A-30〜A-39、6.1       | authz、router、auth/password・token・google、routes/auth、repositories/auth、core/auth.js、pages/login.js            | MT-U04-01〜10、MT-H01-06〜07、MT-K01〜MT-K03、MT-H15-01〜26、MT-D04-05〜11、MT-F01-01〜15、MT-F23-01〜18   |
 | 8.2 データ保護              | 2.4.5、9.1           | logger、format、prompts           | MT-U05-04、MT-F05-01、MT-A04-02             |
 | 3.3 画面遷移、3.4 画面レイアウトの基本 | 6.1、6.2 | shell、router、sw | MT-F08-01〜06、MT-F03-06、MT-F24-01〜04 |
 | 3.5 共通の表示ルール、9章 メッセージ | 6.1 | components、status | MT-F07-01〜13 |
@@ -1514,6 +1550,7 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | 3.7 S-15・S-08 学習サマリ（学習サマリのルール）、5.3 A-12b・A-12c、5.5 AI連携 | 3.5 M-G08、5.2 A-12b・A-12c、6.2、7.7、8.6 | domain/summary、routes/summaries、repositories/summaries、prompts/summary-comment、parts/summary-panel、s15-summary、s08-profile | MT-G08-01〜08、MT-H16-01〜08、MT-D03-36〜37、MT-A04-11〜12、MT-F26-01〜07、MT-F25-04、MT-F16-06、MT-F14-12 |
 | 3.7 S-08・S-16・S-17 コースごとの実績（コースごとの実績のルール）、5.3 A-12・A-12d・A-12e | 5.2 A-12・A-12d・A-12e、6.1、6.2、7.7、8.6 | routes/course-records、routes/me、repositories/course-records、prompts/summary-comment、s16-course-records、s17-course-record、s08-profile、shell | MT-H17-01〜07、MT-H02-20、MT-D03-38〜41、MT-A04-13、MT-F29-01〜02、MT-F30-01〜04、MT-F16-02・07〜08、MT-F08-07 |
 | 2章 システム構成（ファイル・監視・リリース） | 3.9、4.1、8.7、10.4 | storage、db/migrate、server/main、util/alert | MT-O01-01〜05、MT-D05-01〜05、MT-S03-01〜05、MT-U08-01〜03 |
+| 2.10 サーバーの自動停止と起動（dev） | 4.8 | workers/wake、core/api.js、core/auth.js | MT-C01-01〜21、MT-F02-09〜10、MT-F01-14〜15 |
 
 ### 6.2 合否基準
 
@@ -1535,7 +1572,7 @@ flowchart TD
 | --------- | ------------------------------------------------------------------------------------------ |
 | テストケース    | 本書のテストケースがすべて実装され、すべて成功する（`it.skip`・`it.todo` が0件）                                          |
 | カバレッジ     | `functions/shared/domain/**` と `web/js/logic/validators.js`：命令網羅（C0）100%・分岐網羅（C1）100%      |
-|           | そのほかの `functions/**`、`server/**`、`web/js/core/**`・`logic/**`・`pages/**`・`parts/**`・`components/**`・`shell.js`：命令網羅90%以上・分岐網羅80%以上                |
+|           | そのほかの `functions/**`、`server/**`、`web/js/core/**`・`logic/**`・`pages/**`・`parts/**`・`components/**`・`shell.js`、`workers/**`：命令網羅90%以上・分岐網羅80%以上                |
 | 実行時間      | 全件で60秒以内（遅いテストは偽の時計を使っているか見直す）                                                             |
 | 安定性       | 同じコミットで3回続けて実行し、結果が変わらない（時刻・乱数・実行順に依存しない）                                                  |
 
@@ -1562,6 +1599,8 @@ flowchart TD
 | 件数        | 実行・成功・失敗・スキップの件数                      |
 | カバレッジ     | C0・C1（全体と domain・validators）           |
 | 失敗したテスト   | ID と Issue 番号（失敗0件ならなし）                |
+
+モジュールテスト結果報告書は、`npm run test:report` で作り直す。テストを3回（3回目はカバレッジ付き）流し、仕様書のケースと突き合わせて md・html を書き出す。仕様書にないID（`MT-F02-03b` のようにうしろに文字が続くものを含む）があれば不合格にする。所見・判定の文・変更履歴は `scripts/test-report.meta.json` に書く。
 
 ### 6.5 結合テストへの申し送り
 
@@ -1592,7 +1631,7 @@ timeline
   2026-11-04 : 第2.1版
   2026-11-06 : 第2.2版 : 第2.3版
   2026-11-07 : 第2.4版
-  2026-11-12 : 第2.5版
+  2026-11-12 : 第2.5版 : 第2.6版
 ```
 
 日付は版を作った日。
@@ -1624,3 +1663,4 @@ timeline
 | 第2.3版 | 2026-11-06 | Googleでログイン（A-38・A-39、S-01）のテスト23件を MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18 として載せる |
 | 第2.4版 | 2026-11-07 | 通知メール（S-10・A-04・B-03）を機能ごと削除し、そのテストケースを欠番にする |
 | 第2.5版 | 2026-11-12 | サーバーが止まっているときの Service Worker のテスト2件（MT-F24-03〜04）を載せる |
+| 第2.6版 | 2026-11-12 | 起こす係の Cloudflare Worker（`workers/wake`）のテスト21件を M-C01（MT-C01-01〜21）として載せ、サーバー起動中（`SERVER_WAKING`）の待ち合わせのテスト4件を MT-F02-09〜10・MT-F01-14〜15 として載せ、1.3・2.1・3.2・6.1・6.2 を今の `vitest.config.js` に合わせ、6.4 に報告書を作り直すコマンド（`npm run test:report`）を書く |

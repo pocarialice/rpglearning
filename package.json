@@ -10,7 +10,8 @@
     "migrate": "node scripts/migrate.mjs",
     "create-admin": "node scripts/create-admin.mjs",
     "check-ai": "node scripts/check-ai.mjs",
-    "build:web": "node scripts/build-web.mjs"
+    "build:web": "node scripts/build-web.mjs",
+    "test:report": "node scripts/test-report-all.mjs"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.7",
