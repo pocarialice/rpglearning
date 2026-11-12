@@ -131,7 +131,7 @@ describe('M-F01 core/auth', () => {
   })
 })
 describe('M-F01 core/auth サーバー起動中', () => {
-  it('MT-F01-30 SERVER_WAKING なら5秒ごとに待ってやり直す', async () => {
+  it('MT-F01-14 SERVER_WAKING なら5秒ごとに待ってやり直す', async () => {
     vi.useFakeTimers()
     const waking = () => res(503, { error: { code: 'SERVER_WAKING', message: '起動中' } })
     fetchFn.mockResolvedValueOnce(waking()).mockResolvedValueOnce(waking()).mockResolvedValue(tokens())
@@ -141,7 +141,7 @@ describe('M-F01 core/auth サーバー起動中', () => {
     expect(fetchFn).toHaveBeenCalledTimes(3)
     vi.useRealTimers()
   })
-  it('MT-F01-31 待っても起きなければ SERVER_WAKING で失敗する', async () => {
+  it('MT-F01-15 待っても起きなければ SERVER_WAKING で失敗する', async () => {
     vi.useFakeTimers()
     fetchFn.mockImplementation(async () => res(503, { error: { code: 'SERVER_WAKING' } }))
     const p = make().signIn('a@x.jp', 'Pass1234')

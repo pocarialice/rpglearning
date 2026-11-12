@@ -38,12 +38,12 @@ async function run(request, opts) {
 }
 beforeEach(() => resetCache())
 describe('shouldWake', () => {
-  it('ログイン中の画面からの /api/*（Authorization）と POST は起こす', () => {
+  it('MT-C01-01 ログイン中の画面からの /api/*（Authorization）と POST は起こす', () => {
     expect(shouldWake(req('/api/me', { headers: { authorization: 'Bearer x' } }))).toBe(true)
     expect(shouldWake(req('/api/auth/login', { method: 'POST' }))).toBe(true)
     expect(shouldWake(req('/__wake', { method: 'POST' }))).toBe(true)
   })
-  it('画面のファイル・GET だけの /api・死活確認・ボットでは起こさない', () => {
+  it('MT-C01-02 画面のファイル・GET だけの /api・死活確認・ボットでは起こさない', () => {
     expect(shouldWake(req('/'))).toBe(false)
     expect(shouldWake(req('/js/main.js'))).toBe(false)
     expect(shouldWake(req('/api/me'))).toBe(false)
@@ -54,7 +54,7 @@ describe('shouldWake', () => {
   })
 })
 describe('isUnreachable', () => {
-  it('Cloudflare の 52x・530 だけをつながらないとみなす（アプリの 503 や Caddy の 502 はそのまま返す）', () => {
+  it('MT-C01-03 Cloudflare の 52x・530 だけをつながらないとみなす（アプリの 503 や Caddy の 502 はそのまま返す）', () => {
     expect(isUnreachable(new Response('', { status: 522 }))).toBe(true)
     expect(isUnreachable(new Response('', { status: 530 }))).toBe(true)
     expect(isUnreachable(new Response('', { status: 503 }))).toBe(false)
@@ -62,7 +62,7 @@ describe('isUnreachable', () => {
   })
 })
 describe('powerOn', () => {
-  it('止まっていれば PUT で電源を入れる。認証は Basic', async () => {
+  it('MT-C01-04 止まっていれば PUT で電源を入れる。認証は Basic', async () => {
     const f = fakeFetch()
     expect(await powerOn(env, f)).toBe('started')
     const s = f.sakura()
@@ -71,34 +71,34 @@ describe('powerOn', () => {
     expect(s[2].url).toMatch(/\/server\/113\/power$/)
     expect(s[0].auth).toBe('Basic ' + btoa('t:s'))
   })
-  it('もう動いていれば何もしない。ID は覚えておく', async () => {
+  it('MT-C01-05 もう動いていれば何もしない。ID は覚えておく', async () => {
     const f = fakeFetch({ power: 'up' })
     expect(await powerOn(env, f)).toBe('up')
     expect(await powerOn(env, f)).toBe('up')
     expect(f.sakura().map((c) => c.method)).toEqual(['GET', 'GET', 'GET'])
   })
-  it('名前がぴったり同じサーバーが1台でなければ失敗する（部分一致のものは数えない）', async () => {
+  it('MT-C01-06 名前がぴったり同じサーバーが1台でなければ失敗する（部分一致のものは数えない）', async () => {
     const f = fakeFetch({ servers: [{ ID: '1', Name: 'rpg-dev-app-old' }] })
     await expect(powerOn(env, f)).rejects.toThrow('0 台')
   })
-  it('API がエラーなら失敗する', async () => {
+  it('MT-C01-07 API がエラーなら失敗する', async () => {
     const f = async () => json(401, {})
     await expect(powerOn(env, f)).rejects.toThrow('HTTP 401')
   })
 })
 describe('handle', () => {
-  it('サーバーが動いていれば、そのまま返す（起こさない）', async () => {
+  it('MT-C01-08 サーバーが動いていれば、そのまま返す（起こさない）', async () => {
     const f = fakeFetch({ origin: () => json(200, { ok: true }) })
     const res = await run(req('/api/me', { headers: { authorization: 'Bearer x' } }), { fetchFn: f, cache: memCache() })
     expect(res.status).toBe(200)
     expect(f.sakura()).toHaveLength(0)
   })
-  it('アプリの 503（DB_RESUMING）はそのまま返す', async () => {
+  it('MT-C01-09 アプリの 503（DB_RESUMING）はそのまま返す', async () => {
     const f = fakeFetch({ origin: () => json(503, { error: { code: 'DB_RESUMING' } }) })
     const res = await run(req('/api/me', { headers: { authorization: 'Bearer x' } }), { fetchFn: f, cache: memCache() })
     expect((await res.json()).error.code).toBe('DB_RESUMING')
   })
-  it('止まっていて、ログイン中の画面からの API なら、起こして SERVER_WAKING を返す', async () => {
+  it('MT-C01-10 止まっていて、ログイン中の画面からの API なら、起こして SERVER_WAKING を返す', async () => {
     const cache = memCache()
     const f = fakeFetch({ origin: () => new Response('', { status: 522 }) })
     const res = await run(req('/api/me', { headers: { authorization: 'Bearer x' } }), { fetchFn: f, cache })
@@ -109,7 +109,7 @@ describe('handle', () => {
     expect(cache.m.has(stateUrl(SITE))).toBe(true)
     expect(cache.m.has(wokeUrl(SITE))).toBe(true)
   })
-  it('つながらないと覚えているあいだはサーバーに取りに行かず、起こしたばかりなら API も呼ばない', async () => {
+  it('MT-C01-11 つながらないと覚えているあいだはサーバーに取りに行かず、起こしたばかりなら API も呼ばない', async () => {
     const cache = memCache()
     await cache.put(stateUrl(SITE), new Response('1'))
     await cache.put(wokeUrl(SITE), new Response('1'))
@@ -118,12 +118,12 @@ describe('handle', () => {
     expect(res.status).toBe(503)
     expect(f.calls).toHaveLength(0)
   })
-  it('つながらない（例外）ときも起動中を返す', async () => {
+  it('MT-C01-12 つながらない（例外）ときも起動中を返す', async () => {
     const f = fakeFetch({ origin: () => { throw new Error('timeout') } })
     const res = await run(req('/api/me', { headers: { authorization: 'Bearer x' } }), { fetchFn: f, cache: memCache() })
     expect((await res.json()).error.code).toBe('SERVER_WAKING')
   })
-  it('止まっていて画面を開いたら、起動中ページを返す（ページの JavaScript が起こす。GET だけでは起こさない）', async () => {
+  it('MT-C01-13 止まっていて画面を開いたら、起動中ページを返す（ページの JavaScript が起こす。GET だけでは起こさない）', async () => {
     const f = fakeFetch({ origin: () => new Response('', { status: 521 }) })
     const res = await run(req('/', { headers: { accept: 'text/html' } }), { fetchFn: f, cache: memCache() })
     expect(res.status).toBe(503)
@@ -134,48 +134,48 @@ describe('handle', () => {
     expect(html).toContain('/api/health')
     expect(f.sakura()).toHaveLength(0)
   })
-  it('画面のファイル（画像など）には短い 503 を返す', async () => {
+  it('MT-C01-14 画面のファイル（画像など）には短い 503 を返す', async () => {
     const f = fakeFetch({ origin: () => new Response('', { status: 522 }) })
     const res = await run(req('/img/a.png', { headers: { accept: 'image/png' } }), { fetchFn: f, cache: memCache() })
     expect(res.status).toBe(503)
     expect(await res.text()).toBe('starting')
   })
-  it('POST /__wake は 204 を返し、電源を入れる', async () => {
+  it('MT-C01-15 POST /__wake は 204 を返し、電源を入れる', async () => {
     const f = fakeFetch()
     const res = await run(req('/__wake', { method: 'POST' }), { fetchFn: f, cache: memCache() })
     expect(res.status).toBe(204)
     expect(f.sakura().some((c) => c.method === 'PUT')).toBe(true)
   })
-  it('ボットの POST /__wake では起こさない', async () => {
+  it('MT-C01-16 ボットの POST /__wake では起こさない', async () => {
     const f = fakeFetch()
     const res = await run(req('/__wake', { method: 'POST', headers: { 'user-agent': 'GPTBot/1.0' } }), { fetchFn: f, cache: memCache() })
     expect(res.status).toBe(204)
     expect(f.sakura()).toHaveLength(0)
   })
-  it('電源を入れられなくても、起動中は返す（ログに残す）', async () => {
+  it('MT-C01-17 電源を入れられなくても、起動中は返す（ログに残す）', async () => {
     const f = async (input) => (typeof input === 'string' ? json(500, {}) : new Response('', { status: 522 }))
     const res = await run(req('/api/me', { headers: { authorization: 'Bearer x' } }), { fetchFn: f, cache: memCache() })
     expect(res.status).toBe(503)
   })
-  it('Let\'s Encrypt の確認はそのまま渡す。状態のパスは外に見せない', async () => {
+  it('MT-C01-18 Let\'s Encrypt の確認はそのまま渡す。状態のパスは外に見せない', async () => {
     const f = fakeFetch({ origin: () => new Response('token') })
     expect(await (await run(req('/.well-known/acme-challenge/abc'), { fetchFn: f, cache: memCache() })).text()).toBe('token')
     expect((await run(req('/__wake-state/woke'), { fetchFn: f, cache: memCache() })).status).toBe(404)
   })
 })
 describe('canonicalRedirect', () => {
-  it('www・前のドメインは、パスとクエリをそのままに本体へ 301 で移す（サーバーにも API にも行かない）', async () => {
+  it('MT-C01-19 www・前のドメインは、パスとクエリをそのままに本体へ 301 で移す（サーバーにも API にも行かない）', async () => {
     const f = fakeFetch()
     const res = await run(new Request('https://www.example.jp/s/06?x=1', { headers: { 'user-agent': UA } }), { fetchFn: f, cache: memCache() })
     expect(res.status).toBe(301)
     expect(res.headers.get('Location')).toBe('https://example.jp/s/06?x=1')
     expect(f.calls).toHaveLength(0)
   })
-  it('本体のドメインと、CANONICAL_HOST がないときは移さない', () => {
+  it('MT-C01-20 本体のドメインと、CANONICAL_HOST がないときは移さない', () => {
     expect(canonicalRedirect(new URL('https://example.jp/'), env)).toBeNull()
     expect(canonicalRedirect(new URL('https://www.example.jp/'), {})).toBeNull()
   })
-  it('www の Let\'s Encrypt の確認は、移さずにサーバーへ渡す', async () => {
+  it('MT-C01-21 www の Let\'s Encrypt の確認は、移さずにサーバーへ渡す', async () => {
     const f = fakeFetch({ origin: () => new Response('token') })
     const res = await run(new Request('https://www.example.jp/.well-known/acme-challenge/abc'), { fetchFn: f, cache: memCache() })
     expect(await res.text()).toBe('token')
