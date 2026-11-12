@@ -562,7 +562,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.7版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>版数<b>第1.8版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
       <li>作成日<b>2026-10-19（各版の日付は「変更履歴」を参照）</b></li>
       <li>入力文書<b>RPG学習アプリ 要件定義書 第1.5版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
@@ -996,7 +996,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>PWA</td>
-<td><code>manifest.webmanifest</code> と Service Worker を配置。ホーム画面に追加できる。ホーム画面に追加したときの起動を速くする</td>
+<td><code>manifest.webmanifest</code> と Service Worker を配置。ホーム画面に追加できる。ホーム画面に追加したときの起動を速くする。画面を開くときはキャッシュを使わず毎回サーバーから取る（サーバーが休んでいれば Worker の起動中ページが出る）。通信そのものができないときは「お休み中」の案内と「もう一度開く」ボタンを出す</td>
 </tr>
 <tr>
 <td>対応ブラウザ</td>
@@ -4450,7 +4450,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   
 <section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
 <div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/07</small></span></li><li class="now"><span class="hist-chip"><b>第1.7版</b><small>11/10</small></span></li></ol>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/10</small></span></li><li class="now"><span class="hist-chip"><b>第1.8版</b><small>11/12</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
 <thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
@@ -4468,11 +4468,12 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr><td>第1.5版</td><td>2026-11-06</td><td>Googleでログインを追加</td></tr>
 <tr><td>第1.6版</td><td>2026-11-07</td><td>通知メール（S-10・B-03）を機能ごと削除</td></tr>
 <tr><td>第1.7版</td><td>2026-11-10</td><td>dev を本番として <code>rpglearning.net</code> で公開している構成に合わせる。Cloudflare（DNS・Worker）、サーバーの自動停止とアクセスでの起動（2.10）、サーバーの中の DB、prod の凍結を、方式・API・可用性・監視・メッセージ・未決事項に反映</td></tr>
+<tr><td>第1.8版</td><td>2026-11-12</td><td>サーバーが休んでいるときにキャッシュの画面を出さないよう、PWA の Service Worker のふるまい（2.6）を直す</td></tr>
 </tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.7版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.8版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

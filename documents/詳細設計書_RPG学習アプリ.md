@@ -3,7 +3,7 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第1.8版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照） |
+| 版数     | 第1.9版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照） |
 | 作成日    | 2026-10-20（各版の日付は「変更履歴」を参照） |
 | 入力文書   | 要件定義書 第1.4版（ドラフト）、外部設計書 第1.7版、さくらのクラウド構築手順書 第0.5版。AWS 版（第1.1版まで）は `aws/documents/` に退避 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
@@ -1260,7 +1260,7 @@ sequenceDiagram
 | `components/celebration.js` | `showCelebration({ items, onClose })` | S-06 のクエスト達成・レベルアップのお祝い。`<dialog>` を `data-theme="dark"` で全画面に出し、光の柱と紙吹雪55個（色はトークン、`animate` で下から上へ無限にくり返す）を出す。`items`（`{kind:'quest', title, reward}` または `{kind:'level', level}`）を1枚ずつ見せ、タップで次へ、最後のタップか Esc で閉じる。S-06 は今回達成したクエスト → レベルアップの順に渡し、`result.celebrated` で1つの結果につき1回にする |
 | `core/keys.js` | `installCtrlEnter(doc)`、`findPrimary(field)` | 外部設計書 3.5.1 の Ctrl+Enter。`main.js` の `boot` で `document` に `keydown` を1つ付ける。対象の入力欄は `textarea` と、文字を打つ `input`（checkbox・radio・file・button・submit・reset・range・color を除く）。Enter かつ Ctrl か ⌘、`isComposing` でないときだけ動く。`findPrimary` は入力欄の親から順に、`[data-ctrl-enter]` → `.gd-btn-primary, button[type="submit"]` の順で `querySelector` し、最初に見つかった囲みのボタンを返す（`disabled` か `[hidden]` の中なら null）。`form`・`dialog`・`main`・`body` まで来て見つからなければ、`form` ならその form を（`requestSubmit()` で送る）、ほかは null。見つかったら `preventDefault` して `click()` |
 | `core/zoom.js` | `blockPinchZoom(doc)` | ピンチでの拡大を止める。`gesturestart`（iOS Safari）と、2本指以上の `touchmove` を `preventDefault`（`passive: false`）。viewport の `user-scalable=no`（`index.html`）は iOS Safari が無視するため。ダブルタップの拡大は CSS の `html { touch-action: manipulation; }`、入力時の自動拡大は `@media (pointer: coarse)` で入力欄を `font-size: 16px` にして止める（`css/app.css`） |
-| `sw.js`             | -                                                      | キャッシュ名 `rpg-shell-{リリース番号}`。画面の資材はキャッシュ優先、`/api/*` はキャッシュしない。新しい版が入ったら古いキャッシュを削除。キャッシュにないファイルは `fetch(request, { cache: 'no-cache' })` でサーバーに確かめて取る（ブラウザの HTTP キャッシュ（1日）に残る前の版を新しいキャッシュに入れないため） |
+| `sw.js`             | -                                                      | キャッシュ名 `rpg-shell-{リリース番号}`。画面を開くとき（ナビゲーション）はキャッシュを使わず、毎回 `fetch(request, { cache: 'no-cache' })` でサーバーから取り、応答（サーバーが止まっているときに Worker が返す起動中ページ（503）を含む）をそのまま返す。通信そのものができないときだけ、SW に組み込んだ「お休み中」の案内（503、`no-store`、「もう一度開く」ボタン）を返す（キャッシュのログイン画面が出て、何も反応しないように見えるのを防ぐため）。ほかの資材はキャッシュ優先、`/api/*` はキャッシュしない。新しい版が入ったら古いキャッシュを削除。キャッシュにないファイルは `fetch(request, { cache: 'no-cache' })` でサーバーに確かめて取る（ブラウザの HTTP キャッシュ（1日）に残る前の版を新しいキャッシュに入れないため） |
 
 ### 6.2 画面モジュール一覧
 
@@ -2539,6 +2539,7 @@ timeline
   2026-11-06 : 第1.5版 : 第1.6版
   2026-11-07 : 第1.7版
   2026-11-10 : 第1.8版
+  2026-11-12 : 第1.9版
 ```
 
 日付は版を作った日。
@@ -2563,3 +2564,4 @@ timeline
 | 第1.6版 | 2026-11-06 | Googleでログイン（A-38・A-39、M-K03、V008）を追加 |
 | 第1.7版 | 2026-11-07 | 通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009） |
 | 第1.8版 | 2026-11-10 | dev を本番として公開している構成に合わせる。起こす係の Cloudflare Worker（4.8）とサーバーのコマンド rpg-idle-stop・rpg-db・rpg-deploy（4.9）を足し、DB（dev はサーバーの中）・ディレクトリ・技術スタック・環境変数・監視・エラーの扱い（`SERVER_WAKING`）・ワークフロー・反映・環境ごとの違いを直す |
+| 第1.9版 | 2026-11-12 | サーバーが止まっているときに、Service Worker がキャッシュの画面を出さないようにする（画面を開くときは毎回サーバーから取り、つながらなければ「お休み中」の案内を出す。6.1 の sw.js） |

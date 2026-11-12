@@ -436,7 +436,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
     <span class="eyebrow">詳細設計書</span>
     <h1><i class="fa-solid fa-sitemap h-ico" aria-hidden="true"></i>RPG学習アプリ 詳細設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.8版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>版数<b>第1.9版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
       <li>作成日<b>2026-10-20（各版の日付は「変更履歴」を参照）</b></li>
       <li>入力文書<b>要件定義書 第1.4版（ドラフト）、外部設計書 第1.7版、さくらのクラウド構築手順書 第0.5版。AWS 版（第1.1版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
@@ -3470,7 +3470,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr>
 <td><code>sw.js</code></td>
 <td>-</td>
-<td>キャッシュ名 <code>rpg-shell-{リリース番号}</code>。画面の資材はキャッシュ優先、<code>/api/*</code> はキャッシュしない。新しい版が入ったら古いキャッシュを削除。キャッシュにないファイルは <code>fetch(request, { cache: 'no-cache' })</code> でサーバーに確かめて取る（ブラウザの HTTP キャッシュ（1日）に残る前の版を新しいキャッシュに入れないため）</td>
+<td>キャッシュ名 <code>rpg-shell-{リリース番号}</code>。画面を開くとき（ナビゲーション）はキャッシュを使わず、毎回 <code>fetch(request, { cache: 'no-cache' })</code> でサーバーから取り、応答（サーバーが止まっているときに Worker が返す起動中ページ（503）を含む）をそのまま返す。通信そのものができないときだけ、SW に組み込んだ「お休み中」の案内（503、<code>no-store</code>、「もう一度開く」ボタン）を返す（キャッシュのログイン画面が出て、何も反応しないように見えるのを防ぐため）。ほかの資材はキャッシュ優先、<code>/api/*</code> はキャッシュしない。新しい版が入ったら古いキャッシュを削除。キャッシュにないファイルは <code>fetch(request, { cache: 'no-cache' })</code> でサーバーに確かめて取る（ブラウザの HTTP キャッシュ（1日）に残る前の版を新しいキャッシュに入れないため）</td>
 </tr>
 </tbody>
 </table></div>
@@ -5766,7 +5766,7 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
   
 <section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
 <div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/07</small></span></li><li class="now"><span class="hist-chip"><b>第1.8版</b><small>11/10</small></span></li></ol>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/10</small></span></li><li class="now"><span class="hist-chip"><b>第1.9版</b><small>11/12</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
 <thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
@@ -5789,11 +5789,12 @@ docker compose logs --since 24h api worker | grep -E '&quot;msg&quot;:&quot;(ai|
 <tr><td>第1.6版</td><td>2026-11-06</td><td>Googleでログイン（A-38・A-39、M-K03、V008）を追加</td></tr>
 <tr><td>第1.7版</td><td>2026-11-07</td><td>通知メール（S-10・A-04・B-03・T-04）を機能ごと削除（V009）</td></tr>
 <tr><td>第1.8版</td><td>2026-11-10</td><td>dev を本番として公開している構成に合わせる。起こす係の Cloudflare Worker（4.8）とサーバーのコマンド rpg-idle-stop・rpg-db・rpg-deploy（4.9）を足し、DB（dev はサーバーの中）・ディレクトリ・技術スタック・環境変数・監視・エラーの扱い（<code>SERVER_WAKING</code>）・ワークフロー・反映・環境ごとの違いを直す</td></tr>
+<tr><td>第1.9版</td><td>2026-11-12</td><td>サーバーが止まっているときに、Service Worker がキャッシュの画面を出さないようにする（画面を開くときは毎回サーバーから取り、つながらなければ「お休み中」の案内を出す。6.1 の <code>sw.js</code>）</td></tr>
 </tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.8版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 詳細設計書 第1.9版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({
