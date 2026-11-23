@@ -20,6 +20,7 @@ import * as exp from '../../../../../functions/shared/db/repositories/exp.js'
 import * as quests from '../../../../../functions/shared/db/repositories/quests.js'
 import * as badges from '../../../../../functions/shared/db/repositories/badges.js'
 import { main } from '../../../../../functions/api-handler/index.mjs'
+import { startWithOf } from '../../../../../functions/api-handler/routes/quests.js'
 import { httpEvent, parse } from '../../../../fixtures/events/http.js'
 import { memoryLogger } from '../../../../helpers/logger.js'
 import { bedrockMock, dbMock, awsError } from '../../../../helpers/mocks.js'
@@ -44,7 +45,7 @@ describe('M-H05 quests（A-07）', () => {
   })
   it('MT-H05-01 冒険の開始', async () => {
     const body = parse(await call({ path: '/api/quests/next' }))
-    expect(adventures.start).toHaveBeenCalledWith(15, 3)
+    expect(adventures.start).toHaveBeenCalledWith(15, 3, { includeExplain: true })
     expect(body).toMatchObject({ adventureId: 'adv_90', index: 1, total: 5, kind: 'choice', isReview: true })
     expect(adventures.incrementServed).toHaveBeenCalledWith(90, { k: 'choice', q: 42 })
     expect(reviews.listDue).toHaveBeenCalledWith(15, 3, 'choice', '2026-10-20')
@@ -104,6 +105,26 @@ describe('M-H05 quests（A-07）', () => {
     expect(parse(await call({ path: '/api/quests/next' })).keyword).toEqual({ id: 'kw_123', text: '' })
     adventures.start.mockResolvedValue({ adventureId: 90, servedCount: 0 })
     expect((await call({ path: '/api/quests/next' })).statusCode).toBe(200)
+  })
+  it('MT-H05-13 explain=0 で始めた冒険は説明問題を出さない', async () => {
+    adventures.start.mockResolvedValue(adv({ lastKind: 'choice', includeExplain: false }))
+    reviews.listUnlearned.mockImplementation(async (u, c, kind) => (kind === 'explain' ? [{ questionId: 42, keywordId: 123 }] : []))
+    const body = parse(await call({ path: '/api/quests/next', query: { explain: '0' } }))
+    expect(adventures.start).toHaveBeenCalledWith(15, 3, { includeExplain: false })
+    expect(body).toMatchObject({ kind: 'choice', question: { id: 'q_42' } })
+    expect(reviews.listDue.mock.calls.map((c) => c[2])).toEqual(['choice'])
+    // 続きの問題でも、冒険に保存した選択に従う
+    adventures.find.mockResolvedValue(adv({ servedCount: 1, lastKind: 'choice', includeExplain: false, served: [{ k: 'choice', q: 41 }] }))
+    expect(parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } }))).toMatchObject({ kind: 'choice' })
+  })
+  it('MT-H05-14 復習と新規を交互に出す（冒険ごとに始まりが入れ替わる）', async () => {
+    expect(startWithOf(90)).toBe('new')
+    expect(startWithOf(91)).toBe('review')
+    reviews.listUnlearned.mockImplementation(async (u, c, kind) => (kind === 'choice' ? [{ questionId: 43, keywordId: null }] : []))
+    adventures.find.mockResolvedValue(adv({ servedCount: 0 }))
+    expect(parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } }))).toMatchObject({ index: 1, isReview: false })
+    adventures.find.mockResolvedValue(adv({ servedCount: 1, lastKind: 'explain', served: [{ k: 'explain', q: 7, kw: 70 }] }))
+    expect(parse(await call({ path: '/api/quests/next', query: { adventureId: 'adv_90' } }))).toMatchObject({ index: 2, isReview: true })
   })
 })
 describe('M-H06 answers（A-08）', () => {
@@ -183,6 +204,15 @@ describe('M-H06 answers（A-08）', () => {
     })
     const input = br.commandCalls(ConverseCommand)[0].args[0].input
     expect(input).toMatchObject({ modelId: 'model-light', inferenceConfig: { maxTokens: 1000, temperature: 0.7 } })
+  })
+  it('MT-H06-09 冒険の5問目を答えると「冒険を1回やりとげる」を達成', async () => {
+    quests.listToday.mockResolvedValue([{ userQuestId: 6, questCode: 'Q-06', target: 1, progress: 0, achieved: false }])
+    adventures.countAnswers.mockResolvedValue(4)
+    const body = parse(await answer(1))
+    expect(adventures.countAnswers.mock.calls[0][0]).toBe(90)
+    expect(body.quests).toEqual([{ id: 'Q-06', progress: 1, target: 1, done: true, achievedNow: true, reward: 30 }])
+    adventures.countAnswers.mockResolvedValue(2)
+    expect(parse(await answer(1)).quests[0]).toMatchObject({ progress: 0, done: false })
   })
   it('MT-H06-08 冒険IDなし・クエスト達成・バッジ・コメントが空', async () => {
     br.on(ConverseCommand).resolves(converseOutput(''))

@@ -3,9 +3,9 @@
 | 項目     | 内容                                                         |
 | ------ | ---------------------------------------------------------- |
 | 文書名    | RPG学習アプリ 詳細設計書                                             |
-| 版数     | 第2.0版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照） |
+| 版数     | 第2.1版（ドラフト：第1〜12章、HTML版あり。変更の内容は「変更履歴」を参照） |
 | 作成日    | 2026-10-20（各版の日付は「変更履歴」を参照） |
-| 入力文書   | 要件定義書 第1.4版（ドラフト）、外部設計書 第1.7版、さくらのクラウド構築手順書 第0.5版。AWS 版（第1.1版まで）は `aws/documents/` に退避 |
+| 入力文書   | 要件定義書 第1.6版（ドラフト）、外部設計書 第1.9版、さくらのクラウド構築手順書 第0.5版。AWS 版（第1.1版まで）は `aws/documents/` に退避 |
 | 対象フェーズ | Phase 1（MVP）。Phase 2/3は「拡張予定」と注記                           |
 | 関連文書   | モジュールテスト仕様書\_RPG学習アプリ（本書のモジュール単位の試験を定める）                   |
 
@@ -162,7 +162,8 @@ rpglearning/
 │  ├─ V006__signup.sql            # アカウント作成の確認待ち（8.4.4）
 │  ├─ V007__daily_message_slot.sql # ひとことを作った時間帯（8.4.5）
 │  ├─ V008__google_login.sql      # Googleでログイン（8.4.6）
-│  └─ V009__drop_notify_settings.sql # 通知設定を削除（8.4.7）
+│  ├─ V009__drop_notify_settings.sql # 通知設定を削除（8.4.7）
+│  └─ V010__quest_mix.sql         # クエスト Q-04 の廃止と Q-06〜Q-08、冒険の説明問題の有無（8.4.8）
 ├─ server/                        # コンテナの入口
 │  ├─ main.mjs                    # 環境変数の確認、マイグレーション、ROLE ごとの起動と停止
 │  ├─ http.mjs                    # HTTP サーバー（/api・画面・/partners）
@@ -387,7 +388,7 @@ rpglearning/
 | M-G03 | `domain/quest.js`             | デイリークエスト                               | `pickDailyQuests`、`applyQuestEvent`                           |
 | M-G04 | `domain/badge.js`             | バッジ                                    | `judgeMasteryBadges`、`judgeStreakBadges`                      |
 | M-G05 | `domain/ranking.js`           | 順位づけ                                   | `rankRows(rows)`                                              |
-| M-G06 | `domain/picker.js`            | 出題                                     | `chooseKind(...)`、`pickNext(candidates, state)`               |
+| M-G06 | `domain/picker.js`            | 出題                                     | `chooseKind(...)`、`slotOf(index, startWith)`、`pickNext(candidates, state)` |
 | M-G07 | `domain/answer-flow.js`       | 解答後の更新内容の計算                            | `buildAnswerOutcome(input)`                                   |
 | M-G08 | `domain/summary.js`           | 学習サマリの組み立て（A-12b・A-12c）              | `studySeconds(rows)`、`formatStudyTime`、`reviewPoints`、`tally`、`buildMarkdown`、`snippet` |
 | M-A01 | `ai/bedrock.js`               | Bedrock呼び出し                            | `converse({modelId, system, messages, maxTokens, temperature, timeoutMs})` |
@@ -465,15 +466,15 @@ rpglearning/
 | `courses.js` | `listWithProgress`、`listAll`（担当者つき）、`listIds`、`findById`、`create`、`update`、`assignAdmins`、`listAdminCourses`、`isAdmin`（担当コースの確認）、`dashboardRows`（8.6 のダッシュボードの一覧） |
 | `enrollments.js` | `enroll`、`isEnrolled`、`listCourseIds`、`nicknameTaken(courseIds, nickname, exceptUserId)` |
 | `questions.js` | `findForLearner`、`findById`、`findKeyword`、`findDraftsByImport`、`listByCourse(courseId, {status, importId})`（archived を除き新しい順に最大500件。5.3 A-15b）、`findByIds(ids)`（5.3 A-16b）、`update`（選択肢・キーワードは番号ごとに更新。5.3 A-15）、`publish`、`deleteOrArchive(questionId, status, …)`（下書き・要確認は削除、公開済みは archived） |
-| `reviews.js` | `findItem`、`upsertItem`、`countDue`、`countDueByKind`（形式ごとの今日の復習数）、`listDue`、`listUnlearned`、`listLearned` |
+| `reviews.js` | `findItem`、`upsertItem`、`countDue`、`listDue`、`listUnlearned`、`listLearned`（今日の復習の数は画面に出さないので、形式ごとに数える `countDueByKind` は第2.1版でなくした） |
 | `answers.js` | `insert`、`statsForUser`、`countOnDate`、`masteredCount` |
 | `exp.js` | `insertLog`、`weeklyTotals(courseId, weekStart)`（利用者の状態 `status` も返す）、`weeklyTotalForUser` |
-| `quests.js` | `listToday`、`insertAssignments`、`saveProgress`、`listAssignTargets(today)`（日次の割り当て対象と復習対象数）、`listDefs` |
+| `quests.js` | `listToday`、`insertAssignments`、`saveProgress`、`listAssignTargets(today)`（日次の割り当て対象と、今日の割り当てがあるか）、`listDefs` |
 | `badges.js` | `listOwned`、`listOwnedDetail`（獲得日時つき）、`grant`、`listDefs` |
 | `rankings.js` | `currentWeek`、`history`、`weeks`（過去週の開始日。新しい順に最大12）、`closeWeek` |
 | `gradings.js` | `create`、`find`、`complete`（`status='processing'` のときだけ更新）、`fail`、`deleteOlderThan(cutoff)`（cutoff は `+09:00` 付きの日時。日数ではない） |
 | `imports.js` | `create`、`setKey`、`find`、`findByKey`、`listByCourse`、`setStatus`、`insertDrafts` |
-| `adventures.js` | `start`、`find`、`incrementServed`、`finish`、`addStudyTime`（1問10分までで冒険と累計に足す）、`summary`（S-15）                                                            |
+| `adventures.js` | `start(userId, courseId, { includeExplain })`（説明問題を出すかを冒険に保存）、`find`、`incrementServed`、`finish`、`addStudyTime`（1問10分までで冒険と累計に足す）、`countAnswers(adventureId)`（冒険の中で記録した解答の数。Q-06 の判定）、`summary`（S-15）                                                            |
 | `summaries.js`  | `listForAdventure(userId, adventureId)`・`listForDate(userId, day)`（学習サマリの解答の一覧。解いた順。8.6） |
 | `course-records.js` | `listForUser(userId)`（受講したコースと解答したコース。最後に学習した日が新しい順）、`findForUser(userId, courseId)`（1コース分。なければ null）、`detailCounts(userId, courseId, today)`、`listWeak(userId, courseId, limit)`（コースごとの実績。8.6） |
 | `audit.js`      | `write(actorId, action, target, detail)`                                                              |
@@ -513,16 +514,20 @@ rpglearning/
 
 | 関数                                           | 内容                                                                                         |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `pickDailyQuests(dueCount, rand = Math.random)` | `dueCount > 0` なら Q-04 を必ず入れ、残り2つを Q-01・02・03・05 から重複なく選ぶ。`dueCount = 0` なら Q-04 を除く4つから3つ。Q-04 の `target` は `dueCount` |
-| `applyQuestEvent(quests, ev)`                | 解答イベント `ev = { kind, correct, passed, isNew, isReview }` で未達成クエストの `progress` を進め、`target` に届いたものを `achieved` にする。戻り値は `{ quests, achievedNow: [{ code, reward }], questExp }`（`achievedNow` は今回達成したもの、`questExp` はその報酬の合計） |
+| `pickDailyQuests(rand = Math.random)` | `QUEST_CODES`（Q-01・02・03・05・06・07・08）から重複なく3つ選ぶ。説明問題でしか進まない `EXPLAIN_ONLY`（Q-03・Q-08）は1つ選んだらもう1つは候補から外す。`target` は `QUEST_DEFS` の値 |
+| `applyQuestEvent(quests, ev)`                | 解答イベント `ev = { kind, correct, passed, isNew, isReview, score, adventureCompleted, retryCorrect }` で未達成クエストの `progress` を進め、`target` に届いたものを `achieved` にする。定義のないクエスト（廃止した Q-04 の残り）は進めない。戻り値は `{ quests, achievedNow: [{ code, reward }], questExp }`（`achievedNow` は今回達成したもの、`questExp` はその報酬の合計） |
 
 | クエスト | 進む条件                                  | target   |
 | ---- | ------------------------------------- | -------- |
 | Q-01 | `kind='choice'`                       | 5        |
 | Q-02 | `kind='choice'` かつ `correct`          | 3        |
 | Q-03 | `kind='explain'` かつ `passed`          | 1        |
-| Q-04 | `isReview`                            | 0:00時点の復習対象数 |
 | Q-05 | `isNew`（その形式で初めて解いた問題・キーワード）           | 3        |
+| Q-06 | `adventureCompleted`（この解答で冒険の5問目を記録した）      | 1        |
+| Q-07 | `retryCorrect`（前にまちがえたことのある問題・キーワードに正解・合格した。`review_items.correct_count < answer_count`） | 1 |
+| Q-08 | `kind='explain'` かつ `score >= 80`（`HIGH_SCORE`）    | 1        |
+
+- Q-04（`isReview`、target は0:00時点の復習対象数）は第2.1版で廃止した（V010 で `quest_defs.is_active=false`）
 
 #### M-G04 `domain/badge.js` バッジ（Phase 1）
 
@@ -537,12 +542,22 @@ rpglearning/
 
 #### M-G06 `domain/picker.js` 出題
 
-1. 出す形式を決める：前の問題が `choice` なら `explain`、`explain` なら `choice`（最初は `choice`）。決めた形式に出せるものがなければ、もう一方の形式にする
-2. 形式の中では、①今日の復習（予定日の古い順）→ ②未学習（`question_id` の小さい順）→ ③学習済み（正答率の低い順。段階は変えない）の順に1件選ぶ
-3. 同じ冒険の中ですでに出したもの（`servedIds`）は除く
-4. キーワードは、同じ問題に複数あるとき予定日の早いもの（未学習なら `sort_order` の小さいもの）を1つだけ候補にする（SQLで絞る）
+1. 出す形式を決める：前の問題が `choice` なら `explain`、`explain` なら `choice`（最初は `choice`）。決めた形式に出せるものがなければ、もう一方の形式にする。`allowExplain=false`（説明問題なしの冒険）なら `choice` だけ
+2. 枠を決める：`slotOf(index, startWith)`。`index`（0始まり）が偶数なら `startWith` の枠、奇数ならもう一方（`'new'` 始まりは 新・復・新・復・新、`'review'` 始まりは 復・新・復・新・復）
+3. 枠ごとに出どころの順を変える。復習の枠は ①今日の復習 → ②未学習 → ③学習済み、新規の枠は ①未学習 → ②今日の復習 → ③学習済み。候補が1件以上ある最初の出どころから、`rand()` で**ランダムに**1件選ぶ
+4. 同じ冒険の中ですでに出したもの（`servedIds`）は除く。同じ冒険で出した問題（`usedQuestionIds`。択一・説明を問わない）は1回目の探索では除き、どの出どころにもなければ2回目で許す
+5. キーワードは、同じ問題に複数あるとき予定日の早いもの（未学習なら `sort_order` の小さいもの）を1つだけ候補にする（SQLで絞る）
 
-`pickNext({ due, unlearned, learned }, { lastKind, servedIds })` → `{ kind, questionId, keywordId, source: 'due'|'new'|'learned' }` または `null`（出せるものがない）
+`pickNext({ due, unlearned, learned }, { lastKind, servedIds, usedQuestionIds, index, startWith, allowExplain, rand })` → `{ kind, questionId, keywordId, source: 'due'|'new'|'learned' }` または `null`（出せるものがない）
+
+```mermaid
+flowchart LR
+  I["index と startWith"] --> S{"slotOf"}
+  S -->|review| R["due → unlearned → learned"]
+  S -->|new| N["unlearned → due → learned"]
+  R --> P["最初に候補がある出どころからランダムに1件"]
+  N --> P
+```
 
 - 候補は形式ごとに分ける：`{ due: { choice, explain }, unlearned: { choice, explain }, learned: { choice, explain } }`
 - `servedIds` は形式ごとに内部IDが重なるため、`choice:{問題ID}`・`explain:{キーワードID}` の文字列にする（`servedKey(kind, row)` で作る。`adventures.served` の `k`・`q`・`kw` と対応）
@@ -552,11 +567,13 @@ rpglearning/
 択一（A-08）と説明（grading-worker）で同じ計算を使うため、DBに書く前の「結果」を純粋関数でまとめる。
 
 ```text
-buildAnswerOutcome({ kind, correct, score, reviewItem, today, user, quests, ownedBadges, masteredCountBefore })
+buildAnswerOutcome({ kind, correct, score, adventureCompleted, reviewItem, today, user, quests, ownedBadges, masteredCountBefore })
   1. review = nextReview(reviewItem, correct, today)
   2. gained = calcAnswerExp(kind, correct, review.isReview)
   3. before = levelInfo(user.totalExp), after = levelInfo(user.totalExp + gained)
-  4. quests2 = applyQuestEvent(quests, {kind, correct, passed: kind==='explain' && correct, isNew: !reviewItem, isReview: review.isReview})
+  4. quests2 = applyQuestEvent(quests, {kind, correct, passed: kind==='explain' && correct, isNew: !reviewItem, isReview: review.isReview,
+                                       score, adventureCompleted, retryCorrect: retried(reviewItem, correct)})
+     retried = correct かつ reviewItem があり correctCount < answerCount（前にまちがえたことがある）
      questExp = 今回達成したクエストの報酬の合計 → after を再計算
   5. mastered = masteredCountBefore + (review.mastered ? 1 : 0)
      newBadges = judgeMasteryBadges(mastered, ownedBadges)
@@ -845,7 +862,7 @@ flowchart TD
 | - | ----------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | 1 | `close-ranking.js`      | 月曜だけ：前週（今日−7日〜昨日）の `exp_logs` をコース・利用者ごとに合計し、`rankRows` で順位をつけて `weekly_rankings` に保存。論理削除中の利用者は除く | `INSERT ... ON CONFLICT (course_id, week_start, user_id) DO NOTHING` |
 | 2 | `update-streak.js`      | 昨日 `last_active_on = 昨日` の利用者は `streak_days + 1`、それ以外は0。継続バッジを判定して付与                                         | `streak_checked_on = 今日` の利用者は飛ばす                              |
-| 3 | `assign-quests.js`      | 有効な学習者ごとに、0:00時点の復習対象数（全コース）を数え、`pickDailyQuests` で3つ選んで `user_quests` に入れる                                     | `UNIQUE (user_id, quest_on, quest_code)`。今日の行がある利用者は飛ばす          |
+| 3 | `assign-quests.js`      | 有効な学習者ごとに、`pickDailyQuests` で3つ選んで `user_quests` に入れる（復習対象の数は使わない）                                     | `UNIQUE (user_id, quest_on, quest_code)`。今日の行がある利用者は飛ばす          |
 | 4 | `purge-users.js`        | `delete_scheduled_on <= 今日` の利用者を `DELETE FROM users` で消す（関連テーブル・トークン・再設定リンクはCASCADE）。操作記録 `user.purge`（操作者は NULL）を残す。あわせて期限の切れたトークン・再設定リンク・アカウント作成の確認待ちを消す（`auth.deleteExpired`）        | 条件付きDELETEなので何度でも同じ                 |
 | 5 | `cleanup-gradings.js`   | 作成から30日を過ぎた `grading_jobs` と、終わってから30日を過ぎた `jobs` を削除                                                                            | 条件付きDELETEなので何度でも同じ                                          |
 
@@ -961,18 +978,18 @@ dev のサーバーを作るとき、スタートアップスクリプト（`set
 | 1 | `levelInfo(users.total_exp)`                                                                               |
 | 2 | ひとこと：`users.daily_message_on = 今日` かつ `users.daily_message_slot = 今の時間帯`（JST。朝 5:00〜10:59＝`morning`、昼 11:00〜16:59＝`day`、夜 17:00〜4:59＝`night`。0:00〜4:59 は前日の夜の続きとして、前日の日付で扱う）ならそれを使う。違えば軽量モデルで生成（5秒で打ち切り）して日付・時間帯と組で保存する（1日最大3回）。失敗したら定型文（persona ごとに3つから選ぶ）を使い、保存はしない |
 | 3 | `user_quests` の今日の3件（進み具合つき）                                                                              |
-| 4 | 今日の復習数：`review_items` の `stage < 6 AND next_review_on <= 今日` を現在のコースで、択一・説明ごとに数える                          |
+| - | 今日の復習数は返さない（第2.1版。復習は A-07 の出題の中でだけ使う）                          |
 
 #### A-06 `POST /api/enrollments`
 
 `{ courseId }` → コースの存在確認 → 受講済みなら `users.current_course_id` だけ切り替えて終わり → そのコースで自分のニックネームが使われていたら `409 CONFLICT`（M-08。ニックネームを変えてから受講する）→ `enrollments` に追加し `users.current_course_id` を更新。
 
-#### A-07 `GET /api/quests/next?adventureId=`
+#### A-07 `GET /api/quests/next?adventureId=&explain=`
 
-1. `adventureId` がなければ `adventures` を新しく作る。あれば自分のものか確認
+1. `adventureId` がなければ `adventures` を新しく作る（`explain=0` なら `include_explain=false`。それ以外は true）。あれば自分のものか確認
 2. `served_count >= 5`（`ADVENTURE_SIZE`）なら `finished_at` を入れ、`{ done: true, summary }` を返す（`summary` は下記。1問も解いていなければ null）
-3. 候補を取得：`reviews.listDue`（現在のコース・形式ごと最大20件）、`reviews.listUnlearned`、`reviews.listLearned`
-4. `pickNext` で1件選ぶ。`null` なら `finished_at` を入れ、`{ done: true, reason: 'NO_QUESTION', summary }`
+3. 候補を取得：`reviews.listDue`（現在のコース・形式ごと最大20件）、`reviews.listUnlearned`、`reviews.listLearned`。`include_explain=false` の冒険は `choice` だけ取る
+4. `pickNext` で1件選ぶ。`index = served_count`、`startWith = startWithOf(adventure_id)`（偶数＝`'new'`、奇数＝`'review'`。冒険ごとに交互）、`usedQuestionIds = served の q`、`allowExplain = include_explain`。`null` なら `finished_at` を入れ、`{ done: true, reason: 'NO_QUESTION', summary }`
 5. `adventures.served_count + 1`、`last_kind`・`served`（出した問題・キーワードの内部IDの配列）を更新
 6. 応答（択一）：`{ adventureId, index: 3, total: 5, kind: 'choice', isReview, question: {id, body, choices: [{no, body}]} }`。正解と解説は返さない
 7. 応答（説明）：`{ ..., kind: 'explain', keyword: {id, text}, question: {id, body} }`
@@ -1012,8 +1029,8 @@ sequenceDiagram
 1. 問題を取得（公開済み・現在のコース）。なければ 404
 2. correct = (choiceNo === questions.correct_choice)
 3. withTx:
-   a. review_items を FOR UPDATE で取得
-   b. outcome = buildAnswerOutcome(...)
+   a. review_items を FOR UPDATE で取得。adventureId があれば adventures.countAnswers（記録済みの解答の数）
+   b. outcome = buildAnswerOutcome(...)。記録済みの解答が4つ（この解答で5問目）なら adventureCompleted
    c. answer_logs に追加、review_items を upsert
    d. gained + questExp > 0 なら exp_logs に追加（理由 choice／quest、earned_week = weekStartJst）
    e. users.total_exp・level・last_active_on を更新
@@ -1269,7 +1286,7 @@ sequenceDiagram
 | 画面   | ファイル（pages/）                  | 使うAPI                    | 画面固有の処理                                                    |
 | ---- | ----------------------------- | ------------------------ | ---------------------------------------------------------- |
 | 初回   | `learner/onboarding.js`       | A-02、A-06、A-03           | 3ステップの流れ（ニックネーム→コース→パートナー）                                |
-| S-02 | `learner/s02-home.js`         | A-05                     | 「冒険に出る」で `store.adventureId` を空にして S-04／S-05 へ                 |
+| S-02 | `learner/s02-home.js`         | A-05                     | 「冒険に出る」で `store.adventureId` を空にして S-04／S-05 へ。「説明問題も出す」を外していれば A-07 に `explain=0` を付ける。選択は `localStorage`（キー `rpg.adventure.includeExplain`、`'0'`／`'1'`）に覚え、読み書きできないときは「出す」で始める。復習の数は出さない                 |
 | S-03 | `learner/s03-courses.js`      | A-06                     | 受講中の印、409（M-08）ならニックネーム変更へ案内                               |
 | S-04 | `learner/s04-choice.js`       | A-07、A-08                | 選ぶまで「答える」を押せない。結果は S-06 へ                                  |
 | S-05 | `learner/s05-explain.js`      | A-07、A-07b、A-09、A-10     | 最初に A-07b でパートナーの問いかけを取得（待つ間は「〇〇が質問を考えています」、失敗したら定型の質問）し、`store.quest.prompt` に覚える。入力のたびに `validateExplanation` で文字数とM-03・M-04を表示。送信時に `prompt` を添え、送信後は `pollGrading` と待機演出 |
@@ -1730,6 +1747,7 @@ CREATE TABLE IF NOT EXISTS adventures (
   served_count  smallint    NOT NULL DEFAULT 0 CHECK (served_count BETWEEN 0 AND 10),
   last_kind     text        CHECK (last_kind IN ('choice', 'explain')),
   served        jsonb       NOT NULL DEFAULT '[]',      -- [{"k":"choice","q":42},{"k":"explain","kw":123}]
+  -- include_explain boolean NOT NULL DEFAULT true    -- V010 で追加。false の冒険は説明問題を出さない（8.4.8）
   started_at    timestamptz NOT NULL DEFAULT now(),
   finished_at   timestamptz
 );
@@ -2085,6 +2103,22 @@ DROP TABLE IF EXISTS notify_settings;
 INSERT INTO schema_migrations (version, description) VALUES ('V009', 'drop notify settings') ON CONFLICT DO NOTHING;
 ```
 
+#### 8.4.8 出題の見直し（`db/migrations/V010__quest_mix.sql`）
+
+デイリークエスト Q-04（今日の復習をすべて終える）をやめ、Q-06〜Q-08 を足す。Q-04 の定義は過去の割り当てが参照しているので消さずに `is_active=false` にし、今日以降の未達成の Q-04 は取り下げる。あわせて冒険に、説明問題を出すかどうか（`include_explain`）を持たせる（既存の冒険は true）。
+
+```sql
+UPDATE quest_defs SET is_active = false WHERE quest_code = 'Q-04';
+INSERT INTO quest_defs (quest_code, title, target, reward_exp, sort_order) VALUES
+  ('Q-06', '冒険を1回やりとげる',           1, 30, 6),
+  ('Q-07', 'まちがえた問題を正解し直す',       1, 20, 7),
+  ('Q-08', 'キーワード説明で80点以上をとる',    1, 30, 8)
+ON CONFLICT (quest_code) DO NOTHING;
+DELETE FROM user_quests WHERE quest_code = 'Q-04' AND achieved_at IS NULL AND quest_on >= (now() AT TIME ZONE 'Asia/Tokyo')::date;
+ALTER TABLE adventures ADD COLUMN IF NOT EXISTS include_explain boolean NOT NULL DEFAULT true;
+INSERT INTO schema_migrations (version, description) VALUES ('V010', 'quest mix') ON CONFLICT DO NOTHING;
+```
+
 ### 8.5 初期データ（`db/migrations/V002__seed_masters.sql`）
 
 ```sql
@@ -2098,9 +2132,10 @@ INSERT INTO quest_defs (quest_code, title, target, reward_exp, sort_order) VALUE
   ('Q-01', '択一を5問解く',              5,    20, 1),
   ('Q-02', '択一で3問正解する',            3,    20, 2),
   ('Q-03', 'キーワード説明を1問合格する',      1,    30, 3),
-  ('Q-04', '今日の復習をすべて終える',        NULL, 30, 4),
+  ('Q-04', '今日の復習をすべて終える',        NULL, 30, 4),  -- V010 で is_active=false（廃止）
   ('Q-05', '新しい問題に3問挑戦する',         3,    20, 5)
 ON CONFLICT (quest_code) DO NOTHING;
+-- Q-06〜Q-08 は V010 で足す（8.4.8）
 
 INSERT INTO badge_defs (badge_code, category, tier, name, threshold, condition_text, phase, sort_order) VALUES
   ('mastery_bronze',  'mastery',  'bronze', '習得の証（銅）',     10,  '習得済みの問題が10問',          1, 1),
@@ -2542,6 +2577,7 @@ timeline
   2026-11-07 : 第1.7版
   2026-11-10 : 第1.8版
   2026-11-12 : 第1.9版 : 第2.0版
+  2026-11-23 : 第2.1版
 ```
 
 日付は版を作った日。
@@ -2568,3 +2604,4 @@ timeline
 | 第1.8版 | 2026-11-10 | dev を本番として公開している構成に合わせる。起こす係の Cloudflare Worker（4.8）とサーバーのコマンド rpg-idle-stop・rpg-db・rpg-deploy（4.9）を足し、DB（dev はサーバーの中）・ディレクトリ・技術スタック・環境変数・監視・エラーの扱い（`SERVER_WAKING`）・ワークフロー・反映・環境ごとの違いを直す |
 | 第1.9版 | 2026-11-12 | サーバーが止まっているときに、Service Worker がキャッシュの画面を出さないようにする（画面を開くときは毎回サーバーから取り、つながらなければ「お休み中」の案内を出す。6.1 の sw.js） |
 | 第2.0版 | 2026-11-12 | 報告書を作り直すコマンド（`npm run test:report`、`scripts/test-report-all.mjs`・`test-report.meta.json`）をディレクトリ構成（2.3）に足す |
+| 第2.1版 | 2026-11-23 | 出題の見直し（要件定義書 第1.6版・外部設計書 第1.9版）。picker（M-G06）を復習と新規の枠を交互にしてランダムに選ぶ形にし、説明問題なしの冒険（A-07 の `explain=0`、`adventures.include_explain`）を足す。A-05 から復習数を外し `reviews.countDueByKind` をなくす。クエスト Q-04 を廃止して Q-06〜Q-08 を足す（M-G03・M-G07・A-08・`adventures.countAnswers`・V010） |

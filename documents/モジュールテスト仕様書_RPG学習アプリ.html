@@ -436,7 +436,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第2.6版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>版数<b>第2.7版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
       <li>作成日<b>2026-10-20（各版の日付は「変更履歴」を参照）</b></li>
       <li>入力文書<b>詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
@@ -2002,9 +2002,9 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-D03-26</td>
-<td>users.lastLoginLogAt・reviews.countDueByKind</td>
-<td>ログインあり／なし、形式ごとの件数あり／なし</td>
-<td>最後の日時／null、<code>{choice, explain, total}</code>（なければ0）</td>
+<td>users.lastLoginLogAt</td>
+<td>ログインあり／なし</td>
+<td>最後の日時／null（<code>reviews.countDueByKind</code> は第2.7版でなくしたのでケースから外す）</td>
 <td>境</td>
 </tr>
 <tr>
@@ -2018,7 +2018,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-D03-28</td>
 <td>imports.setKey・listByCourse、quests.listAssignTargets、partners</td>
 <td>各関数</td>
-<td>キーの更新、一覧、割り当て対象（復習数・割り当て済み）、パートナーの取得・画像の更新（null 可）</td>
+<td>キーの更新、一覧、割り当て対象（割り当て済みか）、パートナーの取得・画像の更新（null 可）</td>
 <td>同</td>
 </tr>
 <tr>
@@ -2038,8 +2038,8 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-D03-31</td>
 <td>adventures の各関数</td>
-<td><code>start</code>・<code>find</code>（他人は null）・<code>incrementServed</code>・<code>finish</code></td>
-<td><code>served</code> をJSONで追加、5問まで（<code>served_count &lt; :size</code>、<code>ADVENTURE_SIZE = 5</code>）</td>
+<td><code>start</code>（<code>includeExplain</code> なし／false）・<code>find</code>（他人は null）・<code>incrementServed</code>・<code>finish</code>・<code>countAnswers</code>（4件／行なし）</td>
+<td><code>include_explain</code> は true／false で入れる、<code>served</code> をJSONで追加、5問まで（<code>served_count &lt; :size</code>、<code>ADVENTURE_SIZE = 5</code>）、解答の数 4／0</td>
 <td>同</td>
 </tr>
 <tr>
@@ -2221,7 +2221,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-D05-01</td>
 <td>ファイルの並べ方</td>
 <td>テスト用のフォルダ（<code>V002</code>・<code>V001</code>・<code>.down.sql</code>・ほかのファイル）、リポジトリの <code>db/migrations</code></td>
-<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V008</code></td>
+<td><code>V001</code>・<code>V002</code> の順（<code>.down.sql</code> などは除く）、リポジトリは <code>V001</code>〜<code>V010</code></td>
 <td>同</td>
 </tr>
 <tr>
@@ -2487,23 +2487,23 @@ describe('M-D01 client', () =&gt; {
 <tbody>
 <tr>
 <td>MT-G03-01</td>
-<td>復習ありの日</td>
-<td><code>pickDailyQuests(5, 固定乱数)</code></td>
-<td>3つ、Q-04 を含み target=5、重複なし</td>
+<td>1日に3つ、重複なし</td>
+<td><code>pickDailyQuests(固定乱数)</code></td>
+<td>3つ、重複なし、target は <code>QUEST_DEFS</code> の値</td>
 <td>DT</td>
 </tr>
 <tr>
 <td>MT-G03-02</td>
-<td>復習なしの日</td>
-<td><code>pickDailyQuests(0, 固定乱数)</code></td>
-<td>3つ、Q-04 を含まない、重複なし</td>
+<td>Q-04 は割り当てない</td>
+<td><code>QUEST_CODES</code>、<code>pickDailyQuests(固定乱数)</code></td>
+<td>候補は Q-01・02・03・05・06・07・08、Q-04 を含まない</td>
 <td>DT</td>
 </tr>
 <tr>
 <td>MT-G03-03</td>
 <td>乱数によらず守られる</td>
-<td>乱数のシードを変えて各1,000回（dueCount 0 と 3）</td>
-<td>毎回3つ・重複なし・Q-04 の有無が条件どおり</td>
+<td>乱数のシードを変えて1,000回</td>
+<td>毎回3つ・重複なし・Q-03 と Q-08 は合わせて1つまで、7種類すべてが選ばれうる</td>
 <td>境</td>
 </tr>
 <tr>
@@ -2543,10 +2543,10 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-G03-09</td>
-<td>復習</td>
-<td>Q-04(1/2) に <code>{isReview:true}</code></td>
-<td>達成</td>
-<td>境</td>
+<td>定義のなくなったクエスト</td>
+<td>廃止した Q-04(1/2) に <code>{isReview:true}</code></td>
+<td>進めない（<code>achievedNow</code> は空）</td>
+<td>異</td>
 </tr>
 <tr>
 <td>MT-G03-10</td>
@@ -2567,6 +2567,13 @@ describe('M-D01 client', () =&gt; {
 <td>クエストなし</td>
 <td><code>applyQuestEvent([], ev)</code></td>
 <td><code>[]</code>、例外なし</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-G03-13</td>
+<td>Q-06・Q-07・Q-08</td>
+<td>Q-06 に <code>{adventureCompleted:true}</code>／なし、Q-07 に <code>{retryCorrect:true}</code>、Q-08 に説明 80点／79点／択一 100</td>
+<td>達成（30）／進まない、達成（20）、達成（30）／進まない／進まない</td>
 <td>境</td>
 </tr>
 </tbody>
@@ -2732,9 +2739,9 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-G06-05</td>
-<td>優先順位</td>
-<td>択一の復習・未学習・学習済みがすべてある</td>
-<td>復習（<code>due</code> の先頭＝予定日の最も古いもの）</td>
+<td>枠ごとの優先順位</td>
+<td>択一の復習・未学習・学習済みがすべてある、<code>index</code>・<code>startWith</code> を変える／枠の出どころが空</td>
+<td>新規の枠は未学習、復習の枠は復習／もう片方の出どころから補う</td>
 <td>DT</td>
 </tr>
 <tr>
@@ -2765,6 +2772,41 @@ describe('M-D01 client', () =&gt; {
 <td>その行は選ばない</td>
 <td>異</td>
 </tr>
+<tr>
+<td>MT-G06-10</td>
+<td>枠の並び</td>
+<td><code>slotOf(0〜4, 'new')</code>／<code>slotOf(0〜4, 'review')</code>／<code>startWith</code> なし</td>
+<td>新・復・新・復・新／復・新・復・新・復／<code>'new'</code></td>
+<td>DT</td>
+</tr>
+<tr>
+<td>MT-G06-11</td>
+<td>復習がたまっていても新規がまざる</td>
+<td>復習6件・未学習3件、説明なしで5問続けて選ぶ（<code>startWith</code> 'new'／'review'）</td>
+<td>復習は2問／3問、残りは新規</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-G06-12</td>
+<td>出どころの中ではランダム</td>
+<td>復習 [q1, q2, q3]、<code>rand</code> が 0／0.999／0.5</td>
+<td>q1／q3／q2</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-G06-13</td>
+<td>説明問題を出さない冒険</td>
+<td><code>allowExplain:false</code>、<code>lastKind='choice'</code>、説明の候補あり／説明の候補だけ</td>
+<td>択一を返す／<code>null</code></td>
+<td>DT</td>
+</tr>
+<tr>
+<td>MT-G06-14</td>
+<td>同じ冒険で出した問題は後回し</td>
+<td><code>usedQuestionIds</code> に q4、説明の候補 [q4, q5]／[q4] だけ</td>
+<td>q5／q4（ほかになければ出す）</td>
+<td>同</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-G07 <code>domain/answer-flow.js</code> 解答後の更新内容</h4>
@@ -2789,8 +2831,8 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-G07-02</td>
 <td>復習の択一に正解</td>
-<td>stage2・予定日当日、Q-04(0/3)</td>
-<td>stage3・gained 15・Q-04=1</td>
+<td>stage2・予定日当日・まちがいなし（2回中2回正解）、Q-07(0/1)・Q-05(0/3)</td>
+<td>stage3・gained 15・Q-07 と Q-05 は進まない</td>
 <td>同</td>
 </tr>
 <tr>
@@ -2831,9 +2873,30 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-G07-08</td>
 <td>習得済みの問題に正解</td>
-<td>stage6</td>
+<td>stage6、廃止した Q-04(0/3) が残っている</td>
 <td>gained 10（復習ボーナスなし）・段階は6のまま・Q-04 は進まない</td>
 <td>状</td>
+</tr>
+<tr>
+<td>MT-G07-09</td>
+<td>まちがえた問題を正解し直す</td>
+<td>3回中1回正解の問題に正解／不正解／初めての問題に正解、Q-07(0/1)</td>
+<td>達成（20）／進まない／進まない</td>
+<td>DT</td>
+</tr>
+<tr>
+<td>MT-G07-10</td>
+<td>説明で80点以上</td>
+<td>説明 80点／79点、Q-08(0/1)</td>
+<td>達成（30）／進まない</td>
+<td>境</td>
+</tr>
+<tr>
+<td>MT-G07-11</td>
+<td>冒険をやりとげる</td>
+<td><code>adventureCompleted</code> true／false、Q-06(0/1)</td>
+<td>達成（30）／進まない</td>
+<td>DT</td>
 </tr>
 </tbody>
 </table></div>
@@ -3894,9 +3957,9 @@ describe('M-D01 client', () =&gt; {
 </tr>
 <tr>
 <td>MT-H03-04</td>
-<td>今日の復習数</td>
-<td>択一3件・説明2件が今日以前</td>
-<td><code>review: {choice:3, explain:2, total:5}</code></td>
+<td>復習の数は返さない</td>
+<td>通常の A-05</td>
+<td>応答に <code>review</code> がなく、reviews のどの関数も呼ばない</td>
 <td>同</td>
 </tr>
 <tr>
@@ -4001,7 +4064,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-H05-01</td>
 <td>冒険の開始</td>
 <td><code>adventureId</code> なし</td>
-<td><code>adventures.start(15, 3)</code> が呼ばれ、応答に新しい <code>adventureId</code>・<code>index:1</code></td>
+<td><code>adventures.start(15, 3, { includeExplain: true })</code> が呼ばれ、応答に新しい <code>adventureId</code>・<code>index:1</code></td>
 <td>状</td>
 </tr>
 <tr>
@@ -4081,6 +4144,20 @@ describe('M-D01 client', () =&gt; {
 <td><code>summary:null</code>／<code>null</code>／<code>explainAvgScore:null</code></td>
 <td>境</td>
 </tr>
+<tr>
+<td>MT-H05-13</td>
+<td>説明問題なしの冒険</td>
+<td><code>explain=0</code> で開始（説明の候補あり）→ 続きの問題</td>
+<td><code>adventures.start(15, 3, { includeExplain: false })</code>、択一を返し、候補は択一だけ取る。続きも冒険の <code>includeExplain:false</code> に従う</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-H05-14</td>
+<td>復習と新規を交互に出す</td>
+<td>冒険90（偶数）の1問目・2問目、復習と未学習の択一あり</td>
+<td><code>startWithOf</code> は偶数で 'new'・奇数で 'review'。1問目は <code>isReview:false</code>、2問目は <code>isReview:true</code></td>
+<td>状</td>
+</tr>
 </tbody>
 </table></div>
 <h4><i class="fa-solid fa-angle-right h-ico" aria-hidden="true"></i>M-H06 <code>routes/answers.js</code>（A-08）</h4>
@@ -4143,6 +4220,13 @@ describe('M-D01 client', () =&gt; {
 <td>正常</td>
 <td>外部設計書 5.3 の A-10 と同じキー（exp・review・quests・badges）＋ correct・correctChoice</td>
 <td>同</td>
+</tr>
+<tr>
+<td>MT-H06-09</td>
+<td>冒険をやりとげる（Q-06）</td>
+<td>冒険90で記録済みの解答4件／2件、Q-06(0/1)</td>
+<td><code>countAnswers(90)</code> を呼び、Q-06 達成（報酬30）／進まない</td>
+<td>境</td>
 </tr>
 <tr>
 <td>MT-H06-08</td>
@@ -5406,8 +5490,8 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-W03-07</td>
 <td>クエストの割り当て</td>
-<td>学習者2名（復習対象 4件・0件）</td>
-<td>1人目は Q-04（target 4）を含む3つ、2人目は Q-04 なしの3つ</td>
+<td>学習者2名</td>
+<td>2人とも Q-04 を含まない3つ（target は1以上）</td>
 <td>DT</td>
 </tr>
 <tr>
@@ -6540,7 +6624,7 @@ describe('M-D01 client', () =&gt; {
 <td>MT-F10-01</td>
 <td>表示の順番</td>
 <td>A-05 の応答</td>
-<td>EXPバー → ひとこと → 受講中のコース → クエスト → 今日の復習の順、復習の内訳とリリース番号。クエスト名を状態に覚える</td>
+<td>EXPバー → ひとこと → 受講中のコース → クエスト → 冒険の準備の順、「今日の復習」は出さない、「説明問題も出す」は入った状態、リリース番号。クエスト名を状態に覚える</td>
 <td>同</td>
 </tr>
 <tr>
@@ -6570,6 +6654,20 @@ describe('M-D01 client', () =&gt; {
 <td>A-05 の <code>course</code> あり → 「コースを変える」／<code>course: null</code></td>
 <td>コース名・資格・問題数・網羅率（35.0%）と網羅率のバー（幅35%）、押すと S-03（<code>/courses</code>）へ／カードを出さない</td>
 <td>同</td>
+</tr>
+<tr>
+<td>MT-F10-06</td>
+<td>説明問題を出さない冒険</td>
+<td>「説明問題も出す」を外す → 「冒険に出る」→ ホームを開き直す</td>
+<td><code>localStorage</code> に <code>'0'</code>、A-07 に <code>?explain=0</code>、開き直しても外れたまま</td>
+<td>状</td>
+</tr>
+<tr>
+<td>MT-F10-07</td>
+<td>選択を保存できない端末</td>
+<td>読み書きで例外を投げるストレージ／ストレージなし</td>
+<td>「出す」（true）で始め、保存の失敗で止まらない</td>
+<td>異</td>
 </tr>
 </tbody>
 </table></div>
@@ -7837,7 +7935,7 @@ describe('M-D01 client', () =&gt; {
 <td>4.3 出題ルール</td>
 <td>3.5 M-G06、5.2 A-07</td>
 <td>picker、quests</td>
-<td>MT-G06-01〜09、MT-H05-01〜12</td>
+<td>MT-G06-01〜14、MT-H05-01〜14、MT-F10-06〜07</td>
 </tr>
 <tr>
 <td>4.4 忘却曲線</td>
@@ -7849,7 +7947,7 @@ describe('M-D01 client', () =&gt; {
 <td>4.5 経験値・レベル</td>
 <td>3.5 M-G02・M-G07</td>
 <td>exp、answer-flow</td>
-<td>MT-G02-01〜13、MT-G07-01〜08</td>
+<td>MT-G02-01〜13、MT-G07-01〜11</td>
 </tr>
 <tr>
 <td>4.6 週間ランキング</td>
@@ -7861,7 +7959,7 @@ describe('M-D01 client', () =&gt; {
 <td>4.7 デイリークエスト</td>
 <td>3.5 M-G03、4.5.1</td>
 <td>quest、assign-quests</td>
-<td>MT-G03-01〜12、MT-W03-07〜08</td>
+<td>MT-G03-01〜13、MT-G07-09〜11、MT-H06-09、MT-W03-07〜08</td>
 </tr>
 <tr>
 <td>4.8 バッジ</td>
@@ -8133,7 +8231,7 @@ describe('M-D01 client', () =&gt; {
   
 <section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
 <div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/01</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>11/04</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.4版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第2.5版</b><small>11/12</small></span></li><li class="now"><span class="hist-chip"><b>第2.6版</b><small>11/12</small></span></li></ol>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/01</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>11/04</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.4版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第2.5版</b><small>11/12</small></span></li><li><span class="hist-chip"><b>第2.6版</b><small>11/12</small></span></li><li class="now"><span class="hist-chip"><b>第2.7版</b><small>11/23</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
 <thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
@@ -8164,11 +8262,12 @@ describe('M-D01 client', () =&gt; {
 <tr><td>第2.4版</td><td>2026-11-07</td><td>通知メール（S-10・A-04・B-03）を機能ごと削除し、そのテストケースを欠番にする</td></tr>
 <tr><td>第2.5版</td><td>2026-11-12</td><td>サーバーが止まっているときの Service Worker のテスト2件（MT-F24-03〜04）を載せる</td></tr>
 <tr><td>第2.6版</td><td>2026-11-12</td><td>起こす係の Cloudflare Worker（<code>workers/wake</code>）のテスト21件を M-C01（MT-C01-01〜21）として載せ、サーバー起動中（<code>SERVER_WAKING</code>）の待ち合わせのテスト4件を MT-F02-09〜10・MT-F01-14〜15 として載せ、1.3・2.1・3.2・6.1・6.2 を今の <code>vitest.config.js</code> に合わせ、6.4 に報告書を作り直すコマンド（<code>npm run test:report</code>）を書く</td></tr>
+<tr><td>第2.7版</td><td>2026-11-23</td><td>出題の見直し（詳細設計書 第2.1版）に合わせる。出題の枠とランダムな選び方・説明問題なしの冒険のテスト（MT-G06-10〜14・MT-H05-13〜14・MT-F10-06〜07）、新しいクエストのテスト（MT-G03-13・MT-G07-09〜11・MT-H06-09）を載せ、MT-G03-01〜03・09、MT-G06-05、MT-G07-02、MT-H03-04、MT-H05-01、MT-D03-26・28・31、MT-D05-01、MT-W03-07、MT-F10-01 を直す</td></tr>
 </tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第2.6版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第2.7版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

@@ -562,9 +562,9 @@ table.hist td:nth-child(2) { white-space: nowrap; }
     <span class="eyebrow">外部設計書</span>
     <h1><i class="fa-solid fa-compass-drafting h-ico" aria-hidden="true"></i>RPG学習アプリ 外部設計書</h1>
     <ul class="meta">
-      <li>版数<b>第1.8版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>版数<b>第1.9版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
       <li>作成日<b>2026-10-19（各版の日付は「変更履歴」を参照）</b></li>
-      <li>入力文書<b>RPG学習アプリ 要件定義書 第1.5版（ドラフト）</b></li>
+      <li>入力文書<b>RPG学習アプリ 要件定義書 第1.6版（ドラフト）</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）。Phase 2/3は「拡張予定」と注記</b></li>
     </ul>
   </div>
@@ -667,7 +667,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>ゲームルール</td>
-<td>1回の冒険は5問（終わったら冒険のまとめを出す）。デイリークエストは5種類から1日3つ（復習対象がある日はQ-04を必ず含む、報酬20〜30 EXP）。バッジは習得10／50／100問・継続7／30／100日</td>
+<td>1回の冒険は5問（終わったら冒険のまとめを出す）。デイリークエストは7種類から1日3つ（説明問題だけで進むものは1日1つまで、報酬20〜30 EXP）。バッジは習得10／50／100問・継続7／30／100日</td>
 <td>仮置き No.6、4.4</td>
 </tr>
 <tr>
@@ -1839,24 +1839,28 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tr>
 <tr>
 <td>4</td>
-<td>今日の復習</td>
-<td>復習対象数（択一・説明の内訳）と「冒険に出る」ボタン</td>
-<td><code>gd-card</code> ＋ <code>Button primary block</code></td>
+<td>冒険の準備</td>
+<td>「説明問題も出す」のチェック（最初は入り、前に選んだ状態をその端末に覚える）、「時間がないときは外すと、択一だけの5問になる」の案内、「冒険に出る」ボタン</td>
+<td><code>gd-card</code> ＋ チェックボックス ＋ <code>Button primary block</code></td>
 </tr>
 </tbody>
 </table></div>
+<ul>
+<li>今日の復習の数は出さない。復習は冒険の中で新しい問題とまぜて出す（4.3）</li>
+<li>「説明問題も出す」を外して「冒険に出る」を押すと、その冒険（5問）は択一だけになる。途中で切り替えはできない（次の冒険から変わる）</li>
+</ul>
 <div class="mock"><p class="mock-label"><i class="fa-solid fa-image" aria-hidden="true"></i>画面構成イメージ：S-02 ホーム</p><div class="mock-row"><div class="ph-frame"><div class="gd-scope ph-screen">
 <div class="mk-head"><span class="gd-serif mk-app">冒険者ギルド</span><span class="mk-course">基本情報技術者</span></div>
 <div class="mk-body">
 <div class="gd-card"><div class="gd-exp"><div class="gd-crest"><small>Lv</small><b>9</b></div><div class="gd-exp-main"><div class="gd-exp-head"><span>次のレベルまで</span><span>820 / 1,397 EXP</span></div><div class="gd-track"><div class="gd-fill" style="width:59%"></div></div></div></div></div>
 <div class="gd-partner"><div class="gd-sigil gd-sigil-encourage">ミ</div><div class="gd-bubble"><div class="gd-bubble-name">ミナ<span>励まし型</span></div>昨日より3問多く解けてるよ。今日もいこう！</div></div>
 <p class="mk-h">今日のクエスト</p>
-<div class="gd-card gd-quest gd-quest-done"><div class="gd-quest-body"><p class="gd-quest-title">ログインする</p><div class="gd-quest-meta"><span class="gd-quest-reward">+20 EXP</span><span>1 / 1</span></div></div><span class="gd-stamp">達成</span></div>
-<div class="gd-card gd-quest"><div class="gd-quest-body"><p class="gd-quest-title">復習を5問こなす</p><div class="gd-quest-meta"><span class="gd-quest-reward">+30 EXP</span><span>2 / 5</span></div><div class="gd-track"><div class="gd-fill" style="width:40%"></div></div></div></div>
-<div class="gd-card gd-quest"><div class="gd-quest-body"><p class="gd-quest-title">説明問題で合格する</p><div class="gd-quest-meta"><span class="gd-quest-reward">+25 EXP</span><span>0 / 1</span></div><div class="gd-track"><div class="gd-fill" style="width:0%"></div></div></div></div>
-<div class="gd-card"><p class="mk-h" style="margin-top:0">今日の復習 <b class="mk-num">8</b>問</p><p class="mk-meta">択一 5問・説明 3問</p><button class="gd-btn gd-btn-primary gd-btn-block" type="button">冒険に出る</button></div>
+<div class="gd-card gd-quest gd-quest-done"><div class="gd-quest-body"><p class="gd-quest-title">択一を5問解く</p><div class="gd-quest-meta"><span class="gd-quest-reward">+20 EXP</span><span>5 / 5</span></div></div><span class="gd-stamp">達成</span></div>
+<div class="gd-card gd-quest"><div class="gd-quest-body"><p class="gd-quest-title">まちがえた問題を正解し直す</p><div class="gd-quest-meta"><span class="gd-quest-reward">+20 EXP</span><span>0 / 1</span></div><div class="gd-track"><div class="gd-fill" style="width:0%"></div></div></div></div>
+<div class="gd-card gd-quest"><div class="gd-quest-body"><p class="gd-quest-title">冒険を1回やりとげる</p><div class="gd-quest-meta"><span class="gd-quest-reward">+30 EXP</span><span>0 / 1</span></div><div class="gd-track"><div class="gd-fill" style="width:0%"></div></div></div></div>
+<div class="gd-card"><p class="mk-h" style="margin-top:0">冒険の準備</p><p><label><input type="checkbox" checked> <b>説明問題も出す</b></label></p><p class="mk-meta">時間がないときは外すと、択一だけの5問になる</p><button class="gd-btn gd-btn-primary gd-btn-block" type="button">冒険に出る</button></div>
 </div>
-<div class="mk-nav"><span class="on"><i class="fa-solid fa-house"></i>ホーム</span><span class=""><i class="fa-solid fa-ranking-star"></i>ランキング</span><span class=""><i class="fa-solid fa-user"></i>プロフィール</span></div></div><p class="mk-cap">学習者：スマホ縦（最大幅420px）</p></div></div><p class=mock-note>EXPバー → パートナーのひとこと → デイリークエスト3件 → 今日の復習の順に縦に並べる。</p></div>
+<div class="mk-nav"><span class="on"><i class="fa-solid fa-house"></i>ホーム</span><span class=""><i class="fa-solid fa-ranking-star"></i>ランキング</span><span class=""><i class="fa-solid fa-user"></i>プロフィール</span></div></div><p class="mk-cap">学習者：スマホ縦（最大幅420px）</p></div></div><p class=mock-note>EXPバー → パートナーのひとこと → デイリークエスト3件 → 冒険の準備の順に縦に並べる。復習の数は出さない。</p></div>
 <h4>S-03 コース選択</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -2783,31 +2787,36 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>順</th>
-<th>出題対象</th>
+<th>出どころ</th>
 <th>条件</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
 <td>今日の復習（期限切れを含む）</td>
-<td>復習予定日が今日以前。予定日の古い順</td>
+<td>復習予定日が今日以前。予定日の古いものから最大20件を候補にする</td>
 </tr>
 <tr>
-<td>2</td>
 <td>未学習の問題</td>
-<td>公開済みで、まだ解いていない問題。登録順</td>
+<td>公開済みで、まだ解いていない問題。登録順に最大20件を候補にする</td>
 </tr>
 <tr>
-<td>3</td>
 <td>学習済みの問題</td>
-<td>1と2がないとき。正答率の低い順（復習段階は変えない）</td>
+<td>復習と未学習がないとき。正答率の低いものから最大20件（復習段階は変えない）</td>
 </tr>
 </tbody>
 </table></div>
+<div class="mock"><p class="mock-label"><i class="fa-solid fa-shuffle" aria-hidden="true"></i>図解：1回の冒険の枠の並び</p>
+<div class="mock-row">
+<div class="gd-card"><p class="mk-h" style="margin-top:0">新しい問題から始める冒険</p><p><b>新 → 復 → 新 → 復 → 新</b></p><p class="mk-meta">復習は2問</p></div>
+<div class="gd-card"><p class="mk-h" style="margin-top:0">復習から始める冒険</p><p><b>復 → 新 → 復 → 新 → 復</b></p><p class="mk-meta">復習は3問</p></div>
+</div><p class=mock-note>どちらから始めるかは冒険ごとに入れ替わる。枠の問題がなければ、もう片方の出どころから補う。</p></div>
 <ul>
 <li>1回の冒険は5問。途中でやめてもそれまでの結果は保存する</li>
+<li>5問を「復習の枠」と「新しい問題の枠」に分け、交互に出す。どちらの枠から始めるかは冒険ごとに入れ替わる（新→復→新→復→新、または 復→新→復→新→復）。復習は5問のうち2問か3問になる</li>
+<li>復習の枠は 今日の復習 → 未学習 → 学習済み、新しい問題の枠は 未学習 → 今日の復習 → 学習済み の順に探し、最初に候補があった出どころから<strong>ランダムに</strong>1件選ぶ（毎回同じ問題が出ないようにする）</li>
+<li>同じ冒険の中では、もう出した問題を後回しにする（択一と説明で同じ問題が続かない）。ほかに候補がなければ出す</li>
+<li>冒険を始めるときに「説明問題も出す」を外していたら、その冒険では択一だけを出す</li>
 <li>学習時間は解答のたびに数える。1問ぶん＝前の解答（冒険の最初の問題は冒険の開始）から、その解答を送るまで。問題を開いたまま放置しても増えすぎないよう、1問あたり10分までとする</li>
 <li>学習時間は冒険ごとに持ち、利用者ごとの累計にも足す。途中でやめた冒険も、解いた問題のぶんは累計に入る。冒険の外の解答は数えない</li>
 <li>四肢択一とキーワード説明は、出題対象の中で交互に出す。キーワードがない問題は択一のみ</li>
@@ -3033,21 +3042,34 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <td>30 EXP</td>
 </tr>
 <tr>
-<td>Q-04</td>
-<td>今日の復習をすべて終える</td>
-<td>0:00時点の復習対象をすべて解答。対象が0件の日は割り当てない</td>
-<td>30 EXP</td>
-</tr>
-<tr>
 <td>Q-05</td>
 <td>新しい問題に3問挑戦する</td>
 <td>未学習の問題を3問解答</td>
 <td>20 EXP</td>
 </tr>
+<tr>
+<td>Q-06</td>
+<td>冒険を1回やりとげる</td>
+<td>1回の冒険の5問をすべて解答（説明は採点が終わったもの）</td>
+<td>30 EXP</td>
+</tr>
+<tr>
+<td>Q-07</td>
+<td>まちがえた問題を正解し直す</td>
+<td>前にまちがえたことのある問題に正解（説明は合格）する</td>
+<td>20 EXP</td>
+</tr>
+<tr>
+<td>Q-08</td>
+<td>キーワード説明で80点以上をとる</td>
+<td>説明で80点以上を1回</td>
+<td>30 EXP</td>
+</tr>
 </tbody>
 </table></div>
 <ul>
-<li>復習対象がある日は Q-04 を必ず含める</li>
+<li>Q-03 と Q-08 は説明問題でしか進まないので、1日に1つまでにする（説明問題を出さない冒険もあるため）</li>
+<li>Q-04（今日の復習をすべて終える）は第1.9版で廃止した。それまでに割り当てた Q-04 は、達成済みなら履歴に残し、その日の未達成のものは取り下げる</li>
 <li>達成したらその場でEXPを付与し、S-06 に「達成」スタンプを出す</li>
 <li>未達成でもペナルティはない。翌日0:00に入れ替える</li>
 </ul>
@@ -3397,7 +3419,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <td>A-05</td>
 <td>GET</td>
 <td><code>/home</code></td>
-<td>ホームの表示内容（レベル、ひとこと、受講中のコース、クエスト、復習数）</td>
+<td>ホームの表示内容（レベル、ひとこと、受講中のコース、クエスト）。復習の数は返さない</td>
 <td>学習者</td>
 </tr>
 <tr>
@@ -3410,8 +3432,8 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr>
 <td>A-07</td>
 <td>GET</td>
-<td><code>/quests/next</code></td>
-<td>次の問題（5問の冒険の中の1問）。終わったら冒険のまとめ</td>
+<td><code>/quests/next?adventureId=&amp;explain=</code></td>
+<td>次の問題（5問の冒険の中の1問）。終わったら冒険のまとめ。冒険を始めるとき（<code>adventureId</code> なし）に <code>explain=0</code> を付けると、その冒険では説明問題を出さない</td>
 <td>学習者</td>
 </tr>
 <tr>
@@ -3655,6 +3677,11 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 </tbody>
 </table></div>
 <h3 id="sec-5-3"><i class="fa-solid fa-caret-right h-ico" aria-hidden="true"></i>5.3 主なAPIの入出力</h3>
+<p><strong>A-07 次の問題（冒険を始める）</strong></p>
+<pre><code class="language-json">// GET /api/quests/next?explain=0（説明問題なしで始める。付けなければ説明問題も出す）
+{&quot;adventureId&quot;: &quot;adv_91&quot;, &quot;index&quot;: 1, &quot;total&quot;: 5, &quot;kind&quot;: &quot;choice&quot;, &quot;isReview&quot;: true,
+ &quot;question&quot;: {&quot;id&quot;: &quot;q_42&quot;, &quot;body&quot;: &quot;DNSの役割は？&quot;, &quot;choices&quot;: [{&quot;no&quot;: 1, &quot;body&quot;: &quot;…&quot;}, {&quot;no&quot;: 2, &quot;body&quot;: &quot;…&quot;}, {&quot;no&quot;: 3, &quot;body&quot;: &quot;…&quot;}, {&quot;no&quot;: 4, &quot;body&quot;: &quot;…&quot;}]}}
+</code></pre>
 <p><strong>A-07 次の問題（冒険の終わり）</strong></p>
 <pre><code class="language-json">// 5問を出し終えたあと（出せる問題がなくなったときは &quot;reason&quot;: &quot;NO_QUESTION&quot; がつく）。1問も解いていなければ summary は null
 {&quot;adventureId&quot;: &quot;adv_90&quot;, &quot;done&quot;: true,
@@ -4450,7 +4477,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
   
 <section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
 <div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/10</small></span></li><li class="now"><span class="hist-chip"><b>第1.8版</b><small>11/12</small></span></li></ol>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版〜第0.5版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/19</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/10</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/12</small></span></li><li class="now"><span class="hist-chip"><b>第1.9版</b><small>11/23</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
 <thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
@@ -4469,11 +4496,12 @@ table.hist td:nth-child(2) { white-space: nowrap; }
 <tr><td>第1.6版</td><td>2026-11-07</td><td>通知メール（S-10・B-03）を機能ごと削除</td></tr>
 <tr><td>第1.7版</td><td>2026-11-10</td><td>dev を本番として <code>rpglearning.net</code> で公開している構成に合わせる。Cloudflare（DNS・Worker）、サーバーの自動停止とアクセスでの起動（2.10）、サーバーの中の DB、prod の凍結を、方式・API・可用性・監視・メッセージ・未決事項に反映</td></tr>
 <tr><td>第1.8版</td><td>2026-11-12</td><td>サーバーが休んでいるときにキャッシュの画面を出さないよう、PWA の Service Worker のふるまい（2.6）を直す</td></tr>
+<tr><td>第1.9版</td><td>2026-11-23</td><td>要件定義書 第1.6版に合わせる。出題ルール（4.3）を、1回の冒険に復習と新しい問題を交互にまぜ、候補からランダムに選ぶ形にする。ホーム（S-02）の「今日の復習」を「冒険の準備」にして復習の数を外し、説明問題を出すかを選べるようにする（A-05・A-07）。デイリークエスト（4.7）の Q-04 を廃止し、Q-06〜Q-08 を足す</td></tr>
 </tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.8版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ 外部設計書 第1.9版（ドラフト：第1〜10章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({

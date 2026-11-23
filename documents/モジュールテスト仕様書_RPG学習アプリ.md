@@ -3,7 +3,7 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第2.6版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照） |
+| 版数     | 第2.7版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照） |
 | 作成日    | 2026-10-20（各版の日付は「変更履歴」を参照） |
 | 入力文書   | 詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
@@ -431,12 +431,12 @@ describe('M-D01 client', () => {
 | MT-D03-23 | quests の各関数 | `listToday`・`insertAssignments`（2件）・`saveProgress`（achieved なし）・`listDefs` | 2回 INSERT（ON CONFLICT DO NOTHING）、achieved 省略は false | 同 |
 | MT-D03-24 | badges の各関数 | `listOwned`・`grant`（2つ）・`listDefs` | コードの配列、2回 INSERT | 同 |
 | MT-D03-25 | rankings の各関数 | `currentWeek`・`history`・`closeWeek([])` | 空の締めは0件 | 境 |
-| MT-D03-26 | users.lastLoginLogAt・reviews.countDueByKind | ログインあり／なし、形式ごとの件数あり／なし | 最後の日時／null、`{choice, explain, total}`（なければ0） | 境 |
+| MT-D03-26 | users.lastLoginLogAt | ログインあり／なし | 最後の日時／null（`reviews.countDueByKind` は第2.7版でなくしたのでケースから外す） | 境 |
 | MT-D03-27 | badges.listOwnedDetail・rankings.weeks・courses.listAll・listIds | 各関数 | 獲得日時つき、週の開始日の配列、担当者IDのJSONを配列に直す | 同 |
-| MT-D03-28 | imports.setKey・listByCourse、quests.listAssignTargets、partners | 各関数 | キーの更新、一覧、割り当て対象（復習数・割り当て済み）、パートナーの取得・画像の更新（null 可） | 同 |
+| MT-D03-28 | imports.setKey・listByCourse、quests.listAssignTargets、partners | 各関数 | キーの更新、一覧、割り当て対象（割り当て済みか）、パートナーの取得・画像の更新（null 可） | 同 |
 | MT-D03-29 | gradings の各関数 | `create`（問いかけなし／あり）・`find`（自分／利用者指定なし／行なし／問いかけあり）・`fail`・`deleteOlderThan` | 問いかけなしは `prompt` null、ありは JSON で渡す。結果・問いかけのJSONを直す、`fail` は `status='processing'` の条件、削除は日時の境目を渡す | 同 |
 | MT-D03-30 | imports の各関数 | `create`・`find`・`findByKey`・`setStatus`（from あり／なし）・`insertDrafts`（2問） | 問題・選択肢・キーワードを INSERT。正解なし・解説なしは null・空文字 | 同 |
-| MT-D03-31 | adventures の各関数 | `start`・`find`（他人は null）・`incrementServed`・`finish` | `served` をJSONで追加、5問まで（`served_count < :size`、`ADVENTURE_SIZE = 5`） | 同 |
+| MT-D03-31 | adventures の各関数 | `start`（`includeExplain` なし／false）・`find`（他人は null）・`incrementServed`・`finish`・`countAnswers`（4件／行なし） | `include_explain` は true／false で入れる、`served` をJSONで追加、5問まで（`served_count < :size`、`ADVENTURE_SIZE = 5`）、解答の数 4／0 | 同 |
 | MT-D03-32 | audit.write | 対象IDあり／なし、detail 省略 | detail はJSON（省略時 `{}`）、対象IDなしは null | 境 |
 | MT-D03-33 | （欠番） | 通知メールを削除したため削除（第2.4版） | - | - |
 | MT-D03-34 | listByCourse・findByIds | 絞り込みなし／`{status:'published', importId:8}`、行なし。`findByIds([43,44])`／`[]` | archived を除き新しい順に最大500件。状態・取り込みは SQL のパラメータで渡す。`findByIds` は `ANY(string_to_array(…))` で、空なら SQL を流さない | 同 |
@@ -468,7 +468,7 @@ describe('M-D01 client', () => {
 
 | ID        | 観点 | 入力・前提 | 期待結果 | 技法 |
 | --------- | -- | ----- | ---- | -- |
-| MT-D05-01 | ファイルの並べ方 | テスト用のフォルダ（`V002`・`V001`・`.down.sql`・ほかのファイル）、リポジトリの `db/migrations` | `V001`・`V002` の順（`.down.sql` などは除く）、リポジトリは `V001`〜`V008` | 同 |
+| MT-D05-01 | ファイルの並べ方 | テスト用のフォルダ（`V002`・`V001`・`.down.sql`・ほかのファイル）、リポジトリの `db/migrations` | `V001`・`V002` の順（`.down.sql` などは除く）、リポジトリは `V001`〜`V010` | 同 |
 | MT-D05-02 | 未適用だけを流す | `V001` が適用済み、`V002` が未適用、`release:'r1'` | `pg_advisory_lock` → 適用済みの確認 → `BEGIN` → `V002` → `release_no` の更新 → `COMMIT` → ロックを外す。戻り値 `['V002']` | 状 |
 | MT-D05-03 | 初めての DB | `schema_migrations` がない | すべて未適用として流す | 境 |
 | MT-D05-04 | 失敗 | `V002` の SQL が例外 | `ROLLBACK`、「V002 の適用に失敗しました: …」を投げる。ロックを外して接続を返す | 異 |
@@ -519,18 +519,19 @@ describe('M-D01 client', () => {
 
 | ID        | 観点                 | 入力・前提                                                           | 期待結果                                                   | 技法 |
 | --------- | ------------------ | --------------------------------------------------------------- | ------------------------------------------------------ | -- |
-| MT-G03-01 | 復習ありの日             | `pickDailyQuests(5, 固定乱数)`                                       | 3つ、Q-04 を含み target=5、重複なし                              | DT |
-| MT-G03-02 | 復習なしの日             | `pickDailyQuests(0, 固定乱数)`                                       | 3つ、Q-04 を含まない、重複なし                                     | DT |
-| MT-G03-03 | 乱数によらず守られる         | 乱数のシードを変えて各1,000回（dueCount 0 と 3）                              | 毎回3つ・重複なし・Q-04 の有無が条件どおり                               | 境  |
+| MT-G03-01 | 1日に3つ、重複なし          | `pickDailyQuests(固定乱数)`                                         | 3つ、重複なし、target は `QUEST_DEFS` の値                        | DT |
+| MT-G03-02 | Q-04 は割り当てない        | `QUEST_CODES`、`pickDailyQuests(固定乱数)`                          | 候補は Q-01・02・03・05・06・07・08、Q-04 を含まない                     | DT |
+| MT-G03-03 | 乱数によらず守られる         | 乱数のシードを変えて1,000回                                                | 毎回3つ・重複なし・Q-03 と Q-08 は合わせて1つまで、7種類すべてが選ばれうる                | 境  |
 | MT-G03-04 | 択一の不正解             | Q-01(0/5)・Q-02(0/3) に `{kind:'choice', correct:false}`           | Q-01=1、Q-02=0                                         | DT |
 | MT-G03-05 | 択一の正解              | 同上に `{kind:'choice', correct:true}`                              | Q-01=1、Q-02=1                                         | DT |
 | MT-G03-06 | 達成                 | Q-01(4/5) に択一                                                    | Q-01 が achieved、`achievedNow` に Q-01（報酬20）               | 境  |
 | MT-G03-07 | 達成済みは進めない          | Q-01(5/5・達成済み) に択一                                              | 変化なし、`achievedNow` は空                                  | 状  |
 | MT-G03-08 | 説明の合格・不合格          | Q-03(0/1) に `{kind:'explain', passed:true}`／`passed:false`       | 達成／変化なし                                                | DT |
-| MT-G03-09 | 復習                 | Q-04(1/2) に `{isReview:true}`                                    | 達成                                                     | 境  |
+| MT-G03-09 | 定義のなくなったクエスト       | 廃止した Q-04(1/2) に `{isReview:true}`                              | 進めない（`achievedNow` は空）                                  | 異  |
 | MT-G03-10 | 新しい問題              | Q-05(2/3) に `{isNew:true}`／`{isNew:false}`                      | 達成／変化なし                                                | DT |
 | MT-G03-11 | 同時に2つ達成            | Q-01(4/5)・Q-05(2/3) に `{kind:'choice', isNew:true}`               | 2つとも `achievedNow`（報酬の合計40）                             | 同  |
 | MT-G03-12 | クエストなし             | `applyQuestEvent([], ev)`                                         | `[]`、例外なし                                              | 境  |
+| MT-G03-13 | Q-06・Q-07・Q-08         | Q-06 に `{adventureCompleted:true}`／なし、Q-07 に `{retryCorrect:true}`、Q-08 に説明 80点／79点／択一 100 | 達成（30）／進まない、達成（20）、達成（30）／進まない／進まない           | 境  |
 
 #### M-G04 `domain/badge.js` バッジ
 
@@ -563,24 +564,32 @@ describe('M-D01 client', () => {
 | MT-G06-02 | 交互（択一のあと）          | `lastKind='choice'`、説明の復習あり                                    | `kind='explain'`                         | DT |
 | MT-G06-03 | 交互（説明のあと）          | `lastKind='explain'`、択一の未学習あり                                  | `kind='choice'`、`source='new'`           | DT |
 | MT-G06-04 | 説明がないときは択一         | `lastKind='choice'`、説明の候補が0                                    | `kind='choice'`                          | DT |
-| MT-G06-05 | 優先順位               | 択一の復習・未学習・学習済みがすべてある                                           | 復習（`due` の先頭＝予定日の最も古いもの）               | DT |
+| MT-G06-05 | 枠ごとの優先順位           | 択一の復習・未学習・学習済みがすべてある、`index`・`startWith` を変える／枠の出どころが空               | 新規の枠は未学習、復習の枠は復習／もう片方の出どころから補う               | DT |
 | MT-G06-06 | 学習済みからの出題          | 復習・未学習が0、学習済みが正答率の低い順に [q7, q3]                                 | `questionId=7`、`source='learned'`        | DT |
 | MT-G06-07 | 出したものは除く           | 復習 [q5, q8]、`servedIds` に q5                                    | q8                                       | 同  |
 | MT-G06-08 | 出せるものがない           | 全候補が空、または全部が `servedIds` に含まれる                                 | `null`                                   | 境  |
 | MT-G06-09 | キーワードのない説明候補       | 説明の候補に `keywordId=null` の行                                     | その行は選ばない                                 | 異  |
+| MT-G06-10 | 枠の並び                 | `slotOf(0〜4, 'new')`／`slotOf(0〜4, 'review')`／`startWith` なし              | 新・復・新・復・新／復・新・復・新・復／`'new'`            | DT |
+| MT-G06-11 | 復習がたまっていても新規がまざる   | 復習6件・未学習3件、説明なしで5問続けて選ぶ（`startWith` 'new'／'review'）              | 復習は2問／3問、残りは新規                          | 同  |
+| MT-G06-12 | 出どころの中ではランダム        | 復習 [q1, q2, q3]、`rand` が 0／0.999／0.5                               | q1／q3／q2                                 | 境  |
+| MT-G06-13 | 説明問題を出さない冒険         | `allowExplain:false`、`lastKind='choice'`、説明の候補あり／説明の候補だけ         | 択一を返す／`null`                              | DT |
+| MT-G06-14 | 同じ冒険で出した問題は後回し      | `usedQuestionIds` に q4、説明の候補 [q4, q5]／[q4] だけ                       | q5／q4（ほかになければ出す）                         | 同  |
 
 #### M-G07 `domain/answer-flow.js` 解答後の更新内容
 
 | ID        | 観点                   | 入力・前提                                                                 | 期待結果                                                          | 技法 |
 | --------- | -------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------- | -- |
 | MT-G07-01 | 初めての択一に正解            | reviewItem なし、total 330、Q-05(0/3)                                     | stage1・gained 10（ボーナスなし）・Q-05=1・levelUp false                   | 同  |
-| MT-G07-02 | 復習の択一に正解             | stage2・予定日当日、Q-04(0/3)                                               | stage3・gained 15・Q-04=1                                       | 同  |
+| MT-G07-02 | 復習の択一に正解             | stage2・予定日当日・まちがいなし（2回中2回正解）、Q-07(0/1)・Q-05(0/3)                  | stage3・gained 15・Q-07 と Q-05 は進まない                          | 同  |
 | MT-G07-03 | 復習の説明に合格             | kind explain・correct true・stage1・予定日当日                                | gained 45、Q-03 が達成なら questExp 30                               | 同  |
 | MT-G07-04 | 不正解                  | stage3・予定日当日・correct false、Q-01(0/5)                                  | stage1・gained 0・Q-01=1                                         | 同  |
 | MT-G07-05 | 正解でレベルアップ            | total 95、初めての択一に正解                                                  | after.level 2・expInLevel 5・levelUp true                         | 境  |
 | MT-G07-06 | クエスト報酬だけでレベルアップ      | total 90、択一に不正解、Q-01(4/5)                                           | gained 0・questExp 20・total 110・levelUp true                     | 境  |
 | MT-G07-07 | 習得でバッジ               | masteredCountBefore 9、stage5・予定日当日に正解                                | `newBadges=['mastery_bronze']`                                  | 境  |
-| MT-G07-08 | 習得済みの問題に正解           | stage6                                                                | gained 10（復習ボーナスなし）・段階は6のまま・Q-04 は進まない                         | 状  |
+| MT-G07-08 | 習得済みの問題に正解           | stage6、廃止した Q-04(0/3) が残っている                                       | gained 10（復習ボーナスなし）・段階は6のまま・Q-04 は進まない                         | 状  |
+| MT-G07-09 | まちがえた問題を正解し直す        | 3回中1回正解の問題に正解／不正解／初めての問題に正解、Q-07(0/1)                       | 達成（20）／進まない／進まない                                         | DT |
+| MT-G07-10 | 説明で80点以上               | 説明 80点／79点、Q-08(0/1)                                                 | 達成（30）／進まない                                                | 境  |
+| MT-G07-11 | 冒険をやりとげる               | `adventureCompleted` true／false、Q-06(0/1)                               | 達成（30）／進まない                                                | DT |
 
 #### M-G08 `domain/summary.js` 学習サマリ
 
@@ -787,7 +796,7 @@ describe('M-D01 client', () => {
 | MT-H03-01 | ひとことの使い回し         | `daily_message_on = '2026-10-20'`（今日）・`daily_message_slot = 'morning'`、JST 10:00 | Bedrock を呼ばず、保存済みのひとことを返す                               | 状  |
 | MT-H03-02 | ひとことの生成           | `daily_message_on = '2026-10-19'`、今日の解答数12                      | Haiku（`MODEL_LIGHT`）を1回呼び、user に「時間帯：朝」「伝える数字：今日の解答数 12問」（復習の語なし）。`setDailyMessage(15, 文, '2026-10-20', 'morning')` | 状  |
 | MT-H03-03 | ひとことの失敗           | Bedrock が `AI_TIMEOUT`                                 | 励まし型の定型文（今日の解答数12）のどれかを返し、保存しない。応答は200                            | 異  |
-| MT-H03-04 | 今日の復習数            | 択一3件・説明2件が今日以前                                         | `review: {choice:3, explain:2, total:5}`                 | 同  |
+| MT-H03-04 | 復習の数は返さない         | 通常の A-05                                              | 応答に `review` がなく、reviews のどの関数も呼ばない                 | 同  |
 | MT-H03-05 | レベル表示             | total 330                                              | `level:3, expInLevel:0, next:374`                        | 同  |
 | MT-H03-06 | コース未選択            | `current_course_id = null`                             | 409 `COURSE_REQUIRED`                                   | 状  |
 | MT-H03-07 | ひとことが空・パートナー未設定 | Bedrock が空白を返す、persona なし／Bedrock が例外・ライバル型 | 励まし型の定型文／ライバル型の定型文。保存しない | 異 |
@@ -808,7 +817,7 @@ describe('M-D01 client', () => {
 
 | ID        | 観点            | 入力・前提                                        | 期待結果                                                     | 技法 |
 | --------- | ------------- | -------------------------------------------- | -------------------------------------------------------- | -- |
-| MT-H05-01 | 冒険の開始         | `adventureId` なし                             | `adventures.start(15, 3)` が呼ばれ、応答に新しい `adventureId`・`index:1` | 状  |
+| MT-H05-01 | 冒険の開始         | `adventureId` なし                             | `adventures.start(15, 3, { includeExplain: true })` が呼ばれ、応答に新しい `adventureId`・`index:1` | 状  |
 | MT-H05-02 | 5問で終わり       | `served_count = 5`                           | `{ done: true, summary }`（まとめは `adventures.summary(90, 15)` から）、`finished_at` を入れる | 境  |
 | MT-H05-03 | 4問目の次         | `served_count = 4`                           | `index:5, total:5` の問題を返す                               | 境  |
 | MT-H05-04 | 他人の冒険         | 別の利用者の `adventureId`                         | 404                                                      | 異  |
@@ -820,6 +829,8 @@ describe('M-D01 client', () => {
 | MT-H05-10 | 問いかけの失敗 | AI が例外／`angles` が空 | 200、定型の質問（定義・しくみ）で `fallback:true` | 異 |
 | MT-H05-11 | 問いかけできないキーワード | 他コース・非公開・ないキーワード | 404、AI を呼ばない | 異 |
 | MT-H05-12 | まとめがない・平均点がない | 解答0件のまとめ／行なし／説明なし | `summary:null`／`null`／`explainAvgScore:null` | 境 |
+| MT-H05-13 | 説明問題なしの冒険 | `explain=0` で開始（説明の候補あり）→ 続きの問題 | `adventures.start(15, 3, { includeExplain: false })`、択一を返し、候補は択一だけ取る。続きも冒険の `includeExplain:false` に従う | 同 |
+| MT-H05-14 | 復習と新規を交互に出す | 冒険90（偶数）の1問目・2問目、復習と未学習の択一あり | `startWithOf` は偶数で 'new'・奇数で 'review'。1問目は `isReview:false`、2問目は `isReview:true` | 状 |
 
 #### M-H06 `routes/answers.js`（A-08）
 
@@ -832,6 +843,7 @@ describe('M-D01 client', () => {
 | MT-H06-05 | 解説コメントの失敗      | Haiku が `AI_ERROR`                             | 200、`comment.text` は問題の解説文                                            | 異  |
 | MT-H06-06 | 更新の途中で失敗       | `reviews.upsertItem` が例外                       | Rollback が呼ばれ 500。Haiku は呼ばない                                         | 異  |
 | MT-H06-07 | 応答の形           | 正常                                             | 外部設計書 5.3 の A-10 と同じキー（exp・review・quests・badges）＋ correct・correctChoice | 同  |
+| MT-H06-09 | 冒険をやりとげる（Q-06） | 冒険90で記録済みの解答4件／2件、Q-06(0/1) | `countAnswers(90)` を呼び、Q-06 達成（報酬30）／進まない | 境 |
 | MT-H06-08 | 冒険IDなし・クエスト達成・バッジ | 冒険IDなし、段階5の復習に正解、Q-01(4/5)、習得9件、Bedrock が空文字 | gained 15・questExp 20、exp_logs は choice と quest の2行、`mastery_bronze`、コメントは解説文。冒険の外なので学習時間は足さない | 同 |
 
 #### M-H07 `routes/gradings.js`（A-09・A-10）
@@ -1062,7 +1074,7 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-W03-04 | 継続日数（続いた）           | `last_active_on = 昨日`、streak 6                             | streak 7、`streak_bronze` を付与、`streak_checked_on=今日`                   | 境  |
 | MT-W03-05 | 継続日数（途切れた）          | `last_active_on = 一昨日`、streak 12                           | streak 0（バッジは取り消さない）                                                | DT |
 | MT-W03-06 | 継続日数（二重実行）          | `streak_checked_on = 今日`                                   | 更新しない                                                               | 状  |
-| MT-W03-07 | クエストの割り当て           | 学習者2名（復習対象 4件・0件）                                         | 1人目は Q-04（target 4）を含む3つ、2人目は Q-04 なしの3つ                            | DT |
+| MT-W03-07 | クエストの割り当て           | 学習者2名                                                    | 2人とも Q-04 を含まない3つ（target は1以上）                            | DT |
 | MT-W03-08 | クエストの二重実行           | 今日の行がすでにある学習者                                              | その学習者は飛ばす                                                           | 状  |
 | MT-W03-09 | 物理削除                | 削除予定日が今日の利用者                                               | `users.purge`。操作記録 `user.purge`（操作者は null）    | 状  |
 | MT-W03-10 | 期限切れのトークンの掃除    | 日次処理の cleanup-gradings                | `auth.deleteExpired` を1回呼ぶ                                                          | 同  |
@@ -1273,11 +1285,13 @@ Cloudflare の Worker は Node のテストの中で動かす（`Request`・`Res
 
 | ID | 観点 | 入力・前提 | 期待結果 | 技法 |
 | --- | --- | --- | --- | --- |
-| MT-F10-01 | 表示の順番 | A-05 の応答 | EXPバー → ひとこと → 受講中のコース → クエスト → 今日の復習の順、復習の内訳とリリース番号。クエスト名を状態に覚える | 同 |
+| MT-F10-01 | 表示の順番 | A-05 の応答 | EXPバー → ひとこと → 受講中のコース → クエスト → 冒険の準備の順、「今日の復習」は出さない、「説明問題も出す」は入った状態、リリース番号。クエスト名を状態に覚える | 同 |
 | MT-F10-02 | 冒険に出る | 前の冒険IDあり → 「冒険に出る」 | 冒険IDを空にして A-07（`adventureId` なし）、択一なら S-04 へ | 状 |
 | MT-F10-03 | 冒険の終わりのお知らせ | 状態に `notice` あり | お知らせを出し、状態からは消す（1回だけ） | 状 |
 | MT-F10-04 | 読み込み失敗 | A-05 が通信エラー → 再読み込み | M-02 と再読み込みボタン → ホームを表示 | 異 |
 | MT-F10-05 | 受講中のコース | A-05 の `course` あり → 「コースを変える」／`course: null` | コース名・資格・問題数・網羅率（35.0%）と網羅率のバー（幅35%）、押すと S-03（`/courses`）へ／カードを出さない | 同 |
+| MT-F10-06 | 説明問題を出さない冒険 | 「説明問題も出す」を外す → 「冒険に出る」→ ホームを開き直す | `localStorage` に `'0'`、A-07 に `?explain=0`、開き直しても外れたまま | 状 |
+| MT-F10-07 | 選択を保存できない端末 | 読み書きで例外を投げるストレージ／ストレージなし | 「出す」（true）で始め、保存の失敗で止まらない | 異 |
 
 #### M-F11 `pages/learner/s03-courses.js`（S-03 コース選択）
 
@@ -1527,11 +1541,11 @@ Cloudflare の Worker は Node のテストの中で動かす（`Request`・`Res
 | 外部設計書                  | 詳細設計書               | 主なモジュール                         | テストケース                                    |
 | ---------------------- | ------------------- | ------------------------------- | ----------------------------------------- |
 | 3.6.2 パートナー名、3.7 入力ルール | 3.2 M-U07           | validators                      | MT-U07-01〜33（08〜10・33は欠番）                              |
-| 4.3 出題ルール              | 3.5 M-G06、5.2 A-07  | picker、quests                   | MT-G06-01〜09、MT-H05-01〜12                 |
+| 4.3 出題ルール              | 3.5 M-G06、5.2 A-07  | picker、quests                   | MT-G06-01〜14、MT-H05-01〜14、MT-F10-06〜07                 |
 | 4.4 忘却曲線               | 3.5 M-G01           | review                          | MT-G01-01〜14                              |
-| 4.5 経験値・レベル            | 3.5 M-G02・M-G07     | exp、answer-flow                 | MT-G02-01〜13、MT-G07-01〜08                 |
+| 4.5 経験値・レベル            | 3.5 M-G02・M-G07     | exp、answer-flow                 | MT-G02-01〜13、MT-G07-01〜11                 |
 | 4.6 週間ランキング            | 3.5 M-G05、4.5.1、5.2 A-11 | ranking、close-ranking、rankings | MT-G05-01〜06、MT-W03-03、MT-H08-01〜08       |
-| 4.7 デイリークエスト           | 3.5 M-G03、4.5.1     | quest、assign-quests             | MT-G03-01〜12、MT-W03-07〜08                 |
+| 4.7 デイリークエスト           | 3.5 M-G03、4.5.1     | quest、assign-quests             | MT-G03-01〜13、MT-G07-09〜11、MT-H06-09、MT-W03-07〜08                 |
 | 4.8 バッジ                | 3.5 M-G04           | badge、update-streak             | MT-G04-01〜07、MT-W03-04〜06                 |
 | 4.9 説明の採点、2.5 非同期方式    | 3.7、4.3、4.7、5.2 A-07b・A-09・A-10、7.3・7.6 | grading-worker、gradings、prompts、jobs、server/worker | MT-W01-01〜14、MT-H07-01〜11、MT-A02、MT-A04、MT-D04-01〜03、MT-S02-01〜06   |
 | 4.10 問題取り込み            | 4.4、5.3 A-13〜A-16、7.4 | import-worker、admin-imports、admin-questions | MT-W02-01〜20、MT-H09-01〜09、MT-H10              |
@@ -1632,6 +1646,7 @@ timeline
   2026-11-06 : 第2.2版 : 第2.3版
   2026-11-07 : 第2.4版
   2026-11-12 : 第2.5版 : 第2.6版
+  2026-11-23 : 第2.7版
 ```
 
 日付は版を作った日。
@@ -1664,3 +1679,4 @@ timeline
 | 第2.4版 | 2026-11-07 | 通知メール（S-10・A-04・B-03）を機能ごと削除し、そのテストケースを欠番にする |
 | 第2.5版 | 2026-11-12 | サーバーが止まっているときの Service Worker のテスト2件（MT-F24-03〜04）を載せる |
 | 第2.6版 | 2026-11-12 | 起こす係の Cloudflare Worker（`workers/wake`）のテスト21件を M-C01（MT-C01-01〜21）として載せ、サーバー起動中（`SERVER_WAKING`）の待ち合わせのテスト4件を MT-F02-09〜10・MT-F01-14〜15 として載せ、1.3・2.1・3.2・6.1・6.2 を今の `vitest.config.js` に合わせ、6.4 に報告書を作り直すコマンド（`npm run test:report`）を書く |
+| 第2.7版 | 2026-11-23 | 出題の見直し（詳細設計書 第2.1版）に合わせる。出題の枠とランダムな選び方・説明問題なしの冒険のテスト（MT-G06-10〜14・MT-H05-13〜14・MT-F10-06〜07）、新しいクエストのテスト（MT-G03-13・MT-G07-09〜11・MT-H06-09）を載せ、MT-G03-01〜03・09、MT-G06-05、MT-G07-02、MT-H03-04、MT-H05-01、MT-D03-26・28・31、MT-D05-01、MT-W03-07、MT-F10-01 を直す |

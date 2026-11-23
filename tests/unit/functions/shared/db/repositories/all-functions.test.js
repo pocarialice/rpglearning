@@ -218,11 +218,9 @@ describe('M-D03 quests・badges・rankings', () => {
   })
 })
 describe('M-D03 第2弾で追加した関数', () => {
-  it('MT-D03-26 users.lastLoginLogAt・reviews.countDueByKind', async () => {
+  it('MT-D03-26 users.lastLoginLogAt', async () => {
     expect(await users.lastLoginLogAt(15, fakeDb({ rows: [{ last_at: '2026-10-20 00:00:00' }] }))).toBe('2026-10-20 00:00:00')
     expect(await users.lastLoginLogAt(15, fakeDb({ rows: [] }))).toBeNull()
-    expect(await reviews.countDueByKind(15, 3, '2026-10-20', fakeDb({ rows: [{ kind: 'choice', cnt: 3 }, { kind: 'explain', cnt: 2 }] }))).toEqual({ choice: 3, explain: 2, total: 5 })
-    expect(await reviews.countDueByKind(15, 3, '2026-10-20', fakeDb())).toEqual({ choice: 0, explain: 0, total: 0 })
   })
   it('MT-D03-27 badges.listOwnedDetail・rankings.weeks・courses.listAll・courses.listIds', async () => {
     expect(await badges.listOwnedDetail(15, fakeDb({ rows: [{ badge_code: 'streak_bronze', earned_at: 'x' }] }))).toEqual([{ badgeCode: 'streak_bronze', earnedAt: 'x' }])
@@ -231,11 +229,11 @@ describe('M-D03 第2弾で追加した関数', () => {
     expect(await courses.listIds(fakeDb({ rows: [{ course_id: 3 }] }))).toEqual([3])
   })
   it('MT-D03-28 imports.setKey・listByCourse・quests.listAssignTargets・partners', async () => {
-    const db = fakeDb({ rows: [{ import_id: 8, user_id: 15, due_count: 2, assigned: false, persona: 'logic', default_name: 'セージ', image_key: null }] })
+    const db = fakeDb({ rows: [{ import_id: 8, user_id: 15, assigned: false, persona: 'logic', default_name: 'セージ', image_key: null }] })
     await imports.setKey(8, 'uploads/8/a.pdf', db)
     expect(db.execute.mock.calls[0][1]).toEqual({ importId: 8, s3Key: 'uploads/8/a.pdf' })
     expect((await imports.listByCourse(3, db))[0].importId).toBe(8)
-    expect((await quests.listAssignTargets('2026-10-20', db))[0]).toMatchObject({ userId: 15, dueCount: 2, assigned: false })
+    expect((await quests.listAssignTargets('2026-10-20', db))[0]).toEqual(expect.objectContaining({ userId: 15, assigned: false }))
     expect(await partners.get('logic', db)).toMatchObject({ persona: 'logic', defaultName: 'セージ', imageKey: null })
     expect(await partners.list(db)).toHaveLength(1)
     await partners.setImage('logic', null, db)
@@ -279,7 +277,11 @@ describe('M-D03 gradings・imports・adventures・audit', () => {
   })
   it('MT-D03-31 adventures の各関数', async () => {
     const db = fakeDb({ rows: [{ adventure_id: 90, served: '[{"k":"choice","q":42}]' }] })
-    expect((await adventures.start(15, 3, db)).served).toEqual([{ k: 'choice', q: 42 }])
+    expect((await adventures.start(15, 3, {}, db)).served).toEqual([{ k: 'choice', q: 42 }])
+    expect(db.query.mock.calls[0][1]).toEqual({ userId: 15, courseId: 3, includeExplain: true })
+    await adventures.start(15, 3, { includeExplain: false }, db)
+    expect(db.query.mock.calls[1][1]).toMatchObject({ includeExplain: false })
+    expect(db.query.mock.calls[1][0]).toContain('include_explain')
     expect((await adventures.find(90, 15, fakeDb({ rows: [{ adventure_id: 90, served: [] }] }))).served).toEqual([])
     expect(await adventures.find(90, 16, fakeDb())).toBeNull()
     expect(await adventures.incrementServed(90, { k: 'explain', kw: 9 }, db)).toBe(true)
@@ -287,6 +289,10 @@ describe('M-D03 gradings・imports・adventures・audit', () => {
     expect(db.execute.mock.calls[0][0]).toContain('served_count < :size')
     await adventures.finish(90, db)
     expect(adventures.ADVENTURE_SIZE).toBe(5)
+    const c = fakeDb({ rows: [{ cnt: 4 }] })
+    expect(await adventures.countAnswers(90, c)).toBe(4)
+    expect(c.query.mock.calls[0][1]).toEqual({ adventureId: 90 })
+    expect(await adventures.countAnswers(90, fakeDb())).toBe(0)
   })
   it('MT-D03-35 adventures の学習時間とまとめ', async () => {
     const db = fakeDb({ rows: [{ sec: 125 }] })

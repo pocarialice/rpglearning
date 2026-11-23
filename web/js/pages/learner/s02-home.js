@@ -1,4 +1,5 @@
-// S-02 ホーム：EXPバー → ひとこと → 受講中のコース → デイリークエスト×3 → 今日の復習と「冒険に出る」（外部設計書 3.7）
+// S-02 ホーム：EXPバー → ひとこと → 受講中のコース → デイリークエスト×3 → 冒険の準備（説明問題を出すか・「冒険に出る」）（外部設計書 3.7）
+// 復習の数は出さない。出題の中で新規とまぜて出す
 import { getContext } from '../../core/context.js'
 import { expBar } from '../../components/exp-bar.js'
 import { partnerBubble, imageFor } from '../../components/partner-bubble.js'
@@ -19,12 +20,24 @@ function courseCard(course) {
 <div class="gd-track" role="progressbar" aria-label="網羅率" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div class="gd-fill" style="width:${pct}%"></div></div>
 ${button({ label: 'コースを変える', variant: 'quiet', block: true, attrs: 'data-action="courses"' })}</section>`
 }
-function reviewCard(review) {
-  const total = review?.total ?? 0
-  const detail = total > 0
-    ? `<p class="numeral">${total}<small class="meta"> 件</small></p><p class="meta">択一 ${review.choice ?? 0}・説明 ${review.explain ?? 0}</p>`
-    : '<p class="body">今日の復習はなし。新しい依頼に挑もう</p>'
-  return `<section class="gd-card app-section" aria-labelledby="review-h"><h2 id="review-h" class="title">今日の復習</h2>${detail}
+// 「説明問題も出す」の選択は、この端末に覚えておく（保存できないときは毎回「出す」から始める）
+export const EXPLAIN_PREF_KEY = 'rpg.adventure.includeExplain'
+export function loadExplainPref(storage = globalThis.localStorage) {
+  try {
+    return storage?.getItem(EXPLAIN_PREF_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+export function saveExplainPref(on, storage = globalThis.localStorage) {
+  try {
+    storage?.setItem(EXPLAIN_PREF_KEY, on ? '1' : '0')
+  } catch { /* 保存できなくても冒険は始められる */ }
+}
+function adventureCard(includeExplain) {
+  return `<section class="gd-card app-section" aria-labelledby="adventure-h"><h2 id="adventure-h" class="title">冒険の準備</h2>
+<label class="app-radio"><input type="checkbox" data-explain${includeExplain ? ' checked' : ''}> 説明問題も出す</label>
+<p class="meta">時間がないときは外すと、択一だけの5問になる</p>
 <div class="app-error-slot"></div>${button({ label: '冒険に出る', variant: 'primary', block: true, attrs: 'data-action="start"' })}</section>`
 }
 export async function render(root) {
@@ -51,14 +64,16 @@ ${partnerBubble({ name: home.message?.partnerName, persona: home.message?.person
 ${courseCard(home.course)}
 <section class="app-section" aria-labelledby="quest-h"><h2 id="quest-h" class="title">本日の依頼</h2>
 <div class="app-stack">${quests.map((q) => questCard({ title: q.title, reward: q.reward, current: q.progress, target: q.target, done: q.done })).join('') || '<p class="meta">今日の依頼はまだ届いていない</p>'}</div></section>
-${reviewCard(home.review)}${release}`
+${adventureCard(loadExplainPref())}${release}`
   root.querySelector('[data-action="courses"]')?.addEventListener('click', () => go('/courses'))
+  const explain = root.querySelector('[data-explain]')
+  explain.addEventListener('change', () => saveExplainPref(explain.checked))
   const start = root.querySelector('[data-action="start"]')
   start.addEventListener('click', async () => {
     start.disabled = true
     setState({ adventureId: null }) // 「冒険に出る」は新しい冒険を始める（詳細設計書 6.2）
     try {
-      await goNextQuest({ api, getState, setState, go })
+      await goNextQuest({ api, getState, setState, go }, { includeExplain: explain.checked })
     } catch (err) {
       root.querySelector('.app-error-slot').innerHTML = errorBand(errorMessage(err, M_START_ERROR))
       start.disabled = false
