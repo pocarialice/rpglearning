@@ -32,7 +32,6 @@ describe('M-H03 home（A-05）', () => {
     br.on(ConverseCommand).resolves(converseOutput('昨日より3問多く解けてるよ。今日もいこう'))
     users.findBySub.mockResolvedValue({ ...learner, dailyMessageOn: '2026-10-19', dailyMessage: '昨日のひとこと' })
     quests.listToday.mockResolvedValue([{ userQuestId: 1, questCode: 'Q-01', title: '択一を5問解く', target: 5, progress: 2, rewardExp: 20, achieved: false }])
-    reviews.countDueByKind.mockResolvedValue({ choice: 3, explain: 2, total: 5 })
     answers.countOnDate.mockResolvedValue(12)
     exp.weeklyTotalForUser.mockResolvedValue(340)
   })
@@ -86,10 +85,10 @@ describe('M-H03 home（A-05）', () => {
     expect(fallbackTexts('rival', TODAY_12)).toContain(b2.message.text)
     expect(b2.streakDays).toBe(4)
   })
-  it('MT-H03-04 今日の復習数', async () => {
+  it('MT-H03-04 復習の数は返さない', async () => {
     const body = parse(await call({ path: '/api/home' }))
-    expect(reviews.countDueByKind).toHaveBeenCalledWith(15, 3, '2026-10-20')
-    expect(body.review).toEqual({ choice: 3, explain: 2, total: 5 })
+    expect(body.review).toBeUndefined()
+    expect(Object.values(reviews).filter((fn) => typeof fn === 'function' && fn.mock?.calls.length > 0)).toEqual([])
     expect(body.quests).toEqual([{ id: 'Q-01', title: '択一を5問解く', progress: 2, target: 5, done: false, reward: 20 }])
   })
   it('MT-H03-05 レベル表示', async () => {

@@ -2,9 +2,10 @@
 export const QUEST_PATH = { choice: '/quest/choice', explain: '/quest/explain' }
 export const NOTICE_DONE = '5問の冒険を終えた。おつかれさま'
 export const NOTICE_NO_QUESTION = 'いま出せる問題がない。また明日、掲示板を見に来よう'
-export async function goNextQuest({ api, getState, setState, go }) {
+// 新しい冒険を始めるとき（adventureId なし）だけ、説明問題を出すかどうか（includeExplain）を送る
+export async function goNextQuest({ api, getState, setState, go }, { includeExplain = true } = {}) {
   const { adventureId } = getState()
-  const qs = adventureId ? `?adventureId=${encodeURIComponent(adventureId)}` : ''
+  const qs = adventureId ? `?adventureId=${encodeURIComponent(adventureId)}` : (includeExplain ? '' : '?explain=0')
   const next = await api.apiGet(`/quests/next${qs}`)
   if (next.done) {
     const notice = next.reason === 'NO_QUESTION' ? NOTICE_NO_QUESTION : NOTICE_DONE

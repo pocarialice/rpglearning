@@ -11,9 +11,8 @@ import { NOTICE_DONE, NOTICE_NO_QUESTION } from '../../../../web/js/pages/learne
 const HOME = {
   level: 5, expInLevel: 410, next: 690, totalExp: 1232, streakDays: 3,
   message: { partnerName: 'ミナ', persona: 'encourage', text: '昨日より3問多く解けてるよ' },
-  quests: [{ id: 'Q-01', title: '今日の復習をすべて終える', progress: 1, target: 5, done: false, reward: 30 }, { id: 'Q-03', title: 'キーワード説明を1問合格する', progress: 0, target: 1, done: false, reward: 30 }],
-  course: { id: 'c_3', name: 'ネットワーク応用', certification: 'ネットワークスペシャリスト', questionCount: 120, coveragePct: 35 },
-  review: { choice: 3, explain: 2, total: 5 }
+  quests: [{ id: 'Q-01', title: '択一を5問解く', progress: 1, target: 5, done: false, reward: 30 }, { id: 'Q-03', title: 'キーワード説明を1問合格する', progress: 0, target: 1, done: false, reward: 30 }],
+  course: { id: 'c_3', name: 'ネットワーク応用', certification: 'ネットワークスペシャリスト', questionCount: 120, coveragePct: 35 }
 }
 const CHOICE_Q = { adventureId: 'adv_1', index: 3, total: 5, kind: 'choice', isReview: true, question: { id: 'q_9', body: '最も適切なものはどれか', choices: [1, 2, 3, 4].map((no) => ({ no, body: `選択肢${no}` })) } }
 const EXPLAIN_Q = { adventureId: 'adv_1', index: 4, total: 5, kind: 'explain', isReview: false, keyword: { id: 'kw_123', text: 'VPC' }, question: { id: 'q_9', body: '出典の問題' } }
@@ -30,17 +29,21 @@ function setup(state = {}) {
 }
 const click = (sel) => root.querySelector(sel).dispatchEvent(new MouseEvent('click', { bubbles: true }))
 const flush = () => new Promise((r) => setTimeout(r, 0))
-beforeEach(() => setup())
+beforeEach(() => {
+  localStorage.clear()
+  setup()
+})
 describe('M-F10 S-02 ホーム', () => {
-  it('MT-F10-01 EXPバー → ひとこと → クエスト → 今日の復習の順に表示する', async () => {
+  it('MT-F10-01 EXPバー → ひとこと → クエスト → 冒険の準備の順に表示し、復習の数は出さない', async () => {
     api.apiGet.mockResolvedValue(HOME)
     await home.render(root)
     expect(api.apiGet).toHaveBeenCalledWith('/home')
-    const order = [...root.querySelectorAll('.gd-exp, .gd-partner, [aria-labelledby="course-h"], .gd-quest, [aria-labelledby="review-h"]')]
+    const order = [...root.querySelectorAll('.gd-exp, .gd-partner, [aria-labelledby="course-h"], .gd-quest, [aria-labelledby="adventure-h"]')]
       .map((e) => e.getAttribute('aria-labelledby') ?? e.className.split(' ')[0])
-    expect(order).toEqual(['gd-exp', 'gd-partner', 'course-h', 'gd-card', 'gd-card', 'review-h'])
+    expect(order).toEqual(['gd-exp', 'gd-partner', 'course-h', 'gd-card', 'gd-card', 'adventure-h'])
     expect(root.querySelectorAll('.gd-quest')).toHaveLength(2)
-    expect(root.textContent).toContain('択一 3・説明 2')
+    expect(root.textContent).not.toContain('今日の復習')
+    expect(root.querySelector('[data-explain]').checked).toBe(true)
     expect(root.textContent).toContain('リリース 20261105-01')
     expect(store.getState().questTitles['Q-03']).toBe('キーワード説明を1問合格する')
   })
@@ -53,6 +56,26 @@ describe('M-F10 S-02 ホーム', () => {
     expect(api.apiGet).toHaveBeenLastCalledWith('/quests/next')
     expect(store.getState().quest).toBe(CHOICE_Q)
     expect(go).toHaveBeenCalledWith('/quest/choice')
+  })
+  it('MT-F10-06 「説明問題も出す」を外すと択一だけの冒険を始め、選択を覚えておく', async () => {
+    api.apiGet.mockResolvedValueOnce(HOME).mockResolvedValueOnce(CHOICE_Q)
+    await home.render(root)
+    const box = root.querySelector('[data-explain]')
+    box.checked = false
+    box.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(localStorage.getItem(home.EXPLAIN_PREF_KEY)).toBe('0')
+    click('[data-action="start"]')
+    await flush()
+    expect(api.apiGet).toHaveBeenLastCalledWith('/quests/next?explain=0')
+    api.apiGet.mockResolvedValueOnce(HOME)
+    await home.render(root)
+    expect(root.querySelector('[data-explain]').checked).toBe(false)
+  })
+  it('MT-F10-07 選択を保存できない端末でも「出す」から始められる', () => {
+    const broken = { getItem: () => { throw new Error('denied') }, setItem: () => { throw new Error('denied') } }
+    expect(home.loadExplainPref(broken)).toBe(true)
+    expect(() => home.saveExplainPref(false, broken)).not.toThrow()
+    expect(home.loadExplainPref(null)).toBe(true)
   })
   it('MT-F10-03 冒険の終わりのお知らせを1回だけ出す', async () => {
     setup({ notice: NOTICE_DONE })

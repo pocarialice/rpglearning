@@ -1,4 +1,5 @@
 // A-07 次の問題（5問の冒険の中の1問。冒険を終えるときは冒険のまとめ（S-15）も返す）、A-07b キーワード説明の問いかけ
+// 冒険を始めるとき（adventureId なし）に explain=0 を付けると、その冒険では説明問題を出さない
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
@@ -19,6 +20,8 @@ async function summaryView(adventureId, userId) {
     expGained: s.expGained, studySeconds: s.studySeconds, totalStudySeconds: s.totalStudySeconds
   }
 }
+// 復習と新規のどちらの枠から始めるか。冒険ごとに入れ替える（5問のうち復習は2問か3問になる）
+export const startWithOf = (adventureId) => (Number(adventureId) % 2 === 0 ? 'new' : 'review')
 const entryKey = (e) => (e.k === 'choice' ? servedKey('choice', { questionId: e.q }) : servedKey('explain', { keywordId: e.kw }))
 export async function next(ctx) {
   const { user, today, query } = ctx
@@ -28,15 +31,16 @@ export async function next(ctx) {
     adv = await adventures.find(decodeId(PREFIX.adventure, query.adventureId), user.userId)
     if (!adv) throw new AppError('NOT_FOUND', '冒険が見つかりません')
   } else {
-    adv = await adventures.start(user.userId, courseId)
+    adv = await adventures.start(user.userId, courseId, { includeExplain: query.explain !== '0' })
   }
+  const allowExplain = adv.includeExplain !== false
   const adventureId = encodeId(PREFIX.adventure, adv.adventureId)
   if (adv.servedCount >= adventures.ADVENTURE_SIZE) {
     await adventures.finish(adv.adventureId)
     return ok({ adventureId, done: true, summary: await summaryView(adv.adventureId, user.userId) })
   }
   const candidates = { due: {}, unlearned: {}, learned: {} }
-  await Promise.all(KINDS.map(async (kind) => {
+  await Promise.all(KINDS.filter((k) => allowExplain || k === 'choice').map(async (kind) => {
     const [due, unlearned, learned] = await Promise.all([
       reviews.listDue(user.userId, courseId, kind, today),
       reviews.listUnlearned(user.userId, courseId, kind),
@@ -46,7 +50,11 @@ export async function next(ctx) {
     candidates.unlearned[kind] = unlearned
     candidates.learned[kind] = learned
   }))
-  const pick = pickNext(candidates, { lastKind: adv.lastKind ?? null, servedIds: (adv.served ?? []).map(entryKey) })
+  const served = adv.served ?? []
+  const pick = pickNext(candidates, {
+    lastKind: adv.lastKind ?? null, servedIds: served.map(entryKey), usedQuestionIds: served.map((e) => e.q),
+    index: adv.servedCount ?? 0, startWith: startWithOf(adv.adventureId), allowExplain
+  })
   if (!pick) {
     await adventures.finish(adv.adventureId)
     return ok({ adventureId, done: true, reason: 'NO_QUESTION', summary: await summaryView(adv.adventureId, user.userId) })

@@ -94,18 +94,19 @@ describe('M-W03 batch-runner daily', () => {
     expect(users.updateStreak).not.toHaveBeenCalled()
   })
   it('MT-W03-07 クエストの割り当て', async () => {
-    quests.listAssignTargets.mockResolvedValue([{ userId: 15, dueCount: 4, assigned: false }, { userId: 16, dueCount: 0, assigned: false }])
+    quests.listAssignTargets.mockResolvedValue([{ userId: 15, assigned: false }, { userId: 16, assigned: false }])
     await assignQuests.run({ today: '2026-10-20', rand: () => 0.5 })
     const [first, second] = quests.insertAssignments.mock.calls
     expect(first[0]).toBe(15)
     expect(first[1]).toBe('2026-10-20')
-    expect(first[2]).toHaveLength(3)
-    expect(first[2]).toContainEqual({ code: 'Q-04', target: 4 })
-    expect(second[2]).toHaveLength(3)
-    expect(second[2].map((q) => q.code)).not.toContain('Q-04')
+    for (const call of [first, second]) {
+      expect(call[2]).toHaveLength(3)
+      expect(call[2].map((q) => q.code)).not.toContain('Q-04')
+      expect(call[2].every((q) => q.target >= 1)).toBe(true)
+    }
   })
   it('MT-W03-08 クエストの二重実行', async () => {
-    quests.listAssignTargets.mockResolvedValue([{ userId: 15, dueCount: 4, assigned: true }, { userId: 16, dueCount: 0, assigned: false }])
+    quests.listAssignTargets.mockResolvedValue([{ userId: 15, assigned: true }, { userId: 16, assigned: false }])
     await daily()
     expect(quests.insertAssignments).toHaveBeenCalledTimes(1)
     expect(quests.insertAssignments.mock.calls[0][0]).toBe(16)

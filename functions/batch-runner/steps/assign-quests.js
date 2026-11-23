@@ -5,7 +5,7 @@ export async function run({ today, rand = Math.random }) {
   let assigned = 0
   for (const t of await quests.listAssignTargets(today)) {
     if (t.assigned) continue
-    await quests.insertAssignments(t.userId, today, pickDailyQuests(t.dueCount, rand))
+    await quests.insertAssignments(t.userId, today, pickDailyQuests(rand))
     assigned++
   }
   return { assigned }

@@ -8,19 +8,23 @@ import * as expRepo from '../db/repositories/exp.js'
 import * as usersRepo from '../db/repositories/users.js'
 import * as questsRepo from '../db/repositories/quests.js'
 import * as badgesRepo from '../db/repositories/badges.js'
+import * as adventuresRepo from '../db/repositories/adventures.js'
 export const toDomainQuest = (q) => ({ userQuestId: q.userQuestId, code: q.questCode, target: q.target, progress: q.progress, achieved: !!q.achieved })
-export async function loadAnswerContext(tx, { user, kind, questionId, keywordId, today }) {
-  const [reviewItem, todayQuests, ownedBadges, masteredCountBefore] = await Promise.all([
+export async function loadAnswerContext(tx, { user, kind, questionId, keywordId, today, adventureId = null }) {
+  const [reviewItem, todayQuests, ownedBadges, masteredCountBefore, adventureAnswers] = await Promise.all([
     reviews.findItem({ userId: user.userId, kind, questionId, keywordId }, tx),
     questsRepo.listToday(user.userId, today, tx),
     badgesRepo.listOwned(user.userId, tx),
-    answers.masteredCount(user.userId, tx)
+    answers.masteredCount(user.userId, tx),
+    adventureId ? adventuresRepo.countAnswers(adventureId, tx) : null
   ])
-  return { reviewItem, todayQuests, ownedBadges, masteredCountBefore }
+  return { reviewItem, todayQuests, ownedBadges, masteredCountBefore, adventureAnswers }
 }
-export function computeOutcome(ctx, { user, kind, correct, today }) {
+export function computeOutcome(ctx, { user, kind, correct, today, score = null }) {
+  // この解答で冒険の5問目を答え終える（記録済みの解答が4つ）とき、冒険をやりとげたことにする
+  const adventureCompleted = ctx.adventureAnswers != null && ctx.adventureAnswers + 1 === adventuresRepo.ADVENTURE_SIZE
   return buildAnswerOutcome({
-    kind, correct, reviewItem: ctx.reviewItem, today, user,
+    kind, correct, reviewItem: ctx.reviewItem, today, user, score, adventureCompleted,
     quests: ctx.todayQuests.map(toDomainQuest), ownedBadges: ctx.ownedBadges, masteredCountBefore: ctx.masteredCountBefore
   })
 }

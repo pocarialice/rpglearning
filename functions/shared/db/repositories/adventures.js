@@ -8,13 +8,14 @@ function parse(row) {
   if (a && typeof a.served === 'string') a.served = JSON.parse(a.served)
   return a
 }
-export async function start(userId, courseId, db = defaultDb) {
-  const rows = await db.query(`INSERT INTO adventures (user_id, course_id) VALUES (:userId, :courseId)
-    RETURNING adventure_id, user_id, course_id, served_count, last_kind, served`, { userId, courseId })
+// includeExplain=false の冒険では説明問題を出さない（冒険を始めるときに学習者が選ぶ）
+export async function start(userId, courseId, { includeExplain = true } = {}, db = defaultDb) {
+  const rows = await db.query(`INSERT INTO adventures (user_id, course_id, include_explain) VALUES (:userId, :courseId, :includeExplain)
+    RETURNING adventure_id, user_id, course_id, served_count, last_kind, served, include_explain`, { userId, courseId, includeExplain })
   return parse(rows[0])
 }
 export async function find(adventureId, userId, db = defaultDb) {
-  const rows = await db.query(`SELECT adventure_id, user_id, course_id, served_count, last_kind, served, finished_at
+  const rows = await db.query(`SELECT adventure_id, user_id, course_id, served_count, last_kind, served, include_explain, finished_at
     FROM adventures WHERE adventure_id = :adventureId AND user_id = :userId`, { adventureId, userId })
   return parse(rows[0])
 }
@@ -42,6 +43,11 @@ export async function addStudyTime(adventureId, userId, db = defaultDb) {
   return rows[0]?.sec ?? 0
 }
 // 冒険のまとめ（S-15）。解答数・正解数・説明の平均点・解答で得たEXP・かかった時間・累計の学習時間
+// 冒険の中で記録した解答の数（デイリークエスト「冒険を1回やりとげる」の判定に使う）
+export async function countAnswers(adventureId, db = defaultDb) {
+  const rows = await db.query('SELECT count(*)::int AS cnt FROM answer_logs WHERE adventure_id = :adventureId', { adventureId })
+  return rows[0]?.cnt ?? 0
+}
 export async function summary(adventureId, userId, db = defaultDb) {
   const rows = await db.query(`SELECT a.study_seconds, u.total_study_seconds,
       count(l.answer_id)::int AS answered,
