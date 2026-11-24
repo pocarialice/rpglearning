@@ -3,7 +3,7 @@
 | 項目     | 内容                                              |
 | ------ | ----------------------------------------------- |
 | 文書名    | RPG学習アプリ モジュールテスト仕様書                            |
-| 版数     | 第2.7版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照） |
+| 版数     | 第2.8版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照） |
 | 作成日    | 2026-10-20（各版の日付は「変更履歴」を参照） |
 | 入力文書   | 詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は `aws/documents/` に退避                          |
 | 対象フェーズ | Phase 1（MVP）                                    |
@@ -441,12 +441,12 @@ describe('M-D01 client', () => {
 | MT-D03-33 | （欠番） | 通知メールを削除したため削除（第2.4版） | - | - |
 | MT-D03-34 | listByCourse・findByIds | 絞り込みなし／`{status:'published', importId:8}`、行なし。`findByIds([43,44])`／`[]` | archived を除き新しい順に最大500件。状態・取り込みは SQL のパラメータで渡す。`findByIds` は `ANY(string_to_array(…))` で、空なら SQL を流さない | 同 |
 | MT-D03-35 | adventures の学習時間とまとめ | `addStudyTime(90, 15)` が 125 秒を返す／行なし。`summary` の行あり／他人 | 125／0。SQL は0〜600秒に丸め、冒険と `users.total_study_seconds` を同じ文で足す。まとめは camelCase、他人は null | 同 |
-| MT-D03-36 | summaries.listForAdventure | 冒険90・利用者15、足りない観点が JSON 文字列の行と null の行 | SQL は本人と冒険で絞り、採点（`status='done'`）から足りない観点を引く。足りない観点は配列（null は `[]`）、列は camelCase。パラメータが SQL の `:name` とそろう | 同 |
+| MT-D03-36 | summaries.listForAdventure | 冒険90・利用者15、足りない観点・問題のキーワードが JSON 文字列の行と配列・null の行 | SQL は本人と冒険で絞り、採点（`status='done'`）から足りない観点を引く。足りない観点と問題のキーワード（`json_agg` で並び順どおり）は配列（null は `[]`）、列は camelCase。パラメータが SQL の `:name` とそろう | 同 |
 | MT-D03-37 | summaries.listForDate | 利用者15・`2026-10-20` | SQL は `answered_on = :day` で絞り、日付は `{date}` で渡す。足りない観点が配列のときはそのまま | 同 |
 | MT-D03-38 | course-records.listForUser | 利用者15、行1つ | SQL は受講（`enrollments`）と解答（`answer_logs`）の `UNION` でコースを集め、学習時間は `sum(ad.study_seconds)`、正答率は択一で数え、`ORDER BY last_studied_on DESC NULLS LAST`。列は camelCase、パラメータが SQL の `:name` とそろう | 同 |
 | MT-D03-39 | course-records.findForUser | 利用者15・コース3（行あり）／コース9（行なし） | SQL に `WHERE c.course_id = :courseId`、camelCase の1行／null | 境 |
 | MT-D03-40 | course-records.detailCounts | 利用者15・コース3・`2026-10-20` | SQL に `count(DISTINCT a.adventure_id)` と今日の復習の `r.next_review_on <= :today`。今日は `{date}` で渡す | 同 |
-| MT-D03-41 | course-records.listWeak | 利用者15・コース3・3件、足りない観点が JSON 文字列の行と null の行 | SQL は `r.stage < 6 AND r.answer_count > r.correct_count`、`ORDER BY miss_count DESC`、`limit` を渡す。足りない観点は配列（null は `[]`） | 同 |
+| MT-D03-41 | course-records.listWeak | 利用者15・コース3・3件、足りない観点・問題のキーワードが JSON 文字列の行と配列・null の行 | SQL は `r.stage < 6 AND r.answer_count > r.correct_count`、`ORDER BY miss_count DESC`、`limit` を渡す。足りない観点と問題のキーワード（`json_agg` で並び順どおり）は配列（null は `[]`） | 同 |
 
 #### M-D04 リポジトリ（ジョブキュー・定期処理・ログイン）
 
@@ -598,11 +598,11 @@ describe('M-D01 client', () => {
 | MT-G08-01 | 学習時間と休憩の上限 | 冒険の開始 01:00、解答 01:02・01:05・02:05 | 2分＋3分＋10分（1つの間隔は10分まで）＝ 900秒 | 境 |
 | MT-G08-02 | 冒険のない解答・冒険ごとの合計・順番 | 冒険なしの解答1つ、冒険91の解答2つ（並びが逆）、解答なし | 冒険なしは0秒、冒険91は開始から10分で600秒、合計600秒。解答なしは0 | 同 |
 | MT-G08-03 | 学習時間の表示 | 0・null・-5・20・1503・3600・3909 秒 | 「0秒」「0秒」「0秒」「20秒」「25分3秒」「1時間0分」「1時間5分」（画面の `formatDuration` と同じ） | 境 |
-| MT-G08-04 | 問題文の1行化 | タグと改行を含む文、45文字、Markdown の記号、null | タグ・改行を落とす、40文字で切って「…」、`*` `[` `#` `\|` `` ` `` を `\` で逃がす、空文字 | 境 |
-| MT-G08-05 | 復習するべき観点 | 正解、同じ問題の不正解2回、正解の選択肢なし・習得済みの不正解、足りない観点ありの不合格、足りない観点・キーワード・復習日なしの不合格 | 正解は出さない、同じ問題は1つ、「解説を読み直す」と復習日なし、「足りない観点は サブネット、ルート（次の復習 2026/10/24）」、「模範説明を読み直す」 | デ |
+| MT-G08-04 | 問題文の1行化 | タグと改行を含む文、45文字、Markdown の記号、null、`escape: false` | タグ・改行を落とす、40文字で切って「…」、`*` `[` `#` `\|` `` ` `` を `\` で逃がす、空文字、`escape: false` は記号をそのまま残す | 境 |
+| MT-G08-05 | 復習するべき観点 | 正解、同じ問題の不正解2回、正解の選択肢なし・習得済みの不正解、足りない観点ありの不合格、足りない観点・キーワード・復習日なしの不合格 | 正解は出さない、同じ問題は1つ、「解説を読み直す」と復習日なし、「足りない観点は サブネット、ルート（次の復習 2026/10/24）」、キーワードがなければ問題文の頭で「模範説明を読み直す」 | デ |
 | MT-G08-06 | 数の集計 | 択一の正解（復習）・不正解、説明の合格 | 解答3・正解2・択一2（正解1）・説明1（合格1）・復習1 | 同 |
 | MT-G08-07 | Markdown の全体 | 2コース、択一2・説明2、コメントに改行 | 見出し → 学習日・学習時間「25分0秒」・コース2つ → 学習した内容（1問ずつ）→ 復習するべき観点 → 「ミナからのコメント」。コメントの改行は空白に、空行がない | 同 |
-| MT-G08-08 | Markdown の省略 | コース名なし、間違いなし、名前なしのコメント、コメントなし | コースの行を出さない、「間違えた問題はありません」、「パートナーのコメント」、コメントの見出しを出さない | 同 |
+| MT-G08-08 | Markdown の省略 | コース名なし、間違いなし、名前なしのコメント、コメントなし、キーワードのない説明 | コースの行を出さない、「間違えた問題はありません」、「パートナーのコメント」、コメントの見出しを出さない、キーワードのない説明は問題文の頭 | 同 |
 | MT-G08-09 | 択一の見出し | 問題にキーワードあり・なし、キーワードが消えた説明 | キーワードを「・」でつなぐ、なければ問題文の頭、説明は問題のキーワード。問題文の頭は出さない | 同 |
 
 ### 4.4 ai
@@ -1564,8 +1564,8 @@ Cloudflare の Worker は Node のテストの中で動かす（`Request`・`Res
 | 3.3.1 初回の流れ、3.7 学習者画面（S-02〜S-09） | 6.2 | pages/learner、parts | MT-F09〜MT-F17 |
 | 3.8 管理画面（S-11〜S-14） | 6.2 | pages/admin | MT-F19〜MT-F22 |
 | 3.5.1 キーボードとタッチの操作 | 6.1 | core/keys、core/zoom | MT-F27-01〜10、MT-F28-01〜02 |
-| 3.7 S-15・S-08 学習サマリ（学習サマリのルール）、5.3 A-12b・A-12c、5.5 AI連携 | 3.5 M-G08、5.2 A-12b・A-12c、6.2、7.7、8.6 | domain/summary、routes/summaries、repositories/summaries、prompts/summary-comment、parts/summary-panel、s15-summary、s08-profile | MT-G08-01〜08、MT-H16-01〜08、MT-D03-36〜37、MT-A04-11〜12、MT-F26-01〜07、MT-F25-04、MT-F16-06、MT-F14-12 |
-| 3.7 S-08・S-16・S-17 コースごとの実績（コースごとの実績のルール）、5.3 A-12・A-12d・A-12e | 5.2 A-12・A-12d・A-12e、6.1、6.2、7.7、8.6 | routes/course-records、routes/me、repositories/course-records、prompts/summary-comment、s16-course-records、s17-course-record、s08-profile、shell | MT-H17-01〜07、MT-H02-20、MT-D03-38〜41、MT-A04-13、MT-F29-01〜02、MT-F30-01〜04、MT-F16-02・07〜08、MT-F08-07 |
+| 3.7 S-15・S-08 学習サマリ（学習サマリのルール）、5.3 A-12b・A-12c、5.5 AI連携 | 3.5 M-G08、5.2 A-12b・A-12c、6.2、7.7、8.6 | domain/summary、routes/summaries、repositories/summaries、prompts/summary-comment、parts/summary-panel、s15-summary、s08-profile | MT-G08-01〜09、MT-H16-01〜08、MT-D03-36〜37、MT-A04-11〜12、MT-F26-01〜07、MT-F25-04、MT-F16-06、MT-F14-12 |
+| 3.7 S-08・S-16・S-17 コースごとの実績（コースごとの実績のルール）、5.3 A-12・A-12d・A-12e | 5.2 A-12・A-12d・A-12e、6.1、6.2、7.7、8.6 | routes/course-records、routes/me、repositories/course-records、prompts/summary-comment、s16-course-records、s17-course-record、s08-profile、shell | MT-H17-01〜09、MT-H02-20、MT-D03-38〜41、MT-A04-13、MT-F29-01〜02、MT-F30-01〜04、MT-F16-02・07〜08、MT-F08-07 |
 | 2章 システム構成（ファイル・監視・リリース） | 3.9、4.1、8.7、10.4 | storage、db/migrate、server/main、util/alert | MT-O01-01〜05、MT-D05-01〜05、MT-S03-01〜05、MT-U08-01〜03 |
 | 2.10 サーバーの自動停止と起動（dev） | 4.8 | workers/wake、core/api.js、core/auth.js | MT-C01-01〜21、MT-F02-09〜10、MT-F01-14〜15 |
 
@@ -1650,6 +1650,7 @@ timeline
   2026-11-07 : 第2.4版
   2026-11-12 : 第2.5版 : 第2.6版
   2026-11-23 : 第2.7版
+  2026-11-24 : 第2.8版
 ```
 
 日付は版を作った日。
@@ -1683,3 +1684,4 @@ timeline
 | 第2.5版 | 2026-11-12 | サーバーが止まっているときの Service Worker のテスト2件（MT-F24-03〜04）を載せる |
 | 第2.6版 | 2026-11-12 | 起こす係の Cloudflare Worker（`workers/wake`）のテスト21件を M-C01（MT-C01-01〜21）として載せ、サーバー起動中（`SERVER_WAKING`）の待ち合わせのテスト4件を MT-F02-09〜10・MT-F01-14〜15 として載せ、1.3・2.1・3.2・6.1・6.2 を今の `vitest.config.js` に合わせ、6.4 に報告書を作り直すコマンド（`npm run test:report`）を書く |
 | 第2.7版 | 2026-11-23 | 出題の見直し（詳細設計書 第2.1版）に合わせる。出題の枠とランダムな選び方・説明問題なしの冒険のテスト（MT-G06-10〜14・MT-H05-13〜14・MT-F10-06〜07）、新しいクエストのテスト（MT-G03-13・MT-G07-09〜11・MT-H06-09）を載せ、MT-G03-01〜03・09、MT-G06-05、MT-G07-02、MT-H03-04、MT-H05-01、MT-D03-26・28・31、MT-D05-01、MT-W03-07、MT-F10-01 を直す |
+| 第2.8版 | 2026-11-24 | 学習サマリとコースごとの実績で問題をキーワードで出す変更に合わせ、MT-G08-09・MT-H17-08〜09 を載せ、MT-G08-04〜05・08、MT-D03-36・41 を直す |

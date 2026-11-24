@@ -436,7 +436,7 @@ table.hist td:nth-child(2) { white-space: nowrap; }
     <span class="eyebrow">モジュールテスト仕様書</span>
     <h1><i class="fa-solid fa-vial-circle-check h-ico" aria-hidden="true"></i>RPG学習アプリ モジュールテスト仕様書</h1>
     <ul class="meta">
-      <li>版数<b>第2.7版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
+      <li>版数<b>第2.8版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</b></li>
       <li>作成日<b>2026-10-20（各版の日付は「変更履歴」を参照）</b></li>
       <li>入力文書<b>詳細設計書 第1.4版、外部設計書 第1.3版。AWS 版（第1.2版まで）は <code>aws/documents/</code> に退避</b></li>
       <li>対象フェーズ<b>Phase 1（MVP）</b></li>
@@ -2073,8 +2073,8 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-D03-36</td>
 <td>summaries.listForAdventure</td>
-<td>冒険90・利用者15、足りない観点が JSON 文字列の行と null の行</td>
-<td>SQL は本人と冒険で絞り、採点（<code>status='done'</code>）から足りない観点を引く。足りない観点は配列（null は <code>[]</code>）、列は camelCase。パラメータが SQL の <code>:name</code> とそろう</td>
+<td>冒険90・利用者15、足りない観点・問題のキーワードが JSON 文字列の行と配列・null の行</td>
+<td>SQL は本人と冒険で絞り、採点（<code>status='done'</code>）から足りない観点を引く。足りない観点と問題のキーワード（<code>json_agg</code> で並び順どおり）は配列（null は <code>[]</code>）、列は camelCase。パラメータが SQL の <code>:name</code> とそろう</td>
 <td>同</td>
 </tr>
 <tr>
@@ -2108,8 +2108,8 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-D03-41</td>
 <td>course-records.listWeak</td>
-<td>利用者15・コース3・3件、足りない観点が JSON 文字列の行と null の行</td>
-<td>SQL は <code>r.stage &lt; 6 AND r.answer_count &gt; r.correct_count</code>、<code>ORDER BY miss_count DESC</code>、<code>limit</code> を渡す。足りない観点は配列（null は <code>[]</code>）</td>
+<td>利用者15・コース3・3件、足りない観点・問題のキーワードが JSON 文字列の行と配列・null の行</td>
+<td>SQL は <code>r.stage &lt; 6 AND r.answer_count &gt; r.correct_count</code>、<code>ORDER BY miss_count DESC</code>、<code>limit</code> を渡す。足りない観点と問題のキーワード（<code>json_agg</code> で並び順どおり）は配列（null は <code>[]</code>）</td>
 <td>同</td>
 </tr>
 </tbody>
@@ -2936,15 +2936,15 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-G08-04</td>
 <td>問題文の1行化</td>
-<td>タグと改行を含む文、45文字、Markdown の記号、null</td>
-<td>タグ・改行を落とす、40文字で切って「…」、<code>*</code> <code>[</code> <code>#</code> <code>|</code> <code>`</code> を <code>\</code> で逃がす、空文字</td>
+<td>タグと改行を含む文、45文字、Markdown の記号、null、<code>escape: false</code></td>
+<td>タグ・改行を落とす、40文字で切って「…」、<code>*</code> <code>[</code> <code>#</code> <code>|</code> <code>`</code> を <code>\</code> で逃がす、空文字、<code>escape: false</code> は記号をそのまま残す</td>
 <td>境</td>
 </tr>
 <tr>
 <td>MT-G08-05</td>
 <td>復習するべき観点</td>
 <td>正解、同じ問題の不正解2回、正解の選択肢なし・習得済みの不正解、足りない観点ありの不合格、足りない観点・キーワード・復習日なしの不合格</td>
-<td>正解は出さない、同じ問題は1つ、「解説を読み直す」と復習日なし、「足りない観点は サブネット、ルート（次の復習 2026/10/24）」、「模範説明を読み直す」</td>
+<td>正解は出さない、同じ問題は1つ、「解説を読み直す」と復習日なし、「足りない観点は サブネット、ルート（次の復習 2026/10/24）」、キーワードがなければ問題文の頭で「模範説明を読み直す」</td>
 <td>デ</td>
 </tr>
 <tr>
@@ -2964,8 +2964,15 @@ describe('M-D01 client', () =&gt; {
 <tr>
 <td>MT-G08-08</td>
 <td>Markdown の省略</td>
-<td>コース名なし、間違いなし、名前なしのコメント、コメントなし</td>
-<td>コースの行を出さない、「間違えた問題はありません」、「パートナーのコメント」、コメントの見出しを出さない</td>
+<td>コース名なし、間違いなし、名前なしのコメント、コメントなし、キーワードのない説明</td>
+<td>コースの行を出さない、「間違えた問題はありません」、「パートナーのコメント」、コメントの見出しを出さない、キーワードのない説明は問題文の頭</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-G08-09</td>
+<td>択一の見出し</td>
+<td>問題にキーワードあり・なし、キーワードが消えた説明</td>
+<td>キーワードを「・」でつなぐ、なければ問題文の頭、説明は問題のキーワード。問題文の頭は出さない</td>
 <td>同</td>
 </tr>
 </tbody>
@@ -5160,6 +5167,20 @@ describe('M-D01 client', () =&gt; {
 <td>ニックネームなし</td>
 <td>409</td>
 <td>異</td>
+</tr>
+<tr>
+<td>MT-H17-08</td>
+<td>苦手な問題の見出し</td>
+<td>問題のキーワードあり、説明のキーワードが消えている</td>
+<td>択一も説明も問題のキーワードを「・」でつないで出す</td>
+<td>同</td>
+</tr>
+<tr>
+<td>MT-H17-09</td>
+<td>苦手な問題の記号</td>
+<td>キーワード・問題文・足りない観点に <code>#</code> <code>*</code> <code>_</code> <code>[</code> <code>|</code> <code>`</code></td>
+<td>Markdown 用の <code>\</code> を付けずにそのまま返す（画面で HTML エスケープする）</td>
+<td>同</td>
 </tr>
 </tbody>
 </table></div>
@@ -8055,13 +8076,13 @@ describe('M-D01 client', () =&gt; {
 <td>3.7 S-15・S-08 学習サマリ（学習サマリのルール）、5.3 A-12b・A-12c、5.5 AI連携</td>
 <td>3.5 M-G08、5.2 A-12b・A-12c、6.2、7.7、8.6</td>
 <td>domain/summary、routes/summaries、repositories/summaries、prompts/summary-comment、parts/summary-panel、s15-summary、s08-profile</td>
-<td>MT-G08-01〜08、MT-H16-01〜08、MT-D03-36〜37、MT-A04-11〜12、MT-F26-01〜07、MT-F25-04、MT-F16-06、MT-F14-12</td>
+<td>MT-G08-01〜09、MT-H16-01〜08、MT-D03-36〜37、MT-A04-11〜12、MT-F26-01〜07、MT-F25-04、MT-F16-06、MT-F14-12</td>
 </tr>
 <tr>
 <td>3.7 S-08・S-16・S-17 コースごとの実績（コースごとの実績のルール）、5.3 A-12・A-12d・A-12e</td>
 <td>5.2 A-12・A-12d・A-12e、6.1、6.2、7.7、8.6</td>
 <td>routes/course-records、routes/me、repositories/course-records、prompts/summary-comment、s16-course-records、s17-course-record、s08-profile、shell</td>
-<td>MT-H17-01〜07、MT-H02-20、MT-D03-38〜41、MT-A04-13、MT-F29-01〜02、MT-F30-01〜04、MT-F16-02・07〜08、MT-F08-07</td>
+<td>MT-H17-01〜09、MT-H02-20、MT-D03-38〜41、MT-A04-13、MT-F29-01〜02、MT-F30-01〜04、MT-F16-02・07〜08、MT-F08-07</td>
 </tr>
 <tr>
 <td>2章 システム構成（ファイル・監視・リリース）</td>
@@ -8231,7 +8252,7 @@ describe('M-D01 client', () =&gt; {
   
 <section class="chapter" id="history"><h2><i class="fa-solid fa-clock-rotate-left h-ico" aria-hidden="true"></i>変更履歴</h2>
 <div class="hist-vis"><p class="hist-label">版の移り変わり</p>
-<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/01</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>11/04</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.4版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第2.5版</b><small>11/12</small></span></li><li><span class="hist-chip"><b>第2.6版</b><small>11/12</small></span></li><li class="now"><span class="hist-chip"><b>第2.7版</b><small>11/23</small></span></li></ol>
+<ol class="hist-flow"><li><span class="hist-chip"><b>第0.1版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.2版</b><small>10/20</small></span></li><li><span class="hist-chip"><b>第0.3版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.4版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.5版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.6版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.7版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.8版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第0.9版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.0版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.1版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.2版</b><small>10/21</small></span></li><li><span class="hist-chip"><b>第1.3版</b><small>10/27</small></span></li><li><span class="hist-chip"><b>第1.4版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.5版</b><small>10/31</small></span></li><li><span class="hist-chip"><b>第1.6版</b><small>11/01</small></span></li><li><span class="hist-chip"><b>第1.7版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.8版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第1.9版</b><small>11/02</small></span></li><li><span class="hist-chip"><b>第2.0版</b><small>11/03</small></span></li><li><span class="hist-chip"><b>第2.1版</b><small>11/04</small></span></li><li><span class="hist-chip"><b>第2.2版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.3版</b><small>11/06</small></span></li><li><span class="hist-chip"><b>第2.4版</b><small>11/07</small></span></li><li><span class="hist-chip"><b>第2.5版</b><small>11/12</small></span></li><li><span class="hist-chip"><b>第2.6版</b><small>11/12</small></span></li><li><span class="hist-chip"><b>第2.7版</b><small>11/23</small></span></li><li class="now"><span class="hist-chip"><b>第2.8版</b><small>11/24</small></span></li></ol>
 <p class="hist-note">濃い色が、いまの版。日付は版を作った日。</p></div>
 <div class="table-wrap"><table class="hist">
 <thead><tr><th>版数</th><th>日付</th><th>変更内容</th></tr></thead>
@@ -8263,11 +8284,11 @@ describe('M-D01 client', () =&gt; {
 <tr><td>第2.5版</td><td>2026-11-12</td><td>サーバーが止まっているときの Service Worker のテスト2件（MT-F24-03〜04）を載せる</td></tr>
 <tr><td>第2.6版</td><td>2026-11-12</td><td>起こす係の Cloudflare Worker（<code>workers/wake</code>）のテスト21件を M-C01（MT-C01-01〜21）として載せ、サーバー起動中（<code>SERVER_WAKING</code>）の待ち合わせのテスト4件を MT-F02-09〜10・MT-F01-14〜15 として載せ、1.3・2.1・3.2・6.1・6.2 を今の <code>vitest.config.js</code> に合わせ、6.4 に報告書を作り直すコマンド（<code>npm run test:report</code>）を書く</td></tr>
 <tr><td>第2.7版</td><td>2026-11-23</td><td>出題の見直し（詳細設計書 第2.1版）に合わせる。出題の枠とランダムな選び方・説明問題なしの冒険のテスト（MT-G06-10〜14・MT-H05-13〜14・MT-F10-06〜07）、新しいクエストのテスト（MT-G03-13・MT-G07-09〜11・MT-H06-09）を載せ、MT-G03-01〜03・09、MT-G06-05、MT-G07-02、MT-H03-04、MT-H05-01、MT-D03-26・28・31、MT-D05-01、MT-W03-07、MT-F10-01 を直す</td></tr>
-</tbody></table></div>
+<tr><td>第2.8版</td><td>2026-11-24</td><td>学習サマリとコースごとの実績で問題をキーワードで出す変更に合わせ、MT-G08-09・MT-H17-08〜09 を載せ、MT-G08-04〜05・08、MT-D03-36・41 を直す</td></tr></tbody></table></div>
 </section>
   </main>
 </div>
-<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第2.7版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
+<footer class="site-footer"><div class="inner">RPG学習アプリ モジュールテスト仕様書 第2.8版（ドラフト：第1〜6章、HTML版あり。変更の内容は「変更履歴」を参照）</div></footer>
 <script type="module">
 import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({
