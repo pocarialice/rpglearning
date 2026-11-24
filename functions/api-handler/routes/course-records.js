@@ -3,7 +3,7 @@
 import { AppError } from '../../shared/util/errors.js'
 import { ok } from '../../shared/util/http.js'
 import { decodeId, encodeId, PREFIX } from '../../shared/util/ids.js'
-import { formatStudyTime, snippet } from '../../shared/domain/summary.js'
+import { formatStudyTime, keywordLabel, questionLabel, snippet, SNIPPET_LENGTH } from '../../shared/domain/summary.js'
 import { generateComment } from './summaries.js'
 import * as records from '../../shared/db/repositories/course-records.js'
 export const WEAK_LIMIT = 3
@@ -25,10 +25,13 @@ export function courseItem(row, currentCourseId) {
     correctPct: pct(row.choiceCorrect ?? 0, row.choiceCount ?? 0)
   }
 }
+// 見出しは問題文の頭ではなくキーワード（択一は問題のキーワードを「・」でつなぐ。なければ問題文の頭）
+// 画面（HTML）と AI に渡す文なので、Markdown の記号は逃がさない（画面でエスケープする）
+const PLAIN = { escape: false }
 function weakItem(w) {
-  if (w.kind === 'choice') return { kind: 'choice', label: snippet(w.questionBody), missCount: w.missCount, score: null, missingPoints: [] }
-  const missing = (w.missingPoints ?? []).map((m) => snippet(m)).filter(Boolean)
-  return { kind: 'explain', label: snippet(w.keyword ?? ''), missCount: w.missCount, score: w.lastScore ?? null, missingPoints: missing }
+  if (w.kind === 'choice') return { kind: 'choice', label: questionLabel(w, PLAIN), missCount: w.missCount, score: null, missingPoints: [] }
+  const missing = (w.missingPoints ?? []).map((m) => snippet(m, SNIPPET_LENGTH, PLAIN)).filter(Boolean)
+  return { kind: 'explain', label: keywordLabel(w, PLAIN), missCount: w.missCount, score: w.lastScore ?? null, missingPoints: missing }
 }
 async function load(ctx) {
   const courseId = decodeId(PREFIX.course, ctx.params.id)

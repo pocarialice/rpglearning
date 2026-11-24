@@ -56,6 +56,24 @@ describe('M-H17 course-records（A-12d・A-12e）', () => {
       { kind: 'explain', label: 'VRRP', missCount: 2, score: 45, missingPoints: ['優先度'] }
     ])
   })
+  it('MT-H17-08 詳細：苦手な問題は問題のキーワードを見出しにする', async () => {
+    records.listWeak.mockResolvedValue([
+      { ...WEAK[0], questionKeywords: ['OSPF', 'ABR'] },
+      { ...WEAK[1], keyword: null, questionKeywords: ['VRRP', '冗長化'] }
+    ])
+    const body = parse(await call({ path: '/api/me/courses/c_3' }))
+    expect(body.weak.map((w) => w.label)).toEqual(['OSPF・ABR', 'VRRP・冗長化'])
+  })
+  it('MT-H17-09 詳細：画面に出す苦手な問題は Markdown の記号を逃がさない', async () => {
+    records.listWeak.mockResolvedValue([
+      { ...WEAK[0], questionKeywords: ['C#', '*args'] },
+      { ...WEAK[1], keyword: 'VLAN_ID', missingPoints: ['[タグ]'] },
+      { ...WEAK[0], questionBody: 'a|b の `x`', questionKeywords: [] }
+    ])
+    const body = parse(await call({ path: '/api/me/courses/c_3' }))
+    expect(body.weak.map((w) => w.label)).toEqual(['C#・*args', 'VLAN_ID', 'a|b の `x`'])
+    expect(body.weak[1].missingPoints).toEqual(['[タグ]'])
+  })
   it('MT-H17-03 詳細：解答がなければ 0 と null', async () => {
     records.detailCounts.mockResolvedValue(null)
     records.listWeak.mockResolvedValue([])

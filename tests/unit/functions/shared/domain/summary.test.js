@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { studySeconds, formatStudyTime, snippet, reviewPoints, tally, buildMarkdown, IDLE_CAP_MS } from '../../../../../functions/shared/domain/summary.js'
+import { studySeconds, formatStudyTime, snippet, questionLabel, reviewPoints, tally, buildMarkdown, IDLE_CAP_MS } from '../../../../../functions/shared/domain/summary.js'
 const row = (p = {}) => ({
   answerId: 1, courseName: '基本情報', adventureId: 90, adventureStartedAt: '2026-10-20 01:00:00.000',
   kind: 'choice', questionId: 42, questionBody: 'DNSの役割は？', correctBody: '名前解決', keywordId: null, keyword: null,
@@ -38,6 +38,7 @@ describe('M-G08 domain/summary.js 学習サマリ', () => {
     expect(snippet('あ'.repeat(45))).toBe(`${'あ'.repeat(40)}…`)
     expect(snippet('*a* [b] #c |d| `e`')).toBe('\\*a\\* \\[b\\] \\#c \\|d\\| \\`e\\`')
     expect(snippet(null)).toBe('')
+    expect(snippet('<p>*a* [b]</p>', 40, { escape: false })).toBe('*a* [b]')
   })
   it('MT-G08-05 復習するべき観点は間違えた択一と不合格の説明だけで、同じものは1つにする', () => {
     const rows = [
@@ -52,7 +53,7 @@ describe('M-G08 domain/summary.js 学習サマリ', () => {
       '- 択一「DNSの役割は？」：正解は「名前解決」（次の復習 2026/10/24）',
       '- 択一「別の問題」：解説を読み直す',
       '- 説明「VPC」（45点）：足りない観点は サブネット、ルート（次の復習 2026/10/24）',
-      '- 説明「」（30点）：模範説明を読み直す'
+      '- 説明「DNSの役割は？」（30点）：模範説明を読み直す'
     ])
   })
   it('MT-G08-06 数の集計', () => {
@@ -91,9 +92,25 @@ describe('M-G08 domain/summary.js 学習サマリ', () => {
     const rows = [row({ courseName: null, kind: 'explain', keyword: null, score: 90 })]
     const md = buildMarkdown({ title: '1日のまとめ', date: '2026-10-20', rows, seconds: 60, comment: { partnerName: null, text: 'いいね' } })
     expect(md).not.toContain('- コース')
-    expect(md).toContain('  - 説明： … 90点 合格')
+    expect(md).toContain('  - 説明：DNSの役割は？ … 90点 合格')
     expect(md).toContain('- 間違えた問題はありません。次の復習日に解き直して定着させましょう')
     expect(md).toContain('## パートナーのコメント\nいいね')
     expect(buildMarkdown({ title: 't', date: null, rows, seconds: 60, comment: null })).not.toContain('コメント')
+  })
+  it('MT-G08-09 択一は問題文の頭ではなく問題のキーワードを見出しにする', () => {
+    expect(questionLabel(row({ questionKeywords: ['DNS', '名前解決'] }))).toBe('DNS・名前解決')
+    expect(questionLabel(row({ questionKeywords: ['*a*', ''] }))).toBe('\\*a\\*')
+    expect(questionLabel(row({ questionKeywords: [] }))).toBe('DNSの役割は？')
+    expect(questionLabel(row({ questionKeywords: ['C#', 'a_b'] }), { escape: false })).toBe('C#・a_b')
+    const rows = [
+      row({ questionBody: 'ある会社では社内のPCから外部のWebサイトへアクセスするときに…', questionKeywords: ['DNS', 'フルリゾルバ'], isCorrect: false }),
+      row({ answerId: 2, kind: 'explain', keywordId: 9, keyword: null, questionKeywords: ['NAT'], score: 40, isCorrect: false })
+    ]
+    const md = buildMarkdown({ title: '冒険のまとめ', date: '2026-10-20', rows, seconds: 60, comment: null })
+    expect(md).toContain('  - 択一：DNS・フルリゾルバ … × 不正解')
+    expect(md).toContain('- 択一「DNS・フルリゾルバ」：正解は「名前解決」（次の復習 2026/10/24）')
+    expect(md).toContain('  - 説明：NAT … 40点 不合格')
+    expect(md).not.toContain('ある会社では')
+    expect(reviewPoints(rows).map((p) => p.label)).toEqual(['DNS・フルリゾルバ', 'NAT'])
   })
 })

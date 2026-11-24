@@ -31,18 +31,25 @@ export function formatStudyTime(seconds) {
   if (m > 0) return `${m}分${total % 60}秒`
   return `${total % 60}秒`
 }
-// 問題文の頭だけを1行にする（タグ・改行を落とし、Markdown の記号として読まれないようにする）
-export function snippet(text, length = SNIPPET_LENGTH) {
+// 問題文の頭だけを1行にする（タグ・改行を落とし、Markdown の記号として読まれないようにする）。画面に出すときは escape: false で記号をそのまま残す
+export function snippet(text, length = SNIPPET_LENGTH, { escape = true } = {}) {
   const s = String(text ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
   const cut = [...s].length > length ? `${[...s].slice(0, length).join('')}…` : s
-  return cut.replace(/([\\`*_[\]#|])/g, '\\$1')
+  return escape ? cut.replace(/([\\`*_[\]#|])/g, '\\$1') : cut
 }
+// 問題の見出し：キーワード（「DNS・名前解決」）。キーワードがなければ問題文の頭
+export function questionLabel(r, opts) {
+  const words = (r.questionKeywords ?? []).map((k) => snippet(k, 50, opts)).filter(Boolean)
+  return words.length ? words.join('・') : snippet(r.questionBody, SNIPPET_LENGTH, opts)
+}
+// 説明の見出し：キーワード。消えていれば問題のキーワード・問題文の頭
+export const keywordLabel = (r, opts) => (r.keyword ? snippet(r.keyword, 50, opts) : questionLabel(r, opts))
 const slash = (d) => (d ? String(d).replaceAll('-', '/') : '')
 const nextReview = (r) => (r.nextReviewOn && r.reviewStage < 6 ? `（次の復習 ${slash(r.nextReviewOn)}）` : '')
 function contentLine(r) {
   const review = r.isReview ? '（復習）' : ''
-  if (r.kind === 'choice') return `- 択一${review}：${snippet(r.questionBody)} … ${r.isCorrect ? '○ 正解' : '× 不正解'}`
-  return `- 説明${review}：${snippet(r.keyword ?? '')} … ${Number(r.score)}点 ${r.isCorrect ? '合格' : '不合格'}`
+  if (r.kind === 'choice') return `- 択一${review}：${questionLabel(r)} … ${r.isCorrect ? '○ 正解' : '× 不正解'}`
+  return `- 説明${review}：${keywordLabel(r)} … ${Number(r.score)}点 ${r.isCorrect ? '合格' : '不合格'}`
 }
 // 復習するべき観点：間違えた択一と不合格の説明。同じ問題・キーワードは最初の1つだけ
 export function reviewPoints(rows) {
@@ -55,11 +62,13 @@ export function reviewPoints(rows) {
     seen.add(key)
     if (r.kind === 'choice') {
       const answer = r.correctBody ? `正解は「${snippet(r.correctBody)}」` : '解説を読み直す'
-      points.push({ kind: 'choice', label: snippet(r.questionBody), text: `- 択一「${snippet(r.questionBody)}」：${answer}${nextReview(r)}` })
+      const label = questionLabel(r)
+      points.push({ kind: 'choice', label, text: `- 択一「${label}」：${answer}${nextReview(r)}` })
     } else {
       const missing = (r.missingPoints ?? []).map((m) => snippet(m)).filter(Boolean)
       const body = missing.length ? `足りない観点は ${missing.join('、')}` : '模範説明を読み直す'
-      points.push({ kind: 'explain', label: snippet(r.keyword ?? ''), missing, text: `- 説明「${snippet(r.keyword ?? '')}」（${Number(r.score)}点）：${body}${nextReview(r)}` })
+      const label = keywordLabel(r)
+      points.push({ kind: 'explain', label, missing, text: `- 説明「${label}」（${Number(r.score)}点）：${body}${nextReview(r)}` })
     }
   }
   return points
