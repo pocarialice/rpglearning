@@ -38,6 +38,7 @@ describe('M-G08 domain/summary.js 学習サマリ', () => {
     expect(snippet('あ'.repeat(45))).toBe(`${'あ'.repeat(40)}…`)
     expect(snippet('*a* [b] #c |d| `e`')).toBe('\\*a\\* \\[b\\] \\#c \\|d\\| \\`e\\`')
     expect(snippet(null)).toBe('')
+    expect(snippet('<p>*a* [b]</p>', 40, { escape: false })).toBe('*a* [b]')
   })
   it('MT-G08-05 復習するべき観点は間違えた択一と不合格の説明だけで、同じものは1つにする', () => {
     const rows = [
@@ -100,6 +101,7 @@ describe('M-G08 domain/summary.js 学習サマリ', () => {
     expect(questionLabel(row({ questionKeywords: ['DNS', '名前解決'] }))).toBe('DNS・名前解決')
     expect(questionLabel(row({ questionKeywords: ['*a*', ''] }))).toBe('\\*a\\*')
     expect(questionLabel(row({ questionKeywords: [] }))).toBe('DNSの役割は？')
+    expect(questionLabel(row({ questionKeywords: ['C#', 'a_b'] }), { escape: false })).toBe('C#・a_b')
     const rows = [
       row({ questionBody: 'ある会社では社内のPCから外部のWebサイトへアクセスするときに…', questionKeywords: ['DNS', 'フルリゾルバ'], isCorrect: false }),
       row({ answerId: 2, kind: 'explain', keywordId: 9, keyword: null, questionKeywords: ['NAT'], score: 40, isCorrect: false })

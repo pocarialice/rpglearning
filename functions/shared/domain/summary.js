@@ -31,19 +31,19 @@ export function formatStudyTime(seconds) {
   if (m > 0) return `${m}分${total % 60}秒`
   return `${total % 60}秒`
 }
-// 問題文の頭だけを1行にする（タグ・改行を落とし、Markdown の記号として読まれないようにする）
-export function snippet(text, length = SNIPPET_LENGTH) {
+// 問題文の頭だけを1行にする（タグ・改行を落とし、Markdown の記号として読まれないようにする）。画面に出すときは escape: false で記号をそのまま残す
+export function snippet(text, length = SNIPPET_LENGTH, { escape = true } = {}) {
   const s = String(text ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
   const cut = [...s].length > length ? `${[...s].slice(0, length).join('')}…` : s
-  return cut.replace(/([\\`*_[\]#|])/g, '\\$1')
+  return escape ? cut.replace(/([\\`*_[\]#|])/g, '\\$1') : cut
 }
 // 問題の見出し：キーワード（「DNS・名前解決」）。キーワードがなければ問題文の頭
-export function questionLabel(r) {
-  const words = (r.questionKeywords ?? []).map((k) => snippet(k, 50)).filter(Boolean)
-  return words.length ? words.join('・') : snippet(r.questionBody)
+export function questionLabel(r, opts) {
+  const words = (r.questionKeywords ?? []).map((k) => snippet(k, 50, opts)).filter(Boolean)
+  return words.length ? words.join('・') : snippet(r.questionBody, SNIPPET_LENGTH, opts)
 }
 // 説明の見出し：キーワード。消えていれば問題のキーワード・問題文の頭
-export const keywordLabel = (r) => (r.keyword ? snippet(r.keyword, 50) : questionLabel(r))
+export const keywordLabel = (r, opts) => (r.keyword ? snippet(r.keyword, 50, opts) : questionLabel(r, opts))
 const slash = (d) => (d ? String(d).replaceAll('-', '/') : '')
 const nextReview = (r) => (r.nextReviewOn && r.reviewStage < 6 ? `（次の復習 ${slash(r.nextReviewOn)}）` : '')
 function contentLine(r) {
