@@ -1012,6 +1012,7 @@ AI は Bedrock のモック（`bedrockMock`）、リポジトリは `vi.mock` �
 | MT-H17-05 | コメント | `GET /api/me/courses/c_3/comment` | `{courseId:'c_3', comment:{partnerName:'ミナ', persona, text}}`。AI は `MODEL_LIGHT`、system に「1つのコースのこれまでの学習全体」、user に `<course>`・学習時間・復習の数・冒険の回数・網羅率・習得済み・今日の復習、`<weak>` に「（3回まちがい）」「（2回まちがい・足りない観点：優先度）」 | 同 |
 | MT-H17-06 | AI の失敗・解答なし | AI が `ThrottlingException`／解答0回 | 励まし型の定型文（解いた数と苦手の名前）／`comment:null`、AI を呼ばない | 異 |
 | MT-H17-07 | ニックネーム未登録 | ニックネームなし | 409 | 異 |
+| MT-H17-08 | 苦手な問題の見出し | 問題のキーワードあり、説明のキーワードが消えている | 択一も説明も問題のキーワードを「・」でつないで出す | 同 |
 
 ### 5.2 grading-worker
 

@@ -52,8 +52,11 @@ export async function detailCounts(userId, courseId, today, db = defaultDb) {
   return camelRow(rows[0])
 }
 // 苦手な問題：まだ習得していない復習項目のうち、まちがえた回数が多い順。説明は直近の点数と足りない観点を付ける
+const toArray = (v) => (typeof v === 'string' ? JSON.parse(v) : (v ?? []))
+// 苦手な問題。questionKeywords は問題のキーワード（並び順どおり）で、画面の見出しに使う
 export async function listWeak(userId, courseId, limit = 3, db = defaultDb) {
   const rows = camelRows(await db.query(`SELECT r.kind, r.question_id, q.body AS question_body, r.keyword_id, k.keyword, r.stage,
+      COALESCE((SELECT json_agg(qk.keyword ORDER BY qk.sort_order) FROM keywords qk WHERE qk.question_id = r.question_id), '[]') AS question_keywords,
       (r.answer_count - r.correct_count)::int AS miss_count,
       (SELECT a.score FROM answer_logs a WHERE r.kind = 'explain' AND a.user_id = r.user_id AND a.kind = 'explain'
          AND a.keyword_id = r.keyword_id ORDER BY a.answered_at DESC LIMIT 1) AS last_score,
@@ -66,6 +69,7 @@ export async function listWeak(userId, courseId, limit = 3, db = defaultDb) {
     ORDER BY miss_count DESC, r.stage, r.updated_at DESC LIMIT :limit`, { userId, courseId, limit }))
   return rows.map((r) => ({
     ...r,
-    missingPoints: typeof r.missingPoints === 'string' ? JSON.parse(r.missingPoints) : (r.missingPoints ?? [])
+    missingPoints: toArray(r.missingPoints),
+    questionKeywords: toArray(r.questionKeywords)
   }))
 }

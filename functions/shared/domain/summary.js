@@ -43,7 +43,7 @@ export function questionLabel(r) {
   return words.length ? words.join('・') : snippet(r.questionBody)
 }
 // 説明の見出し：キーワード。消えていれば問題のキーワード・問題文の頭
-const keywordLabel = (r) => (r.keyword ? snippet(r.keyword, 50) : questionLabel(r))
+export const keywordLabel = (r) => (r.keyword ? snippet(r.keyword, 50) : questionLabel(r))
 const slash = (d) => (d ? String(d).replaceAll('-', '/') : '')
 const nextReview = (r) => (r.nextReviewOn && r.reviewStage < 6 ? `（次の復習 ${slash(r.nextReviewOn)}）` : '')
 function contentLine(r) {

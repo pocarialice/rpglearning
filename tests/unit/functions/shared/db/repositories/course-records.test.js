@@ -34,11 +34,12 @@ describe('M-D03 course-records', () => {
     expect(() => toPositional(sql, params)).not.toThrow()
   })
   it('MT-D03-41 苦手な問題：まちがいの多い順、足りない観点の JSON を配列にする', async () => {
-    const db = fakeDb({ rows: [{ kind: 'explain', miss_count: 2, missing_points: '["優先度"]' }, { kind: 'choice', miss_count: 1, missing_points: null }] })
-    expect(await records.listWeak(15, 3, 3, db)).toEqual([{ kind: 'explain', missCount: 2, missingPoints: ['優先度'] }, { kind: 'choice', missCount: 1, missingPoints: [] }])
+    const db = fakeDb({ rows: [{ kind: 'explain', miss_count: 2, missing_points: '["優先度"]', question_keywords: '["VRRP"]' }, { kind: 'choice', miss_count: 1, missing_points: null, question_keywords: ['OSPF'] }] })
+    expect(await records.listWeak(15, 3, 3, db)).toEqual([{ kind: 'explain', missCount: 2, missingPoints: ['優先度'], questionKeywords: ['VRRP'] }, { kind: 'choice', missCount: 1, missingPoints: [], questionKeywords: ['OSPF'] }])
     const [sql, params] = db.query.mock.calls[0]
     expect(sql).toContain('r.stage < 6 AND r.answer_count > r.correct_count')
     expect(sql).toContain('ORDER BY miss_count DESC')
+    expect(sql).toContain('json_agg(qk.keyword ORDER BY qk.sort_order)')
     expect(params).toEqual({ userId: 15, courseId: 3, limit: 3 })
     expect(() => toPositional(sql, params)).not.toThrow()
   })
