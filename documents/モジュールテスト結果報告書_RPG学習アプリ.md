@@ -3,11 +3,11 @@
 | 項目 | 内容 |
 | --- | --- |
 | 文書名 | RPG学習アプリ モジュールテスト結果報告書 |
-| 版数 | 第3.1版（さくらのクラウド版。変更の内容は「変更履歴」を参照） |
+| 版数 | 第3.2版（さくらのクラウド版。変更の内容は「変更履歴」を参照） |
 | 作成日 | 2026-10-21（各版の日付は「変更履歴」を参照） |
-| 入力文書 | モジュールテスト仕様書 第2.7版、詳細設計書 第2.1版、外部設計書 第1.9版。AWS 版の報告書（第1.9版まで）は `aws/documents/` に退避 |
+| 入力文書 | モジュールテスト仕様書 第2.8版、詳細設計書 第2.1版、外部設計書 第2.0版。AWS 版の報告書（第1.9版まで）は `aws/documents/` に退避 |
 | 対象範囲 | 全モジュール（functions/ の共通モジュール・API・ワーカー・バッチ、server/ のコンテナの入口、workers/ の起こす係、web/js の画面） |
-| 実行日時 | 2026-11-23 12:46（JST） |
+| 実行日時 | 2026-11-24 11:16（JST） |
 | 判定 | **合格**（対象範囲について、仕様書 6.2 の合否基準による） |
 
 ---
@@ -16,13 +16,13 @@
 
 ### 1.1 目的
 
-モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。第3.0版では、報告書を `npm run test:report`（`scripts/test-report-all.mjs` と `scripts/test-report.mjs`）で、テストの結果とカバレッジから作り直すようにした。第3.1版では、出題の見直し（新しい問題と復習をまぜる・説明問題なしの冒険・クエストの入れ替え）を加えた仕様書 第2.7版の全ケースを流し直した。版ごとに変えたことは「変更履歴」に書く。AWS 版の結果（第1.9版まで）は `aws/documents/` に残している。
+モジュールテスト仕様書 第4〜5章のテストケースを Vitest で自動化して実行し、その結果を同書 6.2 の合否基準に照らして判定する。第3.0版では、報告書を `npm run test:report`（`scripts/test-report-all.mjs` と `scripts/test-report.mjs`）で、テストの結果とカバレッジから作り直すようにした。第3.1版では、出題の見直し（新しい問題と復習をまぜる・説明問題なしの冒険・クエストの入れ替え）を加えた仕様書 第2.7版の全ケースを流し直した。第3.2版では、学習サマリとコースごとの実績で問題をキーワードで出す変更を加えた仕様書 第2.8版の全ケースを流し直した。版ごとに変えたことは「変更履歴」に書く。AWS 版の結果（第1.9版まで）は `aws/documents/` に残している。
 
 ### 1.2 今回の範囲
 
 ```mermaid
 flowchart LR
-  A["共通モジュール<br>util・db・domain・ai・mail・auth・storage<br>312ケース"]:::done --> B["API・ワーカー・入口<br>api-handler・worker・batch・server・Cloudflare Worker<br>275ケース"]:::done
+  A["共通モジュール<br>util・db・domain・ai・mail・auth・storage<br>313ケース"]:::done --> B["API・ワーカー・入口<br>api-handler・worker・batch・server・Cloudflare Worker<br>277ケース"]:::done
   B --> C["画面<br>web/js（core・logic・pages・部品）<br>210ケース"]:::done
   classDef done fill:#0017C1,color:#fff,stroke:#0017C1
   classDef todo fill:#fff,color:#414141,stroke:#B4B4B4,stroke-dasharray:4 3
@@ -32,12 +32,12 @@ flowchart LR
 | --- | --- | --- | --- |
 | 対象 | util（MT-U） | 76 | 実行 |
 | 対象 | db（MT-D） | 75 | 実行 |
-| 対象 | domain（MT-G） | 86 | 実行 |
+| 対象 | domain（MT-G） | 87 | 実行 |
 | 対象 | ai（MT-A） | 46 | 実行 |
 | 対象 | mail（MT-M） | 8 | 実行 |
 | 対象 | auth（ログイン）（MT-K） | 16 | 実行 |
 | 対象 | storage（MT-O） | 5 | 実行 |
-| 対象 | api-handler（MT-H） | 180 | 実行 |
+| 対象 | api-handler（MT-H） | 182 | 実行 |
 | 対象 | ワーカー・バッチ（MT-W） | 48 | 実行 |
 | 対象 | server（HTTP・ワーカーの入口）（MT-S） | 26 | 実行 |
 | 対象 | Cloudflare Worker（起こす係）（MT-C） | 21 | 実行 |
@@ -64,30 +64,30 @@ flowchart LR
 
 ```mermaid
 pie showData title テストケースの結果
-  "合格" : 797
+  "合格" : 800
 ```
 
 | 項目 | 結果 |
 | --- | --- |
-| テストケース（仕様書のID） | 797件中 合格 797・不合格 0・未実装 0 |
-| 実行したテスト（`it` の数） | 864件（成功 864・失敗 0・スキップ 0・todo 0）、テストファイル 74 |
-| うち仕様書 第2.1版〜第2.7版 で追加したケース | 68件（第2.1版：HEAD の MT-H01-13・MT-S01-11。第2.2版：ひとことの時間帯の MT-A04-14・MT-H03-09。第2.3版：Googleでログインの MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18。第2.5版：Service Worker の MT-F24-03〜04。第2.6版：起こす係の Worker の MT-C01-01〜21、サーバー起動中の待ち合わせの MT-F02-09〜10・MT-F01-14〜15。第2.7版：出題の見直しの MT-G03-13・MT-G06-10〜14・MT-G07-09〜11・MT-H05-13〜14・MT-H06-09・MT-F10-06〜07。第2.4版では通知メールのケースを欠番にした） |
+| テストケース（仕様書のID） | 800件中 合格 800・不合格 0・未実装 0 |
+| 実行したテスト（`it` の数） | 867件（成功 867・失敗 0・スキップ 0・todo 0）、テストファイル 74 |
+| うち仕様書 第2.1版〜第2.8版 で追加したケース | 68件（第2.1版：HEAD の MT-H01-13・MT-S01-11。第2.2版：ひとことの時間帯の MT-A04-14・MT-H03-09。第2.3版：Googleでログインの MT-D04-11・MT-K03-01〜07・MT-H15-19〜26・MT-F01-12〜13・MT-F23-14〜18。第2.5版：Service Worker の MT-F24-03〜04。第2.6版：起こす係の Worker の MT-C01-01〜21、サーバー起動中の待ち合わせの MT-F02-09〜10・MT-F01-14〜15。第2.7版：出題の見直しの MT-G03-13・MT-G06-10〜14・MT-G07-09〜11・MT-H05-13〜14・MT-H06-09・MT-F10-06〜07。第2.4版では通知メールのケースを欠番にした。第2.8版：問題をキーワードで出す MT-G08-09・MT-H17-08〜09。） |
 | IDのないテスト | 0件 |
 | 仕様書にないID | 0件 |
-| 実行時間 | 最大 17.68 秒（基準：60秒以内） |
-| 安定性 | 同じコミットで3回実行し、すべて同じ結果（864/864、864/864、864/864） |
+| 実行時間 | 最大 16.97 秒（基準：60秒以内） |
+| 安定性 | 同じコミットで3回実行し、すべて同じ結果（867/867、867/867、867/867） |
 | 失敗したテスト | なし |
 
 ## 4. カバレッジ
 
 | 対象 | ファイル数 | 命令網羅（C0） | 分岐網羅（C1） | 関数 | 基準（C0／C1） | 判定 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 全体 | 145 | 99.20% | 94.28% | 98.99% | - | - |
+| 全体 | 145 | 99.20% | 94.32% | 98.99% | - | - |
 | `functions/shared/domain/**` | 8 | 100.00% | 100.00% | 100.00% | 100%／100% | 合格 |
 | `web/js/logic/validators.js` | 1 | 100.00% | 100.00% | 100.00% | 100%／100% | 合格 |
-| `functions/**` | 92 | 99.93% | 97.67% | 99.55% | 90%／80% | 合格 |
+| `functions/**` | 92 | 99.93% | 97.73% | 99.55% | 90%／80% | 合格 |
 | `server/**` | 3 | 96.39% | 91.43% | 100.00% | 90%／80% | 合格 |
-| `web/js/**` | 49 | 98.36% | 90.17% | 98.40% | 90%／80% | 合格 |
+| `web/js/**` | 49 | 98.36% | 90.16% | 98.40% | 90%／80% | 合格 |
 | `workers/**` | 1 | 100.00% | 93.15% | 93.75% | 90%／80% | 合格 |
 
 **ファイル別**
@@ -105,7 +105,7 @@ pie showData title テストケースの結果
 | `functions/api-handler/routes/admin-users.js` | 100.00% | 97.14% | 100.00% |
 | `functions/api-handler/routes/answers.js` | 100.00% | 95.45% | 100.00% |
 | `functions/api-handler/routes/auth.js` | 99.08% | 98.31% | 100.00% |
-| `functions/api-handler/routes/course-records.js` | 100.00% | 83.92% | 100.00% |
+| `functions/api-handler/routes/course-records.js` | 100.00% | 85.71% | 100.00% |
 | `functions/api-handler/routes/courses.js` | 100.00% | 100.00% | 100.00% |
 | `functions/api-handler/routes/gradings.js` | 100.00% | 96.77% | 100.00% |
 | `functions/api-handler/routes/health.js` | 100.00% | 100.00% | 100.00% |
@@ -195,7 +195,7 @@ pie showData title テストケースの結果
 | `web/js/components/celebration.js` | 100.00% | 89.28% | 100.00% |
 | `web/js/components/choice-option.js` | 100.00% | 88.88% | 100.00% |
 | `web/js/components/dialog.js` | 100.00% | 57.14% | 100.00% |
-| `web/js/components/exp-bar.js` | 100.00% | 92.68% | 100.00% |
+| `web/js/components/exp-bar.js` | 100.00% | 92.30% | 100.00% |
 | `web/js/components/guild-badge.js` | 100.00% | 60.00% | 100.00% |
 | `web/js/components/partner-bubble.js` | 100.00% | 89.47% | 100.00% |
 | `web/js/components/quest-card.js` | 100.00% | 100.00% | 100.00% |
@@ -264,7 +264,7 @@ pie showData title テストケースの結果
 | M-G05 | `domain/ranking.js 順位づけ` | 6 | 6 | 0 | 0 | 6 |
 | M-G06 | `domain/picker.js 出題` | 14 | 14 | 0 | 0 | 14 |
 | M-G07 | `domain/answer-flow.js 解答後の更新内容` | 11 | 11 | 0 | 0 | 11 |
-| M-G08 | `domain/summary.js 学習サマリ` | 8 | 8 | 0 | 0 | 8 |
+| M-G08 | `domain/summary.js 学習サマリ` | 9 | 9 | 0 | 0 | 9 |
 | M-A01 | `ai/bedrock.js` | 7 | 7 | 0 | 0 | 8 |
 | M-A02 | `ai/json-guard.js` | 11 | 11 | 0 | 0 | 20 |
 | M-A03・M-A04 | `ai/persona.js・ai/prompts/*` | 16 | 16 | 0 | 0 | 16 |
@@ -290,7 +290,7 @@ pie showData title テストケースの結果
 | M-H15 | `routes/auth.js（A-30〜A-39）` | 26 | 26 | 0 | 0 | 26 |
 | M-H13 | `routes/admin-courses.js（A-21）・M-H14 routes/admin-partners.js（A-22）` | 10 | 10 | 0 | 0 | 10 |
 | M-H16 | `routes/summaries.js（A-12b・A-12c）` | 8 | 8 | 0 | 0 | 8 |
-| M-H17 | `routes/course-records.js（A-12d・A-12e）` | 7 | 7 | 0 | 0 | 7 |
+| M-H17 | `routes/course-records.js（A-12d・A-12e）` | 9 | 9 | 0 | 0 | 9 |
 | M-W01 | `grading-worker/index.mjs・grader.js` | 14 | 14 | 0 | 0 | 15 |
 | M-W02 | `import-worker/index.mjs・extractor.js・pdf-splitter.js・pdf-text.js` | 20 | 20 | 0 | 0 | 24 |
 | M-W03 | `jobs/daily.js と steps/` | 14 | 14 | 0 | 0 | 14 |
@@ -668,6 +668,7 @@ pie showData title テストケースの結果
 | MT-G08-06 | 数の集計 | 同 | 合格 | 1 |
 | MT-G08-07 | Markdown の全体 | 同 | 合格 | 1 |
 | MT-G08-08 | Markdown の省略 | 同 | 合格 | 1 |
+| MT-G08-09 | 択一の見出し | 同 | 合格 | 1 |
 
 ### M-A01 ai/bedrock.js
 
@@ -1053,6 +1054,8 @@ pie showData title テストケースの結果
 | MT-H17-05 | コメント | 同 | 合格 | 1 |
 | MT-H17-06 | AI の失敗・解答なし | 異 | 合格 | 1 |
 | MT-H17-07 | ニックネーム未登録 | 異 | 合格 | 1 |
+| MT-H17-08 | 苦手な問題の見出し | 同 | 合格 | 1 |
+| MT-H17-09 | 苦手な問題の記号 | 同 | 合格 | 1 |
 
 ### M-W01 grading-worker/index.mjs・grader.js
 
@@ -1575,16 +1578,16 @@ pie showData title テストケースの結果
 
 ```mermaid
 flowchart TD
-  A["全件成功<br>797/797"] --> B["カバレッジ基準<br>達成"]
+  A["全件成功<br>800/800"] --> B["カバレッジ基準<br>達成"]
   B --> C["3回続けて同じ結果<br>はい"]
   C --> D["合格"]
 ```
 
 | 基準（仕様書 6.2） | 結果 | 判定 |
 | --- | --- | --- |
-| テストケースがすべて実装され成功する（skip・todo 0件） | 797/797、skip 0・todo 0、仕様書にないID 0 | 合格 |
+| テストケースがすべて実装され成功する（skip・todo 0件） | 800/800、skip 0・todo 0、仕様書にないID 0 | 合格 |
 | カバレッジ（domain・validators 100%、そのほか 90%／80%以上） | 4章のとおり | 合格 |
-| 実行時間 60秒以内 | 17.68 秒 | 合格 |
+| 実行時間 60秒以内 | 16.97 秒 | 合格 |
 | 安定性（3回続けて同じ結果） | 同じ | 合格 |
 
 - dev（`rpglearning.net`）で、テスト仕様書 6.5 の申し送りを結合テストで確かめる
@@ -1607,6 +1610,7 @@ timeline
   2026-11-03 : 第2.5版
   2026-11-12 : 第3.0版
   2026-11-23 : 第3.1版
+  2026-11-24 : 第3.2版
 ```
 
 日付は版を作った日。
@@ -1631,3 +1635,4 @@ timeline
 | 第2.5版 | 2026-11-03 | アカウント作成とコースごとの実績のテストを加えた、仕様書 第2.0版の全ケースを実行 |
 | 第3.0版 | 2026-11-12 | 報告書を `npm run test:report`（`scripts/test-report.mjs`）で作り直す形にし、変更履歴・目次のアコーディオンを生成に入れる。通知メールの削除・Googleでログイン・Service Worker・起こす係の Worker（M-C01）を加えた、仕様書 第2.6版の全ケースを実行 |
 | 第3.1版 | 2026-11-23 | 出題の見直し（新しい問題と復習をまぜる・説明問題なしの冒険・クエスト Q-04 の廃止と Q-06〜Q-08）を加えた、仕様書 第2.7版の全ケースを実行 |
+| 第3.2版 | 2026-11-24 | 学習サマリとコースごとの実績で問題をキーワードで出す変更（MT-G08-09・MT-H17-08〜09 の追加と、MT-G08-04〜05・08、MT-D03-36・41 の直し）を加えた、仕様書 第2.8版の全ケースを実行 |
